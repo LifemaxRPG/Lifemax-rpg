@@ -1,6 +1,6 @@
 # Life Director read models: days, day blocks, now and the week
 
-Status: **complete for WP-LD8a** (plan `LIFE_DIRECTOR_NATIVE_PLAN.md`, WP-LD8, part a). It describes how the Life Director page turns a
+Status: **complete for WP-LD8** (plan `LIFE_DIRECTOR_NATIVE_PLAN.md`, WP-LD8: part a, sections 0 to 10; part b, sections 11 to 16). Part a describes how the Life Director page turns a
 saved state into what its screens and its native projection show for the plan's days, a day's blocks, the live timeline, what is
 happening now and the week (`logic.js`, as at branch `codex/director-dial-controls`, commit `5669a42`), and the native code that
 reproduces it (`android-wrapper/native/src/main/java/com/lifemax/rpg/core/lifedirector/readmodels`). The page is the authority: this
@@ -17,11 +17,20 @@ Contents
 3. A day's blocks (RM-5 to RM-10)
 4. Now: the live timeline and `nowState` (RM-11 to RM-13)
 5. The week (RM-14 to RM-20)
-6. Page words as data
+6. Page words as data (RM-21)
 7. The native API, and how a shadow check uses it
 8. Defects (RD01 to RD14)
 9. Golden cases: the index, and the mutation checks
 10. Open questions for the owner
+
+Part b
+
+11. Boundary and inputs (part b)
+12. The rules of part b (RM-21 to RM-40)
+13. The native API of part b, and how a shadow check uses it
+14. Defects (RD15 to RD23) and native deviations (DV-RM1, DV-RM2)
+15. Golden cases of part b, and the mutation checks
+16. Open questions for the owner (part b)
 
 ---
 
@@ -59,8 +68,8 @@ Used from the engine, unchanged and already native: `buildHorizon` (engine.js:13
 `ymdAdd` (LD1 kernel: `WallClock`, `CalendarMath`), `deriveAvailability` (LD2: `Availability.derive`), `typeForTag` (`core/economy`
 `LifeDirector.typeForTag`), zone names (`ZoneNames.resolve`).
 
-Not in this package (WP-LD8b and later): the dial's geometry, handles and stops, `nativeToday`'s sheets and chips, goals, quests,
-settings, time and forms.
+Part b (sections 11 to 16) adds goals, quests, settings, My time, the forms, Something came up, Move, the shifts and the dial's handles
+and stops; the rest of `nativeToday` is in neither part.
 
 ## 2. The plan's days
 
@@ -174,7 +183,7 @@ one group per title and reason, `×<n>` when repeated, sorted by tier, highest f
 **RM-20** `mins(m)` (logic.js:25): `<h>h` and ` <r>m` when there is a remainder, for 60 minutes or more; else `<m>m`. Numbers as JavaScript
 writes them. Every family that reaches the week.
 
-## 6. Page words as data
+## 6. Page words as data (RM-21)
 
 Every word the read models produce comes from the page, exported by the recorder and never retyped in Kotlin:
 `android-wrapper/native/src/main/resources/lifedirector/readmodel-words.json` (read by `ReadModelWords`). The tables are the page's own
@@ -317,3 +326,264 @@ derivation from the day itself already covers it; it is kept as the page has it.
   drawing?
 - **OQ-RM4** (RD07, RD06) Should Week count only sessions that are planned or done, and count done ones at their actual minutes (and
   preview XP for 0 actual minutes as 0)?
+
+---
+
+# Part b: goals, quests, settings, My time, the forms, the sheets, shifts and the dial's handles
+
+Status: **complete for WP-LD8b**. Part b describes, from the same saved state, what the page's native projection and sheets carry for
+Goals, Quests, Settings, My time, the commitment and goal forms, Something came up, Move, the work rules and shifts other LifeMax features
+read, and each day's dial handles and stops (`logic.js` as at branch `codex/director-dial-controls`, commit `d728b06`), and the native code
+that reproduces it (same package). Line numbers below are that commit's. As in part a, nothing native is wired to a screen.
+
+## 11. Boundary and inputs (part b)
+
+Part b reads part a's inputs (`DirectorReadModels`: the state, `Date.now()`, the device's zone) and three more: what LifeMax answers
+(`Host.capabilities()`, `Host.milestones()`; native takes them as `DirectorHostView`), how the store loaded the state (`loadReport.source`,
+only `MEMORY_ONLY` matters) and the page's locale (RM-22). It never writes.
+
+| `logic.js` | What | Native | Rules |
+|---|---|---|---|
+| 22-23 `fTime`, `fDay`, 1481 `fHm`, 618-620 `H12`, `hourWord`, 3661 `nativeHourWords` | times, dates and the dial's hour words | `ClockWords` (`PanelValues.kt`) | RM-22 |
+| 1396 `goalShare`, 1401 `goalCards`, 3624 `nativeGoals` | Goals | `Goals`, `GoalsPanel` | RM-23, RM-24 |
+| 1436 `questsModel`, 3301 `nativeQuests` | Quests | `Quests`, `QuestsPanel` | RM-25 |
+| 3637 `nativeSettings`, 1683 `graceLabel`, 1685 `diagnosticsLine` | Settings | `Settings`, `SettingsPanel` | RM-26, RM-27 |
+| 1500 `timeModel`, 1497-1499 `ROUTINES`, `MEAL_RANGE`, `stopLabels`, 1467 `daysText`, 1477 `ruleText`, 1484 `sleepContext`, 3663 `nativeTime` | My time | `MyTime`, `TimePanel` | RM-28 to RM-30 |
+| 1559 `formField`, 1571 `ruleForm`, 1614 `goalTypeModel`, 1628 `goalFormModel`, 3679 `activityAtForm`, 3693 `nativeForm`, 3385 `nativeSheet` | the forms | `Forms`, `FormSheet`, `FormField` | RM-31 to RM-33 |
+| 2225 `DISRUPT`, 2226 `disruptParts`, 3385 `nativeSheet('disrupt')` | Something came up | `Sheets.disrupt`, `DisruptSheet` | RM-34 |
+| 2205 `moveTimes`, 2216 `moveModel`, 3395 `nativeSheet('move')` | Move | `Sheets.move`, `MoveSheet` | RM-35 |
+| 2941 `workRules`, 2945 `shifts`, 589 `ruleOn` | work rules and shifts | `Shifts`, `WorkRule`, `Shift` | RM-36 to RM-38 |
+| 600 `ruleInstances`, 1816 `dialHandles`, 613 `handleLabel`, 1764 `snapEp`, 1776 `dialStops`, 1794 `dragPreview`, 1801 `dialChange`, 580 `angOf`, 1827 `minuteOf`, 3097 `nativeHandles` | the dial's handles and stops | `Dial`, `DayHandles` | RM-38 to RM-40 |
+
+Used unchanged: part a's `horizonDays`, `calendarDays` and `dayBlocks`; the engine's `normalizePreferences` (`PlanPreferences.of`),
+`ARCHETYPES` (`DemandTables.archetypes`, exported by the demand recorder), `localParts`, `zonedToEpoch`, `tzOffsetSec`, `ymdAdd`, `ymdKey`
+(`WallClock`, `CalendarMath`).
+
+Not in part a or b (later work): the rest of `nativeToday` (the arcs, the words on the rings, the core, the mix, up next and the rows with
+their chips), the session, timer and meal sheets, `nativeFrame`, the guides, the first-run card and the widget. They are presentation
+over part a's blocks and now state; their times are the RM-22 words.
+
+The page's stored values reach the read models as `JSON.parse` gives them, and the page combines them with JavaScript's operators, so a
+`startMin` stored as text `"540"` is concatenated by `+` (`"540" + 480` is `"540480"`) and converted by `-`, `%` and `Date.UTC`. Native
+does the same (`Js.add`, `PageValues`), so the answers match for every stored value the cases hold.
+
+## 12. The rules of part b
+
+**RM-21** Page words as data (both parts; part a's are section 6's `readmodel-words.json`). Every word part b writes comes from the page: the controller's tables (`PRIO`, `GOALS_EXPLAIN`,
+`GOALS_EMPTY`, `GOAL_REMOVE_CONFIRM`, `CLARIFY_TEXT`, `QUEST_HEAD`, `MILESTONE_NOTE`, `KIND_LABEL`, `ROUTINES`, `MEAL_RANGE`, `RULE_KINDS`,
+`RULE_LOADS`, `NEW_RULE`, `CUSTOM_TAGS`, `GOAL_LEVELS`, `INTENSITY`, `PREF_RANGES`, `GRACE`, `HORIZON`, `MISSES`, `SETTINGS_TEXT`,
+`DRAG_WORDS`, `DIAL`, `MINI_SNAP`, `MINI_GROUP`, `DISRUPT`, `TAG_ICON`, `DRAG_KINDS`, `DOW`), the engine's version, `H12`, and the phrases
+written inline in 24 functions, taken by their position among each function's string literals (`gen_ld_readmodels_b_golden.js`
+`PHRASES`: the literal count of each function pinned, literals that must stay equal pinned), exported to
+`android-wrapper/native/src/main/resources/lifedirector/readmodel-words-b.json` and read strictly by `PanelWords` (a missing, unknown or
+mistyped member refuses the file; `PanelPhrases.REQUIRED` names every phrase native reads). Literals not exported are codes (states,
+kinds, field keys, commands such as `ruleSave`) that native names as the page's API. The numbers of the forms (a name's 40 characters, a
+session's 15 to 180 minutes, travel up to 240) are logic, checked by the cases, not words. The web test fails when the file differs
+from the page's export; `PanelsGoldenTest.theWordsAreThePagesExport` checks the packaged file is the one read, and
+`aChangedWordsFileIsRefused` that a changed one is refused. Every family.
+
+**RM-22** Times as the page writes them, in `en-US` (the locale the page is recorded in; `fmt` uses the device's locale): `fTime` is
+`h:mm AM` with a plain space, `fDay` is `Wed, Oct 28` (Intl's own short names), `fHm(m)` is minute `m` of 1 January 2020 in UTC (so a
+minute past 1440 or below 0 wraps, and NaN throws a RangeError), `hourWord(h)` is `Midnight`, `Noon`, `3 AM`, `3 PM` with `H12` true
+(`03:00` style otherwise, Read). A moment a Date cannot hold throws a RangeError, as `Intl.DateTimeFormat.format` does. Native:
+`ClockWords`, en-US only (DV-RM1). Every family.
+
+**RM-23** `goalShare(g, alloc)` (1396-1400): the goal's allocation (`alloc.find` by `goalId === g.id`); when its `targetShare` is not
+truthy (a local repair left it 0), a copy with `targetShare = (g.priority || 3) / max(1, Σ over the allocation of the matching goal's
+priority || 3)`, the sum taken with `+` (a priority stored as text concatenates, then `Math.max` reads the text as a number). Families
+`goals` (241 plans repaired by the engine, and seeded zero shares), `fuzz`.
+
+**RM-24** `goalCards()` and `nativeGoals()` (1401-1420, 3624-3635): one card per goal, in the stored order: `id`, `title` and
+`priority` as stored; `sub` the archetype's title (or `Custom`), ` · `, `(level || 'NOVICE').toLowerCase()` and ` · paused` for status
+`PAUSED` (RD16); `share` null without an allocation, else `target` and `scheduled` as `min(1, max(0, value || 0))` with the page's
+rounded percentages (`Math.round((v || 0) * 100)` and `%`) and the line `<plannedSessions> sessions · <mins(scheduledMin)> this week ·
+<title> <med>[–<base>]×, ...` (`–<base>` only when `base > med`); `warning` the trajectory warning's message, ` Projected finish: ` and
+`fDay` of its projected epoch; `clarify` the plan's suggested archetypes, or the first four archetypes when it suggests none, each with
+its title (an unknown archetype throws); `pause` `Resume` or `Pause`; `remove`. The panel: the explanation, the priorities 5 to 1 with
+`PRIO`'s names, the cards, `GOALS_EMPTY` when there is no goal, `Add a goal`, the remove confirmation. Families `goals`, `seed`, `fuzz`.
+
+**RM-25** `questsModel()` and `nativeQuests()` (1436-1456, 3301-3305): the head is `QUEST_HEAD` when LifeMax is connected, else `Quest
+Board not detected` with the missing capabilities joined by `, `. Without a plan: no rows, no reminders, `empty` `''`, no milestones,
+and `Host.milestones()` is not asked. Else one row per `questCoverage` entry whose `String(questId)` does not end in `@next`: `when`
+`Daily` (recurrence `DAILY`), `Due <fDay(deadline)>` or `No deadline`; `status` by the first that holds: `All-day reminder` (PASSIVE),
+`Done this period` (COMPLETED), `<n> session(s) scheduled` when covered (singular only for exactly the number 1), `Could not fit` when a
+diagnostic names the quest (`linkedQuestIds` includes its id, or `taskId` is its id), `Locked`, else `<n> scheduled`; `tone` `ok`
+(covered or COMPLETED), `pas` (PASSIVE) or `no`; `why` the first naming diagnostic's explanation when not covered, else `''`. Reminders
+`passiveReminders` as `Tracked on the Quest Board`, `All-day`. Milestones: LifeMax's unlocked ones, `<done> of <n> earned`, each
+`Earned` or `In progress`; null when none. Families `quests`, `host`, `seed`, `fuzz`.
+
+**RM-26** `nativeSettings()` (3637-3659): the preferences as `normalizePreferences` gives them; the intensity, the three ranges and the
+grace range each with a label per stop from low to high by step (`mins` for the ranges, `<m>m` for grace), `value` the preference as
+normalized (grace and the routines are not normalized: RD17); rest days Sunday first with two letters and whether the preference
+includes the day; the planning window (`String` of the value, options 7 and 14: RD18); misses with the text in three spans, the rest
+tokens `String(ledger.restTokens)` in bold; the guide and data texts with `storageUnavailable` true only for a `MEMORY_ONLY` load;
+diagnostics (RM-27); the lab switch `!!ST.ui.lab`. A state without a ledger throws a TypeError (RD15). Families `settings`, `host`,
+`seed`, `fuzz`.
+
+**RM-27** `diagnosticsLine()` (1685-1689): `engine <ENGINE_VERSION> · ` then `<status> · <computeTimeMs> ms · quality <sqi> ·
+<scheduledInstances.length> planned` (or `no plan`), ` · events <ledger.order.length>`, ` · host connected` or ` · host missing <missing
+joined by ,>`, and ` · last rejected plan: <JSON.stringify(violations)>` when a rejected plan is stored. Families `settings`, `host`.
+
+**RM-28** `timeModel()` sleep (1500-1513): the weeknight sleep is the SLEEP rule with id `sleep-wk`, else the first SLEEP rule; the
+weekend one the rule `sleep-we`. Bed and wake are the rule's start and `(start + duration) % 1440` (23:00 and 07:00 without one), their
+`fHm` texts, the length `mins(((wake - bed) + 1440) % 1440 || 1440)` (a zero length reads as 24 hours), the weekend's times (an hour
+later than the week's when there is no weekend rule), the labels (`Weeknight bedtime` when a weekend rule exists), and the save button
+(`Save sleep and continue`, primary, without a sleep rule). Set-up's steps (while set-up is unfinished): Sleep, Work & school, Goals,
+Build, each `ok`, `cur` or `''` by what exists. Families `time`, `seed`, `fuzz`.
+
+**RM-29** `timeModel()` the rest (1514-1527), `daysText`, `ruleText` (1467-1480): commitments are the rules that are neither SLEEP nor
+PREFERRED, each `<KIND_LABEL or kind> · <days> · <fHm start>–<fHm end>[ · <commute>m travel each way]`, the days as `rotating <on> on /
+<off> off`, `every day`, `weekdays`, `weekends`, or the day names of the days sorted as text; the dot `block` for UNAVAILABLE; the
+routines with a stop label per step (`Off` for 0) and the meals' switch; the goals' titles as chips; the build card with `Time zone:
+<tz()>` while set-up is unfinished, else Re-plan. (`daysText`'s night patterns, `Sun–Thu nights` and `Fri and Sat nights`, are for
+SLEEP rules, which My time never lists: Read.) Families `time`, `seed`, `fuzz`.
+
+**RM-30** `nativeTime()` (3663-3669): the sleep part gains the snap (15), `sleepContext` (each rule neither SLEEP nor PREFERRED that
+rotates or has a day from Monday to Friday, as `{from: startMin, to: startMin + durationMin}`), the clock text of every quarter hour,
+the length text of every quarter-hour length (0 as a full day), the dial face (`DIAL`, `hourWord` every three hours), and the labels'
+`group`. Families `time`, every family.
+
+**RM-31** `ruleForm(r)` (1559-1590) through `nativeSheet('rule', id)`: a new commitment (id `''`) starts from `NEW_RULE`; an id names a
+rule that is not SLEEP or PREFERRED (`{kind, id, gone: true}` otherwise). Fields in order: name (text, 40), type (`RULE_KINDS`),
+rotating (a check that reveals on/off/anchor and hides days), days (the stored list copied, `[]` while rotating), days on and off (the
+rotation's counts, 4 and 4 without one), first day on (the rotation's anchor, else today's local date), start and end (time, with
+`fHm`), travel (0 to 240 by 5), unwind (`decompressMin` when not null, else 30 for WORK that is not LIGHT, else 0), how tiring
+(`RULE_LOADS`, `MIXED_MODERATE` by default). Each field carries what `formField` gives its kind (time: text; text: maxLength and
+placeholder; number: min, max, step and placeholder; check: reveals and hides). Families `forms`, `seed`, `fuzz`.
+
+**RM-32** `goalTypeModel()` and `goalFormModel(arch)` (1614-1651): the goal kinds are the engine's archetypes in order (icon by
+`tagIcon` of the first template's tag, the templates' titles joined), then `Something else`. A goal form for a known archetype or
+`CUSTOM` (null for any other id): name; `Language` with `spanish` for SKILL_LANGUAGE; for your own activity the tag, minutes, times per
+week and the two efforts; priority (`'3'`) and experience; the measurable target (fold) only when a template drives volume. Families
+`forms`, `fuzz`.
+
+**RM-33** `activityAtForm(id)` and `nativeForm` (3679-3700): `at:<epoch>` with a safe positive integer gives the one-activity form at
+that local date and minute in `tz()`; anything else (`at:0`, `at:-900`, `at:abc`, `at:1.5`, beyond 2^53) gives null. Families `forms`,
+`dst`, `fuzz`.
+
+**RM-34** `nativeSheet('disrupt')` (2225-2240, 3397): null while set-up is unfinished or there is no plan; else `DISRUPT`'s title and
+note and the five parts: work (today's local date, travel 0 by 5, 17:00 to 21:00 with their texts), the next hours (1, 2, 3, 4, 6), the
+day, sick (1 to 3 days) and the energy check-in. Every family.
+
+**RM-35** `nativeSheet('move', id)` and `moveTimes(inst)` (2205-2218, 3395): null without a plan; `{kind, gone: true}` unless `id` is a
+`PLANNED` session of `scheduledInstances`. The times: on every shown day (part a's `horizonDays`), the day's free blocks and the
+session's own blocks sorted by start and merged when they touch or overlap; in each, every half hour from `max(start, ceil((now + 900)
+/ 900) × 900)` where the session's length fits, except its own start; the first 48, labelled `<short day> <fTime>`. The title is `Move
+“<title>”` and the note gives the length in `mins` of `(end - start) / 60`. Families `move`, `dst`, `seed`, `fuzz`.
+
+**RM-36** `workRules()` (2941-2944): the WORK rules as `{id, title || 'Work', days (copied, [] when not truthy), startMin, durationMin}`.
+Every family.
+
+**RM-37** `shifts(from, to)` (2945-2974): for each local date from the day before `from`'s to `to`'s (at most 400), each WORK rule on that
+date (RM-38) gives a shift from `zonedToEpoch(date, startMin)` to `zonedToEpoch(date, startMin + durationMin)`, kept when it ends after
+`from` and no later than `to` (key `<id>|<date>`); then each one-off commitment whose kind (or, without one, `commitmentType` CLASS or
+EMERGENCY, else WORK: RD19) is WORK, with truthy start and end, ending in the same window (key `one|<id or commitmentId or start>`,
+`ruleId` null, `Extra shift` without a title, minutes rounded). A shift is dropped when blackouts with truthy start and end cover at
+least half of it. Sorted by end, stable. Families `shifts`, `dst`, `seed`, `fuzz`.
+
+**RM-38** `ruleOn(r, ymd)` and `ruleInstances(day)` (589-612), `dialHandles(day)` (1816-1826): a rule is on a date within its
+`validFrom`..`validTo` (compared as the page compares), on a rotation's active day (days since the anchor, as `Math.round` of the UTC
+difference, taken `((n % c) + c) % c` with the stored cycle length, so a cycle stored as text concatenates), else when its `days` list
+(every day when it has none) includes the date's weekday. The dial's rules are those of a `DRAG_KINDS` kind; each occurrence that starts
+on the day before or the day and overlaps the day gives a handle at each end that falls on the day (an end at the day's very start is
+not a handle), keyed `<id>|<end>|<date>|<epoch>`, kind `sleep` for SLEEP, else `work`. Families `handles`, `dst`, `fuzz`.
+
+**RM-39** `snapEp` and `dialStops(d0, d1)` (1764-1792): a place is the nearest quarter hour of the wall clock (`Math.round`; 24:00 is
+23:45), on `d0`'s date. On a plain day (86400 seconds from a local midnight whose offset is the same a minute before the end) the snap
+is asked at the start and at minute 8 of each quarter hour; on any other day at every minute; a stop is kept where the snapped minute
+changes, with its angle (`angOf`), the angle it is chosen from (`(t - d0) / (d1 - d0) × 360`) and its `fHm` text. Families `handles`,
+`dst` (every 2026-2027 clock change).
+
+**RM-40** `dragPreview`, `dialChange` (1794-1806) and `nativeHandles` (3097-3110): for each handle, its angle, its minute, its label
+(`Bedtime`/`Wake up` for sleep, else `<title || KIND_LABEL || 'Commitment'> starts/ends`), the TalkBack label with `fTime`, and for every
+stop the rule's new length (start handle: `(end - m) mod 1440`; end handle: `(m - start) mod 1440`), `''` when under 15 minutes (the
+readout says `Too short`), else `mins` with ` of sleep` for sleep; and the angle where the lit arc ends (the other end of the span,
+`zonedToEpoch` on `d0`'s date, kept on the day). No handles: `{handles: [], stops: [], dragWords}`. The golden adds the day's start and
+end, as the projection's `dial` carries them beside these members. Families `handles`, `dst`, `seed`, `fuzz`.
+
+## 13. The native API of part b, and how a shadow check uses it
+
+`DirectorPanels(models, host, loadSource, words)` takes part a's `DirectorReadModels`, a `DirectorHostView` and the load source. Its
+answers are typed (`GoalsPanel`, `QuestsPanel`, `SettingsPanel`, `TimePanel`, `FormSheet` (`Form`, `GoalTypes`, `Gone`), `DisruptSheet`,
+`MoveSheet` (`Move`, `Gone`), `WorkRule`, `Shift`, `DayHandles`), each with `json()`, the page's JSON for it (members the page leaves out
+left out). Nothing throws: every answer is a `ReadAnswer` (`Value`, or `Threw` with the page's error name; a native fault that stands
+for nothing on the page is `Threw("Native…")`, so a shadow records it rather than stopping). `TimePanel` keeps the page's object whole
+because a screen reads it whole.
+
+For the read shadow (stage A, plan 5.1): the projection's goals, quests, settings and time are `nativeGoals()`, `nativeQuests()`,
+`nativeSettings()` and `nativeTime()` exactly, and a sheet is `nativeSheet(kind, id)` exactly, so the page can send them beside part a's
+sections in the same envelope, with the host's two answers it gave while they ran (as part a sends the XP previews) and the load source;
+native compares `json()` member for member. Today's dial handles are `nativeToday(...).dial`'s `handles`, `stops` and `dragWords`
+(with `startEpoch`, `endEpoch`): `handles(day)` compares with them. `PanelsReplay.replay` is the reference for building the sections;
+`RecordedHost` there is how the page's answers are replayed. The shadow packages are not changed by this work.
+
+## 14. Defects (part b)
+
+Recorded as the page behaves; native reproduces each. None is fixed here.
+
+| ID | Where | What | Severity |
+|---|---|---|---|
+| RD15 | logic.js:3655, 1688 | Settings reads `ST.ledger.restTokens` and `ledger.order.length` with no guard: a state without a ledger (a damaged save; the store always writes one) makes Settings throw (Executed, `fuzz`). | Low |
+| RD16 | logic.js:1409 | A goal card's subtitle shows the stored level lower-cased (`novice`, `intermediate`, `advanced`), not the words the goal form offers for it (`New to this`, `Some experience`, `Experienced`) (Executed, every goal card). | Low: inconsistent words |
+| RD17 | logic.js:3647, 3653 | The grace range's and the routines' values are the stored preferences, which `normalizePreferences` does not check: a value outside the slider (600, 0) or stored as text reaches the screen as it is (Executed, 23 settings answers). | Low |
+| RD18 | logic.js:3650 | The planning window offers 7 and 14 days, but the preferences allow 1 to 28: any other stored value (10) is shown with no option chosen (Executed, 18 answers). | Low |
+| RD19 | logic.js:2962 | A one-off commitment without `kind` counts as work unless its `commitmentType` is CLASS or EMERGENCY, so an older appointment (`commitmentType` APPOINTMENT or anything else) is reported to the rest of LifeMax as an extra shift (Executed, `shifts`: 13 shifts). | Medium for the features that read shifts |
+| RD20 | logic.js:2213 | Move lists only the first 48 half hours, so on a free week only the next day or two can be chosen (Executed, `move`). | Low |
+| RD21 | logic.js:2213, 22-23 | The move label cuts `fDay` at its first comma: in a locale whose date has no comma the label keeps the whole date (Read). | Informational |
+| RD22 | logic.js:1520 | A commitment of a kind `KIND_LABEL` does not name (a hand-edited or future kind) shows its code (`GYM · ...`) (Executed, 32 rows). | Informational |
+| RD23 | logic.js:1504 | My time's sleep length is `|| 1440`: a sleep rule whose start equals its end reads as 24 hours (Executed). | Informational |
+
+Native deviations:
+
+- **DV-RM1** Times are written as `en-US` writes them, with a 12-hour clock, whatever the device's locale (`ClockWords`). The page uses the
+  device's locale (`fmt(opts)` with `undefined`), so on a device in another locale native's times, dates and hour words differ (OQ-RM5).
+  Every recorded case is `en-US`.
+- **DV-RM2** An archetype or kind name that is a property of every JavaScript object (`constructor`, `toString`) is looked up by the page
+  on the prototype; native looks up own members only (Read; no stored value holds one).
+
+## 15. Golden cases of part b, and the mutation checks
+
+Recorder `lifemax_modular_v73/tools/gen_ld_readmodels_b_golden.js`, as part a's: the controller module with its hook (`ld_logic_vm.js`
+`READ_MODELS_B`, with a setter for the load report added beside the state's, in the recorder's copy only) evaluated in the built page in
+Chromium, with the page's engine, a host whose `capabilities()` and `milestones()` give the case's answers (`page`: the page's own, its
+answers recorded) and a pinned `Date`; every case twice. States are part a's (`tools/ld_readmodels_cases.js` `defineStates`), not repeated
+in this file: the web test requires every state a case names to be part a's byte for byte. A plan state, stored by the engine with
+`ledger: null`, gets the lived-in day's ledger first (the page always has one), except a few fuzz cases (RD15). Cases:
+`tools/ld_readmodels_b_cases.js`. Web test `lifemax_modular_v73/tests/ld-readmodels-b-golden.test.js` (layout, families, rules defined
+here, throws only where built, every outcome reached, then re-records every case and the words; `LD_QUICK=1` runs the checks without the
+page).
+
+1,601 cases over part a's 432 states (each case records every read model, so every family exercises every rule; the families say what
+each varies):
+
+| Family | Cases | What |
+|---|---|---|
+| seed | 42 | the page's own saved states (fresh, planned, lived, its backup, imported, unfinished, migrated v0) at six moments |
+| goals | 213 | paused, re-prioritised and custom goals, repaired and out-of-range shares, warnings, clarifications with and without suggestions |
+| quests | 200 | every coverage status, covered or not, 0, 1 and more sessions, deadlines, `@next`, diagnostics naming a quest, reminders, LifeMax answers |
+| settings | 146 | every preference, out-of-range and text values, rest tokens, a memory-only load, the lab, a rejected plan, a plan or none |
+| time | 144 | sleep rules (week, weekend, none, other ids, crossing midnight), commitments of every kind and day pattern, rotations, routines, set-up |
+| forms | 132 | the commitment sheet for every rule (new, rotating, light, with unwind), the goal kinds, every goal form, an activity at a held time, gone and malformed ids |
+| move | 142 | sessions on every day, done and moved ones, a session starting soon, ids that are gone |
+| shifts | 122 | work rules with valid dates, no title or days, a night shift, one-off shifts of every kind, blackouts over them |
+| handles | 140 | the first and later days, drag rules of every kind added, sleep across midnight, rotations, other zones |
+| dst | 60 | every plan made across a 2026-2027 clock change, read on the changing day: stops every minute, shifts, move, an activity at a held time |
+| host | 60 | LifeMax not connected, partly connected, milestones earned, locked and in progress |
+| fuzz | 200 | seeded states, moments, zones and changes from every family |
+
+Native: `PanelsGoldenTest` replays every case (every section equal, the questions asked of LifeMax the same as the page's, the family
+counts pinned); `PanelsMutationTest` puts ten plausible porting mistakes in place of one word or one read model and requires the replay
+to notice each.
+
+Source mutations of the native code, each compiled and replayed against the whole file:
+
+MUTATION_TABLE
+
+## 16. Open questions for the owner (part b)
+
+- **OQ-RM5** (DV-RM1) Which locale should native write times in once it draws these screens: the device's (and then native needs the
+  page's Intl output recorded per locale, or a check in the shadow on the owner's device), or en-US always?
+- **OQ-RM6** (RD19) Should a one-off commitment without `kind` count as a shift only when its `commitmentType` says work?
+- **OQ-RM7** (RD16, RD18) Should the goal card show the experience words the form offers, and should the planning window offer every
+  value the preferences allow (or the preferences keep to 7 and 14)?
+- **OQ-RM8** (RD17) Should the grace and routine values be checked and kept in range when the preferences are read?

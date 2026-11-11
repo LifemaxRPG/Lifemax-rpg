@@ -541,8 +541,8 @@ owns it (the page's `localStorage` is not reachable from native without the web 
 
 ### WP-LD8. Read models from state (M, risk low-medium)
 
-**Status: part a done** (branch `logic/ld8a-readmodels`, NativeApi 131); not wired to anything, the page still computes what it shows;
-part b (goals, quests, settings, time, forms, dial stops and handles) not started. Spec: `LIFE_DIRECTOR_READMODELS_SPEC.md` (rules RM-1
+**Status: done** (part a: branch `logic/ld8a-readmodels`, NativeApi 131; part b: branch `logic/ld8b-readmodels`, NativeApi 137); not
+wired to anything, the page still computes what it shows. Part a, spec: `LIFE_DIRECTOR_READMODELS_SPEC.md` (rules RM-1
 to RM-20, defects RD01 to RD14, no native deviations, golden index, mutation checks, OQ-RM1 to OQ-RM4). Recorder
 `tools/gen_ld_readmodels_golden.js`: the controller module of `logic.js` (`tools/ld_logic_vm.js`, with one statement added in the
 recorder's copy only, so the page's source is unchanged) evaluated inside the built page in Chromium with the page's own engine, host
@@ -555,9 +555,27 @@ exported words). The page words are exported by the recorder to `android-wrapper
 never retyped. Kotlin in `core/lifedirector/readmodels` (`DirectorReadModels`, `DayBlocks`, `DayBlock`, `LiveNow`, `Week`,
 `WeekProjection`, `ReadModelWords`, `ReadModelJson`), typed outputs, no `org.json`, reproduces every case (`ReadModelsGoldenTest`);
 `ReadModelsMutationTest` (11 checks) and 42 source mutations, 41 caught, the survivor equivalent on the data (spec section 9). The projection's `week` is reproduced exactly; Today's inputs (days,
-blocks, now) are, its dial is part b. Findings: the first week row is called Today when the plan starts on a later day (RD01); any timer,
+blocks, now) are; the dial's handles and stops are part b. Findings: the first week row is called Today when the plan starts on a later day (RD01); any timer,
 even paused or on another session, hides the late warning (RD03); an unknown stored zone stops Life Director drawing (RD04); Week counts
 skipped and missed sessions and planned rather than actual minutes (RD07). Open: OQ-RM1 to OQ-RM4.
+
+Part b (spec sections 11 to 16: rules RM-21 to RM-40, defects RD15 to RD23, native deviations DV-RM1 and DV-RM2, OQ-RM5 to OQ-RM8): Goals
+(`nativeGoals`, `goalCards`, `goalShare`), Quests (`nativeQuests`, `questsModel`), Settings (`nativeSettings`, `diagnosticsLine`), My time
+(`nativeTime`, `timeModel`), the forms (`nativeForm`: the commitment sheet, the goal kinds, a goal form, an activity at a held time),
+Something came up and Move (`nativeSheet`, `disruptParts`, `moveTimes`), `workRules` and `shifts`, and the dial's handles and stops
+(`nativeHandles` over `dialHandles`, `dialStops`, `dragPreview`). Recorder `tools/gen_ld_readmodels_b_golden.js` (same method; the hook
+also hands out a setter for the load report; LifeMax's `capabilities()` and `milestones()` answered per case); cases
+`tools/ld_readmodels_b_cases.js` over part a's states (not repeated: the web test requires them byte for byte). 1,601 cases in
+`tests/fixtures/ld-readmodels-b-golden.json.gz` (12 families: seed 42, goals 213, quests 200, settings 146, time 144, forms 132, move 142,
+shifts 122, handles 140, dst 60, host 60, fuzz 200); web test `tests/ld-readmodels-b-golden.test.js`. Words exported to
+`readmodel-words-b.json` (29 tables, 24 functions' phrases). Kotlin in the same package (`DirectorPanels` with `ReadAnswer` (nothing
+throws) and `DirectorHostView`, `Goals`, `Quests`, `Settings`, `MyTime`, `Forms`, `Sheets`, `Shifts`, `Dial`, `PanelWords`,
+`PanelValues`), typed answers each with the page's JSON; reproduces every case (`PanelsGoldenTest`); `PanelsMutationTest` (10 checks) and
+SOURCE_MUTATIONS source mutations (spec section 15). Times are written as en-US writes them (DV-RM1, OQ-RM5). Findings: a one-off
+commitment without a kind is reported as an extra work shift unless its type says class or emergency (RD19); the grace and routine values
+reach Settings and My time unchecked (RD17); the planning window shows no choice for a stored value other than 7 or 14 (RD18); goal
+cards show the stored level code, not the form's words (RD16). Not covered by either part: the rest of `nativeToday` (arcs, ring words,
+core, mix, up next, rows), the session, timer and meal sheets, the guides and the widget.
 
 Scope: native computation of what the projection carries today: `horizonDays`, `unplannedSegments`, `dayBlocks`, `liveTimeline`,
 `nowState`, `weekModel`, `goalCards`, `questsModel`, settings and time models, `moveTimes`, `disruptParts`, `shifts`,
