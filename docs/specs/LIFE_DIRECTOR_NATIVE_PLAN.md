@@ -562,6 +562,23 @@ timer should use a monotonic clock.
 
 ### WP-LD11. Adapters to the native economy and quests (M, risk medium; depends on economy WP5 and the quests port)
 
+**Status: done for the host surface** (branch `logic/ld11-adapters`, NativeApi 132); not wired to anything, the page is still the only writer.
+Spec: `LIFE_DIRECTOR_ADAPTERS_SPEC.md` (rules HA-1 to HA-25, defects LA01 to LA11, deviations DV-A1 to DV-A3, golden index, the bridge to
+WP-LD9's host interface, open questions). Recorder `tools/gen_ld_adapters_golden.js` (the real built page in Chromium, `LifeMaxHost` called on
+saves set up as `load()` leaves them, the economy golden's method; what the page's plan and Smart Diet code answered the host is logged with
+each case; every case recorded twice and required equal; cases `tools/ld_adapters_cases.js`), 1,651 cases in
+`tests/fixtures/ld-adapters-golden.json.gz` (16 families: tags 571, week 68, player 11, xp 39, award 50, bounty 37, quests 219, plan 71, milestones 23, retired
+64, since 40, describe 38, meals 84, flow 12, verify 24, fuzz 300), web test `tests/ld-adapters-golden.test.js` (re-records every case byte
+for byte). Kotlin in `core/lifedirector/hostadapters`: `HostPort` (the interface: typed inputs, typed answers, `HostAnswer.Refused` where the
+page throws, the `PlanDays` and `MealDays` ports), `EconomyHost` (on the native economy's LD-1 to LD-4, the save codec, the quest content's
+Hand library), `HostTexts`, `BoardQuests`, `QuestReading`, `PlanReading`, `HostMeals`, `HostResults`; reproduces every case, answers, the
+economy left behind and the messages, but the 4 DV-A1 shapes its strict board reader refuses (`AdapterGoldenTest`, `AdapterHandTest`,
+`AdapterMutationTest`: 9 port mistakes each noticed); 43 source mutations, 42 caught, the survivor equivalent (spec section 9). D1 ported as the page does it: awards, bonuses and quest keys
+by the device's zone, previews, week bounds, plan sessions and meal blocks by the plan's (spec HA-11, LA01). Findings: plan session titles carry
+`&amp;` from the plan's escaped labels (LA02); a plan session never shows its exercises (LA04) and its length is eight minutes an item, not the
+plan's (LA05); two Hand cards paid by one award share a record id (LA06); a daily quest with a day word the board does not know is planned
+every day (LA09). Open: the plan's days and Smart Diet's days are ports fed by the page (DV-A3); D1 and the spec's section 12.
+
 Scope: replace `LifeMaxHost`: `xpFor`, `awardActivity`, `completeQuest` (LD-2 to LD-4, already in `core/economy`), plus
 `readQuests`, `readPlanSessions`, `milestones`, `retiredUntimedQuest`, `activitiesSince`, `activityExists`, meal lookups. Needs
 the quest board native (QUESTS_SPEC) and the Plan day content. Decision: D1 (which time zone dates an award).
