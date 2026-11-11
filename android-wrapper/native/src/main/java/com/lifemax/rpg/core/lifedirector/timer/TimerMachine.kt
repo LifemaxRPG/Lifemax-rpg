@@ -13,10 +13,10 @@ import com.lifemax.rpg.core.save.JsonString
 import com.lifemax.rpg.core.save.JsonValue
 
 /**
- * What a screen (or a background job) asks of the timer (TM-1): `Today.timer`'s acts by the
- * page's names, with the session id and the timer's start (milliseconds) they name, and [Check],
- * the once-a-second check. Ids and starts are JSON values, as a screen sends them: the page
- * compares them strictly, so a number id is not its text (TM-14).
+ * What a screen (or a background job) asks of the timer (TM-1): `Today.timer`'s acts by the page's
+ * names, with the session id and the timer's start (milliseconds) they name, and [Check], the
+ * once-a-second check. Ids and starts are JSON values, as a screen sends them: the page compares
+ * them strictly, so a number id is not its text (TM-14).
  */
 sealed interface TimerCommand {
     /** Start the session's timer (TM-10). */
@@ -98,15 +98,21 @@ data class TimerOutcome(val state: HostState, val reply: TimerReply, val calls: 
 
 /**
  * WP-LD10's entry point: the timer as a pure function `(state, now, host, command) -> (state',
- * reply, hostCalls)` over WP-LD9's state and host ([HostState], [HostEffects]); [nowMs] is the
- * wall clock the page reads (`Date.now()`). Nothing throws. Not wired to a screen; the page stays
- * the only writer.
+ * reply, hostCalls)` over WP-LD9's state and host ([HostState], [HostEffects]); [nowMs] is the wall
+ * clock the page reads (`Date.now()`). Nothing throws. Not wired to a screen; the page stays the
+ * only writer.
  */
 object TimerMachine {
-    fun run(state: HostState, nowMs: Double, host: HostEffects, command: TimerCommand): TimerOutcome {
+    fun run(
+        state: HostState,
+        nowMs: Double,
+        host: HostEffects,
+        command: TimerCommand,
+    ): TimerOutcome {
         if (command == TimerCommand.Check) {
             var tick: FocusTick = FocusTick.Idle
-            val o = HostCommands.runOn(state, nowMs, host) { p -> tick = TimerCommands.focusTick(p) }
+            val o =
+                HostCommands.runOn(state, nowMs, host) { p -> tick = TimerCommands.focusTick(p) }
             return TimerOutcome(o.state, threw(o.reply) ?: TimerReply.Checked(tick), o.calls)
         }
         val o = HostCommands.run(state, nowMs, host, HostCommand.Today("timer", command.payload()))

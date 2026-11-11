@@ -11,7 +11,9 @@ import com.lifemax.rpg.core.save.JsonValue
 
 /** What a command is asked to do (HC-2); the page's names. */
 sealed interface HostCommand {
-    /** `Today[name](payload)` through `nativeTodayRun` (HC-10 to HC-35; `timer` is WP-LD10's, TM-n). */
+    /**
+     * `Today[name](payload)` through `nativeTodayRun` (HC-10 to HC-35; `timer` is WP-LD10's, TM-n).
+     */
     data class Today(val name: String, val payload: JsonValue?) : HostCommand
 
     /** `Do[name](payload)` through `nativeRun` (HC-50 to HC-66). */
@@ -121,8 +123,8 @@ object HostCommands {
         answer(state, nowMs, host) { p -> execute(p, command) }
 
     /**
-     * Runs [block] on the page's memory as [run] runs a command (the same recording host, errors
-     * as [HostReply.Threw]); its answer is [HostReply.None]. For WP-LD10's timer check.
+     * Runs [block] on the page's memory as [run] runs a command (the same recording host, errors as
+     * [HostReply.Threw]); its answer is [HostReply.None]. For WP-LD10's timer check.
      */
     fun runOn(
         state: HostState,

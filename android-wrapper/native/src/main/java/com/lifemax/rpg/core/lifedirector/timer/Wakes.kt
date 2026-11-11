@@ -18,13 +18,15 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 /**
- * Why the app would need to run at an instant (TM-80 to TM-88). [background] kinds change the
- * saved state when the page's code runs at or after them; the others are the page's foreground
- * rhythm (its polling interval, the dial's day, the vibration before a session), listed so a
- * native screen can keep the same rhythm.
+ * Why the app would need to run at an instant (TM-80 to TM-88). [background] kinds change the saved
+ * state when the page's code runs at or after them; the others are the page's foreground rhythm
+ * (its polling interval, the dial's day, the vibration before a session), listed so a native screen
+ * can keep the same rhythm.
  */
 enum class WakeKind(val background: Boolean) {
-    /** TM-80: the running timer reaches its target; the check finishes it with the plan's minutes. */
+    /**
+     * TM-80: the running timer reaches its target; the check finishes it with the plan's minutes.
+     */
     TIMER_END(true),
 
     /** TM-81: the first planned session to count as missed (its end plus the grace, strictly). */
@@ -70,9 +72,9 @@ data class WakePlan(val nowMs: Double, val wakes: List<Wake>) {
 }
 
 /**
- * The pure "what should wake the app" calculator (TM-80 to TM-88): given Life Director's state (`ST`
- * as JSON) and the wall clock, the instants at which the page's own code (the once-a-second timer
- * check, and the tick's misses and rollover) would change something, computed from the same
+ * The pure "what should wake the app" calculator (TM-80 to TM-88): given Life Director's state
+ * (`ST` as JSON) and the wall clock, the instants at which the page's own code (the once-a-second
+ * timer check, and the tick's misses and rollover) would change something, computed from the same
  * conditions the page tests, to the millisecond. The page tests each condition only when it runs
  * (the timer every second, the tick every 5 minutes, at the dial's midnight and on returning to the
  * app, and only while Life Director is on screen, D4), so its own change comes at the first run at
@@ -89,14 +91,20 @@ object Wakes {
     private const val ALERT_S = 300.0
 
     /**
-     * The wakes of [st] at [nowMs]. [deviceZone] is the zone `tz()` falls back to;
-     * [tickAnchorMs], when known, is when the page's 5-minute interval started.
+     * The wakes of [st] at [nowMs]. [deviceZone] is the zone `tz()` falls back to; [tickAnchorMs],
+     * when known, is when the page's 5-minute interval started.
      */
-    fun of(st: JsonValue?, nowMs: Double, deviceZone: String, tickAnchorMs: Double? = null): WakePlan {
+    fun of(
+        st: JsonValue?,
+        nowMs: Double,
+        deviceZone: String,
+        tickAnchorMs: Double? = null,
+    ): WakePlan {
         val s = Js.of(st)
         val out = ArrayList<Wake>()
         if (!truthy(s)) return WakePlan(nowMs, out)
-        val zoneName = at(at(s, "availability"), "timezone").let { if (truthy(it)) text(it) else deviceZone }
+        val zoneName =
+            at(at(s, "availability"), "timezone").let { if (truthy(it)) text(it) else deviceZone }
         val zone = ZoneNames.resolve(zoneName)
         val nowS = floor(nowMs / SECOND_MS)
         val schedule = at(s, "schedule").takeIf(::truthy)
@@ -122,14 +130,15 @@ object Wakes {
         if (tickAnchorMs != null && tickAnchorMs.isFinite())
             out += Wake(WakeKind.TICK, nextTick(tickAnchorMs, nowMs))
         if (schedule != null) alert(schedule, nowS, nowMs)?.let(out::add)
-        val sorted = out.filter { !it.atMs.isNaN() }.sortedWith(compareBy({ it.atMs }, { it.kind.ordinal }))
+        val sorted =
+            out.filter { !it.atMs.isNaN() }.sortedWith(compareBy({ it.atMs }, { it.kind.ordinal }))
         return WakePlan(nowMs, sorted)
     }
 
     /**
      * TM-80: `focusTick` finishes when `focusMs(f) >= target`, that is at `f.start + (f.pausedMs ||
      * 0) + target` while not paused; the target is `f.plannedMs`, else the length of the session of
-     * that id (planned or history). No target, or paused: none.
+     *    that id (planned or history). No target, or paused: none.
      */
     private fun timerEnd(s: Any?, nowMs: Double): Wake? {
         val f = at(at(s, "ui"), "focus")
@@ -157,8 +166,9 @@ object Wakes {
     }
 
     /**
-     * TM-81: `detectMisses` (`engine.js:2048`) takes a `PLANNED` session once `endEpoch + grace * 60
-     * < nowEpoch()`; the grace is the normalised preference (60 by default). The earliest session.
+     * TM-81: `detectMisses` (`engine.js:2048`) takes a `PLANNED` session once `endEpoch + grace *
+     * 60 < nowEpoch()`; the grace is the normalised preference (60 by default). The earliest
+     * session.
      */
     private fun miss(s: Any?, schedule: Any?): Wake? {
         val grace = PlanPreferences.of(Js.json(at(s, "prefs"))).members["missGraceMinutes"]
@@ -174,8 +184,8 @@ object Wakes {
     }
 
     /**
-     * TM-82: `maybeRollover` re-plans when `lastGeneratedWeekKey !== weekKey(now)`: now when the key
-     * differs already, else at the next local Monday's midnight.
+     * TM-82: `maybeRollover` re-plans when `lastGeneratedWeekKey !== weekKey(now)`: now when the
+     * key differs already, else at the next local Monday's midnight.
      */
     private fun week(s: Any?, nowS: Double, nowMs: Double, zone: PageZone): Wake {
         if (!same(at(s, "lastGeneratedWeekKey"), PlanHorizon.weekKey(nowS, zone)))

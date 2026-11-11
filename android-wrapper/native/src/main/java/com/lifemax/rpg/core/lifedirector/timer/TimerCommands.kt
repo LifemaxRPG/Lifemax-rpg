@@ -21,11 +21,11 @@ import kotlin.math.floor
 
 /**
  * `Today.timer` (`logic.js:3491-3552`) and the timer's once-a-second check `focusTick`
- * (`logic.js:1952-1959`) over the page's memory ([HostPage]), as the page runs them (TM-1 to
- * TM-61, LIFE_DIRECTOR_TIMER_SPEC.md). The running timer is `ST.ui.focus = {id, start, paused,
- * pausedMs, plannedMs}`, wall-clock milliseconds read from `Date.now()` ([HostPage.nowMs]); its
- * values are read with JavaScript's coercions, so a timer the page wrote oddly (a number id, no
- * `plannedMs`, a negative `pausedMs`) behaves as it does there.
+ * (`logic.js:1952-1959`) over the page's memory ([HostPage]), as the page runs them (TM-1 to TM-61,
+ * LIFE_DIRECTOR_TIMER_SPEC.md). The running timer is `ST.ui.focus = {id, start, paused, pausedMs,
+ * plannedMs}`, wall-clock milliseconds read from `Date.now()` ([HostPage.nowMs]); its values are
+ * read with JavaScript's coercions, so a timer the page wrote oddly (a number id, no `plannedMs`, a
+ * negative `pausedMs`) behaves as it does there.
  */
 object TimerCommands {
     private const val MINUTE_MS = 60_000.0
@@ -45,7 +45,8 @@ object TimerCommands {
     const val OFF_PLAN = "That session is no longer on the plan. Log it from the Log page."
 
     /** The acts `Today.timer` knows (TM-4). */
-    val ACTS = listOf("start", "replace", "pause", "resume", "reset", "finish", "cancel", "autoFinish")
+    val ACTS =
+        listOf("start", "replace", "pause", "resume", "reset", "finish", "cancel", "autoFinish")
 
     /** `ST.ui.focus` (TM-1): the running timer, or JavaScript's null or undefined. */
     fun focusOf(p: HostPage): Any? = get(get(p.s, "ui"), "focus")
@@ -62,7 +63,10 @@ object TimerCommands {
         val paused = at(f, "paused")
         val upTo = if (truthy(paused)) num(paused) else nowMs
         val pausedMs = at(f, "pausedMs")
-        return maxOf(0.0, upTo - num(at(f, "start")) - (if (truthy(pausedMs)) num(pausedMs) else 0.0))
+        return maxOf(
+            0.0,
+            upTo - num(at(f, "start")) - (if (truthy(pausedMs)) num(pausedMs) else 0.0),
+        )
     }
 
     /** `plannedInst(id)`: the session of that id (as text) still on the plan. */
