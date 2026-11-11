@@ -3927,7 +3927,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 31805,
+   "bytes": 31993,
    "statement_count": 1,
    "tags": [
     "native",
@@ -4002,6 +4002,23 @@
     "window.lmaPlugin",
     "window.setNativeShadowEnabled",
     "window.LmaShadow"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-director-shadow.js",
+   "bytes": 21781,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "director",
+    "shadow"
+   ],
+   "symbols": [
+    "window.LmaDirectorShadow",
+    "window.LmaDirectorShadowCard",
+    "window.setNativeDirectorShadowEnabled",
+    "window.LmaDirectorShadowStatus",
+    "window.LmaDirectorShadowText"
    ]
   },
   {

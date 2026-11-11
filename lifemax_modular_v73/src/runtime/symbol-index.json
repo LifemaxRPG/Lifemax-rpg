@@ -7843,6 +7843,18 @@
  "window.LifeMaxVoiceG5": [
   "src/runtime/segments/50-voice-gen5.js"
  ],
+ "window.LmaDirectorShadow": [
+  "src/runtime/segments/50-native-director-shadow.js"
+ ],
+ "window.LmaDirectorShadowCard": [
+  "src/runtime/segments/50-native-director-shadow.js"
+ ],
+ "window.LmaDirectorShadowStatus": [
+  "src/runtime/segments/50-native-director-shadow.js"
+ ],
+ "window.LmaDirectorShadowText": [
+  "src/runtime/segments/50-native-director-shadow.js"
+ ],
  "window.LmaShadow": [
   "src/runtime/segments/50-native-shadow.js"
  ],
@@ -8047,6 +8059,9 @@
  ],
  "window.setNativeCatsEnabled": [
   "src/runtime/segments/50-native-overview-cards.js"
+ ],
+ "window.setNativeDirectorShadowEnabled": [
+  "src/runtime/segments/50-native-director-shadow.js"
  ],
  "window.setNativeNutritionEnabled": [
   "src/runtime/segments/50-native-nutrition.js"

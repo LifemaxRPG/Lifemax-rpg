@@ -67,6 +67,16 @@ const LifeDirectorApp = (function () {
     return { cls: ' ld-fx ld-arrive ld-new', tag: 'Added' };
   }
   /* ── persistence ── */
+  /* The native Life Director check (beta, runtime 50-native-director-shadow.js) while it is on: it is told of each save and each
+     plan the engine makes, only reads what it is handed, and nothing it does can change what happens here (it never throws here). */
+  const shadow = () => (typeof window !== 'undefined' && window.LmaDirectorShadow && window.LmaDirectorShadow.live ? window.LmaDirectorShadow : null);
+  function planned(kind, input, run) {
+    let seen = null;
+    try { const s = shadow(); if (s) seen = s.planning(kind, input); } catch (e) { seen = null; }
+    const out = run();
+    try { if (seen) seen(out); } catch (e) { /* never in the way */ }
+    return out;
+  }
   let lastSave = { ok: true }; // the last write's outcome, which a native command reports
   function persist() {
     if (ST.schedule) {
@@ -77,6 +87,7 @@ const LifeDirectorApp = (function () {
     ST.updatedEpoch = nowEpoch();
     const r = store.save(ST);
     lastSave = r;
+    try { const s = shadow(); if (s && r.ok) s.saved(ST, r.bytes); } catch (e) { /* never in the way */ }
     if (!r.ok) ui.banner = { kind: 'bad', text: 'Not saved: ' + r.error };
     else if (ui.banner && ui.banner.kind === 'bad' && /^Not saved/.test(ui.banner.text)) ui.banner = null;
     return r.ok;
@@ -131,7 +142,7 @@ const LifeDirectorApp = (function () {
   }
   function regenerate(reason, quiet) {
     const now = nowEpoch();
-    const out = E.generateSchedule(buildInput(now));
+    const input = buildInput(now), out = planned('plan', input, () => E.generateSchedule(input));
     const ok = applyOutput(out, 'Re-planned (' + reason + ')');
     if (ok) ST.lastGeneratedWeekKey = weekKey(now);
     persist();
@@ -142,13 +153,13 @@ const LifeDirectorApp = (function () {
   function autoReplan(reason) { if (ST.setupComplete) regenerate(reason, true); else persist(); }
   /* Local repair holds compatible sessions and protects recovery. */
   function planTimeChange(input) {
-    return E.rescheduleActivity({ engineInput: input, currentOutput: ST.schedule,
-      trigger: { type: 'TIME_CHANGED' } }).updatedSchedule;
+    const req = { engineInput: input, currentOutput: ST.schedule, trigger: { type: 'TIME_CHANGED' } };
+    return planned('repair', req, () => E.rescheduleActivity(req)).updatedSchedule;
   }
   function weekKey(now) { const p = U.localParts(now, tz()); const mon = U.ymdAdd({ y: p.y, mo: p.mo, d: p.d }, -((p.dow + 6) % 7)); return U.ymdKey(mon); }
   function reschedule(trigger) {
     const now = nowEpoch();
-    const r = E.rescheduleActivity({ engineInput: buildInput(now), currentOutput: ST.schedule, trigger });
+    const req = { engineInput: buildInput(now), currentOutput: ST.schedule, trigger }, r = planned('repair', req, () => E.rescheduleActivity(req));
     if (r.rejectedMove) { say(r.rejectedMove.message); return null; }
     if (!applyOutput(r.updatedSchedule, r.changeRecord.triggerReason, 'repair')) { persist(); return null; }
     ST.fixedCommitments = r.engineInput.fixedCommitments || [];
@@ -3899,7 +3910,9 @@ const LifeDirectorApp = (function () {
       return { schedMin: sched, doneMin: done, sessions: n, doneSessions: doneN };
     }
   };
-  return { mount, glance, widgetSnapshot, voice: voiceApi, native: nativeApi, coach: coachApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
+  return { mount, glance, widgetSnapshot, voice: voiceApi, native: nativeApi, coach: coachApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID,
+    /* the native Life Director check (beta) reads the page's own read models with these; they only read */
+    shadowReads: () => ({ ST, horizonDays, unplannedSegments, dayBlocks, liveTimeline, nowState, weekModel, nativeWeek, tz, nowEpoch, deviceTz }) };
 })();
 
 /* Public API for LifeMax or other features */
