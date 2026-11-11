@@ -635,6 +635,24 @@ still writes every save.
   `tests/native-shadow.test.js`; screenshots `SettingsShadowScreenshotTest`.
 
 
+## Life Director shadow check, WP-LD12 first stage (Native API 135)
+
+Native logic, web authority, behind a new switch, "Native Life Director check (beta)" (Settings, Data & advanced, its own card under the
+economy check's, off by default). docs/specs/LIFE_DIRECTOR_SHADOW_SPEC.md. The Life Director code native already has runs beside the page
+and is compared: the store codec's round trip on each saved text, the day, now and week read models, and placement and local repair re-run
+on the page's engine input. Nothing native computes is shown or saved.
+
+| Part | Where | What |
+|---|---|---|
+| Capability | `director.shadow.v1` | added to `NativeShadow`'s handshake; calls with `scope: "director"` go to the Life Director check |
+| Native | `core/directorshadow` (pure), `app/shadow/DirectorShadowWorker`, `app/shadow/ShadowRing` (a folder per check), `bridge/web/NativeShadowPlugin.kt` | strict decoder, the copy as the page's own texts (`TextMirror`), the three checks, redacted paths, its own ring and self-disable |
+| Page | `50-native-director-shadow.js` (new), `logic.js` (four behaviour-neutral lines), `views/settings.html`, `50-native-settings.js` | the capture, deltas and bases, the read check once a minute, the engine's input and answer, the switch and its card |
+
+- **Rollout.** Rides the new switch. An older app lacks `director.shadow.v1`: the line says it is not available and nothing is sent.
+  Rollback: drop the capability from the handshake.
+- **Evidence.** `tests/native-director-shadow.test.js` (22 checks), Kotlin `core/directorshadow` and `DirectorShadowWorkerTest` (39 tests,
+  among them the real page's messages for a lived-in day replayed through native's checks with no difference). No screenshot changed.
+
 ## Cat brain, developer parkour demo (Native API 107)
 
 Native presentation and behaviour, web authority, behind "Native Cat (beta)" AND the page's developer mode. A DEVELOPER DEMO: the owner can watch the cats do their parkour on demand; it happens rarely on its own.

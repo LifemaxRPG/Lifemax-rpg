@@ -164,7 +164,7 @@ run)`: while the check is live the module stringifies the input before the engin
 
 ## 6. Settings
 
-Settings, Data & advanced, in the economy check's card: **Native Life Director check (beta)**, a switch, off by default
+Settings, Data & advanced, its own card ("Native Life Director check") right under the economy check's: **Native Life Director check (beta)**, a switch, off by default
 (`nativeDirectorShadow` in `lifemax_android_prefs_v1`; native Settings binds it in its BOUND list). Help line: "Your phone also works out
 Life Director's plans, its week and what it saves, without saving or showing any of it, and counts any difference. Nothing leaves the
 phone." Under it the status line ("Checked 23 times since 1 Nov · none different", or paused, stale, stopped and why), and Copy report
@@ -188,8 +188,8 @@ and Clear (Clear asks in the card first). The demo turns it off (the plugin is a
 
 `ECONOMY_SHADOW_PLAN.md` section 7 sketched how this check joins; built differently, each for a reason:
 
-- **Its own ring and switch** instead of the same ring and a second line in the economy's counts: the owner can run either check alone,
-  and a stop of one (slow, errors) does not stop the other. The card is the same card.
+- **Its own ring, switch and card** instead of the same ring and a second line on the economy's card: the owner can run either check
+  alone, a stop of one (slow, errors) does not stop the other, and the economy card's tests and native fixtures stay as they are.
 - **Its own `seq` per page session** instead of one across both scopes: no envelope here touches the economy's keys (commands that award,
   `scope: "both"`, are 5.1 C), so one ordered stream is not needed yet.
 - **The read shadow is an envelope** (`director.read`, with the state it read) instead of a `shadowSeq` added to the projection: the

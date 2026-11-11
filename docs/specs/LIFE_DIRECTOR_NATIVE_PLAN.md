@@ -623,8 +623,8 @@ the quest board native (QUESTS_SPEC) and the Plan day content. Decision: D1 (whi
 
 **Status: first stage built** (branch `logic/ld12-shadow`, Native API 135, capability `director.shadow.v1`); the page is still the only
 writer. Spec: `LIFE_DIRECTOR_SHADOW_SPEC.md` (rules SH-1 to SH-35, allowlist DA-1 and DA-2, deviations from `ECONOMY_SHADOW_PLAN.md`
-section 7, OQ-S1 to OQ-S3). Behind a new switch, **Native Life Director check (beta)** (Settings, Data & advanced, in the economy check's
-card, off by default), the page module `50-native-director-shadow.js` joins the economy check's `NativeShadow` plugin with `scope:
+section 7, OQ-S1 to OQ-S3). Behind a new switch, **Native Life Director check (beta)** (Settings, Data & advanced, its own card under the economy
+check's, off by default), the page module `50-native-director-shadow.js` joins the economy check's `NativeShadow` plugin with `scope:
 "director"` and sends, while `logic.js` tells it (four behaviour-neutral lines: `shadow()`, `planned()`, the save notice, `shadowReads`):
 each save's state as the page's own JSON texts of its parts (native stitches the exact stored text and runs the WP-LD7 codec's round trip
 and strict reading on it), the page's day, now and week read models with the XP previews they asked, at most once a minute (WP-LD8a), and
