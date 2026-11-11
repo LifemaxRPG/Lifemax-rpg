@@ -42,6 +42,9 @@ class DirectorShadowSession(
     private var pageFingerprint = ""
     private var basesThisSession = 0
     private var engineSkips = 0
+    private var commandSkips = 0
+    /** Take-backs the page sent in full, by digest (SH-41): the latest two. */
+    private val takeBacks = LinkedHashMap<String, com.lifemax.rpg.core.lifedirector.host.TakeBackState>()
     private val costs = ArrayDeque<Long>()
     private val pageCosts = ArrayDeque<Double>()
 
@@ -182,6 +185,15 @@ class DirectorShadowSession(
             }
             stitched = mirror.stitch() ?: return skipLost(e.kind, "capture")
         }
+        var after: String? = null
+        if (e.cmd != null) {
+            // the copy is at the state before the command; its own changes take it to the state after (SH-40)
+            if (!mirror.apply(e.cmd.afterOps, e.seq, base = false)) {
+                ledger.refuse(ShadowRefusal.BAD_DELTA)
+                return skipLost(e.kind, "resync")
+            }
+            after = mirror.stitch() ?: return skipLost(e.kind, "capture")
+        }
         counts.applied++
         if (e.kind !in DirectorShadowJson.KINDS) return ledger.skip(e.kind, "unknownKind")
         val result =
@@ -196,6 +208,25 @@ class DirectorShadowSession(
                         val state = (JsonReader.read(stitched!!) as? JsonRead.Parsed)?.value
                             ?: return skipLost(e.kind, "capture")
                         checks.read(state, e.read!!)
+                    }
+                    DirectorShadowJson.CMD, DirectorShadowJson.TICK -> {
+                        if (SECOND in e.flags) return ledger.skip(e.kind, SECOND)
+                        if (commandSkips > 0) {
+                            commandSkips--
+                            return ledger.skip(e.kind, "sampled")
+                        }
+                        val before = (JsonReader.read(stitched!!) as? JsonRead.Parsed)?.value ?: return skipLost(e.kind, "capture")
+                        val now = (JsonReader.read(after!!) as? JsonRead.Parsed)?.value ?: return skipLost(e.kind, "capture")
+                        val start = System.nanoTime()
+                        val r = checks.command(before, now, e.cmd!!, e.t1) { takeBacks[it] }
+                        if ((System.nanoTime() - start) / NANOS_PER_MS > DirectorShadowLimits.ENGINE_SLOW_MS)
+                            commandSkips = DirectorShadowLimits.ENGINE_SAMPLE - 1
+                        r.learned?.let { (digest, t) ->
+                            takeBacks.remove(digest)
+                            takeBacks[digest] = t
+                            while (takeBacks.size > 2) takeBacks.remove(takeBacks.keys.first())
+                        }
+                        CheckResult(r.verdict)
                     }
                     else -> {
                         if (engineSkips > 0) {
@@ -284,6 +315,7 @@ class DirectorShadowSession(
     }
 
     private fun lose() {
+        takeBacks.clear()
         mirror.discard()
         parts.clear()
         needBase = true

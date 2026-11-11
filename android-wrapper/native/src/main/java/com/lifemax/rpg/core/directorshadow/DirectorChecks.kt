@@ -43,6 +43,7 @@ class DirectorChecks(
     private val zoneOffset: (String, Long) -> Int? = ::javaOffset,
 ) {
     private val paths = JsonPaths(redactor)
+    private val commands = CommandCheck(paths)
 
     /** SH-9 to SH-11. [text] is the stitched text; the page said its store wrote [bytes] characters. */
     fun save(text: String): CheckResult {
@@ -109,6 +110,15 @@ class DirectorChecks(
         val page = if (kind == DirectorShadowJson.PLAN) withoutTime(facts.output) else normalRepair(facts.output)
         val at = if (kind == DirectorShadowJson.PLAN) "plan" else "repair"
         return CheckResult(verdict(paths.diff(page, mine, at)))
+    }
+
+    /**
+     * SH-36 to SH-46: the command (or tick) native runs on [before] with the page's host answers, compared with the page's reply,
+     * host calls, memory and [after]; [t1] is when the page's command ended; [known] gives a take-back sent in full earlier.
+     */
+    fun command(before: JsonValue, after: JsonValue, facts: CommandFacts, t1: Long, known: (String) -> com.lifemax.rpg.core.lifedirector.host.TakeBackState?): CommandResult {
+        tzdata(facts.planZone, facts.nowMs, facts.planOffset)?.let { return CommandResult(it) }
+        return commands.run(before, after, facts, t1, known)
     }
 
     private fun repairJson(input: JsonValue): JsonValue {
