@@ -70,6 +70,7 @@ class ReadModelsGoldenTest {
                 "zone" to 51,
                 "life" to 134,
                 "midnight" to 39,
+                "edge" to 36,
                 "calendar" to 42,
                 "host" to 31,
                 "week" to 40,

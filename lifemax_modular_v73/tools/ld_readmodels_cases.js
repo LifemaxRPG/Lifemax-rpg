@@ -24,7 +24,7 @@ const engineVm = require('./ld_engine_vm.js');
 const { ZONES } = require('./ld_schedule_cases.js');
 
 const FIX = path.join(__dirname, '..', 'tests', 'fixtures');
-const FAMILIES = ['seed', 'scenario', 'dst', 'plan', 'reschedule', 'now', 'focus', 'zone', 'life', 'midnight', 'calendar', 'host', 'week', 'fuzz'];
+const FAMILIES = ['seed', 'scenario', 'dst', 'plan', 'reschedule', 'now', 'focus', 'zone', 'life', 'midnight', 'edge', 'calendar', 'host', 'week', 'fuzz'];
 const SEEDS = ['fresh', 'planned', 'lived', 'lived-bak', 'imported', 'unfinished', 'v0'];
 const STATES = ['PLANNED', 'COMPLETED_ON_TIME', 'COMPLETED_EARLY', 'COMPLETED_LATE', 'PARTIALLY_COMPLETED', 'SKIPPED_VOLUNTARY',
   'MISSED_UNEXPLAINED', 'EXCUSED_BY_TOKEN', 'EXCUSED_DISPLACED', 'CANCELLED_BY_QUEST'];
@@ -219,6 +219,38 @@ function defineCases(seeds) {
     if (others.length && r() < 0.6) move(pick(r, others), 900 * (1 + Math.floor(r() * 8)), 900 * (1 + Math.floor(r() * 8)));
     if (!set.length) return;
     add('midnight', BLOCKS + ' ' + LIVE + ' ' + WEEK, id, ms(r, pick(r, [cut - 1200, cut - 60, cut, cut + 600])), { set }, 'cut' + k);
+  });
+
+  /* edge: blocks off the quarter hour, at the edges of RM-11 and RM-12: a meal moved into free time and ended 30, 60 or 61 seconds before
+     an identical block (joined within 60 seconds), a commitment that starts 30 seconds before a done session on now ends (next allows 60 seconds),
+     and a planned session that starts exactly now while an earlier one is on (nextTask needs a later start) */
+  const edgeStates = ids_('plan/scenario/').filter((k, i) => i % 3 === 0).slice(0, 36);
+  edgeStates.forEach((id, n) => {
+    const r = random(n * 613 + 41), s = sched(id), segs = (s.segments || []).map((g, j) => [g, j]), p = planned(id);
+    const list = s.scheduledInstances || [], at = i => list.indexOf(i), base = i => ['schedule', 'scheduledInstances', at(i)];
+    const days = U.buildHorizon(s.horizonStartEpoch, Math.round((s.horizonEndEpoch - s.horizonStartEpoch) / 86400), zoneOf(id));
+    const kind = n % 3;
+    if (kind === 0) {
+      const meals = segs.filter(([g]) => g.kind === 'MEAL'), others = segs.filter(([g]) => g.kind !== 'MEAL' && g.code !== 'FREE');
+      const free = segs.filter(([g]) => g.code === 'FREE' && g.endEpoch - g.startEpoch >= 3600);
+      if (!meals.length || !others.length || !free.length) return;
+      const [meal, j] = pick(r, meals), [, j2] = pick(r, others), [f] = pick(r, free), cut = f.startEpoch + 1800, gap = [30, 60, 61][n % 9 / 3 | 0];
+      const set = [[['schedule', 'segments', j, 'startEpoch'], f.startEpoch], [['schedule', 'segments', j, 'endEpoch'], cut - gap],
+        [['schedule', 'segments', j2], Object.assign({}, meal, { startEpoch: cut, endEpoch: cut + 1800 })]];
+      add('edge', BLOCKS + ' ' + LIVE, id, ms(r, f.startEpoch - 600), { set }, 'join' + gap);
+    } else if (kind === 1) {
+      const others = segs.filter(([g]) => g.code !== 'FREE' && g.code !== 'SCHEDULED_TASK' && g.kind !== 'SLEEP');
+      if (!p.length || !others.length) return;
+      const i = pick(r, p), [, j] = pick(r, others), lead = [30, 60, 61][n % 9 / 3 | 0];
+      const set = [[base(i).concat('lifecycleState'), 'COMPLETED_ON_TIME'], [['schedule', 'segments', j, 'startEpoch'], i.endEpoch - lead],
+        [['schedule', 'segments', j, 'endEpoch'], i.endEpoch + 1800]];
+      add('edge', LIVE, id, ms(r, i.startEpoch + 60), { set }, 'next' + lead);
+    } else {
+      if (p.length < 2) return;
+      const k = Math.floor(r() * (p.length - 1)), a = p[k], b = p[k + 1], len = b.endEpoch - b.startEpoch, start = a.startEpoch + 300;
+      const set = [[base(b).concat('startEpoch'), start], [base(b).concat('endEpoch'), start + len]];
+      add('edge', LIVE, id, start * 1000 + (n % 2 ? 999 : 0), { set }, 'starts-now');
+    }
   });
 
   /* calendar: days off the plan (before it, after it, far ahead), which show the availability preview */
