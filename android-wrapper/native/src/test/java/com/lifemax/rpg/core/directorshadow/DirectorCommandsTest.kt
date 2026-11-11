@@ -104,14 +104,15 @@ class DirectorCommandsTest {
         val week = r.facts.copy(before = with(r.facts.before, "tab", JsonString("week")))
         assertEquals(listOf("do.goalPriority.session.tab"), paths(check(r, week)!!.verdict))
         val failed = r.facts.copy(before = with(r.facts.before, "lastSave", JsonObject(mapOf("ok" to JsonBool.FALSE, "error" to JsonString("x")))))
-        assertTrue(paths(check(r, failed)!!.verdict).toString(), paths(check(r, failed)!!.verdict).all { it.startsWith("do.goalPriority.session.lastSave") })
+        assertEquals(listOf("do.goalPriority.session.lastSave.ok", "do.goalPriority.session.lastSave.error"), paths(check(r, failed)!!.verdict))
         // the voice's completion with other options: without XP native asks no award; silent, it says nothing
         val f = ran.first { it.facts.op == "finish" }
         val p = obj(f.facts.payload)
         val opt = p.members["opt"] as? JsonObject ?: JsonObject(emptyMap())
         fun withOpt(k: String) = f.facts.copy(payload = with(p, "opt", with(opt, k, JsonBool.of(k == "silent" || k == "quietRefusal").let { if (k == "awardXp") JsonBool.FALSE else it })))
         assertTrue(paths(check(f, withOpt("awardXp"))!!.verdict).toString(), paths(check(f, withOpt("awardXp"))!!.verdict).first().startsWith("finish.calls"))
-        assertTrue(paths(check(f, withOpt("silent"))!!.verdict).toString(), paths(check(f, withOpt("silent"))!!.verdict).isNotEmpty())
+        val quiet = check(f, withOpt("silent"))!!.verdict
+        assertTrue(quiet.toString(), quiet is Verdict.Differed && paths(quiet).any { it.startsWith("finish.session.notice") || it.startsWith("finish.calls") })
     }
 
     @Test
