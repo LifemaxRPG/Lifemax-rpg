@@ -89,8 +89,8 @@ sealed interface FormSheet {
     fun json(): JsonValue
 
     /**
-     * A commitment or goal form. [id] as the page holds it: a rule's stored id (null: undefined, left
-     * out), [JsonNull] for a new commitment, the goal kind or `at:` id of a goal form.
+     * A commitment or goal form. [id] as the page holds it: a rule's stored id (null: undefined,
+     * left out), [JsonNull] for a new commitment, the goal kind or `at:` id of a goal form.
      */
     data class Form(
         val kind: String,
@@ -125,8 +125,7 @@ sealed interface FormSheet {
                 "remove" to (remove?.let(::command) ?: JsonNull),
             )
 
-        private fun command(c: SheetCommand) =
-            obj("label" to s(c.label), "command" to s(c.command))
+        private fun command(c: SheetCommand) = obj("label" to s(c.label), "command" to s(c.command))
     }
 
     /** The goal-kind grid. */
@@ -220,7 +219,8 @@ internal object Forms {
                     }
                 }
         val anchor =
-            if (rotating) get(rot, "anchorDate") else s(p.clock.dateKey(p.models.nowEpoch, p.zone()))
+            if (rotating) get(rot, "anchorDate")
+            else s(p.clock.dateKey(p.models.nowEpoch, p.zone()))
         val start = get(r, "startMin")
         val end = number(Js.add(start, get(r, "durationMin"))) % DAY
         val commute = get(r, "commuteMin").let { if (truthy(it)) it else n(0.0) }
@@ -243,16 +243,49 @@ internal object Forms {
                     ph("days"),
                     days,
                     required = true,
-                    options =
-                        w.dayNames.mapIndexed { k, d -> FieldOption(n(k), d.take(SHORT_DAY)) },
+                    options = w.dayNames.mapIndexed { k, d -> FieldOption(n(k), d.take(SHORT_DAY)) },
                 ),
-                FormField("on", "number", ph("daysOn"), n(on), group = 0, min = 1.0, max = MOST_DAYS),
-                FormField("off", "number", ph("daysOff"), n(off), group = 0, min = 1.0, max = MOST_DAYS),
+                FormField(
+                    "on",
+                    "number",
+                    ph("daysOn"),
+                    n(on),
+                    group = 0,
+                    min = 1.0,
+                    max = MOST_DAYS,
+                ),
+                FormField(
+                    "off",
+                    "number",
+                    ph("daysOff"),
+                    n(off),
+                    group = 0,
+                    min = 1.0,
+                    max = MOST_DAYS,
+                ),
                 FormField("anchor", "date", ph("firstDay"), anchor, required = true, group = 0),
                 time(p, "start", ph("starts"), start, 1),
                 time(p, "end", ph("ends"), n(end), 1),
-                FormField("commute", "number", ph("travel"), commute, group = 2, min = 0.0, max = TRAVEL_MAX, step = STEP),
-                FormField("unwind", "number", ph("unwind"), unwind, group = 2, min = 0.0, max = UNWIND_MAX, step = STEP),
+                FormField(
+                    "commute",
+                    "number",
+                    ph("travel"),
+                    commute,
+                    group = 2,
+                    min = 0.0,
+                    max = TRAVEL_MAX,
+                    step = STEP,
+                ),
+                FormField(
+                    "unwind",
+                    "number",
+                    ph("unwind"),
+                    unwind,
+                    group = 2,
+                    min = 0.0,
+                    max = UNWIND_MAX,
+                    step = STEP,
+                ),
                 FormField("load", "choice", ph("tiring"), load, options = choices(w.ruleLoads)),
             )
         return FormSheet.Form(
@@ -271,7 +304,15 @@ internal object Forms {
 
     /** A time field: its value and the page's text for it (`fHm`). */
     private fun time(p: DirectorPanels, key: String, label: String, value: JsonValue?, group: Int) =
-        FormField(key, "time", label, value, required = true, group = group, timeText = p.clock.hm(number(value)))
+        FormField(
+            key,
+            "time",
+            label,
+            value,
+            required = true,
+            group = group,
+            timeText = p.clock.hm(number(value)),
+        )
 
     /** RM-32 `goalTypeModel()`: the engine's archetypes, then your own. */
     private fun goalTypes(p: DirectorPanels): FormSheet.GoalTypes {
@@ -313,15 +354,61 @@ internal object Forms {
                 placeholder = ph("namePlaceholder"),
             )
         if (arch == LANGUAGE)
-            fields += FormField("subject", "text", ph("language"), s(ph("languageValue")), maxLength = SUBJECT_MAX)
+            fields +=
+                FormField(
+                    "subject",
+                    "text",
+                    ph("language"),
+                    s(ph("languageValue")),
+                    maxLength = SUBJECT_MAX,
+                )
         if (a == null)
             fields +=
                 listOf(
-                    FormField("tag", "choice", ph("activity"), w.customTags[0].value, options = choices(w.customTags)),
-                    FormField("minutes", "number", ph("minutes"), n(MINUTES), group = 0, min = MINUTES_MIN, max = MINUTES_MAX, step = MINUTES_STEP),
-                    FormField("perWeek", "number", ph("perWeek"), n(PER_WEEK), group = 0, min = 1.0, max = MOST_DAYS),
-                    FormField("physical", "number", ph("physical"), n(EFFORT), group = 1, min = 1.0, max = EFFORT_MAX),
-                    FormField("mental", "number", ph("mental"), n(EFFORT), group = 1, min = 1.0, max = EFFORT_MAX),
+                    FormField(
+                        "tag",
+                        "choice",
+                        ph("activity"),
+                        w.customTags[0].value,
+                        options = choices(w.customTags),
+                    ),
+                    FormField(
+                        "minutes",
+                        "number",
+                        ph("minutes"),
+                        n(MINUTES),
+                        group = 0,
+                        min = MINUTES_MIN,
+                        max = MINUTES_MAX,
+                        step = MINUTES_STEP,
+                    ),
+                    FormField(
+                        "perWeek",
+                        "number",
+                        ph("perWeek"),
+                        n(PER_WEEK),
+                        group = 0,
+                        min = 1.0,
+                        max = MOST_DAYS,
+                    ),
+                    FormField(
+                        "physical",
+                        "number",
+                        ph("physical"),
+                        n(EFFORT),
+                        group = 1,
+                        min = 1.0,
+                        max = EFFORT_MAX,
+                    ),
+                    FormField(
+                        "mental",
+                        "number",
+                        ph("mental"),
+                        n(EFFORT),
+                        group = 1,
+                        min = 1.0,
+                        max = EFFORT_MAX,
+                    ),
                 )
         fields +=
             FormField(
@@ -332,7 +419,15 @@ internal object Forms {
                 group = 2,
                 options = PRIORITY_ORDER.map { FieldOption(s(it.toString()), w.priorities[it]) },
             )
-        fields += FormField("level", "choice", ph("experience"), s(NOVICE), group = 2, options = choices(w.goalLevels))
+        fields +=
+            FormField(
+                "level",
+                "choice",
+                ph("experience"),
+                s(NOVICE),
+                group = 2,
+                options = choices(w.goalLevels),
+            )
         val fold =
             if (!volume) null
             else
@@ -340,9 +435,30 @@ internal object Forms {
                     ph("foldSummary"),
                     ph("foldNote"),
                     listOf(
-                        FormField("units", "number", ph("total"), JsonNull, group = 3, placeholder = ph("totalPlaceholder")),
-                        FormField("unit", "text", ph("unit"), s(""), group = 3, placeholder = ph("unitPlaceholder")),
-                        FormField("rate", "number", ph("rate"), JsonNull, group = 4, placeholder = ph("ratePlaceholder")),
+                        FormField(
+                            "units",
+                            "number",
+                            ph("total"),
+                            JsonNull,
+                            group = 3,
+                            placeholder = ph("totalPlaceholder"),
+                        ),
+                        FormField(
+                            "unit",
+                            "text",
+                            ph("unit"),
+                            s(""),
+                            group = 3,
+                            placeholder = ph("unitPlaceholder"),
+                        ),
+                        FormField(
+                            "rate",
+                            "number",
+                            ph("rate"),
+                            JsonNull,
+                            group = 4,
+                            placeholder = ph("ratePlaceholder"),
+                        ),
                         FormField("deadline", "date", ph("by"), s(""), group = 4),
                     ),
                 )
@@ -375,9 +491,28 @@ internal object Forms {
             text = ph("text"),
             fields =
                 listOf(
-                    FormField("title", "text", ph("name"), s(""), required = true, maxLength = ACTIVITY_MAX),
-                    FormField("tag", "choice", ph("activity"), w.customTags[0].value, options = choices(w.customTags)),
-                    FormField("date", "date", ph("date"), s(p.clock.dateKey(epoch, zone)), required = true),
+                    FormField(
+                        "title",
+                        "text",
+                        ph("name"),
+                        s(""),
+                        required = true,
+                        maxLength = ACTIVITY_MAX,
+                    ),
+                    FormField(
+                        "tag",
+                        "choice",
+                        ph("activity"),
+                        w.customTags[0].value,
+                        options = choices(w.customTags),
+                    ),
+                    FormField(
+                        "date",
+                        "date",
+                        ph("date"),
+                        s(p.clock.dateKey(epoch, zone)),
+                        required = true,
+                    ),
                     FormField(
                         "start",
                         "time",
@@ -386,7 +521,15 @@ internal object Forms {
                         required = true,
                         timeText = p.clock.hm(local.minuteOfDay.toDouble()),
                     ),
-                    FormField("minutes", "number", ph("duration"), n(MINUTES), min = MINUTES_MIN, max = MINUTES_MAX, step = MINUTES_STEP),
+                    FormField(
+                        "minutes",
+                        "number",
+                        ph("duration"),
+                        n(MINUTES),
+                        min = MINUTES_MIN,
+                        max = MINUTES_MAX,
+                        step = MINUTES_STEP,
+                    ),
                 ),
             fold = null,
             note = ph("note"),

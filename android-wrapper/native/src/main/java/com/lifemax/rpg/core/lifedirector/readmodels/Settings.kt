@@ -125,11 +125,19 @@ internal object Settings {
                 stops += label(v)
                 v += r.step
             }
-            return SettingRange(r.key, r.label, r.hint ?: "", r.low, r.high, r.step, prefs[r.key], stops)
+            return SettingRange(
+                r.key,
+                r.label,
+                r.hint ?: "",
+                r.low,
+                r.high,
+                r.step,
+                prefs[r.key],
+                stops,
+            )
         }
         val rest = prefs["preferredRestDays"]
-        val misses =
-            SettingChoice(t("misses"), prefs["consequenceMode"], w.missOptions)
+        val misses = SettingChoice(t("misses"), prefs["consequenceMode"], w.missOptions)
         val missText =
             listOf(
                 TextSpan(w.missText + w.phrase("nativeSettings", "restTokens"), false),
@@ -195,9 +203,17 @@ internal object Settings {
         val rejected = get(st, "lastRejected")
         val tail =
             if (truthy(rejected))
-                ph("rejected") + (get(rejected, "violations")?.let(JsonWriter::write) ?: "undefined")
+                ph("rejected") +
+                    (get(rejected, "violations")?.let(JsonWriter::write) ?: "undefined")
             else ""
-        return ph("engine") + p.words.engineVersion + ph("sep") + plan + ph("events") + events +
-            ph("host") + host + tail
+        return ph("engine") +
+            p.words.engineVersion +
+            ph("sep") +
+            plan +
+            ph("events") +
+            events +
+            ph("host") +
+            host +
+            tail
     }
 }

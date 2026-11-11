@@ -19,7 +19,13 @@ import com.lifemax.rpg.core.save.JsonValue
 import kotlin.math.ceil
 
 /** A place a handle can land on the day (RM-39): minute [m], where it sits, where it is chosen. */
-data class DialStop(val m: Double, val ep: Double, val a: Double, val from: Double, val time: String)
+data class DialStop(
+    val m: Double,
+    val ep: Double,
+    val a: Double,
+    val from: Double,
+    val time: String,
+)
 
 /**
  * A handle on the day's dial (RM-38, RM-40): which end of which rule, where it is, its readout
@@ -71,14 +77,22 @@ data class DayHandles(
             "stops" to
                 Js.list(
                     stops.map {
-                        obj("m" to n(it.m), "a" to n(it.a), "from" to n(it.from), "time" to s(it.time))
+                        obj(
+                            "m" to n(it.m),
+                            "a" to n(it.a),
+                            "from" to n(it.from),
+                            "time" to s(it.time),
+                        )
                     }
                 ),
             "dragWords" to dragWords,
         )
 }
 
-/** RM-38 to RM-40: `ruleInstances`, `dialHandles`, `snapEp`, `dialStops`, `dragPreview`, `dialChange`. */
+/**
+ * RM-38 to RM-40: `ruleInstances`, `dialHandles`, `snapEp`, `dialStops`, `dragPreview`,
+ * `dialChange`.
+ */
 internal object Dial {
     private val SLEEP = JsonString("SLEEP")
     private const val START = "start"
@@ -93,7 +107,12 @@ internal object Dial {
     private const val FULL = 360.0
 
     /** A rule's occurrence that touches the day: its start and end, and the date it starts on. */
-    private class Occurrence(val rule: JsonValue, val start: Double, val end: Double, val date: CalendarDate)
+    private class Occurrence(
+        val rule: JsonValue,
+        val start: Double,
+        val end: Double,
+        val date: CalendarDate,
+    )
 
     private class Handle(val occ: Occurrence, val end: String, val ep: Double, val key: String)
 
@@ -158,7 +177,8 @@ internal object Dial {
     private fun occurrences(p: DirectorPanels, day: PlanDay): List<Occurrence> {
         val zone = p.zone()
         val out = ArrayList<Occurrence>()
-        val before = CalendarMath.plusDays(day.date, -1) ?: throw PageRangeError("Invalid time value")
+        val before =
+            CalendarMath.plusDays(day.date, -1) ?: throw PageRangeError("Invalid time value")
         for (r in MyTime.rules(p)) {
             if (text(get(r, "kind")) !in p.words.dragKinds) continue
             for (date in listOf(before, day.date)) {
@@ -180,10 +200,19 @@ internal object Dial {
         for (o in occurrences(p, day)) {
             for (end in listOf(START, END)) {
                 val ep = if (end == START) o.start else o.end
-                if (ep < day.startEpoch || ep >= day.endEpoch || (end == END && ep == day.startEpoch))
+                if (
+                    ep < day.startEpoch ||
+                        ep >= day.endEpoch ||
+                        (end == END && ep == day.startEpoch)
+                )
                     continue
                 val key =
-                    text(get(o.rule, "id")) + sep + end + sep + CalendarMath.key(o.date) + sep +
+                    text(get(o.rule, "id")) +
+                        sep +
+                        end +
+                        sep +
+                        CalendarMath.key(o.date) +
+                        sep +
                         PageValues.numberText(ep)
                 out += Handle(o, end, ep, key)
             }
@@ -197,7 +226,14 @@ internal object Dial {
         var m = PageValues.round((q.hour * MINUTE + q.minute) / QUARTER) * QUARTER
         val day = parts(d0, zone)
         if (m >= DAY) m = LAST_STOP
-        return m to WallClock.instantOf(day.year.toDouble(), day.month.toDouble(), day.day.toDouble(), m, zone)
+        return m to
+            WallClock.instantOf(
+                day.year.toDouble(),
+                day.month.toDouble(),
+                day.day.toDouble(),
+                m,
+                zone,
+            )
     }
 
     /**
@@ -213,13 +249,15 @@ internal object Dial {
                 first.minute == 0 &&
                 WallClock.offsetSeconds(d0, zone) == WallClock.offsetSeconds(d1 - MINUTE, zone)
         val at =
-            if (even) listOf(d0) + (0 until QUARTERS).map { d0 + (QUARTER * (it + 1) - SNAP_AT) * MINUTE }
+            if (even)
+                listOf(d0) + (0 until QUARTERS).map { d0 + (QUARTER * (it + 1) - SNAP_AT) * MINUTE }
             else (0 until ceil((d1 - d0) / MINUTE).toInt()).map { d0 + it * MINUTE }
         val out = ArrayList<DialStop>()
         for (t in at) {
             val (m, ep) = snap(d0, t, zone)
             if (out.isEmpty() || out.last().m != m)
-                out += DialStop(m, ep, angle(ep, d0, d1), (t - d0) / (d1 - d0) * FULL, p.clock.hm(m))
+                out +=
+                    DialStop(m, ep, angle(ep, d0, d1), (t - d0) / (d1 - d0) * FULL, p.clock.hm(m))
         }
         return out
     }
@@ -240,11 +278,21 @@ internal object Dial {
         val bad = dur < QUARTER
         val day = parts(d0, zone)
         val minute = if (end == START) cur.m + dur else cur.m - dur
-        val other = WallClock.instantOf(day.year.toDouble(), day.month.toDouble(), day.day.toDouble(), minute, zone)
+        val other =
+            WallClock.instantOf(
+                day.year.toDouble(),
+                day.month.toDouble(),
+                day.day.toDouble(),
+                minute,
+                zone,
+            )
         val text =
             if (bad) p.words.tooShort
-            else p.mins(dur) + if (get(r, "kind") == SLEEP) p.words.phrase("dragPreview", "ofSleep") else ""
-        return if (end == START) Preview(cur.ep, other, bad, text) else Preview(other, cur.ep, bad, text)
+            else
+                p.mins(dur) +
+                    if (get(r, "kind") == SLEEP) p.words.phrase("dragPreview", "ofSleep") else ""
+        return if (end == START) Preview(cur.ep, other, bad, text)
+        else Preview(other, cur.ep, bad, text)
     }
 
     /** RM-40 `dialChange(r, end, om, m).durationMin`: the rule's length with that end at [m]. */

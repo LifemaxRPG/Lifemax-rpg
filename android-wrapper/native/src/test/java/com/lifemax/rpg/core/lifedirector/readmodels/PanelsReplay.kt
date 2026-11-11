@@ -15,15 +15,17 @@ import java.io.File
 import java.util.zip.GZIPInputStream
 
 /**
- * The read-model golden cases of part b, `ld-readmodels-b-golden.json.gz` (recorded from the page in
- * Chromium; format in `lifemax_modular_v73/tools/gen_ld_readmodels_b_golden.js`), with the states
- * of part a's file, and the replay that computes every section of a case natively and writes it as
- * the recorder does.
+ * The read-model golden cases of part b, `ld-readmodels-b-golden.json.gz` (recorded from the page
+ * in Chromium; format in `lifemax_modular_v73/tools/gen_ld_readmodels_b_golden.js`), with the
+ * states of part a's file, and the replay that computes every section of a case natively and writes
+ * it as the recorder does.
  */
 object PanelsReplay {
     const val FILE = "ld-readmodels-b-golden.json.gz"
 
-    /** One case: part a's state [state] changed by [set], at [nowMillis], with LifeMax's answers. */
+    /**
+     * One case: part a's state [state] changed by [set], at [nowMillis], with LifeMax's answers.
+     */
     class Case(
         val id: String,
         val family: String,
@@ -151,7 +153,8 @@ object PanelsReplay {
 
         override fun capabilities(): HostCapabilities {
             asked += "capabilities"
-            val c = seen["capabilities"] as? JsonObject ?: return HostCapabilities(false, listOf("?"))
+            val c =
+                seen["capabilities"] as? JsonObject ?: return HostCapabilities(false, listOf("?"))
             return HostCapabilities(
                 c["connected"] == JsonBool.TRUE,
                 (c["missing"] as JsonArray).items.map(::text),

@@ -85,13 +85,15 @@ internal object Quests {
             else
                 obj(
                     "title" to s(ph("notDetected")),
-                    "text" to s(ph("missing") + cap.missing.joinToString(ph("comma")) + ph("period")),
+                    "text" to
+                        s(ph("missing") + cap.missing.joinToString(ph("comma")) + ph("period")),
                     "open" to s(""),
                 )
         val sched = get(p.state, "schedule")
         val done = ph("earned")
         val going = ph("inProgress")
-        if (!truthy(sched)) return QuestsPanel(head, emptyList(), emptyList(), "", null, done, going)
+        if (!truthy(sched))
+            return QuestsPanel(head, emptyList(), emptyList(), "", null, done, going)
         val diagnostics = Js.itemsOrNone(get(sched, "unscheduledDiagnostics"), "diagnostics")
         val rows =
             Js.items(get(sched, "questCoverage"), "questCoverage")
@@ -131,7 +133,8 @@ internal object Quests {
                 covered ->
                     text(sessions) +
                         ph("session") +
-                        (if (sessions is JsonNumber && sessions.value == 1.0) "" else ph("plural")) +
+                        (if (sessions is JsonNumber && sessions.value == 1.0) ""
+                        else ph("plural")) +
                         ph("scheduled")
                 diag.isNotEmpty() -> ph("couldNotFit")
                 status == LOCKED -> ph("locked")

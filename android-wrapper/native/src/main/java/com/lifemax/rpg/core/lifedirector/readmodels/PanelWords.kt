@@ -72,7 +72,8 @@ private constructor(
     }
 
     /** `PRIO`: the priority names, index 1 to 5. */
-    val priorities: List<String> = (table("PRIO") as JsonArray).items.map { (it as JsonString).value }
+    val priorities: List<String> =
+        (table("PRIO") as JsonArray).items.map { (it as JsonString).value }
     val goalsExplain: JsonValue = table("GOALS_EXPLAIN")
     val goalsEmpty: JsonValue = table("GOALS_EMPTY")
     val goalRemoveConfirm: String = text("GOAL_REMOVE_CONFIRM")
@@ -90,8 +91,7 @@ private constructor(
     val newRule: JsonObject = table("NEW_RULE") as JsonObject
     val customTags: List<Choice> = pairs(table("CUSTOM_TAGS"))
     val goalLevels: List<Choice> = pairs(table("GOAL_LEVELS"))
-    val intensityOptions: List<Choice> =
-        pairs((table("INTENSITY") as JsonObject)["options"]!!)
+    val intensityOptions: List<Choice> = pairs((table("INTENSITY") as JsonObject)["options"]!!)
     val intensityNote: String = field("INTENSITY", "note")
     val prefRanges: List<RangeSpec> = (table("PREF_RANGES") as JsonArray).items.map(::range)
     val grace: RangeSpec = range(table("GRACE"))
@@ -188,8 +188,9 @@ private constructor(
             check(phrases.keys == PanelPhrases.REQUIRED.keys) {
                 "$RESOURCE: phrases of ${phrases.keys}"
             }
-            for ((fn, keys) in PanelPhrases.REQUIRED)
-                check(phrases.getValue(fn).keys == keys) { "$RESOURCE: phrases of $fn differ" }
+            for ((fn, keys) in PanelPhrases.REQUIRED) check(phrases.getValue(fn).keys == keys) {
+                "$RESOURCE: phrases of $fn differ"
+            }
             val words =
                 PanelWords(
                     tables,
@@ -213,10 +214,19 @@ private constructor(
         check((questHead as JsonObject).members.values.all { it is JsonString })
         check(routines.isNotEmpty() && prefRanges.isNotEmpty())
         check(newRule["title"] is JsonString)
-        for (k in listOf("intensity", "restDays", "restNote", "horizon", "misses", "diagnostics", "lab"))
-            check(settingsText(k) is JsonString) { "$RESOURCE: SETTINGS_TEXT.$k" }
-        for (k in listOf("guide", "data"))
-            check((settingsText(k) as JsonObject).members.values.all { it is JsonString })
+        for (k in
+            listOf(
+                "intensity",
+                "restDays",
+                "restNote",
+                "horizon",
+                "misses",
+                "diagnostics",
+                "lab",
+            )) check(settingsText(k) is JsonString) { "$RESOURCE: SETTINGS_TEXT.$k" }
+        for (k in listOf("guide", "data")) check(
+            (settingsText(k) as JsonObject).members.values.all { it is JsonString }
+        )
         check((dial as JsonObject).members.values.all { it is JsonNumber })
         check((dragWords as JsonObject).members.values.all { it is JsonString })
         check(tagIcons.isNotEmpty() && dragKinds.isNotEmpty())

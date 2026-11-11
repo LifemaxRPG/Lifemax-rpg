@@ -19,10 +19,15 @@ sealed interface ReadAnswer<out T> {
     data class Threw(val error: String) : ReadAnswer<Nothing>
 }
 
-/** `Host.capabilities()` as the read models use it: whether LifeMax is connected, what is missing. */
+/**
+ * `Host.capabilities()` as the read models use it: whether LifeMax is connected, what is missing.
+ */
 data class HostCapabilities(val connected: Boolean, val missing: List<String>)
 
-/** One of `Host.milestones()`: a LifeMax milestone quest (title and description as LifeMax has them). */
+/**
+ * One of `Host.milestones()`: a LifeMax milestone quest (title and description as LifeMax has
+ * them).
+ */
 data class Milestone(val title: String?, val desc: String?, val done: Boolean, val locked: Boolean)
 
 /** What the read models ask LifeMax (logic.js `Host`): the page's `LifeMaxHost`, or native's. */
@@ -38,8 +43,8 @@ interface DirectorHostView {
  * ([host]) and how the store loaded the state ([loadSource], `loadReport.source`, null for none),
  * exactly what the page's native projection and sheets carry for Goals, Quests, Settings, My time,
  * the forms, Something came up, Move, the work rules and shifts, and each day's dial handles and
- * stops. Only reads. Each answer's `json()` is the page's JSON for it, so a shadow check compares it
- * with the page's member for member.
+ * stops. Only reads. Each answer's `json()` is the page's JSON for it, so a shadow check compares
+ * it with the page's member for member.
  */
 class DirectorPanels(
     val models: DirectorReadModels,
@@ -74,7 +79,9 @@ class DirectorPanels(
     }
 
     /** RM-31 to RM-33 `nativeSheet(kind, id)` for `rule`, `goalType` and `goalForm`. */
-    fun form(kind: String, id: String): ReadAnswer<FormSheet?> = answer { Forms.sheet(this, kind, id) }
+    fun form(kind: String, id: String): ReadAnswer<FormSheet?> = answer {
+        Forms.sheet(this, kind, id)
+    }
 
     /** RM-36 `workRules()`. */
     fun workRules(): ReadAnswer<List<WorkRule>> = answer { Shifts.workRules(this) }
@@ -110,7 +117,9 @@ class DirectorPanels(
     internal fun mins(value: JsonValue?): String {
         val n = com.lifemax.rpg.core.lifedirector.PageValues.number(value)
         return if (n >= HOUR) mins(n)
-        else com.lifemax.rpg.core.lifedirector.PageValues.text(value) + models.words.phrase("minutes")
+        else
+            com.lifemax.rpg.core.lifedirector.PageValues.text(value) +
+                models.words.phrase("minutes")
     }
 
     private inline fun <T> answer(f: () -> T): ReadAnswer<T> =

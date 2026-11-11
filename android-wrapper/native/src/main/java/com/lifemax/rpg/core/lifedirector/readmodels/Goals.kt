@@ -192,7 +192,8 @@ internal object Goals {
      */
     private fun share(st: JsonValue?, g: JsonValue, alloc: JsonValue?): Allocation? {
         val list = items(alloc, "goalAllocation")
-        val a0 = list.firstOrNull { PageValues.same(get(it, "goalId"), get(g, "id")) } ?: return null
+        val a0 =
+            list.firstOrNull { PageValues.same(get(it, "goalId"), get(g, "id")) } ?: return null
         if (truthy(get(a0, "targetShare"))) return Allocation(a0, null)
         val goals = items(get(st, "goals"), "goals")
         var sum: JsonValue = n(0.0)

@@ -46,7 +46,12 @@ data class RoutineStepper(
 }
 
 /** A commitment's row in My time: the rule's id and title as stored, its dot and line. */
-data class CommitmentRow(val id: JsonValue?, val title: JsonValue?, val dot: String, val line: String)
+data class CommitmentRow(
+    val id: JsonValue?,
+    val title: JsonValue?,
+    val dot: String,
+    val line: String,
+)
 
 /**
  * `nativeTime()` (RM-28 to RM-30): `timeModel()` with what the mini sleep dial needs. Members are
@@ -235,10 +240,7 @@ internal object MyTime {
                 "chips" to Js.list(goals.map { get(it, "title") ?: JsonNull }),
                 "empty" to s(ph("goalsEmpty")),
                 "add" to
-                    obj(
-                        "label" to s(ph("goalsAdd")),
-                        "primary" to Js.b(hasWk && goals.isEmpty()),
-                    ),
+                    obj("label" to s(ph("goalsAdd")), "primary" to Js.b(hasWk && goals.isEmpty())),
                 "manage" to (if (goals.isNotEmpty()) s(ph("goalsManage")) else JsonNull),
             )
         return obj(

@@ -7,9 +7,9 @@ import org.junit.Test
 
 /**
  * Replays every case of `ld-readmodels-b-golden.json.gz` (WP-LD8b) and requires the page's answer
- * for every section (as part a's [ReadModelsGoldenTest] does), and that native asks LifeMax the same
- * questions the page asked. Each family's case count is fixed, so a lost or added case fails here
- * as well as in the web test that regenerates the file.
+ * for every section (as part a's [ReadModelsGoldenTest] does), and that native asks LifeMax the
+ * same questions the page asked. Each family's case count is fixed, so a lost or added case fails
+ * here as well as in the web test that regenerates the file.
  */
 class PanelsGoldenTest {
     @Test
@@ -20,7 +20,10 @@ class PanelsGoldenTest {
         for (c in PanelsReplay.cases) {
             counts[c.family] = (counts[c.family] ?: 0) + 1
             assertTrue("repeated id ${c.id}", ids.add(c.id))
-            assertTrue("${c.id} cites a rule outside RM", c.rule.split(' ').all { RULE.matches(it) })
+            assertTrue(
+                "${c.id} cites a rule outside RM",
+                c.rule.split(' ').all { RULE.matches(it) },
+            )
             PanelsReplay.difference(c)?.let { wrong += it }
         }
         assertTrue(
@@ -39,7 +42,10 @@ class PanelsGoldenTest {
             generateSequence(start) { it.parentFile }
                 .flatMap {
                     sequenceOf(
-                        File(it, "android-wrapper/native/src/main/resources/" + PanelWords.RESOURCE),
+                        File(
+                            it,
+                            "android-wrapper/native/src/main/resources/" + PanelWords.RESOURCE,
+                        ),
                         File(it, "src/main/resources/" + PanelWords.RESOURCE),
                     )
                 }

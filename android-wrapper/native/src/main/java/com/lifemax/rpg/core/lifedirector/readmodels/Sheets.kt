@@ -145,7 +145,15 @@ internal object Sheets {
                     form =
                         listOf(
                             DisruptField("date", "date", ph("date"), s(today), 0),
-                            DisruptField("commute", "number", ph("travel"), n(0.0), 0, min = 0.0, step = STEP),
+                            DisruptField(
+                                "commute",
+                                "number",
+                                ph("travel"),
+                                n(0.0),
+                                0,
+                                min = 0.0,
+                                step = STEP,
+                            ),
                             time("from", ph("from"), FROM),
                             time("until", ph("until"), UNTIL),
                         ),
@@ -165,7 +173,10 @@ internal object Sheets {
                     param = "days",
                     options =
                         SICK_DAYS.map {
-                            FieldOption(n(it), it.toString() + ph("day") + if (it > 1) ph("plural") else "")
+                            FieldOption(
+                                n(it),
+                                it.toString() + ph("day") + if (it > 1) ph("plural") else "",
+                            )
                         },
                     note = ph("sickNote"),
                 ),
@@ -236,7 +247,10 @@ internal object Sheets {
         val zone = p.zone()
         val space = p.words.phrase("moveTimes", "space")
         return out.take(MOST_TIMES).map {
-            MoveTime(p.clock.day(it, zone).replace(Regex(",.*"), "") + space + p.clock.time(it, zone), it)
+            MoveTime(
+                p.clock.day(it, zone).replace(Regex(",.*"), "") + space + p.clock.time(it, zone),
+                it,
+            )
         }
     }
 }

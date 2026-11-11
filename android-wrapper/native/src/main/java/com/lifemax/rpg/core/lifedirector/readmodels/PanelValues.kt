@@ -36,11 +36,38 @@ internal object PanelPhrases {
                     setOf("missing", "comma", "rejected"),
             "timeModel" to
                 setOf("off", "less", "more", "stepSleep", "stepOk", "stepCurrent", "stepWork") +
-                    setOf("stepGoals", "stepBuild", "ledeFirst", "lede", "sleepTitle", "sleepNote") +
+                    setOf(
+                        "stepGoals",
+                        "stepBuild",
+                        "ledeFirst",
+                        "lede",
+                        "sleepTitle",
+                        "sleepNote",
+                    ) +
                     setOf("sleepCentre", "weeknightBed", "bedtime", "wakeUp", "weekendToggle") +
-                    setOf("weekendBed", "weekendWake", "saveSleep", "saveSleepFirst", "commitTitle") +
-                    setOf("dotBlock", "dotWork", "sep", "commitEmpty", "commitAdd", "routinesTitle") +
-                    setOf("routinesText", "turnOff", "turnOn", "shorter", "longer", "routinesNote") +
+                    setOf(
+                        "weekendBed",
+                        "weekendWake",
+                        "saveSleep",
+                        "saveSleepFirst",
+                        "commitTitle",
+                    ) +
+                    setOf(
+                        "dotBlock",
+                        "dotWork",
+                        "sep",
+                        "commitEmpty",
+                        "commitAdd",
+                        "routinesTitle",
+                    ) +
+                    setOf(
+                        "routinesText",
+                        "turnOff",
+                        "turnOn",
+                        "shorter",
+                        "longer",
+                        "routinesNote",
+                    ) +
                     setOf("goalsTitle", "goalsEmpty", "goalsAdd", "goalsManage", "buildTitle") +
                     setOf("zone", "buildTail", "replan"),
             "daysText" to
@@ -154,7 +181,8 @@ internal object Js {
     fun n(value: Int): JsonNumber = JsonNumber(value.toDouble())
 
     fun b(value: Boolean): JsonValue =
-        if (value) com.lifemax.rpg.core.save.JsonBool.TRUE else com.lifemax.rpg.core.save.JsonBool.FALSE
+        if (value) com.lifemax.rpg.core.save.JsonBool.TRUE
+        else com.lifemax.rpg.core.save.JsonBool.FALSE
 
     fun list(items: List<JsonValue>): JsonArray = JsonArray(items)
 
@@ -165,10 +193,10 @@ internal object Js {
 }
 
 /**
- * RM-22: times and dates as the page writes them in `en-US`, the locale it is recorded in (`fmt` with
- * the device's locale; logic.js:19-24, 618-622, 1481): `fTime` `9:05 AM`, `fDay` `Wed, Oct 28`, `fHm`
- * a minute of the day in UTC, and the dial's hour words with a 12-hour clock (`H12`). A moment a
- * JavaScript Date cannot hold throws a RangeError, as `Intl.DateTimeFormat.format` does.
+ * RM-22: times and dates as the page writes them in `en-US`, the locale it is recorded in (`fmt`
+ * with the device's locale; logic.js:19-24, 618-622, 1481): `fTime` `9:05 AM`, `fDay` `Wed, Oct
+ * 28`, `fHm` a minute of the day in UTC, and the dial's hour words with a 12-hour clock (`H12`). A
+ * moment a JavaScript Date cannot hold throws a RangeError, as `Intl.DateTimeFormat.format` does.
  */
 internal class ClockWords(private val words: PanelWords) {
     /** `en-US`'s own short names (Intl's locale data, not the page's words). */
@@ -188,7 +216,9 @@ internal class ClockWords(private val words: PanelWords) {
         return weekdays[p.weekday] + ", " + months[p.month - 1] + " " + p.day
     }
 
-    /** `fHm(m)`: minute [m] of the day (`Date.UTC(2020, 0, 1, floor(m / 60) % 24, m % 60)`, UTC). */
+    /**
+     * `fHm(m)`: minute [m] of the day (`Date.UTC(2020, 0, 1, floor(m / 60) % 24, m % 60)`, UTC).
+     */
     fun hm(m: Double): String {
         val ms = EcmaTime.utc(YEAR, 0.0, 1.0, floor(m / HOUR) % HOURS, m % HOUR)
         if (ms.isNaN()) throw PageRangeError("Invalid time value")
@@ -221,7 +251,10 @@ internal class ClockWords(private val words: PanelWords) {
 
     private fun twelve(h: Int, mi: Int): String {
         val h12 = if (h % NOON == 0) NOON else h % NOON
-        return h12.toString() + ":" + mi.toString().padStart(2, '0') + if (h < NOON) " AM" else " PM"
+        return h12.toString() +
+            ":" +
+            mi.toString().padStart(2, '0') +
+            if (h < NOON) " AM" else " PM"
     }
 
     private companion object {

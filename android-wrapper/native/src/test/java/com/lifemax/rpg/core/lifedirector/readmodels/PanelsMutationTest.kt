@@ -35,14 +35,24 @@ class PanelsMutationTest {
     /** A retyped phrase: "x" for the page's "×" after a template's count. */
     @Test
     fun aRetypedGoalPhraseIsNoticed() =
-        assertCaught(setOf("goals"), 150, Mutation(words = words("\"times\": \"×\"", "\"times\": \"x\"")))
+        assertCaught(
+            setOf("goals"),
+            150,
+            Mutation(words = words("\"times\": \"×\"", "\"times\": \"x\"")),
+        )
 
     @Test
     fun aRetypedQuestStatusIsNoticed() =
         assertCaught(
             setOf("quests"),
             40,
-            Mutation(words = words("\"couldNotFit\": \"Could not fit\"", "\"couldNotFit\": \"Could not fit.\"")),
+            Mutation(
+                words =
+                    words(
+                        "\"couldNotFit\": \"Could not fit\"",
+                        "\"couldNotFit\": \"Could not fit.\"",
+                    )
+            ),
         )
 
     /** A 24-hour clock where the page was recorded with a 12-hour one (hour words only). */
@@ -55,13 +65,19 @@ class PanelsMutationTest {
         assertCaught(
             setOf("forms"),
             120,
-            Mutation(words = words("\"unwind\": \"Unwind after (min)\"", "\"unwind\": \"Unwind (min)\"")),
+            Mutation(
+                words = words("\"unwind\": \"Unwind after (min)\"", "\"unwind\": \"Unwind (min)\"")
+            ),
         )
 
     /** Appointments not draggable on the dial. */
     @Test
     fun aKindMissingFromTheDragKindsIsNoticed() =
-        assertCaught(setOf("handles", "dst"), 5, Mutation(words = words("\"APPOINTMENT\": 1", "\"APPOINTMENTS\": 1")))
+        assertCaught(
+            setOf("handles", "dst"),
+            5,
+            Mutation(words = words("\"APPOINTMENT\": 1", "\"APPOINTMENTS\": 1")),
+        )
 
     /** Study before reading in the icon table: a reading goal shows the study icon. */
     @Test
@@ -113,7 +129,9 @@ class PanelsMutationTest {
                         is ReadAnswer.Value ->
                             ReadAnswer.Value(
                                 r.value.sortedBy {
-                                    com.lifemax.rpg.core.lifedirector.PageValues.number(it.startEpoch)
+                                    com.lifemax.rpg.core.lifedirector.PageValues.number(
+                                        it.startEpoch
+                                    )
                                 }
                             )
                         else -> r

@@ -20,7 +20,9 @@ import com.lifemax.rpg.core.save.JsonNull
 import com.lifemax.rpg.core.save.JsonString
 import com.lifemax.rpg.core.save.JsonValue
 
-/** A work rule as `workRules()` gives it to the rest of LifeMax (RM-36); stored values as stored. */
+/**
+ * A work rule as `workRules()` gives it to the rest of LifeMax (RM-36); stored values as stored.
+ */
 data class WorkRule(
     val id: JsonValue?,
     val title: JsonValue,
@@ -95,9 +97,9 @@ internal object Shifts {
         }
 
     /**
-     * RM-38 `ruleOn(r, ymd)`: within the rule's valid dates; on a rotation's active day (counted from
-     * its anchor date, as the stored values combine in JavaScript); else on one of its week days
-     * (every day when it stores none as a list).
+     * RM-38 `ruleOn(r, ymd)`: within the rule's valid dates; on a rotation's active day (counted
+     * from its anchor date, as the stored values combine in JavaScript); else on one of its week
+     * days (every day when it stores none as a list).
      */
     fun ruleOn(r: JsonValue, date: CalendarDate): Boolean {
         val key = s(CalendarMath.key(date))
@@ -183,8 +185,10 @@ internal object Shifts {
             val start = get(c, "startEpoch")
             val end = get(c, "endEpoch")
             if (kind != WORK || !truthy(start) || !truthy(end)) continue
-            if (PageValues.lessOrEqual(end, n(fromEpoch)) || PageValues.less(n(toEpoch), end)) continue
-            val id = listOf(get(c, "id"), get(c, "commitmentId")).firstOrNull { truthy(it) } ?: start
+            if (PageValues.lessOrEqual(end, n(fromEpoch)) || PageValues.less(n(toEpoch), end))
+                continue
+            val id =
+                listOf(get(c, "id"), get(c, "commitmentId")).firstOrNull { truthy(it) } ?: start
             out +=
                 Shift(
                     ph("oneKey") + text(id),
@@ -199,18 +203,16 @@ internal object Shifts {
             Js.itemsOrNone(get(get(p.state, "availability"), "blackouts"), "blackouts").filter {
                 truthy(it) && truthy(get(it, "startEpoch")) && truthy(get(it, "endEpoch"))
             }
-        return out
-            .filter { sh ->
+        return out.filter { sh ->
                 val e = number(sh.endEpoch)
                 val st = number(sh.startEpoch)
                 var hit = 0.0
-                for (b in off)
-                    hit +=
-                        Math.max(
-                            0.0,
-                            Math.min(number(get(b, "endEpoch")), e) -
-                                Math.max(number(get(b, "startEpoch")), st),
-                        )
+                for (b in off) hit +=
+                    Math.max(
+                        0.0,
+                        Math.min(number(get(b, "endEpoch")), e) -
+                            Math.max(number(get(b, "startEpoch")), st),
+                    )
                 hit < (e - st) * HALF
             }
             .sortedWith { a, b -> PageValues.byDifference(number(a.endEpoch) - number(b.endEpoch)) }
