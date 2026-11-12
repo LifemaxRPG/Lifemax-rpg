@@ -4,7 +4,7 @@ Status: PLAN, with WP-H1 built and a first slice of H4, H5 and H7 (see "Built so
 against `origin/codex/director-dial-controls` (26c9575).
 The owner's wish: "expand the house, add some extra rooms, make the cats explore a little more".
 
-## Built so far (NativeApi 156)
+## Built so far (NativeApi 160)
 
 - **H1, done.** `R/house.json` lists every room (id, name, world x, the `roomOf` cut, the stretch a trip stops in, the window,
   whether its light lies on the floor, core or not, the bond that opens it). `room/HouseMap.kt` reads it; `RoomLayout.HOUSE_X0`,
@@ -20,10 +20,23 @@ The owner's wish: "expand the house, add some extra rooms, make the cats explore
 - **H7, the unlock.** The page opens rooms by bond (Sunroom 2, Study 3, Bathroom 4; highest bond among cats that are grown or
   past kitten stage 2), records them in `state.petHouse` with the world command's save, and sends `house` in the world block;
   native reads it (optional key) and opens the rooms (`HouseMap.select`) before the art is made.
-- **Not built:** raised places and their surfaces in the new rooms (bench, desk, shelf, tub, sink: new `SurfaceId`s, solids,
-  occluders, `Spots`), the generated solids/occluders/place tables (H2), the 64-bit piece mask and step residency (H3), per-room
-  light, sun patch that moves, birds, dripping tap (H6), the reveal toast and `seen` use, the map strip and glide (H8), catch-up
-  story lines (H9), per-cat kitten limits (the page applies the kitten rule house-wide instead), the phone check (H10).
+- **H2, first slice: raised places.** Five new `SurfaceId`s, native only like the parkour tops (`bench` in the Sunroom, `desk`
+  and `shelf` in the Study, `tub` rim and `sink` in the Bathroom), each with its `Surface` row (`body/World.kt`), a `Solid`
+  (`Solids.kt`; the chairs are solids with no owner), `Occluders` pieces for every standing piece of the three rooms, and a
+  `Spot` (`Spots.kt`, no page id), chosen only while the room is open (`Spot.open`). The generator draws each surface into
+  `layers_ext.json` (`surfaces`, `volume.surfaces`, and `stand`: feet row and columns) and `--check`s that every column of the
+  walk lies on painted pixels of its piece. The study shelf was lowered (top row 34) and the sink cabinet moved down so the
+  shelf is reached from the desk and the sink from the floor with the cats' jump. `NewRoomsSurfaceWalkTest` runs every
+  `SurfaceWalkTest` check with the whole house open and compares the body's tables with the manifest.
+- **H7, start-up.** `HouseMemory` keeps the opened rooms in `files/pet-house.json` (written when a block opens a room);
+  `CatWorldSetup.restoreHouse` reads it and calls `HouseMap.select` when a Cat screen plugin loads (`load()` of
+  `NativePetPlugin` and `NativeOverviewCardsPlugin`), so the house is known before the first projection and before any art.
+- **H9, first slice.** The catch-up story words the new places (`CatchUpRun.where`: "in the sun patch", "up on the sink").
+  Replays already never pick a closed room's places (`Spot.open`).
+- **Not built:** the generated solids/occluders/place tables (H2; the tables above are written by hand and tested against the
+  manifest), the 64-bit piece mask and step residency (H3), per-room
+  light, sun patch that moves, birds, dripping tap (H6), the reveal toast and `seen` use, the map strip and glide (H8), per-room
+  catch-up lines beyond the place words (H9), per-cat kitten limits (the page applies the kitten rule house-wide instead), the phone check (H10).
 - **Decisions taken at the plan's defaults** (OWNER DECISIONs still open for the owner to overturn): rooms Sunroom, Study,
   Bathroom (OQ-H3); side-by-side strip (OQ-H2); unlock by bond 2/3/4 using the highest bond (option B, OQ-H1, OQ-H10); kittens
   stage 0 to 2 do not count towards it (OQ-H9, house-wide); generated placeholder art shipped room by room (OQ-H4); old seams stay

@@ -22,6 +22,19 @@ enum class SurfaceId(val key: String) {
     FRIDGE("fridge"),
     BOOKCASE("bookcase"),
     TABLE("sidetable"),
+
+    /**
+     * The raised places of the rooms that open as the cats grow close (docs/specs/
+     * CAT_HOUSE_EXPANSION_PLAN.md WP-H2), native only like the parkour tops: the Sunroom's window
+     * bench, the Study's desk and tall shelf, the Bathroom's tub rim and sink. They are in the
+     * table always and used only while their room is open. Keep them last: the order is the bit of
+     * a surface in the brain's and the solids' masks.
+     */
+    BENCH("bench"),
+    DESK("desk"),
+    SHELF("shelf"),
+    TUB("tub"),
+    SINK("sink"),
 }
 
 /**
@@ -109,6 +122,12 @@ object World {
             flat(SurfaceId.FRIDGE, 31f, 214f, 238f),
             flat(SurfaceId.BOOKCASE, 33f, 108f, 136f),
             flat(SurfaceId.TABLE, 105f, -22f, -12f),
+            // the new rooms' pieces (tools/gen_pet_room_new.js `stand`, in layers_ext.json)
+            flat(SurfaceId.BENCH, 102f, 434f, 522f),
+            flat(SurfaceId.DESK, 96f, -328f, -240f),
+            flat(SurfaceId.SHELF, 34f, -372f, -344f),
+            flat(SurfaceId.TUB, 92f, -566f, -494f),
+            flat(SurfaceId.SINK, 80f, -450f, -424f),
         )
 
     private var floorMap: HouseMap? = null

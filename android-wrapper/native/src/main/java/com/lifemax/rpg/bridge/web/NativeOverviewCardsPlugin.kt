@@ -90,6 +90,11 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
             }
         }
 
+    override fun load() {
+        super.load()
+        CatWorldSetup.restoreHouse(context.filesDir) // the open rooms, before any projection
+    }
+
     init {
         CatWorldSetup.install() // the native brain, once, for the process's cat world
         CatWorldHost.shared.registerPort("dashboard", worldPort)

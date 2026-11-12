@@ -162,6 +162,16 @@ object Spots {
     val STUDY_RUG = add("study rug", null, SurfaceId.FLOOR, -294f, REST or ROOM_FLOOR, z = 62f)
     val BATH_MAT = add("bath mat", null, SurfaceId.FLOOR, -496f, REST or ROOM_FLOOR, z = 62f)
 
+    // The raised places of those rooms (WP-H2), chosen only while their room is open. The sun
+    // room's
+    // bench sits under the window: a cat sleeps there in the sun like on the sofa.
+    val SUN_BENCH =
+        add("sun bench", null, SurfaceId.BENCH, 478f, SLEEP or REST or SOFT or SUNNY or WINDOW)
+    val DESK = add("desk", null, SurfaceId.DESK, -290f, REST or SOFT)
+    val SHELF = add("study shelf", null, SurfaceId.SHELF, -358f, REST or HIGH or PARKOUR)
+    val TUB_RIM = add("tub rim", null, SurfaceId.TUB, -530f, REST)
+    val SINK = add("sink", null, SurfaceId.SINK, -437f, REST or HIGH or PARKOUR)
+
     /** Every spot, by [Spot.index]. */
     val all: List<Spot> = list
 

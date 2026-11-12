@@ -99,17 +99,32 @@ internal object CatchUpRun {
 
         private fun line(name: String, what: Pair<String, String>, share: Double): String {
             val verb = VERBS[what.first] ?: what.first
-            val place = what.second
-            val where =
-                when {
-                    place in NOWHERE -> ""
-                    place.startsWith(BEHIND) -> " $place"
-                    else -> " on the $place"
-                }
+            val where = where(what.second)
             val how = if (share >= CatchUpTuning.MOST_SHARE) " most of the time" else " for a while"
             return "$name $verb$where$how"
         }
     }
+
+    /**
+     * Where a doing happened, as the story says it: nothing for the floor, the words of the rooms
+     * that open with the cats' bond (a sun patch is sat in, a sink is climbed), else "on the
+     * place". A place of a room that is not open is never one a cat chose ([Spot.open]).
+     */
+    internal fun where(place: String): String =
+        when {
+            place in NOWHERE -> ""
+            place.startsWith(BEHIND) -> " $place"
+            else -> NEW_ROOMS[place] ?: " on the $place"
+        }
+
+    private val NEW_ROOMS =
+        mapOf(
+            "sun patch" to " in the sun patch",
+            "sun bench" to " on the sunroom bench",
+            "study shelf" to " up on the study shelf",
+            "tub rim" to " on the rim of the tub",
+            "sink" to " up on the sink",
+        )
 
     private const val NANOS_PER_MS = 1_000_000L
     private const val BEHIND = "behind"

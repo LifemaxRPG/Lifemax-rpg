@@ -10,6 +10,7 @@ import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.World
 import kotlin.math.abs
 import kotlin.math.sin
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -27,9 +28,19 @@ import org.junit.Test
  *   at any depth, anywhere in the house, sorts by its floor row among the pieces, so the room needs
  *   no minimum depth: cats may pass behind the sofa's arm and inside the tree.
  */
-class SurfaceWalkTest {
-    private val art = PetArtResources.loadRoom()
+open class SurfaceWalkTest {
+    /**
+     * The rooms open for the run: none but the core three here, every other room in the subclass.
+     */
+    protected open val opened: Set<String> = emptySet()
+
+    private val art by lazy {
+        HouseMap.select(opened, force = true)
+        PetArtResources.loadRoom()
+    }
     private val level = DepthLevel.MEDIUM
+
+    @After fun backToTheCoreRooms() = HouseMap.reset()
 
     /** A body as the room's cat layer; records the shift the painter drew it with. */
     private class BodyCats(val bodies: Array<CatBody>) : CatLayer {
@@ -76,7 +87,7 @@ class SurfaceWalkTest {
 
     // ------------------------------------------------------------------ the agreement, by surface
 
-    private val surfaces =
+    protected open val surfaces =
         listOf(
             SurfaceId.COUCH,
             SurfaceId.MID,
@@ -105,20 +116,23 @@ class SurfaceWalkTest {
         }
     }
 
+    /** The body's solid by name and the layer piece it stands where. */
+    protected open val solidPieces =
+        mapOf(
+            "sofa" to "sofa",
+            "side_table" to "side_table_plant",
+            "bookcase" to "bookcase_plant",
+            "fridge" to "fridge",
+            "counter" to "counter",
+            "cat_tree_top" to "cat_tree_slab_top",
+            "cat_tree_mid" to "cat_tree_slab_mid",
+        )
+
     @Test
     fun theBodysSolidsStandWhereTheLayersDo() {
         // what a flying cat must clear is the piece the room draws
         val w = Walker(art, level)
-        val byName =
-            mapOf(
-                "sofa" to "sofa",
-                "side_table" to "side_table_plant",
-                "bookcase" to "bookcase_plant",
-                "fridge" to "fridge",
-                "counter" to "counter",
-                "cat_tree_top" to "cat_tree_slab_top",
-                "cat_tree_mid" to "cat_tree_slab_mid",
-            )
+        val byName = solidPieces
         for (solid in Solids.all) {
             val name = byName[solid.name] ?: continue
             val piece = w.depth.solid(name)

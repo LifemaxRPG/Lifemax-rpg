@@ -5,6 +5,8 @@ import com.lifemax.rpg.feature.pet.brain.CatProfile
 import com.lifemax.rpg.feature.pet.brain.CatWorld
 import com.lifemax.rpg.feature.pet.host.AutopilotBrain
 import com.lifemax.rpg.feature.pet.host.CatWorldHost
+import com.lifemax.rpg.feature.pet.world.HouseMemory
+import java.io.File
 
 /**
  * The composition root of the cat world (docs/specs/CAT_BRAIN_PLAN.md 2.7): gives the process's one
@@ -23,6 +25,15 @@ object CatWorldSetup {
     val factory = BrainFactory { cats, clock ->
         runCatching { CatWorld(clock, cats.map(CatProfile::of), CatWorld.Fidelity.LIVE) }
             .getOrElse { AutopilotBrain(cats.map { it.name }) }
+    }
+
+    /**
+     * Opens the rooms the cats had opened when the app last ran ([HouseMemory]): called when a Cat
+     * screen plugin loads, with the app's files directory, so the house is known before the first
+     * projection and before any room art is made. The page's blocks keep it up to date.
+     */
+    fun restoreHouse(filesDir: File) {
+        HouseMemory.restore(File(filesDir, HouseMemory.FILE))
     }
 
     /** Sets [CatWorldHost.shared]'s brain the first time it is called; later calls do nothing. */
