@@ -32,6 +32,8 @@ public final class DownloadRules {
     public static final long WEB_MAX_BYTES = 80L * 1024 * 1024;
     /** The APK is about 29 MB (build 277). */
     public static final long APK_MAX_BYTES = 300L * 1024 * 1024;
+    /** The USDA branded-foods file is about 18 MB (432,470 foods). */
+    public static final long FOOD_MAX_BYTES = 120L * 1024 * 1024;
 
     private static final int MAX_HOPS = 6;
 

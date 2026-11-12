@@ -71,6 +71,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(AppLauncherPlugin.class);
         registerPlugin(FileSaverPlugin.class);
         registerPlugin(UpdaterPlugin.class);
+        registerPlugin(FoodDataPlugin.class);
         registerPlugin(BackupFolderPlugin.class);
         registerPlugin(DeviceBackupPlugin.class);
         registerPlugin(HealthSyncPlugin.class);
