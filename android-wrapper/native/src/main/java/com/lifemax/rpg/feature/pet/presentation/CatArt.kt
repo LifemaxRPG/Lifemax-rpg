@@ -6,11 +6,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import com.lifemax.rpg.feature.pet.art.Anim
 import com.lifemax.rpg.feature.pet.art.IndexSheet
+import com.lifemax.rpg.feature.pet.art.OutlineGaps
 import com.lifemax.rpg.feature.pet.art.PageCoatSource
 import com.lifemax.rpg.feature.pet.art.PetArt
 import com.lifemax.rpg.feature.pet.art.PetArtResources
 import com.lifemax.rpg.feature.pet.art.Recolour
 import com.lifemax.rpg.feature.pet.art.RestingFloor
+import com.lifemax.rpg.feature.pet.art.RestingShade
 import com.lifemax.rpg.feature.pet.art.RigLayer
 import com.lifemax.rpg.feature.pet.art.RigLibrary
 import com.lifemax.rpg.feature.pet.art.RigMorph
@@ -41,6 +43,8 @@ internal class RoomKit(val art: RoomArt) {
  *
  * The side view's resting rows are drawn mended ([RestingFloor]): a frame whose tail sinks a pixel
  * through the floor shows the band of its neighbour there, in the plain sprite and the rig alike.
+ * Every row also has its outline ring closed ([OutlineGaps]) and the resting rows their coat shades
+ * held steady where nothing around a pixel moves ([RestingShade]).
  */
 internal object CatArt {
     /** The page's genetic coats; the plugin connects it to the bridge ([PageCoatSource.bind]). */
@@ -102,6 +106,9 @@ internal object CatArt {
                         frames[it] * frameWidth <= sheet.width)
             }
 
+        /** Every side-view row, for [OutlineGaps]. */
+        fun sideRows(): List<Anim> = anims.filterIndexed { id, _ -> !onDepth[id] }
+
         /** The side-view rows of the clips a cat rests in, for [RestingFloor]. */
         fun resting(): List<Anim> =
             Clips.all.filter { it.isHoldable && !onDepth[it.id] }.map { anims[it.id] }
@@ -147,7 +154,9 @@ internal object CatArt {
                 coats.reject(coat, kind)
                 return null
             }
-            val sheet = RestingFloor.mend(raw, art.anims, t.resting())
+            val closed = OutlineGaps.close(raw, art.anims, t.sideRows())
+            val floored = RestingFloor.mend(closed, art.anims, t.resting())
+            val sheet = RestingShade.freeze(floored, art.anims, t.resting())
             entry.sideSheet = sheet
             entry.side = bitmap(Recolour.sheet(sheet, palette))
         }
