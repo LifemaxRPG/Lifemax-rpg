@@ -234,8 +234,10 @@ function petCoatPreviewDraw(){
 }
 function petPickCoat(c){document.querySelectorAll('#petCoats .pet-coat').forEach(function(b){b.classList.toggle('on',b.dataset.coat===c)});window.__petCoat=c}
 function petPickTrait(t){document.querySelectorAll('#petTraits button').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});window.__petTrait=t}
-function petAdoptClick(){
-  const coat=window.__petCoat||'ginger',trait=window.__petTrait||'curious',name=(document.getElementById('petNameIn')||{}).value;
+function petAdoptClick(){petAdoptWith((document.getElementById('petNameIn')||{}).value)}
+/* the click's work with the name given (the native Adoption screen has its own name field) */
+function petAdoptWith(name){
+  const coat=window.__petCoat||'ginger',trait=window.__petTrait||'curious';
   const p=petAdopt(coat,name,trait);window.__petFresh=true;
   petInit().then(function(rt){rt.c.x=214;rt.c.surf='floor';rt.c.z=PET_DEPTH.ART_Z;rt.c.y=PET_SURF.floor.y;rt.c.dir=-1;petInterrupt(rt,[{k:'walk',x:110},{k:'face',dir:1},petAct('idle_sit',3),petAct('meow',2.4,{snd:'beg'})]);renderPetView(true);petSync()});
   toast(p.name+' has moved in.');

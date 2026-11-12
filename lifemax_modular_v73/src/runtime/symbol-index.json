@@ -5130,6 +5130,9 @@
  "petAdoptNew": [
   "src/runtime/segments/15-runtime.js"
  ],
+ "petAdoptWith": [
+  "src/runtime/segments/17-runtime.js"
+ ],
  "petAffect": [
   "src/runtime/segments/26-pet-brain.js"
  ],
@@ -6303,6 +6306,9 @@
   "src/runtime/segments/29-pet-pair.js"
  ],
  "petPairAdoptOpen": [
+  "src/runtime/segments/29-pet-pair.js"
+ ],
+ "petPairAdoptWith": [
   "src/runtime/segments/29-pet-pair.js"
  ],
  "petPairCardData": [
@@ -7912,6 +7918,9 @@
  "window.NativePet": [
   "src/runtime/segments/50-native-pet.js"
  ],
+ "window.NativePetCattery": [
+  "src/runtime/segments/50-native-pet-cattery.js"
+ ],
  "window.NativePetDemo": [
   "src/runtime/segments/50-native-pet-demo.js"
  ],
@@ -7992,10 +8001,12 @@
   "src/runtime/segments/17-runtime.js"
  ],
  "window.__petLegacy": [
-  "src/runtime/segments/32-pet-dna.js"
+  "src/runtime/segments/32-pet-dna.js",
+  "src/runtime/segments/50-native-pet-cattery.js"
  ],
  "window.__petLitter": [
-  "src/runtime/segments/32-pet-dna.js"
+  "src/runtime/segments/32-pet-dna.js",
+  "src/runtime/segments/50-native-pet-cattery.js"
  ],
  "window.__petReady": [
   "src/runtime/segments/17-runtime.js"

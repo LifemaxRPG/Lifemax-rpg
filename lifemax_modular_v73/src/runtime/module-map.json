@@ -932,8 +932,8 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 38753,
-   "statement_count": 73,
+   "bytes": 38886,
+   "statement_count": 74,
    "tags": [
     "pet",
     "interface"
@@ -970,6 +970,7 @@
     "petPickTrait",
     "window.__petTrait",
     "petAdoptClick",
+    "petAdoptWith",
     "window.__petFresh",
     "petIntroHtml",
     "petRoomHtml",
@@ -1579,8 +1580,8 @@
   },
   {
    "file": "src/runtime/segments/29-pet-pair.js",
-   "bytes": 46895,
-   "statement_count": 101,
+   "bytes": 47046,
+   "statement_count": 102,
    "tags": [
     "pet",
     "interface",
@@ -1649,6 +1650,7 @@
     "petPairAdoptHtml",
     "petPairAdopt",
     "petPairAdoptClick",
+    "petPairAdoptWith",
     "petPairFocus",
     "petPairDrawPortraits",
     "petPairSwitchHtml",
@@ -3635,7 +3637,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-pet.js",
-   "bytes": 22084,
+   "bytes": 22238,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3660,6 +3662,21 @@
    "symbols": [
     "window.writeSave",
     "window.NativePetPanels"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-pet-cattery.js",
+   "bytes": 19173,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "pet",
+    "cattery"
+   ],
+   "symbols": [
+    "window.__petLitter",
+    "window.__petLegacy",
+    "window.NativePetCattery"
    ]
   },
   {

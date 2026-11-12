@@ -148,7 +148,8 @@
       cue: { fed: fed.slice(-CUES).map((c) => ({ cat: c.cat, id: c.id, ago: Math.max(0, now - c.at) })) },
     }, touch);
     const panels = window.NativePetPanels ? NativePetPanels.extend(out, cat, f, now) : out;
-    const played = window.NativePetPlay ? NativePetPlay.extend(panels, cat, tab) : panels; // the toy tray, for a screen with pet.play.v1
+    const cattery = window.NativePetCattery ? NativePetCattery.extend(panels, tab) : panels; // the cattery, for a screen with pet.cattery.v1
+    const played = window.NativePetPlay ? NativePetPlay.extend(cattery, cat, tab) : cattery; // the toy tray, for a screen with pet.play.v1
     const full = window.NativePetDemo ? NativePetDemo.extend(played, tab) : played; // the developer demo button, for pet.demo.v1 with developer mode on
     return window.NativeCatWorld ? NativeCatWorld.extend(full, tab) : full; // the world block, for a screen with pet.world.v1
   }
@@ -412,6 +413,6 @@
   });
 
   /* the page's room loop stops while the screen covers the view (petWantRun), so the cat is not drawn twice */
-  window.NativePet = { covering: () => tab.active(), active: () => tab.active(), commands, has: (c) => tab.has(c), toasts: () => tab.toasts(), claimToast: toastSince,
+  window.NativePet = { covering: () => tab.active(), active: () => tab.active(), commands, has: (c) => tab.has(c), toasts: () => tab.toasts(), claimToast: toastSince, storedBy,
     fedCues: (now) => fed.slice(-CUES).map((c) => ({ cat: c.cat, id: c.id, ago: Math.max(0, now - c.at) })) }; // for the world block
 })();
