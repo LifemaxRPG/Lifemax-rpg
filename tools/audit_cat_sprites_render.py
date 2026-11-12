@@ -175,3 +175,30 @@ def all_images(side, depth, palettes, out):
         names += cross_coat(kind, depth if kind in DEPTH_KINDS else side, palettes, out,
                             halves=1 if kind in DEPTH_KINDS else 2)
     return names
+
+
+def before_after(coat, kind, clip, palette, out, tag):
+    """A clip row as shipped (heat vs previous frame) above the same row after the loader mends."""
+    import audit_cat_sprites_mend as mend
+    table, box = lut(palette), crop_box(kind)
+    frames = frames_of(load_sheet(kind, coat), clip)
+    after = mend.freeze_shade(mend.close_gaps(frames))
+    top = clip_row(frames, table, box, True, f"{coat} {kind}\n{clip.name}\nas shipped")
+    mid = clip_row(after, table, box, True, "after the loader\nmends")
+    plain = clip_row(after, table, box, False, "after, plain")
+    return save(vstack([top, mid, plain]), os.path.join(out, f"beforeafter_{tag}.png"))
+
+
+def gap_marks(coat, kind, clip, frame, palette, out, tag):
+    """One frame at 12x with the outline-gap pixels painted red, next to the mended frame."""
+    import audit_cat_sprites_mend as mend
+    table, box = lut(palette), crop_box(kind)
+    frames = frames_of(load_sheet(kind, coat), clip)
+    closed = mend.close_gaps(frames)
+    a = paint(frames[frame], table, box)
+    b = paint(closed[frame], table, box)
+    x0, y0 = max(box[0], 0), max(box[2], 0)
+    for y, x in np.argwhere(frames[frame] != closed[frame]):
+        a[y - y0, x - x0] = (255, 0, 0, 255)
+    big = lambda im: np.kron(im, np.ones((12, 12, 1), np.uint8))
+    return save(hstack([big(a), big(b)], gap=12), os.path.join(out, f"gap_{tag}.png"))

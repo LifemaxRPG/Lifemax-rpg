@@ -17,6 +17,7 @@ import sys
 import numpy as np
 
 import audit_cat_sprites_checks as C
+import audit_cat_sprites_mend as M
 import audit_cat_sprites_render as R
 from audit_cat_sprites_lib import (COATS, DEPTH_KINDS, KINDS, SIDE_KINDS, STILL_CLIPS, clips_for,
                                    frames_of, l_table, load_anims, load_palettes, load_sheet)
@@ -111,6 +112,15 @@ def main(argv):
         sheets = {c: load_sheet(kind, c) for c in COATS}
         for clip in clips_for(kind, side, depth):
             result["cross_coat"] += C.check_cross_coat(kind, clip, sheets)
+    result["flips_after"] = []
+    for coat in COATS:
+        ltab = l_table(pals[coat])
+        for kind in SIDE_KINDS:
+            sheet = load_sheet(kind, coat)
+            for clip in side:
+                if clip.name in STILL_CLIPS + ["slowblink"]:
+                    fr = M.freeze_shade(M.close_gaps(frames_of(sheet, clip)))
+                    result["flips_after"].append(C.flip_stats(kind, coat, clip, fr, ltab))
     result["pixel_rows_all"] = len(result["pixels"])
     result["pixels"] = C.flag_outliers(result["pixels"], per_clip)
     result["f"], result["h"], result["i"] = structure_checks(side, depth)
