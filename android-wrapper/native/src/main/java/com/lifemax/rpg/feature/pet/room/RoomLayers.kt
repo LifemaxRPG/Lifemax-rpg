@@ -40,7 +40,8 @@ internal class PieceVolume(
  * do with it.
  *
  * @property name the piece's name, also its file (`sofa`, `cat_tree_slab_mid`).
- * @property room 0 living room, 1 bedroom, 2 kitchen.
+ * @property room the room's place among the open rooms, left to right ([HouseMap.current]); 0 is
+ *   the leftmost, the living room while only the first three are open.
  * @property x left edge in the room's own pixels (0 at the room's left edge).
  * @property y top edge in room pixels (0 at the top of the walls).
  * @property baseY the row of its lowest pixel as the page keeps it (`PET_Z_BLOCK`), or null for
@@ -68,7 +69,7 @@ internal class LayerPiece(
     val atlasX: Int,
     val atlasY: Int,
 ) {
-    /** Left edge in house pixels (0 at the living room's left edge). */
+    /** Left edge in house pixels (0 at the open house's left edge). */
     val houseX: Int
         get() = room * RoomLayout.BACKDROP_WIDTH + x
 
@@ -99,9 +100,17 @@ internal class RoomLayerArt(
     val pieces: List<LayerPiece>,
     val bases: List<ArgbImage>,
     val atlas: ArgbImage,
+    /** The ids of the rooms [bases] are of, in the same order. */
+    val roomIds: List<String> = HouseMap.current.rooms.map { it.id },
 ) {
-    /** The base of [room]. */
+    /** The base of the open room at place [room] (0 the leftmost). */
     fun base(room: Int): ArgbImage = bases[room]
+
+    /** The base of the room called [id]; a clear pixel when that room is not open. */
+    fun baseOf(id: String): ArgbImage {
+        val i = roomIds.indexOf(id)
+        return if (i < 0) NOTHING else bases[i]
+    }
 
     /** The piece called [name]; the manifest has it or the art is broken. */
     fun piece(name: String): LayerPiece =
@@ -120,21 +129,54 @@ internal class RoomLayerArt(
          * pictures ([read] gets a path relative to `room/`, such as `layers/living_base.png` or
          * `volume/sofa.png`).
          */
-        fun parse(manifest: String, read: (String) -> ArgbImage): RoomLayerArt {
-            val json = JSONObject(manifest)
-            require(json.getInt("roomWidth") == RoomLayout.BACKDROP_WIDTH) { "layers: room width" }
-            require(json.getInt("roomHeight") == RoomLayout.HEIGHT) { "layers: room height" }
-            val rooms = json.getJSONObject("rooms")
-            val names = arrayOf("living", "bedroom", "kitchen")
-            val bases = names.map { read(LAYERS + rooms.getJSONObject(it).getString("base")) }
-            val list = json.getJSONArray("pieces")
-            val sprites = ArrayList<ArgbImage>(list.length())
-            val placed = ArrayList<IntArray>(list.length())
+        fun parse(manifest: String, read: (String) -> ArgbImage): RoomLayerArt =
+            parse(listOf(manifest), read)
+
+        /**
+         * Builds the layers of the open rooms ([HouseMap.current]) from several manifests, the
+         * first being the original three rooms'; a room that is not open contributes nothing, so
+         * the atlas of the first three rooms is the same however many manifests there are.
+         */
+        fun parse(manifests: List<String>, read: (String) -> ArgbImage): RoomLayerArt {
+            val names = HouseMap.current.rooms.map { it.id }
+            val bases = arrayOfNulls<ArgbImage>(names.size)
+            val entries = ArrayList<JSONObject>()
+            for (manifest in manifests) {
+                val json = JSONObject(manifest)
+                require(json.getInt("roomWidth") == RoomLayout.BACKDROP_WIDTH) {
+                    "layers: room width"
+                }
+                require(json.getInt("roomHeight") == RoomLayout.HEIGHT) { "layers: room height" }
+                val rooms = json.getJSONObject("rooms")
+                for (id in rooms.keys()) {
+                    val at = names.indexOf(id)
+                    if (at >= 0) {
+                        bases[at] = read(LAYERS + rooms.getJSONObject(id).getString("base"))
+                    }
+                }
+                val all = json.getJSONArray("pieces")
+                for (i in 0 until all.length()) {
+                    val o = all.getJSONObject(i)
+                    if (o.getString("room") in names) entries.add(o)
+                }
+            }
+            require(bases.all { it != null }) { "layers: a room has no base" }
+            return build(names, bases.map { it!! }, entries, read)
+        }
+
+        private fun build(
+            names: List<String>,
+            bases: List<ArgbImage>,
+            list: List<JSONObject>,
+            read: (String) -> ArgbImage,
+        ): RoomLayerArt {
+            val sprites = ArrayList<ArgbImage>(list.size)
+            val placed = ArrayList<IntArray>(list.size)
             var cx = 0
             var cy = 0
             var rowH = 0
-            for (i in 0 until list.length()) {
-                val img = read(LAYERS + list.getJSONObject(i).getString("file"))
+            for (i in list.indices) {
+                val img = read(LAYERS + list[i].getString("file"))
                 if (cx + img.width > ATLAS_WIDTH) {
                     cx = 0
                     cy += rowH + GAP
@@ -146,9 +188,9 @@ internal class RoomLayerArt(
                 rowH = maxOf(rowH, img.height)
             }
             val atlas = IntArray(ATLAS_WIDTH * (cy + rowH))
-            val pieces = ArrayList<LayerPiece>(list.length())
-            for (i in 0 until list.length()) {
-                val o = list.getJSONObject(i)
+            val pieces = ArrayList<LayerPiece>(list.size)
+            for (i in list.indices) {
+                val o = list[i]
                 val img = sprites[i]
                 require(o.getInt("w") == img.width && o.getInt("h") == img.height) {
                     "layers: ${o.getString("name")} is not the size the manifest says"
@@ -183,7 +225,7 @@ internal class RoomLayerArt(
                 )
             }
             val height = atlas.size / ATLAS_WIDTH
-            return RoomLayerArt(pieces, bases, ArgbImage(ATLAS_WIDTH, height, atlas))
+            return RoomLayerArt(pieces, bases, ArgbImage(ATLAS_WIDTH, height, atlas), names)
         }
 
         private fun volume(
@@ -212,5 +254,8 @@ internal class RoomLayerArt(
 
         /** The depth of a flat piece: under every cat. */
         const val FLAT_Z = -1f
+
+        /** What a base stands for when its room is not open: one clear pixel. */
+        private val NOTHING = ArgbImage(1, 1, IntArray(1))
     }
 }

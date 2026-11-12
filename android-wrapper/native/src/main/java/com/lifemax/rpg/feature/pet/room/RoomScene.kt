@@ -69,9 +69,10 @@ internal class RoomScene(private val art: RoomArt, val style: RoomStyle = RoomSt
         if (depth != null) return depth.paintBackdrop(c, hour, clock, topExtra)
         RoomLight.skyAt(hour, sky)
         for (wx in RoomLayout.windows) paintSky(c, wx, hour, clock)
-        paintRoom(c, RoomImage.LIVING, 0, topExtra)
-        paintRoom(c, RoomImage.BEDROOM, RoomLayout.BACKDROP_WIDTH, topExtra)
-        paintRoom(c, RoomImage.KITCHEN, 2 * RoomLayout.BACKDROP_WIDTH, topExtra)
+        val rooms = HouseMap.current.rooms
+        for (i in rooms.indices) {
+            paintRoom(c, RoomImage.backdrop(rooms[i].id), i * RoomLayout.BACKDROP_WIDTH, topExtra)
+        }
         paintWindowLight(c, hour)
     }
 
@@ -131,7 +132,7 @@ internal class RoomScene(private val art: RoomArt, val style: RoomStyle = RoomSt
         }
     }
 
-    /** The window's light lying on the floor of the living room and the bedroom. */
+    /** The window's light lying on the floor of the rooms whose windows throw it. */
     internal fun paintWindowLight(c: RoomCanvas, hour: Double) {
         val colour =
             when {
@@ -139,8 +140,9 @@ internal class RoomScene(private val art: RoomArt, val style: RoomStyle = RoomSt
                 RoomLight.isNight(hour) -> NIGHT_LIGHT
                 else -> return
             }
-        for (i in 0..1) {
-            val x = (RoomLayout.windows[i] - RoomLayout.HOUSE_X0).toFloat()
+        val lit = HouseMap.current.floorLights
+        for (i in lit.indices) {
+            val x = (lit[i] - RoomLayout.HOUSE_X0).toFloat()
             c.quad(x + 30, 118f, x + 90, 118f, x + 112, 142f, x + 52, 142f, colour)
         }
     }

@@ -5,12 +5,12 @@ import com.lifemax.rpg.feature.pet.art.FrameRect
 import com.lifemax.rpg.feature.pet.art.RoomAtlas
 
 /** Every picture the room draws from; the painters name them, the screen holds the bitmaps. */
-internal enum class RoomImage {
+internal enum class RoomImage(val room: String? = null, val base: Boolean = false) {
     /** The item atlas: bed, bowls, sun, moon, clouds. */
     ATLAS,
-    LIVING,
-    BEDROOM,
-    KITCHEN,
+    LIVING("living"),
+    BEDROOM("bedroom"),
+    KITCHEN("kitchen"),
     POUF,
     CUSHION,
     BOX_BACK,
@@ -20,9 +20,27 @@ internal enum class RoomImage {
     LAYERS,
 
     /** The living room's backdrop with the furniture removed and the wall and floor rebuilt. */
-    LIVING_BASE,
-    BEDROOM_BASE,
-    KITCHEN_BASE,
+    LIVING_BASE("living", true),
+    BEDROOM_BASE("bedroom", true),
+    KITCHEN_BASE("kitchen", true),
+
+    /** The rooms that open as the cats grow close (`house.json`): their backdrops and bases. */
+    SUN("sun"),
+    STUDY("study"),
+    BATH("bath"),
+    SUN_BASE("sun", true),
+    STUDY_BASE("study", true),
+    BATH_BASE("bath", true);
+
+    companion object {
+        /** The backdrop picture of room [id]. */
+        fun backdrop(id: String): RoomImage =
+            entries.firstOrNull { it.room == id && !it.base } ?: error("no backdrop for room $id")
+
+        /** The base picture (furniture removed) of room [id]. */
+        fun baseOf(id: String): RoomImage =
+            entries.firstOrNull { it.room == id && it.base } ?: error("no base for room $id")
+    }
 }
 
 /**
@@ -37,8 +55,8 @@ internal class RoomArt(
     val layers: RoomLayerArt? = null,
 ) {
     init {
-        for (backdrop in listOf(RoomImage.LIVING, RoomImage.BEDROOM, RoomImage.KITCHEN)) {
-            val img = image(backdrop)
+        for (room in HouseMap.current.rooms) {
+            val img = image(RoomImage.backdrop(room.id))
             require(img.width == RoomLayout.BACKDROP_WIDTH && img.height == RoomLayout.HEIGHT) {
                 "a backdrop is ${RoomLayout.BACKDROP_WIDTH}x${RoomLayout.HEIGHT}"
             }
@@ -50,10 +68,13 @@ internal class RoomArt(
         when (image) {
             RoomImage.ATLAS -> atlas.image
             RoomImage.LAYERS -> layers?.atlas ?: NOTHING
-            RoomImage.LIVING_BASE -> layers?.base(0) ?: NOTHING
-            RoomImage.BEDROOM_BASE -> layers?.base(1) ?: NOTHING
-            RoomImage.KITCHEN_BASE -> layers?.base(2) ?: NOTHING
-            else -> images[image] ?: error("room art is missing $image")
+            else ->
+                if (image.base) layers?.baseOf(image.room!!) ?: NOTHING
+                // a room that is not open has no backdrop here (the screens still make a bitmap of
+                // every picture, so it is one clear pixel)
+                else
+                    images[image]
+                        ?: if (image.room != null) NOTHING else error("room art is missing $image")
         }
 
     /** Where the atlas sprite [name] is; the room's own names (`bed_back`, `sun`, ...). */
@@ -67,16 +88,23 @@ internal class RoomArt(
 
 /**
  * Where things stand in the house, in the web room's numbers (15-runtime.js and 24-pet-depth.js).
- * World x runs from [HOUSE_X0] at the house's left edge; a house pixel is `world - HOUSE_X0`.
+ * World x runs from [HOUSE_X0] at the house's left edge; a house pixel is `world - HOUSE_X0`. The
+ * rooms and their windows come from the house map ([HouseMap]).
  */
 internal object RoomLayout {
-    const val HOUSE_X0 = -192
-    const val HOUSE_WIDTH = 576
     const val HEIGHT = 144
     const val BACKDROP_WIDTH = 192
 
-    /** Sky offsets of the three windows relative to the bedroom's: living, bedroom, kitchen. */
-    val windows = intArrayOf(-152, 0, 280)
+    /** World x of the open house's left edge, and its width ([HouseMap]: the open rooms). */
+    val HOUSE_X0: Int
+        get() = HouseMap.current.x0
+
+    val HOUSE_WIDTH: Int
+        get() = HouseMap.current.width
+
+    /** Sky offsets (world x) of the open rooms' windows, left to right. */
+    val windows: IntArray
+        get() = HouseMap.current.windows
 
     /** The glass of a window, relative to its offset. */
     const val GLASS_X = 22

@@ -8077,6 +8077,9 @@
  "window.petFeed": [
   "src/runtime/segments/50-native-pet.js"
  ],
+ "window.petHouseRooms": [
+  "src/runtime/segments/50-native-cat-world.js"
+ ],
  "window.petWorldBlock": [
   "src/runtime/segments/50-native-cat-world.js"
  ],

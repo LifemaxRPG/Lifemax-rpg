@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.pet.body
 
+import com.lifemax.rpg.feature.pet.room.HouseMap
 import kotlin.math.abs
 
 /**
@@ -243,13 +244,9 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
     /** Walk to a spot in another room, look about, and sit. */
     fun travel(x: Float, mate: Claim?, claim: Claim): List<PlanStep> {
         val roll = rng.nextFloat()
-        val there =
-            when (roomOf(x)) {
-                LIVING -> if (roll < NEAR_ROOM_SHARE) BEDROOM else KITCHEN
-                KITCHEN -> if (roll < NEAR_ROOM_SHARE) BEDROOM else LIVING
-                else -> if (roll < HALF) LIVING else KITCHEN
-            }
-        val spot = clearOfFurniture(rng.range(ROOM_LO[there], ROOM_HI[there]))
+        val rooms = HouseMap.current.rooms
+        val there = rooms[otherRoom(roomOf(x), rooms.size, roll)]
+        val spot = clearOfFurniture(rng.range(there.strollLo, there.strollHi))
         begin(x)
         reach(spot)
         if (!commit(claim, mate, SurfaceId.FLOOR, 0f)) return emptyList()
@@ -386,21 +383,36 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
 
     private fun act(anim: String, lo: Float, hi: Float) = PlanStep.Act(anim, rng.range(lo, hi))
 
-    /** Which room the world x [x] is in: 0 living, 1 bedroom, 2 kitchen (the web's room split). */
-    fun roomOf(x: Float): Int =
-        if (x < LIVING_END) LIVING else if (x < KITCHEN_START) BEDROOM else KITCHEN
+    /** Which open room the world x [x] is in, from the left (the web's room split). */
+    fun roomOf(x: Float): Int = World.roomOf(x)
+
+    /**
+     * The room a trip from room [here] of [count] goes to, chosen by [roll] (0 up to 1): a
+     * neighbour [NEAR_ROOM_SHARE] of the time, any other room the rest; with no other room than the
+     * neighbours (the middle of three) they share it equally. Rooms are counted from the left.
+     */
+    internal fun otherRoom(here: Int, count: Int, roll: Float): Int {
+        val nears = (if (here > 0) 1 else 0) + (if (here < count - 1) 1 else 0)
+        val fars = count - 1 - nears
+        if (fars == 0) return nthNear(here, count, minOf(nears - 1, (roll * nears).toInt()))
+        if (roll < NEAR_ROOM_SHARE) {
+            return nthNear(here, count, minOf(nears - 1, (roll / NEAR_ROOM_SHARE * nears).toInt()))
+        }
+        var k = minOf(fars - 1, ((roll - NEAR_ROOM_SHARE) / (1f - NEAR_ROOM_SHARE) * fars).toInt())
+        for (i in 0 until count) {
+            if (i == here || i == here - 1 || i == here + 1) continue
+            if (k-- == 0) return i
+        }
+        return here
+    }
+
+    private fun nthNear(here: Int, count: Int, n: Int): Int =
+        if (here > 0 && n == 0) here - 1 else here + 1
 
     companion object {
         /** Cats keep this far apart (feet to feet) on the floor. */
         const val GAP = 40f
 
-        const val LIVING = 0
-        const val BEDROOM = 1
-        const val KITCHEN = 2
-        private const val LIVING_END = -4f
-        private const val KITCHEN_START = 196f
-        private val ROOM_LO = floatArrayOf(-140f, 16f, 218f)
-        private val ROOM_HI = floatArrayOf(-74f, 170f, 328f)
         private const val NEAR_ROOM_SHARE = 0.7f
 
         /**

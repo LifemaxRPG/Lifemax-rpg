@@ -33,7 +33,8 @@ import kotlin.math.exp
  */
 internal object PanTuning {
     /** World x where the pan adds nothing: the middle of the house. */
-    const val CENTRE_X = RoomLayout.HOUSE_X0 + RoomLayout.HOUSE_WIDTH / 2f
+    val CENTRE_X: Float
+        get() = RoomLayout.HOUSE_X0 + RoomLayout.HOUSE_WIDTH / 2f
 
     /**
      * The camera travel from the house's middle to either end that gives the full position gain.

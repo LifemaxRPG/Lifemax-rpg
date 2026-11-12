@@ -1,7 +1,34 @@
 # Cat house expansion plan: more rooms, more to explore
 
-Status: PLAN ONLY, nothing built. Written 2026-11-12 against `origin/codex/director-dial-controls` (26c9575).
+Status: PLAN, with WP-H1 built and a first slice of H4, H5 and H7 (see "Built so far" below). Written 2026-11-12
+against `origin/codex/director-dial-controls` (26c9575).
 The owner's wish: "expand the house, add some extra rooms, make the cats explore a little more".
+
+## Built so far (NativeApi 156)
+
+- **H1, done.** `R/house.json` lists every room (id, name, world x, the `roomOf` cut, the stretch a trip stops in, the window,
+  whether its light lies on the floor, core or not, the bond that opens it). `room/HouseMap.kt` reads it; `RoomLayout.HOUSE_X0`,
+  `HOUSE_WIDTH`, `windows`, `World.HOUSE_MIN_X/MAX_X`, `World.roomOf`, the floor surface, `Spot.room`, the classic and 2.5D room
+  painters, the layer manifest parser (`houseX` by room place) and `HousePlans.travel` all read the map. With the first three rooms
+  open the engine is the old one: `RoomFidelityTest`, `RoomLayersTest`, the golden traces and every other existing test are unchanged.
+- **H4, first version.** `lifemax_modular_v73/tools/gen_pet_room_new.js` draws the Sunroom, Study and Bathroom (bases, 10 solid
+  and 5 flat pieces, depth maps, door frames at the new seams, `layers_ext.json`); CI checks it (`--check`).
+  Placeholder art in the style of the painted rooms; an artist replaces files by name.
+- **H5, floor travel.** Walk limits, camera bounds, the floor and the planner follow the open rooms; `travel` picks a room by weight
+  for any number of rooms (a neighbour 70 percent, the rest otherwise: the old three-way roll for three). Each new room has a
+  floor place (sun patch, study rug, bath mat) the brain chooses only while its room is open (`Spot.open`).
+- **H7, the unlock.** The page opens rooms by bond (Sunroom 2, Study 3, Bathroom 4; highest bond among cats that are grown or
+  past kitten stage 2), records them in `state.petHouse` with the world command's save, and sends `house` in the world block;
+  native reads it (optional key) and opens the rooms (`HouseMap.select`) before the art is made.
+- **Not built:** raised places and their surfaces in the new rooms (bench, desk, shelf, tub, sink: new `SurfaceId`s, solids,
+  occluders, `Spots`), the generated solids/occluders/place tables (H2), the 64-bit piece mask and step residency (H3), per-room
+  light, sun patch that moves, birds, dripping tap (H6), the reveal toast and `seen` use, the map strip and glide (H8), catch-up
+  story lines (H9), per-cat kitten limits (the page applies the kitten rule house-wide instead), the phone check (H10).
+- **Decisions taken at the plan's defaults** (OWNER DECISIONs still open for the owner to overturn): rooms Sunroom, Study,
+  Bathroom (OQ-H3); side-by-side strip (OQ-H2); unlock by bond 2/3/4 using the highest bond (option B, OQ-H1, OQ-H10); kittens
+  stage 0 to 2 do not count towards it (OQ-H9, house-wide); generated placeholder art shipped room by room (OQ-H4); old seams stay
+  open plan, new seams get a drawn door frame (OQ-H12). A room that opens while the app runs shows from the next start of the app
+  (the art, the cats and the camera must agree on the house; `HouseMap.lock`).
 
 Citation shorthand (all paths from the repo root):
 - `N/` = `android-wrapper/native/src/main/java/com/lifemax/rpg/feature/pet/`

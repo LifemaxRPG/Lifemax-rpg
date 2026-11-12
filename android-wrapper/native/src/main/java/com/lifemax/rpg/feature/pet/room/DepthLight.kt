@@ -155,13 +155,21 @@ internal class RimSpec {
  * window side and under the cat.
  */
 internal object RimLight {
-    /**
-     * World x of the centre of the glass of each window (the living room, the bedroom, the
-     * kitchen).
-     */
-    val windowCentres: FloatArray =
-        FloatArray(RoomLayout.windows.size) {
-            (RoomLayout.windows[it] + LightTuning.GLASS_HALF).toFloat()
+    private var centresOf: HouseMap? = null
+    private var centres = FloatArray(0)
+
+    /** World x of the centre of the glass of each window of the open rooms, left to right. */
+    val windowCentres: FloatArray
+        get() {
+            val map = HouseMap.current
+            if (map !== centresOf) {
+                centres =
+                    FloatArray(map.windows.size) {
+                        (map.windows[it] + LightTuning.GLASS_HALF).toFloat()
+                    }
+                centresOf = map
+            }
+            return centres
         }
 
     /** Fill [out] for a cat standing at world [catX] at [hour]. */

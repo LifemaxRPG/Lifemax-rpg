@@ -82,7 +82,7 @@ class RoamingTest {
         for (t in days) for (c in 0..1) seen += t.stats(c, FROM, TO).places
         val wanted =
             Spots.all
-                .filter { it.has(Spots.VISIT) && !it.hidden && !it.has(Spots.HIDDEN) }
+                .filter { it.open && it.has(Spots.VISIT) && !it.hidden && !it.has(Spots.HIDDEN) }
                 .map { it.id }
                 .toSet()
         val missed = wanted - seen

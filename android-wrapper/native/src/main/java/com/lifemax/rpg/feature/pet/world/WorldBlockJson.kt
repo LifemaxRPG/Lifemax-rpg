@@ -54,6 +54,7 @@ object WorldBlockJson {
             "pos",
         )
     private val ID = Regex("[a-z_0-9]{1,32}")
+    private val ROOM_ID = Regex("[a-z]{1,16}")
     private val NAME = Regex("[\\s\\S]{1,40}")
     private const val MORPH_MIN = 0.3
     private const val MORPH_MAX = 3.0
@@ -64,7 +65,7 @@ object WorldBlockJson {
     private const val PCT = 100
 
     fun decode(j: JSONObject): WorldBlock {
-        j.exactKeys(TOP, "world")
+        j.exactKeys(TOP, "world", setOf("house"))
         val stored =
             if (j.isNullAt("stored")) null else j.child("stored", setOf("epoch", "rev", "blob"))
         val blob =
@@ -90,6 +91,7 @@ object WorldBlockJson {
         }
         val cue = j.child("cue", setOf("fed", "cheer"))
         val read = blob?.let(WorldBlobJson::read)
+        val house = if (j.has("house")) house(j.child("house", setOf("v", "rooms"))) else emptySet()
         return WorldBlock(
             v = v,
             seq = j.whole("seq", 1, Long.MAX_VALUE),
@@ -127,7 +129,17 @@ object WorldBlockJson {
                         read.rejectedCats,
                     )
                 },
+            houseRooms = house,
         )
+    }
+
+    /** `house`: the rooms the page has opened, at most [WorldContract.MAX_HOUSE_ROOMS] ids. */
+    private fun house(h: JSONObject): Set<String> {
+        ensure(h.int("v", 1, Int.MAX_VALUE) == 1, "version") { "an unknown house version" }
+        val rooms = h.list("rooms", WorldContract.MAX_HOUSE_ROOMS)
+        val ids = (0 until rooms.length()).map { rooms.textAt(it, 16, ROOM_ID, "a room") }
+        ensure(ids.toSet().size == ids.size, "shape") { "a room twice" }
+        return ids.toSet()
     }
 
     private fun cat(c: JSONObject): WorldCat {

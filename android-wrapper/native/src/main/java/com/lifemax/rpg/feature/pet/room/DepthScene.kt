@@ -105,7 +105,7 @@ internal class DepthScene(
     }
 
     private val shadowed = BooleanArray(solids.size)
-    private val shadowColour = IntArray(3) { floorShadowColour(layers.base(it)) }
+    private val shadowColour = IntArray(layers.bases.size) { floorShadowColour(layers.base(it)) }
 
     /** The camera step piece [name] was cut from in the last [paintScene] (tests and tuning). */
     fun stepOf(name: String): Int {
@@ -221,10 +221,11 @@ internal class DepthScene(
         val seam = Parallax.WALL_ROW.toInt()
         strip(c, 0, seam, wall)
         if (topExtra > 0) {
-            for (room in 0..2) {
+            val rooms = HouseMap.current.rooms
+            for (room in rooms.indices) {
                 val x = room * RoomLayout.BACKDROP_WIDTH + wall
                 c.image(
-                    BASES[room],
+                    RoomImage.baseOf(rooms[room].id),
                     0,
                     0,
                     RoomLayout.BACKDROP_WIDTH,
@@ -251,7 +252,10 @@ internal class DepthScene(
     /** Rows [y] to `y + h` of the three bases, [shift] pixels over, the house's edges filled. */
     private fun strip(c: RoomCanvas, y: Int, h: Int, shift: Int) {
         val w = RoomLayout.BACKDROP_WIDTH
-        for (room in 0..2) c.image(BASES[room], 0, y, w, h, room * w + shift, y, w, h)
+        val rooms = HouseMap.current.rooms
+        for (room in rooms.indices) {
+            c.image(RoomImage.baseOf(rooms[room].id), 0, y, w, h, room * w + shift, y, w, h)
+        }
         edges(c, y, h, y, h, shift)
     }
 
@@ -261,10 +265,21 @@ internal class DepthScene(
      */
     private fun edges(c: RoomCanvas, sy: Int, sh: Int, dy: Int, dh: Int, shift: Int) {
         val w = RoomLayout.BACKDROP_WIDTH
+        val rooms = HouseMap.current.rooms
         if (shift > 0) {
-            c.image(BASES[0], 0, sy, 1, sh, 0, dy, shift, dh)
+            c.image(RoomImage.baseOf(rooms.first().id), 0, sy, 1, sh, 0, dy, shift, dh)
         } else if (shift < 0) {
-            c.image(BASES[2], w - 1, sy, 1, sh, RoomLayout.HOUSE_WIDTH + shift, dy, -shift, dh)
+            c.image(
+                RoomImage.baseOf(rooms.last().id),
+                w - 1,
+                sy,
+                1,
+                sh,
+                RoomLayout.HOUSE_WIDTH + shift,
+                dy,
+                -shift,
+                dh,
+            )
         }
     }
 
@@ -276,13 +291,9 @@ internal class DepthScene(
                 else -> return
             }
         val shift = rowShift(DepthTuning.FLOOR_LIGHT_ROW)
-        for (i in 0..1) {
-            FloorLight.paint(
-                c,
-                (RoomLayout.windows[i] - RoomLayout.HOUSE_X0 + shift).toFloat(),
-                hour,
-                colour,
-            )
+        val lit = HouseMap.current.floorLights
+        for (i in lit.indices) {
+            FloorLight.paint(c, (lit[i] - RoomLayout.HOUSE_X0 + shift).toFloat(), hour, colour)
         }
     }
 
@@ -488,7 +499,6 @@ internal class DepthScene(
         /** rgba(255,236,160,.16) and rgba(150,170,255,.12), as the classic room's window light. */
         const val DAY_LIGHT = (41 shl 24) or 0xFFECA0
         const val NIGHT_LIGHT = (31 shl 24) or 0x96AAFF
-        val BASES = arrayOf(RoomImage.LIVING_BASE, RoomImage.BEDROOM_BASE, RoomImage.KITCHEN_BASE)
 
         /** The darkest colour of a room's floor: the colour its furniture's shadows are. */
         fun floorShadowColour(base: ArgbImage): Int {

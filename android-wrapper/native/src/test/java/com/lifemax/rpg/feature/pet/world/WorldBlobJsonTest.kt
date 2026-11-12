@@ -61,7 +61,7 @@ class WorldBlobJsonTest {
                 "a drive missing" to { obj(it, "$ted.dr").remove("gr") },
                 "hunger saved here" to { obj(it, "$ted.dr").put("hu", 0.5) },
                 "an unknown surface" to { obj(it, "$ted.pos").put("s", "roof") },
-                "x out of the house" to { obj(it, "$ted.pos").put("x", 500) },
+                "x out of the house" to { obj(it, "$ted.pos").put("x", 700) },
                 "z past the glass" to { obj(it, "$ted.pos").put("z", 101) },
                 "dir 0" to { obj(it, "$ted.pos").put("dir", 0) },
                 "act out of form" to { obj(it, ted).put("act", "Sleep!") },
