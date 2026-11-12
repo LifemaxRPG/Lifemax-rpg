@@ -135,7 +135,10 @@ internal class ToyDirector(
     private fun walkTick(dt: Float): Boolean {
         val target = toy ?: return finish()
         if (!target.canBePicked) return finish()
-        dir = rig.dirTo(target.x)
+        // a cat within a pixel of the toy keeps the side it chose: dirTo answers the way it faces
+        // then, and the reach point behind it would flip with each turn it makes to walk there
+        // (the cat turned back and forth on the spot for ever)
+        if (Mathx.abs(target.x - rig.k.x) >= 1f) dir = rig.dirTo(target.x)
         val arrived = rig.walkTo(reachX(target), target.z, false, dt)
         if (arrived) {
             phase = ToyPhase.NOTICE

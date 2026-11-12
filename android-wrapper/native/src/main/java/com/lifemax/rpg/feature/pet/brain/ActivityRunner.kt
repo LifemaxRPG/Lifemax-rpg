@@ -420,7 +420,7 @@ class ActivityRunner(
             Lead.NONE -> if (spot == null) outOfHiding(script)
         }
         if (spot != null && !cut && !standsAt(spot)) {
-            when (routeTo(spot, script)) {
+            when (routeTo(spot, script, a === Eat)) {
                 Way.NONE -> spot = null
                 Way.TAKEN -> {
                     // gives up after a while: that activity cools down and another is picked (at
@@ -473,16 +473,16 @@ class ActivityRunner(
      * cannot get there, [Way.TAKEN] when the other cat holds the place or a perch on the way (a
      * reflex or a resume, which the selector did not price, can meet that).
      */
-    private fun routeTo(spot: Spot, script: Script): Way {
+    private fun routeTo(spot: Spot, script: Script, meal: Boolean): Way {
         if (exec.surface == SurfaceId.FLOOR && spot.onFloor) {
-            if (!m.book.free(m.slot, spot, spot.x, 0)) return Way.TAKEN
+            if (!m.book.free(m.slot, spot, spot.x, 0, meal)) return Way.TAKEN
             script.approach(spot.x, spot.z)
             m.book.claim(m.slot, spot, spot.x, 0)
             return Way.CLEAR
         }
         val r = exec.route(spot.surface, spot.x) ?: return Way.NONE
         val passes = SpotBook.passesOf(r.leaps, spot.surface)
-        if (!m.book.free(m.slot, spot, spot.x, passes)) return Way.TAKEN
+        if (!m.book.free(m.slot, spot, spot.x, passes, meal)) return Way.TAKEN
         script.route(r.steps)
         if (spot.onFloor) script.approach(spot.x, spot.z)
         m.book.claim(m.slot, spot, spot.x, passes)

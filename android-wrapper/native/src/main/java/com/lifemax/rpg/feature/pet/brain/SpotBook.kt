@@ -71,12 +71,18 @@ class SpotBook(private val cats: Int) {
     /** The place cat [slot] is still physically at, or null. */
     fun stayOf(slot: Int): Spot? = staySpot[slot].let { if (it == NONE) null else Spots.all[it] }
 
-    /** True when [spot] (at [x]) is free for cat [slot] whose route there lands on [passes]. */
-    fun free(slot: Int, spot: Spot, x: Float, passes: Int): Boolean {
+    /**
+     * True when [spot] (at [x]) is free for cat [slot] whose route there lands on [passes]. A
+     * [meal] (the cat is going to eat at its bowl) is not kept from the bowl by the other cat
+     * standing or heading for a place near it: it may be asleep, or about to go to its own bowl,
+     * and the cat that is fed must get up and go; the overlap guard (CatWorld.keepApart) sends the
+     * other away from the bowl's side.
+     */
+    fun free(slot: Int, spot: Spot, x: Float, passes: Int, meal: Boolean = false): Boolean {
         for (o in 0 until cats) {
             if (o == slot) continue
-            if (!clear(spot, x, claimSpot[o], claimX[o])) return false
-            if (!clear(spot, x, staySpot[o], stayX[o])) return false
+            if (!meal && !clear(spot, x, claimSpot[o], claimX[o])) return false
+            if (!meal && !clear(spot, x, staySpot[o], stayX[o])) return false
             if (spot.single && (passMask[o] and bit(spot.surface)) != 0) return false
             if ((passes and held(o)) != 0) return false
             // two cats do not cross over the same perch at the same time (they now move a lot)
