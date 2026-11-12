@@ -44,6 +44,7 @@ function script({ save, theme, settingsCaps, shadow } = {}) {
       LiveWeb: { status: async () => ({ installedBuild: 290, activeBuild: 0, nativeApi: 28 }) },
       BackupFolder: { pickFolder: async () => ({ picked: false }) },
       DeviceBackup: { get: async () => ({ allowed: false }), set: async (a) => ({ allowed: !!a.allowed }) },
+      FoodData: { check: async () => ({ foods: 2, bytes: 100, sha256: "0".repeat(64) }), download: async () => ({}), read: async () => ({ data: "", done: true }), discard: async () => ({}), addListener: () => Promise.resolve({ remove() {} }) },
       CalendarSync: { request: async () => ({ granted: true }), status: async () => ({ granted: true }), events: async () => ({ events: [] }) },
       NavHaptics: { pulse: ok, pattern: ok },
       BiometricLock: { status: async () => ({ available: true }) },

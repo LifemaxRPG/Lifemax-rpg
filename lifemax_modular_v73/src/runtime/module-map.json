@@ -449,8 +449,8 @@
   },
   {
    "file": "src/runtime/segments/08-runtime.js",
-   "bytes": 27532,
-   "statement_count": 60,
+   "bytes": 28155,
+   "statement_count": 61,
    "tags": [
     "nutrition",
     "pet",
@@ -497,6 +497,7 @@
     "usdaStatus",
     "usdaCount",
     "importUsdaFoods",
+    "importUsdaStream",
     "renderMealHits",
     "mealSearch",
     "selectMealFood",
@@ -3305,8 +3306,8 @@
   },
   {
    "file": "src/runtime/segments/50-food.js",
-   "bytes": 41312,
-   "statement_count": 85,
+   "bytes": 44020,
+   "statement_count": 89,
    "tags": [
     "nutrition",
     "food"
@@ -3394,7 +3395,12 @@
     "fv2GoalLive",
     "fv2Preset",
     "fv2SaveGoal",
+    "usdaPlugin",
+    "usdaDlBusy",
+    "usdaNote",
     "fv2UsdaRender",
+    "usdaB64Bytes",
+    "downloadUsdaFoods",
     "fv2UsdaClear"
    ]
   },

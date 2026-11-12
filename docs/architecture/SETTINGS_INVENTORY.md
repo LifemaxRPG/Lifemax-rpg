@@ -77,7 +77,7 @@ Settings handlers that are also reached from other tabs: the Journal header "Bac
 | Journal lock card | Android or browser; on or off; message after a change | `48-journal-lock.js:54-76` |
 | Haptics card | haptics off (strength and try buttons disabled); strength `light`/`normal`/`strong`/`max`; motor probe `null`/`true`/`false` | `50-haptics.js:11,52-67,72` |
 | Voice card | voice on/off; fallback log empty or not (Export/Clear disabled); cloud rows only when `localStorage.lifemax_gemini_ui==='1'` | `45-voice.js:583-590`, `50-voice-fallback.js:96-106`, `50-voice-gemini.js:80-95` |
-| Food database card | "Checking…", count, "Not imported yet", import progress, failure text; Remove disabled at 0; Remove armed for 4 s after the first tap | `50-food.js:243-254`, `08-runtime.js:235-245` |
+| Food database card | "Checking…", count, "Not imported yet", download and import progress, failure text, Download button (Android only); Remove disabled at 0; Remove armed for 4 s after the first tap | `50-food.js:243-254`, `08-runtime.js:235-245` |
 | Guided workout card | trainer pack loaded or not (Remove shown only when loaded) | `50-gym3d.js:234` |
 | Developer mode | `state.devMode` shows `#devModeTools` | `04-runtime.js:207-220` |
 | Decay inputs | from `getDecay()` (defaults on, grace 4, rate 3) | `05-runtime.js:43,63` |
@@ -202,7 +202,7 @@ Error note (`lmaWidgetMsg`), "N on your home screen" or "Not on your home screen
 
 ### 3.16 Food database (`#usdaSettingsBody`, `50-food.js:243-247`)
 
-"Branded foods (USDA)" text, `#usdaImportStatus` ("USDA database ready · N foods stored on this device" or "Not imported yet · optional"; progress "Importing USDA foods… N processed"), "Import file", "Remove". Count from `usdaCount()` (`08-runtime.js:235`), IndexedDB `lifemax_usda_branded_v1`.
+"Branded foods (USDA)" text, `#usdaImportStatus` ("USDA database ready · N foods stored on this device" or "Not imported yet · optional"; progress "Importing USDA foods… N processed"; "Downloading from GitHub… N%"; a failed download keeps its words until the next try), "Download" (`#usdaDownloadBtn`, only when the Android `FoodData` plugin exists, with a hint "Download fetches the USDA branded foods from GitHub (about 18 MB) and imports them."), "Import file", "Remove". While a download runs all three buttons are disabled. Count from `usdaCount()` (`08-runtime.js:235`), IndexedDB `lifemax_usda_branded_v1`.
 
 ### 3.17 Automatic backup (`#lmaBakBody`, `35-android-upkeep.js:139-154`)
 
@@ -382,7 +382,8 @@ Columns: handler (file:line), reads, writes, side effects. "Save" means `save()`
 
 | Control | Handler | Writes | Side effects |
 |---|---|---|---|
-| Import file | hidden `#usdaImportFile` → `importUsdaFoods(event).then(fv2UsdaRender)` (`08-runtime.js:237-245`) | IndexedDB `lifemax_usda_branded_v1` (batches of 400) | streams a gzip through `DecompressionStream`; progress every 5,000 foods; toast; can run for minutes on a large file **(duration unverified)** |
+| Download (Android only; hidden without the `FoodData` plugin) | `downloadUsdaFoods()` (`50-food.js`) | IndexedDB `lifemax_usda_branded_v1` through `importUsdaStream` | `FoodData.download()` stages the file from the GitHub release `usda-foods` in the app cache; the page reads it with `FoodData.read` (1 MiB pieces) into the same importer as Import file, then `FoodData.discard()` (also after a failure); progress text, toast; one run at a time; native Settings draws it as a button named "Download the USDA branded foods from GitHub" and hands the tap to the page like Import file **(real download unverified on a device)** |
+| Import file | hidden `#usdaImportFile` → `importUsdaFoods(event).then(fv2UsdaRender)` (`08-runtime.js:235-250`, `importUsdaFoods` hands `file.stream()` to `importUsdaStream`) | IndexedDB `lifemax_usda_branded_v1` (batches of 400) | streams a gzip through `DecompressionStream`; progress every 5,000 foods; toast; can run for minutes on a large file **(duration unverified)** |
 | Remove (tap twice within 4 s) | `fv2UsdaClear(btn)` (`50-food.js:249-254`) | `indexedDB.deleteDatabase` | clears the search cache, toast |
 
 ### 4.13 Health sync

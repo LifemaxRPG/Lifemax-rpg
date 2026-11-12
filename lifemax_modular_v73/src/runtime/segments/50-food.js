@@ -279,15 +279,41 @@ function fv2SaveGoal(){const n=id=>(document.getElementById(id)||{}).value;if(!f
  document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&fv2S().sh.open)fv2Back()})})();
 
 /* ---------- Settings: the optional USDA branded-foods database (import, count, remove). The import button used to live on the old Food page. ---------- */
+/* the FoodData plugin (Android only): downloads the USDA file from GitHub, which the page cannot fetch itself. Without it the Download button is not shown. */
+function usdaPlugin(){try{return lmaPlugin('FoodData')}catch(e){return null}}
+let usdaDlBusy=false,usdaNote='';/* the words of a failed download, kept on the card until the next try or Remove */
 function fv2UsdaRender(){
   const el=document.getElementById('usdaSettingsBody');if(!el)return;
-  el.innerHTML='<div class="settingsline"><div style="flex:1"><strong>Branded foods (USDA)</strong><div class="muted" style="font-size:12px">An optional database of packaged foods, kept on this device only. Choose the compact USDA <b>.jsonl.gz</b> file once, then search it from Food, Add food.</div></div></div>'
-   +'<div class="settingsline"><div style="flex:1;min-width:0"><span id="usdaImportStatus" class="muted" style="font-size:12.5px">Checking…</span></div><button type="button" class="btn small" onclick="document.getElementById(\'usdaImportFile\').click()">Import file</button><input id="usdaImportFile" type="file" accept=".gz,application/gzip" style="display:none" onchange="importUsdaFoods(event).then(fv2UsdaRender)"><button type="button" id="usdaRemoveBtn" class="btn small secondary" style="margin-left:6px" onclick="fv2UsdaClear(this)">Remove</button></div>';
-  usdaCount().then(function(n){usdaStatus(n?'USDA database ready · '+n.toLocaleString()+' foods stored on this device':'Not imported yet · optional');const b=document.getElementById('usdaRemoveBtn');if(b)b.disabled=!n})
+  const run=usdaDlBusy&&document.getElementById('usdaImportStatus'),words=run?run.textContent:null;/* a run in progress keeps its words */
+  const dl=usdaPlugin()?'<button type="button" id="usdaDownloadBtn" class="btn small" aria-label="Download the USDA branded foods from GitHub"'+(usdaDlBusy?' disabled':'')+' onclick="downloadUsdaFoods()">Download</button>':'';
+  el.innerHTML='<div class="settingsline"><div style="flex:1"><strong>Branded foods (USDA)</strong><div class="muted" style="font-size:12px">An optional database of packaged foods, kept on this device only. Choose the compact USDA <b>.jsonl.gz</b> file once, then search it from Food, Add food.</div>'+(dl?'<div class="muted" style="font-size:12px;margin-top:4px">Download fetches the USDA branded foods from GitHub (about 18 MB) and imports them.</div>':'')+'</div></div>'
+   +'<div class="settingsline"><div style="flex:1;min-width:0"><span id="usdaImportStatus" class="muted" style="font-size:12.5px">Checking…</span></div>'+dl+'<button type="button" id="usdaImportBtn" class="btn small'+(dl?' secondary':'')+'" style="margin-left:6px"'+(usdaDlBusy?' disabled':'')+' onclick="document.getElementById(\'usdaImportFile\').click()">Import file</button><input id="usdaImportFile" type="file" accept=".gz,application/gzip" style="display:none" onchange="importUsdaFoods(event).then(fv2UsdaRender)"><button type="button" id="usdaRemoveBtn" class="btn small secondary" style="margin-left:6px" onclick="fv2UsdaClear(this)">Remove</button></div>';
+  if(words)usdaStatus(words);
+  usdaCount().then(function(n){if(!usdaDlBusy)usdaStatus(usdaNote||(n?'USDA database ready · '+n.toLocaleString()+' foods stored on this device':'Not imported yet · optional'));const b=document.getElementById('usdaRemoveBtn');if(b)b.disabled=!n||usdaDlBusy})
+}
+function usdaB64Bytes(s){const bin=atob(s),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
+/* Download from GitHub: the plugin stages the checked file, the page reads it back in 1 MiB pieces through a ReadableStream into the
+   same importer as a chosen file, then the staged file is discarded, whatever happened. A failed run keeps what was already stored. */
+async function downloadUsdaFoods(){
+  const P=usdaPlugin();if(!P||usdaDlBusy)return;
+  usdaDlBusy=true;usdaNote='';['usdaDownloadBtn','usdaImportBtn','usdaRemoveBtn'].forEach(function(id){const b=document.getElementById(id);if(b)b.disabled=true});
+  let sub=null;
+  try{
+    usdaStatus('Downloading from GitHub… 0%');
+    try{sub=P.addListener&&P.addListener('progress',function(e){if(e&&e.pct>=0)usdaStatus('Downloading from GitHub… '+Math.round(e.pct)+'%')})}catch(e){}
+    try{await P.download()}catch(err){usdaNote=(err&&err.message)||'Could not reach GitHub. Check the connection and try again.';usdaStatus(usdaNote);toast('USDA download failed');return}
+    let offset=0;
+    const source=new ReadableStream({async pull(ctrl){const r=await P.read({offset:offset,length:1048576});const b=usdaB64Bytes((r&&r.data)||'');if(b.length){ctrl.enqueue(b);offset+=b.length}if(!b.length||(r&&r.done))ctrl.close()}});
+    if(!await importUsdaStream(source)){const st=document.getElementById('usdaImportStatus');usdaNote=st?st.textContent:''}
+  }finally{
+    try{Promise.resolve(sub).then(function(h){if(h&&h.remove)h.remove()}).catch(function(){})}catch(e){}
+    try{await P.discard()}catch(e){}
+    usdaDlBusy=false;fv2UsdaRender();
+  }
 }
 function fv2UsdaClear(b){
   if(!b._arm){b._arm=1;b.textContent='Tap again to remove';setTimeout(function(){b._arm=0;if(b.isConnected)b.textContent='Remove'},4000);return}
-  b._arm=0;
+  b._arm=0;usdaNote='';
   const req=indexedDB.deleteDatabase(USDA_DB_NAME);
   req.onsuccess=req.onerror=req.onblocked=function(){try{for(const k in usdaFoodsCache)delete usdaFoodsCache[k]}catch(e){}toast('USDA database removed');fv2UsdaRender()}
 }

@@ -1721,6 +1721,9 @@
  "dismissFeatureTip": [
   "src/runtime/segments/13-runtime.js"
  ],
+ "downloadUsdaFoods": [
+  "src/runtime/segments/50-food.js"
+ ],
  "drillItems": [
   "src/runtime/segments/06-runtime.js"
  ],
@@ -3180,6 +3183,9 @@
   "src/runtime/segments/04-runtime.js"
  ],
  "importUsdaFoods": [
+  "src/runtime/segments/08-runtime.js"
+ ],
+ "importUsdaStream": [
   "src/runtime/segments/08-runtime.js"
  ],
  "initOnboarding": [
@@ -7786,14 +7792,26 @@
  "updatePreview": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "usdaB64Bytes": [
+  "src/runtime/segments/50-food.js"
+ ],
  "usdaCount": [
   "src/runtime/segments/08-runtime.js"
  ],
  "usdaDb": [
   "src/runtime/segments/08-runtime.js"
  ],
+ "usdaDlBusy": [
+  "src/runtime/segments/50-food.js"
+ ],
  "usdaFoodsCache": [
   "src/runtime/segments/08-runtime.js"
+ ],
+ "usdaNote": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "usdaPlugin": [
+  "src/runtime/segments/50-food.js"
  ],
  "usdaStatus": [
   "src/runtime/segments/08-runtime.js"

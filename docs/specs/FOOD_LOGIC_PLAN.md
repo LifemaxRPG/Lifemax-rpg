@@ -90,6 +90,8 @@ object per line, `.gz` suffix required. Fields used: `id` (string, required), `n
 (per 100 g), `serving` (number) with `servingUnit` (default `g`) and `household` (label). `fib`, `sug`, `na` are read by `scaleFood` if present;
 whether the real file carries them is **unverified**. A line that is blank, not JSON, or lacks `id` or `n` is skipped without a count.
 
+**Where the file comes from.** The USDA file is now the asset `usda-branded-foods.jsonl.gz` of the GitHub release `usda-foods` (with a manifest `usda-branded-foods.json`: foods, bytes, sha256), built by `tools/build_usda_condensed.py` and published by the workflow "Publish USDA foods". Settings, Data & advanced, Food database has a Download button (Android only) that fetches it through the native `FoodData` plugin (GitHub-only host rules, 120 MB cap, size and SHA-256 checked against the manifest) and feeds it to the same importer as Import file (`importUsdaStream`); Import file stays for a file picked by hand. The real download on a phone is unverified.
+
 **Import rules** (US-1..): (1) `port` = `[{l: household or '1 serving', g: serving}]` only when `serving > 0` and the unit lowercased is `g`;
 otherwise `[]`. (2) `terms` = the set of `[a-z0-9]+` runs in `lowercase(n + ' ' + brand + ' ' + cat)`; any other character splits a word and
 is dropped. (3) Records are `put` by `id`, so a re-import overwrites matching ids and never removes old ones. (4) Batches of 400, progress

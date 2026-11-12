@@ -78,6 +78,9 @@ const HELPERS = `
         : k.kind === 'select' ? 'select:' + k.value + ':' + k.options.map(o => o.value + '=' + o.label).join(',')
         : k.kind === 'button' ? 'button:' + k.label + ':' + k.enabled : 'field:' + k.value);
     out.controlsMatch = pageCards.map((c, i) => [s.cards[i].id, JSON.stringify(pageControls(c)) === JSON.stringify(projControls(s.cards[i]))]).filter(x => !x[1]).map(x => x[0]);
+    // the Food database card carries the Download button like its other buttons: drawn, named for TalkBack, handed to the page (it runs there)
+    out.foodDownload = (k => !!k && k.kind === 'button' && k.label === 'Download' && /GitHub/.test(k.description) && k.op === 'reveal' && k.enabled)(controls(s).find(k => k.id === '#usdaDownloadBtn'))
+      && card(s, 'usdaCard').rows.flatMap(r => r.controls || []).map(k => k.label).join('|') === 'Download|Import file|Remove';
     out.controlsDetail = out.controlsMatch.length ? out.controlsMatch.map(id => { const i = s.cards.findIndex(c => c.id === id); return [pageControls(pageCards[i]), projControls(s.cards[i])] }) : null;
     // words only the renderers know, as the page shows them
     out.words = {
@@ -121,6 +124,7 @@ const HELPERS = `
   ok('the head and the categories are the page\'s', r.head && r.categories, r);
   ok('every card, in the page\'s order, with its title and category', r.cards, r.cardCount);
   ok('every row is worded as the page words it (title and hint)', r.rowsMatch && r.rowsMatch.length === 0, r.rowsMatch);
+  ok('the Food database card draws the Download button, named for TalkBack, like its other buttons', r.foodDownload === true);
   ok('every control shows the page\'s state, options and words', r.controlsMatch && r.controlsMatch.length === 0, r.controlsDetail);
   for (const [k, v] of Object.entries(r.words || {})) ok('words the renderers write: ' + k, v, r.words);
   ok('the easy settings are commands; a switch asking Android first is a delegation to turn on; the rest are delegations', r.ops.bound && r.ops.permission && r.ops.delegated, r.ops);

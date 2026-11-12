@@ -236,12 +236,19 @@ async function importUsdaFoods(ev){
  const file=ev.target.files&&ev.target.files[0];ev.target.value='';if(!file)return;
  if(!('DecompressionStream' in window)){usdaStatus('This browser cannot import .gz files. Try current Chrome.');return}
  if(!/\.gz$/i.test(file.name)){usdaStatus('Choose the compact USDA .jsonl.gz file.');return}
- let db;try{db=await usdaDb();usdaStatus('Opening compressed USDA file…');const txDone=tx=>new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error||new Error('Import cancelled'))});
- const stream=file.stream().pipeThrough(new DecompressionStream('gzip'));const reader=stream.getReader();const decoder=new TextDecoder();let carry='',batch=[],count=0,lastUpdate=0;
+ return importUsdaStream(file.stream());
+}
+/* Imports a stream of gzip bytes (a chosen file, or the pieces the FoodData plugin downloaded) into the foods database. Says what
+   it is doing in #usdaImportStatus and resolves true when every food is stored, false (after saying why) when it is not; the foods
+   stored before a failure stay (they are put by id, so running it again is safe). */
+async function importUsdaStream(source){
+ if(!('DecompressionStream' in window)){usdaStatus('This browser cannot import .gz files. Try current Chrome.');return false}
+ let db,reader;try{db=await usdaDb();usdaStatus('Opening compressed USDA file…');const txDone=tx=>new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error||new Error('Import cancelled'))});
+ const stream=source.pipeThrough(new DecompressionStream('gzip'));reader=stream.getReader();const decoder=new TextDecoder();let carry='',batch=[],count=0,lastUpdate=0;
  async function flush(){if(!batch.length)return;const tx=db.transaction('foods','readwrite');const st=tx.objectStore('foods');for(const f of batch){f.terms=[...new Set((f.n+' '+(f.brand||'')+' '+(f.cat||'')).toLowerCase().match(/[a-z0-9]+/g)||[])];st.put(f)}await txDone(tx);batch=[]}
  while(true){const {value,done}=await reader.read();if(done)break;carry+=decoder.decode(value,{stream:true});let lines=carry.split('\n');carry=lines.pop()||'';for(const line of lines){if(!line.trim())continue;try{const f=JSON.parse(line);if(!f.id||!f.n)continue;f.port=(f.serving>0&&String(f.servingUnit||'g').toLowerCase()==='g')?[{l:f.household||'1 serving',g:f.serving}]:[];batch.push(f);count++;if(batch.length>=400)await flush()}catch(e){}}if(count-lastUpdate>=5000){lastUpdate=count;usdaStatus('Importing USDA foods… '+count.toLocaleString()+' processed');}}
- carry+=decoder.decode();if(carry.trim()){try{const f=JSON.parse(carry);if(f.id&&f.n){f.terms=[...new Set((f.n+' '+(f.brand||'')+' '+(f.cat||'')).toLowerCase().match(/[a-z0-9]+/g)||[])];f.port=(f.serving>0&&String(f.servingUnit||'g').toLowerCase()==='g')?[{l:f.household||'1 serving',g:f.serving}]:[];batch.push(f)}}catch(e){}}await flush();db.close();const total=await usdaCount();usdaStatus('USDA database ready · '+total.toLocaleString()+' foods stored on this device');toast('USDA food database imported');mealSearch();
- }catch(err){if(db)db.close();console.error(err);usdaStatus('Import did not finish: '+(err.message||'storage or file error'));toast('USDA import failed — check available device storage')}
+ carry+=decoder.decode();if(carry.trim()){try{const f=JSON.parse(carry);if(f.id&&f.n){f.terms=[...new Set((f.n+' '+(f.brand||'')+' '+(f.cat||'')).toLowerCase().match(/[a-z0-9]+/g)||[])];f.port=(f.serving>0&&String(f.servingUnit||'g').toLowerCase()==='g')?[{l:f.household||'1 serving',g:f.serving}]:[];batch.push(f)}}catch(e){}}await flush();db.close();const total=await usdaCount();usdaStatus('USDA database ready · '+total.toLocaleString()+' foods stored on this device');toast('USDA food database imported');mealSearch();return true
+ }catch(err){if(reader)reader.cancel().catch(function(){});if(db)db.close();console.error(err);usdaStatus('Import did not finish: '+(err.message||'storage or file error'));toast('USDA import failed — check available device storage');return false}
 }
 function renderMealHits(hits){const box=document.getElementById('mealSearchResults');if(!box)return;box.classList.add('show');box.innerHTML=hits.length?hits.map(f=>`<button type="button" class="meal-hit ${mealPick&&mealPick.id===f.id?'on':''}" onclick="selectMealFood('${f.id}')">${mealGlyph(f.cat,f.n,'mh-ic')}<span class="mh-txt"><strong>${esc(f.n)}</strong><small>${esc(f.cat||'Food')}${f.brand?' · '+esc(f.brand):''} · ${foodEnergyLabel(f)} / 100g · P ${f.p||0} · C ${f.c||0} · F ${f.f||0}</small></span></button>`).join(''):'<div class="empty" style="padding:16px">No matches. Add a custom food.</div>'}
 async function mealSearch(){
