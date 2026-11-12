@@ -184,7 +184,8 @@ jobs:
           git push origin HEAD:codex/director-dial-controls
 
       # Explicit, single-use baseline maintenance for the screenshots that show cats (the sprite's
-      # drawing changed). Same rule as above: development branch only, ordinary pushes only verify.
+      # drawing changed), and for the first recording of a new cat screen class such as PetCatteryScreenshotTest.
+      # Same rule as above: development branch only, ordinary pushes only verify.
       - name: Refresh cat visual references
         if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-cat-snapshots]')
         working-directory: android-wrapper/android
