@@ -112,5 +112,7 @@ check('DownloadRules.FOOD_MAX_BYTES' in plugin and 'KeepAwake.start' in plugin a
 check('FoodDataFile.verify(' in plugin and plugin.count('file.delete()') >= 2, 'the file is verified, and deleted on any failure')
 check('registerPlugin(FoodDataPlugin.class)' in main, 'FoodDataPlugin is registered in MainActivity')
 check(all(f'public void {m}(' in plugin for m in ['check', 'download', 'read', 'discard']), 'check, download, read and discard exist')
+# Capacitor's getLong answers its default for a number the JSON parser made an Integer (every offset and length under 2 GB), so a 1 MiB read arrived as 0 bytes on the phone
+check('call.getLong' not in plugin and 'optLong("offset"' in plugin and 'optLong("length"' in plugin, 'read takes its numbers with optLong, never call.getLong')
 if fails:
     raise SystemExit(f'{len(fails)} failed')

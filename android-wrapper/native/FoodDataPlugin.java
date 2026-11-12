@@ -110,7 +110,10 @@ public class FoodDataPlugin extends Plugin {
     @PluginMethod
     public void read(PluginCall call) {
         try {
-            FoodDataFile.Chunk c = FoodDataFile.read(staged(), call.getLong("offset", 0L), call.getLong("length", 0L));
+            /* optLong, not the plugin call's own getLong: Capacitor's getLong answers its default for a number the JSON parser made an Integer,
+               which every offset and length under 2 GB is, so a read of 1 MiB arrived as a read of 0 bytes */
+            JSObject args = call.getData();
+            FoodDataFile.Chunk c = FoodDataFile.read(staged(), args.optLong("offset", 0L), args.optLong("length", 0L));
             JSObject ret = new JSObject();
             ret.put("data", Base64.encodeToString(c.data, Base64.NO_WRAP));
             ret.put("done", c.done);
