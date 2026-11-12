@@ -1,0 +1,68 @@
+name: Publish USDA foods
+
+# Builds the Food database file the app downloads (Settings > Data & advanced > Food database) from the official USDA
+# FoodData_Central branded-foods download, and attaches it to the release "usda-foods". Run it by hand (Actions > Publish USDA
+# foods > Run workflow) when USDA publishes a new file; the app always fetches the same two links:
+#   https://github.com/<repo>/releases/download/usda-foods/usda-branded-foods.jsonl.gz
+#   https://github.com/<repo>/releases/download/usda-foods/usda-branded-foods.json     (what is in it: count, size, sha256, source)
+# This release is separate from "latest" (the app builds), which the Android build never touches.
+
+on:
+  workflow_dispatch:
+    inputs:
+      usda_url:
+        description: 'The branded-foods .zip on https://fdc.nal.usda.gov/download-datasets'
+        required: true
+        default: 'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_branded_food_json_2026-10-29.zip'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: usda-foods
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download the USDA file
+        env:
+          USDA_URL: ${{ inputs.usda_url }}
+        run: |
+          case "$USDA_URL" in https://fdc.nal.usda.gov/*.zip) ;; *) echo "::error::Only a .zip from https://fdc.nal.usda.gov/ is accepted."; exit 1;; esac
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 15 --retry-all-errors --connect-timeout 20 \
+            "$USDA_URL" -o "$RUNNER_TEMP/branded.zip"
+          ls -l "$RUNNER_TEMP/branded.zip"
+
+      - name: Condense it
+        env:
+          USDA_URL: ${{ inputs.usda_url }}
+        run: |
+          mkdir -p out
+          python3 tools/build_usda_condensed.py "$RUNNER_TEMP/branded.zip" out/usda-branded-foods.jsonl.gz out/usda-branded-foods.json --source-url "$USDA_URL"
+          python3 - <<'PY'
+          import json
+          m = json.load(open('out/usda-branded-foods.json'))
+          print(m['foods'], 'foods,', m['bytes'], 'bytes')
+          # A short or empty result means USDA changed its file layout: stop instead of publishing it.
+          assert m['foods'] > 300000, 'far fewer foods than expected: ' + str(m['foods'])
+          assert m['stats'].get('bad_json', 0) < 50, 'too many unreadable records'
+          PY
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          USDA_URL: ${{ inputs.usda_url }}
+        run: |
+          NOTES="USDA branded foods for the app's Food database (Settings > Data & advanced > Food database > Download). Built by tools/build_usda_condensed.py from $USDA_URL. Details: usda-branded-foods.json."
+          if gh release view usda-foods >/dev/null 2>&1; then
+            gh release edit usda-foods --notes "$NOTES" --latest=false
+          else
+            gh release create usda-foods --title "USDA branded foods (data)" --notes "$NOTES" --latest=false --target "$GITHUB_SHA"
+          fi
+          gh release upload usda-foods out/usda-branded-foods.jsonl.gz out/usda-branded-foods.json --clobber
+          gh release view usda-foods --json assets --jq '.assets[] | .name + " " + (.size|tostring)'
