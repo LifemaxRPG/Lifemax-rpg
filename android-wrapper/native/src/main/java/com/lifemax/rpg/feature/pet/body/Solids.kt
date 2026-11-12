@@ -1,12 +1,17 @@
 package com.lifemax.rpg.feature.pet.body
 
+import com.lifemax.rpg.feature.pet.body.SurfaceId.BENCH
 import com.lifemax.rpg.feature.pet.body.SurfaceId.BOOKCASE
 import com.lifemax.rpg.feature.pet.body.SurfaceId.COUCH
 import com.lifemax.rpg.feature.pet.body.SurfaceId.COUNTER
+import com.lifemax.rpg.feature.pet.body.SurfaceId.DESK
 import com.lifemax.rpg.feature.pet.body.SurfaceId.FRIDGE
 import com.lifemax.rpg.feature.pet.body.SurfaceId.MID
+import com.lifemax.rpg.feature.pet.body.SurfaceId.SHELF
+import com.lifemax.rpg.feature.pet.body.SurfaceId.SINK
 import com.lifemax.rpg.feature.pet.body.SurfaceId.TABLE
 import com.lifemax.rpg.feature.pet.body.SurfaceId.TOP
+import com.lifemax.rpg.feature.pet.body.SurfaceId.TUB
 
 /**
  * Furniture a flying cat cannot pass through, as rectangles in room pixels (world x, rows from
@@ -70,6 +75,31 @@ internal object Solids {
     /** Counter 60..183 with the kettle on it, kitchen (house x 192): worktop row 90. */
     private val COUNTER_BODY = Solid("counter", 252f, 376f, 90f, 128f, owned(COUNTER))
 
+    // The pieces of the rooms that open with the cats' bond (layers_ext.json; house x = the room's
+    // x0: sun 384, study -384, bath -576). A solid is there whether or not its room is open: no
+    // leap of a cat in another room comes near it.
+
+    /** The Sunroom's window bench, sun x 40..144: its cushions are at row 100. */
+    private val SUN_BENCH = Solid("sun_bench", 424f, 528f, 100f, 128f, owned(BENCH))
+
+    /** The wicker chair beside it, sun x 142..184. */
+    private val WICKER_CHAIR = Solid("wicker_chair", 526f, 568f, 82f, 128f, 0)
+
+    /** The Study's bookshelf, study x 8..44: top row 34, reached from the desk. */
+    private val STUDY_SHELF = Solid("study_shelf", -376f, -340f, 34f, 128f, owned(SHELF))
+
+    /** The desk with its lamp, study x 52..148: the top is row 96, the lamp reaches row 84. */
+    private val DESK_BODY = Solid("desk", -332f, -236f, 84f, 128f, owned(DESK))
+
+    /** The desk chair, study x 148..176. */
+    private val DESK_CHAIR = Solid("desk_chair", -236f, -208f, 84f, 128f, 0)
+
+    /** The claw-foot tub with its tap, bath x 4..104: the rim is row 92. */
+    private val TUB_BODY = Solid("bathtub", -572f, -472f, 88f, 128f, owned(TUB))
+
+    /** The sink cabinet, bath x 122..178: the basin is row 80, the tap reaches row 72. */
+    private val SINK_BODY = Solid("sink_cabinet", -454f, -398f, 72f, 122f, owned(SINK))
+
     /** Every solid. */
     val all: Array<Solid> =
         arrayOf(
@@ -81,6 +111,13 @@ internal object Solids {
             TREE,
             FRIDGE_BODY,
             COUNTER_BODY,
+            SUN_BENCH,
+            WICKER_CHAIR,
+            STUDY_SHELF,
+            DESK_BODY,
+            DESK_CHAIR,
+            TUB_BODY,
+            SINK_BODY,
         )
 
     /**

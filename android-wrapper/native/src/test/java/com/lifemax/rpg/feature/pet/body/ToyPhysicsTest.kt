@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.pet.body
 
+import com.lifemax.rpg.feature.pet.room.HouseMap
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -90,9 +92,15 @@ class ToyPhysicsTest {
         assertTrue("the spring bounced several times", peaks >= 3)
     }
 
-    /** A toy dropped onto each surface rests on it, at the right height. */
+    @After fun backToTheCoreRooms() = HouseMap.reset()
+
+    /**
+     * A toy dropped onto each surface rests on it, at the right height (the rooms that open with
+     * the cats' bond are open, or a toy over their furniture would be held at the old walls).
+     */
     @Test
     fun landsOnEverySurfaceItIsOver() {
+        HouseMap.select(setOf("sun", "study", "bath"), force = true)
         for (id in SurfaceId.entries) {
             if (id == SurfaceId.FLOOR || World.surface(id).prop) continue
             val s = World.surface(id)

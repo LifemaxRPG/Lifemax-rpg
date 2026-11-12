@@ -52,6 +52,10 @@
     bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.37
     sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.32
     sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 39  0.80s  effort 0.55
+    desk -> shelf  LEAP rise 62  off -326  on -347  run 0  apex 66  0.63s  effort 0.93
+    shelf -> desk  DROP rise -62  off -346  on -325  run 0  apex 6  0.66s  effort 0.74
+    tub -> sink  LEAP rise 12  off -496  on -447  run 10  apex 20  0.45s  effort 0.74
+    sink -> tub  DROP rise -12  off -448  on -497  run 0  apex 48  0.91s  effort 0.67
 == kitten0: apex 40.8 (+1.8 run), reach 46.5 (+86.4 run), max drop 50.4, max rise 38.6
   floor -> bed: floor > bed
   floor -> couch: floor > couch
@@ -237,6 +241,9 @@
     bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.46
     sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.40
     sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 50  0.89s  effort 0.87
+    shelf -> desk  DROP rise -62  off -346  on -325  run 0  apex 6  0.66s  effort 0.92
+    tub -> sink  LEAP rise 12  off -496  on -447  run 10  apex 22  0.48s  effort 0.73
+    sink -> tub  DROP rise -12  off -448  on -497  run 10  apex 10  0.48s  effort 0.73
 == kitten4: apex 58.9 (+2.6 run), reach 55.9 (+86.4 run), max drop 72.8, max rise 57.5
   floor -> bed: floor > bed
   floor -> couch: floor > couch
@@ -287,6 +294,9 @@
     bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.43
     sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.37
     sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 46  0.86s  effort 0.74
+    shelf -> desk  DROP rise -62  off -346  on -325  run 0  apex 6  0.66s  effort 0.85
+    tub -> sink  LEAP rise 12  off -496  on -447  run 10  apex 21  0.47s  effort 0.73
+    sink -> tub  DROP rise -12  off -448  on -497  run 10  apex 9  0.47s  effort 0.73
 == kitten5: apex 63.5 (+2.8 run), reach 58.0 (+86.4 run), max drop 78.4, max rise 62.3
   floor -> bed: floor > bed
   floor -> couch: floor > couch
@@ -340,6 +350,10 @@
     bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.40
     sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.34
     sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 42  0.82s  effort 0.64
+    desk -> shelf  LEAP rise 62  off -326  on -347  run 17  apex 66  0.63s  effort 1.00
+    shelf -> desk  DROP rise -62  off -346  on -325  run 0  apex 6  0.66s  effort 0.79
+    tub -> sink  LEAP rise 12  off -496  on -444  run 10  apex 22  0.49s  effort 0.73
+    sink -> tub  DROP rise -12  off -448  on -500  run 10  apex 10  0.49s  effort 0.73
 == weak adult: apex 40.8 (+1.8 run), reach 36.0 (+0.0 run), max drop 50.4, max rise 36.8
   floor -> bed: floor > bed
   floor -> couch: floor > couch

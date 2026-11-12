@@ -114,6 +114,19 @@ object Occluders {
             solid("cat_tree_slab_top", 124f, 188f, 64f, 76f, 137f, 0f),
             solid("counter", 252f, 376f, 76f, 128f, 128f, 0f),
             solid("fridge", 206f, 246f, 30f, 128f, 128f, 0f),
+            // the rooms that open with the cats' bond (layers_ext.json; sun x0 384, study -384,
+            // bath
+            // -576); the 2.5D room draws them only while their room is open
+            solid("sun_bench", 424f, 528f, 100f, 128f, 128f, 0f),
+            solid("wicker_chair", 526f, 568f, 82f, 128f, 128f, 0f),
+            solid("big_plant", 390f, 420f, 58f, 128f, 128f, 0f),
+            solid("study_shelf", -376f, -340f, 34f, 128f, 128f, 0f),
+            solid("desk", -332f, -236f, 84f, 128f, 128f, 0f),
+            solid("desk_chair", -236f, -208f, 84f, 128f, 128f, 0f),
+            solid("paper_basket", -266f, -236f, 104f, 128f, 128f, 0f),
+            solid("bathtub", -572f, -472f, 88f, 128f, 128f, 0f),
+            solid("sink_cabinet", -454f, -398f, 72f, 122f, 122f, 0f),
+            solid("laundry_basket", -470f, -442f, 102f, 132f, 132f, 0f),
         )
 
     /** The pieces a cat on the floor could stand under (`room/layers.json`; OccludersTest). */

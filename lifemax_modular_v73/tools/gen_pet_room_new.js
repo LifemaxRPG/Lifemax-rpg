@@ -10,6 +10,10 @@
      layers/<piece>.png                one picture per piece, tight box, clear where empty
      volume/<piece>.png                the depth map of each standing piece (red = front * 8, green = back * 8, alpha where painted)
      layers_ext.json                   the manifest rows of these pieces, in the format of layers.json (rooms and pieces)
+   Raised places (WP-H2): a piece may carry a standable surface (`stand`: the key of its SurfaceId, the feet row and the room columns a
+   cat walks on, and how many floor rows behind the piece's front plane it stands). The script checks each one lies on painted pixels
+   of its piece and writes it to layers_ext.json (`surfaces`, `volume.surfaces`, and `stand` for the tests, which compare it with
+   body/World.kt's table).
    house.json (which rooms there are, where they stand, when they open) is written by hand; this script checks that it lists
    the three rooms in the places the art is drawn for.
 
@@ -169,7 +173,7 @@ function sunBench() { /* 104 x 28: a window bench with two cushions */
   box(c, 0, 8, 104, 20, 3, [C.woodLight, t[0], C.woodHi]);
   c.rect(4, 14, 96, 1, t[0]); for (let x = 6; x < 100; x += 24) c.rect(x, 16, 20, 8, t[1]); /* drawer fronts */
   c.rect(3, 26, 4, 2, t[2]); c.rect(97, 26, 4, 2, t[2]);
-  cushion(c, 8, 2, 40, 7, C.cushionYellow); cushion(c, 56, 2, 36, 7, C.cushionYellow); cushion(c, 90, 1, 10, 8, C.cushionGreen);
+  cushion(c, 8, 2, 40, 7, C.cushionYellow); cushion(c, 48, 2, 42, 7, C.cushionYellow); cushion(c, 90, 2, 10, 7, C.cushionGreen); /* one unbroken seat */
   return c;
 }
 function wickerChair() { /* 42 x 46 */
@@ -212,16 +216,16 @@ function deskChair() { /* 28 x 44 */
   c.rect(3, 28, 3, 16, t[0]); c.rect(22, 28, 3, 16, t[0]); c.rect(6, 34, 16, 2, t[1]);
   return c;
 }
-function studyShelf() { /* 36 x 110: a tall bookshelf */
-  const c = new Canvas(36, 110), t = C.wood;
-  c.rect(0, 0, 36, 110, t[0]); c.rect(0, 0, 36, 3, C.woodLight); c.rect(0, 0, 2, 110, t[2]); c.rect(34, 0, 2, 110, t[2]);
-  for (let i = 0; i < 5; i++) {
+function studyShelf() { /* 36 x 94: a bookshelf a cat reaches from the desk */
+  const c = new Canvas(36, 94), t = C.wood;
+  c.rect(0, 0, 36, 94, t[0]); c.rect(0, 0, 36, 3, C.woodLight); c.rect(0, 0, 2, 94, t[2]); c.rect(34, 0, 2, 94, t[2]);
+  for (let i = 0; i < 4; i++) {
     const y = 6 + i * 21; c.rect(2, y, 32, 17, t[3]);
     let x = 3;
     for (let b = 0; x < 32; b++) { const bw = 3 + (b * 7 + i) % 4, bh = 11 + (b * 5 + i * 3) % 6; c.rect(x, y + 17 - bh, bw, bh, C.book[(b + i) % C.book.length]); x += bw + 1 }
     c.rect(2, y + 17, 32, 2, t[1]);
   }
-  c.rect(0, 108, 36, 2, t[2]);
+  c.rect(0, 92, 36, 2, t[2]);
   return c;
 }
 function paperBasket() { /* 30 x 24: a wicker bin with crumpled paper */
@@ -247,11 +251,11 @@ function bathtub() { /* 100 x 40: a claw-foot tub */
   c.rect(88, 0, 3, 8, C.metal[1]); c.rect(84, 0, 8, 2, C.metal[0]); c.rect(82, 2, 3, 2, C.metal[1]); /* the tap */
   return c;
 }
-function sinkCabinet() { /* 56 x 60: a cabinet with a basin and a tap */
-  const c = new Canvas(56, 60), t = C.wood;
-  c.rect(0, 14, 56, 46, 'e8e0cc'); c.rect(0, 14, 2, 46, 'c9bfa6'); c.rect(54, 14, 2, 46, 'c9bfa6'); c.rect(0, 58, 56, 2, 'c9bfa6');
-  c.rect(3, 22, 24, 33, 'f4ecd8'); c.rect(29, 22, 24, 33, 'f4ecd8');
-  c.rect(24, 36, 2, 5, t[2]); c.rect(30, 36, 2, 5, t[2]);
+function sinkCabinet() { /* 56 x 50: a cabinet with a basin and a tap */
+  const c = new Canvas(56, 50), t = C.wood;
+  c.rect(0, 14, 56, 36, 'e8e0cc'); c.rect(0, 14, 2, 36, 'c9bfa6'); c.rect(54, 14, 2, 36, 'c9bfa6'); c.rect(0, 48, 56, 2, 'c9bfa6');
+  c.rect(3, 22, 24, 23, 'f4ecd8'); c.rect(29, 22, 24, 23, 'f4ecd8');
+  c.rect(24, 32, 2, 5, t[2]); c.rect(30, 32, 2, 5, t[2]);
   box(c, 0, 8, 56, 8, 3, [C.white[0], C.white[1], 'ffffff']);
   c.rect(8, 9, 28, 2, 'c8e0ea');
   c.rect(40, 0, 3, 10, C.metal[1]); c.rect(36, 0, 8, 2, C.metal[0]); c.rect(36, 2, 2, 3, C.metal[1]);
@@ -276,23 +280,23 @@ function bathMat() { /* 60 x 10, flat */
 const ROOMS = {
   sun: { base: baseSun, pieces: [
     { name: 'door_frame_sun', make: () => doorFrame(true), x: 0, y: 17, flat: true },
-    { name: 'sun_bench', make: sunBench, x: 40, y: 100, depth: 8, wall: true, occludes: true },
+    { name: 'sun_bench', make: sunBench, x: 40, y: 100, depth: 8, wall: true, occludes: true, stand: { key: 'bench', row: 2, x0: 10, x1: 98, depth: 3 } },
     { name: 'wicker_chair', make: wickerChair, x: 142, y: 82, depth: 8, wall: false, occludes: true },
     { name: 'big_plant', make: bigPlant, x: 6, y: 58, depth: 6, wall: false, occludes: true },
   ] },
   study: { base: baseStudy, pieces: [
     { name: 'door_frame_study', make: () => doorFrame(false), x: 178, y: 17, flat: true },
     { name: 'study_rug', make: studyRug, x: 40, y: 130, flat: true, floorRug: true },
-    { name: 'study_shelf', make: studyShelf, x: 8, y: 18, depth: 7, wall: true, occludes: true },
-    { name: 'desk', make: desk, x: 52, y: 84, depth: 10, wall: true, occludes: true },
+    { name: 'study_shelf', make: studyShelf, x: 8, y: 34, depth: 7, wall: true, occludes: true, stand: { key: 'shelf', row: 0, x0: 4, x1: 32, depth: 2 } },
+    { name: 'desk', make: desk, x: 52, y: 84, depth: 10, wall: true, occludes: true, stand: { key: 'desk', row: 12, x0: 4, x1: 92, depth: 4 } },
     { name: 'desk_chair', make: deskChair, x: 148, y: 84, depth: 6, wall: false, occludes: true },
     { name: 'paper_basket', make: paperBasket, x: 118, y: 104, depth: 5, wall: false, occludes: true },
   ] },
   bath: { base: baseBath, pieces: [
     { name: 'door_frame_bath', make: () => doorFrame(false), x: 178, y: 17, flat: true },
     { name: 'bath_mat', make: bathMat, x: 50, y: 132, flat: true, floorRug: true },
-    { name: 'bathtub', make: bathtub, x: 4, y: 88, depth: 10, wall: true, occludes: true },
-    { name: 'sink_cabinet', make: sinkCabinet, x: 122, y: 62, depth: 8, wall: true, occludes: true },
+    { name: 'bathtub', make: bathtub, x: 4, y: 88, depth: 10, wall: true, occludes: true, stand: { key: 'tub', row: 4, x0: 6, x1: 78, depth: 4 } },
+    { name: 'sink_cabinet', make: sinkCabinet, x: 122, y: 72, depth: 8, wall: true, occludes: true, stand: { key: 'sink', row: 8, x0: 4, x1: 30, depth: 3 } },
     { name: 'laundry_basket', make: laundryBasket, x: 106, y: 102, depth: 5, wall: false, occludes: true },
   ] },
 };
@@ -327,10 +331,21 @@ function build() {
       files.set(`layers/${p.name}.png`, c.image());
       const baseY = p.flat ? null : p.y + c.h;
       const row = { name: p.name, room: id, file: `${p.name}.png`, x: p.x, y: p.y, w: c.w, h: c.h, baseY, z: baseY === null ? null : round2(zFromRow(baseY)),
-        occludes: !!p.occludes, surfaces: [], volume: null };
+        occludes: !!p.occludes, surfaces: p.stand ? [p.stand.key] : [], volume: null };
       if (!p.flat) {
         files.set(`volume/${p.name}.png`, volumeOf(c, p.depth, Math.min(6, c.h)));
-        row.volume = { file: `volume/${p.name}.png`, front: 0, depth: p.depth, wall: !!p.wall, surfaces: {}, covered: {} };
+        row.volume = { file: `volume/${p.name}.png`, front: 0, depth: p.depth, wall: !!p.wall, surfaces: p.stand ? { [p.stand.key]: p.stand.depth } : {}, covered: {} };
+      }
+      if (p.stand) {
+        /* the feet row and the columns a cat walks on, in the room's own pixels; the whole walk must lie on painted columns of the piece */
+        const s = p.stand;
+        if (p.flat || s.depth > p.depth || s.row < 0 || s.row >= c.h) throw new Error(`${p.name}: bad stand`);
+        for (let x = s.x0; x <= s.x1; x++) {
+          let painted = false;
+          for (let y = s.row - 1; y <= s.row + 3; y++) if (y >= 0 && y < c.h && c.opaque(x, y)) painted = true;
+          if (!painted) throw new Error(`${p.name}: no paint under the ${s.key} surface at column ${x}`);
+        }
+        row.stand = { [s.key]: [p.y + s.row, p.x + s.x0, p.x + s.x1] };
       }
       rows.push(row);
     }

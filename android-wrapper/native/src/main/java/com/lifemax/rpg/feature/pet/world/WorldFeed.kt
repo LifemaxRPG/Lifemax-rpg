@@ -62,6 +62,9 @@ class WorldFeed(
         const val KEY = "world"
 
         /** One feed for the process: both screens draw the same cats. */
-        val shared = WorldFeed { rooms -> HouseMap.select(rooms) } // before the art is made
+        val shared = WorldFeed { rooms ->
+            HouseMap.select(rooms) // before the art is made
+            HouseMemory.remember(rooms) // and known at the next start, before any block
+        }
     }
 }

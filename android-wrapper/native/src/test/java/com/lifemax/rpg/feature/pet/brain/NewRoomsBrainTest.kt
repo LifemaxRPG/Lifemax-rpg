@@ -15,7 +15,9 @@ import org.junit.Test
 class NewRoomsBrainTest {
     @After fun back() = HouseMap.reset()
 
-    private val newPlaces = listOf("sun patch", "study rug", "bath mat")
+    private val floorPlaces = listOf("sun patch", "study rug", "bath mat")
+    private val raisedPlaces = listOf("sun bench", "desk", "study shelf", "tub rim", "sink")
+    private val newPlaces = floorPlaces + raisedPlaces
 
     @Test
     fun thePlacesOfClosedRoomsAreNeverChosen() {
@@ -39,9 +41,32 @@ class NewRoomsBrainTest {
                 spot.x in World.HOUSE_MIN_X..World.HOUSE_MAX_X,
             )
         }
+        assertEquals(5, Spots.SUN_BENCH.room)
+        assertEquals(1, Spots.DESK.room)
+        assertEquals(1, Spots.SHELF.room)
+        assertEquals(0, Spots.TUB_RIM.room)
+        assertEquals(0, Spots.SINK.room)
         assertEquals(5, Spots.SUN_PATCH.room)
         assertEquals(1, Spots.STUDY_RUG.room)
         assertEquals(0, Spots.BATH_MAT.room)
+    }
+
+    @Test
+    fun theCatchUpStoryNamesTheNewPlacesAndNeverALockedOne() {
+        assertEquals("", CatchUpRun.where("floor"))
+        assertEquals(" on the sofa", CatchUpRun.where("sofa"))
+        assertEquals(" behind the bed", CatchUpRun.where("behind the bed"))
+        assertEquals(" in the sun patch", CatchUpRun.where("sun patch"))
+        assertEquals(" on the study rug", CatchUpRun.where("study rug"))
+        assertEquals(" up on the sink", CatchUpRun.where("sink"))
+        // the places of a room that is shut are never chosen, so a replay never tells of them
+        HouseMap.reset()
+        val closed = Spots.all.filter { !it.open }.map { it.id }.toSet()
+        assertEquals(newPlaces.toSet(), closed)
+        val trace = BehaviourMeter.record(day = 1, startHour = 9.0, hours = 6.0)
+        for (cat in 0..1) {
+            assertTrue(trace.stats(cat, 9.0, 15.0).places.none { it in closed })
+        }
     }
 
     @Test
@@ -60,5 +85,6 @@ class NewRoomsBrainTest {
         )
         assertTrue("rooms visited: $rooms", rooms.size >= 4)
         assertTrue("a new room was reached: $rooms", rooms.any { it == 0 || it == 1 || it == 5 })
+        assertTrue("a raised place was used: $places", places.any { it in raisedPlaces })
     }
 }
