@@ -8,6 +8,8 @@ import com.lifemax.rpg.feature.pet.brain.BodyExecutor
 import com.lifemax.rpg.feature.pet.brain.Brain
 import com.lifemax.rpg.feature.pet.brain.BrainFactory
 import com.lifemax.rpg.feature.pet.brain.CatWorld
+import com.lifemax.rpg.feature.pet.brain.Catalogue
+import com.lifemax.rpg.feature.pet.brain.MindState
 import com.lifemax.rpg.feature.pet.brain.Spots
 import com.lifemax.rpg.feature.pet.world.FakePage
 import com.lifemax.rpg.feature.pet.world.FakeTimeSource
@@ -182,11 +184,23 @@ class LiveBrainEndToEndTest {
         first.brains.last().queued += moment
         first.minutes(1)
         first.host.onStop()
-        val before = first.host.house!!.bodies.map { Triple(it.pose.surface, it.pose.x, it.pose.z) }
-        val doing = (0..1).map { first.world.now(it).activity }
         first.host.detach(view)
         val stored = WorldBlobJson.decode(page.stored!!.blob)
         assertEquals(listOf(moment.op), stored.outbox.map { it.op })
+        // the cold start resumes from what the page stored: the answers were dropped, so the page
+        // kept the last save it took (up to a minute old), and the cats now roam and move on in
+        // that time (they used to rest, so the live bodies matched it)
+        val ids = page.living().map { it.id }
+        val before =
+            ids.map {
+                val pos = stored.cats.getValue(it).pos
+                Triple(
+                    SurfaceId.entries.first { s -> s.key == pos.s },
+                    pos.x.toFloat(),
+                    pos.z.toFloat(),
+                )
+            }
+        val doing = ids.map { MindState.activityOf(stored.cats.getValue(it).act) }
 
         // a cold start right away: the cats resume where they were, doing what they did
         val second = Process(page, time)
@@ -199,7 +213,14 @@ class LiveBrainEndToEndTest {
             assertEquals(before[i].second, after[i].pose.x, RESUME_SLACK_PX)
             assertEquals(before[i].third, after[i].pose.z, RESUME_SLACK_PX)
         }
-        assertEquals(doing, (0..1).map { second.world.now(it).activity })
+        // a long rest is resumed; a short one (a loaf now lasts a few minutes at most) may well be
+        // over by the time the cold start draws what is left of it, and the cat moves on
+        val registry = Catalogue.core()
+        for (i in 0..1) {
+            if (registry.find(doing[i])?.asleep == true) {
+                assertEquals(doing[i], second.world.now(i).activity)
+            }
+        }
         second.minutes(60)
         assertEquals("replayed once", 1, second.port.sent.count { it.first == "moment" })
         assertEquals(setOf("first_glass"), page.cats[0].fx.toSet())
@@ -224,8 +245,10 @@ class LiveBrainEndToEndTest {
             val clamped = if (s == SurfaceId.FLOOR) World.clampHouse(x) else World.clampTo(s, x)
             assertEquals("cat on its surface after the gap", clamped, x, 0.5f)
         }
-        // each cat is where the story says it is doing what it does there
+        // each cat that is at its place is on that place's surface (a rest is short now, so a cat
+        // whose story rest is over has picked its next place and is still walking there)
         for (slot in 0..1) {
+            if (second.world.minds[slot].runner.atPlaceS <= 0.0) continue
             val doing = second.world.now(slot)
             val spot = Spots.all.firstOrNull { it.id == doing.place } ?: continue
             assertEquals(
