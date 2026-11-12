@@ -384,3 +384,32 @@ Per `CLAUDE.md`, switching to the larger model (`/model`) is worth it for WP-C2 
 - The Character tab statement rests on a grep of `feature/character` only.
 - Whether the page's detectors keep working while native owns the cat is inferred from
   `CAT_BRAIN_PLAN.md` 2.5 and the empty native senders, not from a run.
+
+---
+
+## 7. Page oddities met while porting the cattery (CT6b)
+
+Recorded, not fixed: CT6b ports the lab, the cattery and the adoption flows with the page's rules unchanged. Each of these
+is what the page does now; the native screens show the same.
+
+- **CD01. "Another stray" is called an adult but is stored as a newborn.** The button's text says "A random unrelated adult
+  joins the cattery" (`petBreedHtml`, `37-pet-morph.js:163`), but `petBreedAdd` stores `born: Date.now()` (`:212`). The cattery
+  card then reads "0 d old" and a stray brought home starts as a kitten (`petBreedHome` copies `born`). The native screen shows the
+  page's words and the page's age.
+- **CD02. The adoption litter outlives the adoption.** `window.__petLitter` (`32-pet-dna.js:482,668`) is not cleared when a
+  kitten is adopted (`petAdoptWith`, `petPairAdoptWith`), so the next intro (after a passing and "Open the door again") offers
+  the same four kittens, one of which is the cat that died or is at home. The pair adoption resets it when opened
+  (`petPairAdoptOpen`); the first-cat intro does not. The native Adoption screen resets it on `view` as the pair card does.
+- **CD03. The lab's "no mate" note points at a button the lab does not have.** "Try Another litter below to find a mate"
+  (`37-pet-morph.js:151`): "Another litter" is the intro's button; the lab's is "Another stray". Native shows the page's sentence.
+- **CD04. Breeding again throws away an unkept litter without asking.** `petBreedGo` replaces `cattery.litter` (`:207`), so the
+  kittens not yet kept or released are lost on the next Breed. Nothing confirms it. The native screen sends the litter's `at` stamp
+  with Keep and Release so a stale tap is refused, but Breed itself behaves as the page does.
+- **CD05. A rename longer than 14 characters is cut silently.** `petBreedRename` trims and slices to 14 (`:230`) with no word
+  to the owner; the native field stops typing at 14, and the `cattery` command refuses a longer name rather than cutting it.
+- **CD06. Any sex-valid pair may breed, including kittens a day old, parent and child, and full siblings.** Known (section 1.1) and
+  listed here because the native Breed button shows the same pairs; WP-C5 decides.
+- **CD07. The first-cat intro and the memorial cannot open natively yet.** `blocked()` in `50-native-pet.js` keeps the page's view
+  for a missing or dead cat (WP-C4), so the native Adoption screen for a first cat and "Open the door again" are built and tested
+  through the command but unreachable on the phone until `blocked()` is relaxed. Native reaches Adoption for a second cat and the
+  Memorial list while a cat lives.
