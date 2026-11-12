@@ -34,30 +34,54 @@ internal object Beats {
         return f
     }
 
-    /** Fills [seconds] of [out] with loafing, broken by a sit and the odd slow blink. */
+    /**
+     * Fills [seconds] of [out] with a varied rest (see [BrainTuning.Roam]): a chunk of loafing,
+     * then a sit, a wash, a look about or a slow blink, so no posture is held long and the cat is
+     * seen to be awake. A tail of less than a few seconds is left to the last beat.
+     */
     fun loafFor(out: Script, seconds: Double, rng: Rng) {
+        val r = BrainTuning.Roam
         var left = seconds
+        var last = -1
         while (left > 0.0) {
-            val chunk = minOf(left, seconds(rng, LOAF_CHUNK_LO, LOAF_CHUNK_HI))
-            out.act(Rows.LOAF, chunk)
-            left -= chunk
-            if (left > SIT_HI && rng.chance(LOOK_ABOUT)) {
-                val sit = seconds(rng, SIT_LO, SIT_HI)
-                out.act(Rows.SIT, sit)
-                left -= sit
-                if (rng.chance(BLINK)) {
-                    out.act(Rows.SLOWBLINK, Rows.once(Rows.SLOWBLINK))
-                    left -= Rows.once(Rows.SLOWBLINK)
+            var pick =
+                rng.nextFloat().toDouble() *
+                    (r.REST_SHARE_LOAF + r.REST_SHARE_SIT + r.REST_SHARE_WASH + r.REST_SHARE_LOOK)
+            var kind = 0
+            val shares =
+                doubleArrayOf(
+                    r.REST_SHARE_LOAF,
+                    r.REST_SHARE_SIT,
+                    r.REST_SHARE_WASH,
+                    r.REST_SHARE_LOOK,
+                )
+            while (kind < shares.size - 1 && pick >= shares[kind]) pick -= shares[kind++]
+            // never the same beat twice running: it would be one long posture
+            if (kind == last) kind = (kind + 1) % shares.size
+            last = kind
+            val chunk =
+                when (kind) {
+                    0 -> minOf(left, seconds(rng, r.REST_CHUNK_LO_S, r.REST_CHUNK_HI_S))
+                    1 -> minOf(left, seconds(rng, r.REST_SIT_LO_S, r.REST_SIT_HI_S))
+                    2 -> minOf(left, seconds(rng, r.REST_WASH_LO_S, r.REST_WASH_HI_S))
+                    else -> minOf(left, seconds(rng, r.REST_LOOK_LO_S, r.REST_LOOK_HI_S))
+                }
+            when (kind) {
+                0 -> out.act(Rows.LOAF, chunk)
+                1 -> out.act(Rows.SIT, chunk)
+                2 -> out.act(Rows.GROOM, chunk)
+                else -> {
+                    out.act(Rows.LOOKUP, chunk)
+                    if (rng.chance(BLINK) && left - chunk > Rows.once(Rows.SLOWBLINK))
+                        out.act(Rows.SLOWBLINK, Rows.once(Rows.SLOWBLINK))
                 }
             }
+            left -= chunk
         }
     }
 
-    const val LOAF_CHUNK_LO = 45.0
-    const val LOAF_CHUNK_HI = 120.0
     const val SIT_LO = 4.0
     const val SIT_HI = 8.0
-    const val LOOK_ABOUT = 0.3f
     const val BLINK = 0.35f
 }
 
@@ -77,7 +101,6 @@ internal object Sleep : Activity {
     override fun satisfies(d: Drive) = if (d == Drive.COMFORT) COMFORT_TAU else 0.0
 
     private const val COMFORT_TAU = 12.0 * BrainTuning.Time.MINUTE
-    private const val ELIGIBLE_ENERGY = 0.65
     private const val BASE = 1.0
     private const val COMFORT_SHARE = 0.12
     private const val ENERGY_CURVE = 1.6
@@ -88,12 +111,20 @@ internal object Sleep : Activity {
     private const val NIGHT_JITTER_H = 0.3f
     private const val GROOM_AFTER = 0.25
 
+    /**
+     * Sleep only at night, when really tired, in a nap window when sleepy, or dozing after a meal
+     * (roaming): a rested cat by day does not lie down to sleep, it rests a little and gets up.
+     */
     override fun eligible(m: MindView): Boolean {
-        val p = BrainTuning.Persona
+        val r = BrainTuning.Roam
+        val energy = m.drives[Drive.ENERGY]
+        if (m.schedule.inBed(m.hour) || energy < r.TIRED) return true
         val sleepy =
-            if (m.persona.kitten) p.KITTEN_SLEEPY
-            else ELIGIBLE_ENERGY + p.LAZY_SLEEPY * m.persona.lazy
-        return m.drives[Drive.ENERGY] < sleepy || m.schedule.inBed(m.hour)
+            if (m.persona.kitten) r.SLEEPY_KITTEN
+            else r.SLEEPY_ADULT + BrainTuning.Persona.LAZY_SLEEPY * m.persona.lazy
+        if (energy < sleepy && m.schedule.inNap(m.hour)) return true
+        return m.sinceMealS < r.MEAL_DOZE_MIN * BrainTuning.Time.MINUTE &&
+            energy < r.MEAL_DOZE_ENERGY
     }
 
     override fun appeal(m: MindView): Double {
@@ -209,7 +240,12 @@ internal object Loaf : Activity {
         val comfort = COMFORT_FLOOR + (1 - COMFORT_FLOOR) * m.drives[Drive.COMFORT]
         val tired = TIRED_FLOOR + (1 - TIRED_FLOOR) * Curves.fall(m.drives[Drive.ENERGY])
         val weak = if (m.persona.weak) BrainTuning.Persona.WEAK_LOAF else 1.0
-        return BASE * comfort * tired * m.persona.restWeight * weak
+        return BASE *
+            comfort *
+            tired *
+            m.persona.restWeight *
+            weak *
+            (1.0 - BrainTuning.Roam.REST_DAMP * Roaming.restless(m))
     }
 
     override fun placeFactor(m: MindView, spot: Spot) = Beats.taste(m, spot) * Beats.cosy(m, spot)
@@ -218,8 +254,7 @@ internal object Loaf : Activity {
         if (m.drives[Drive.COMFORT] > HALF) "wants comfort" else "rests"
 
     override fun duration(m: MindView, rng: Rng): Double {
-        val d = BrainTuning.Durations
-        return Beats.minutes(m, rng, d.LOAF_LO_MIN, d.LOAF_HI_MIN) * Math.sqrt(m.persona.restWeight)
+        return Roaming.restSeconds(m, rng)
     }
 
     override fun script(m: MindView, at: Spot?, seconds: Double, rng: Rng, out: Script) {

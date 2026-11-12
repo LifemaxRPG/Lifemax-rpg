@@ -17,7 +17,7 @@ object SocialTuning {
      * The chance per hour a moment starts while both cats are free, before the urge: the company
      * drive, the friendliness of both, the friendship and the time of day multiply it.
      */
-    const val RATE_PER_H = 1.7
+    const val RATE_PER_H = 6.0 // roaming: was 1.7
 
     /** The urge's spread: company drive low..high, friendly low..high, friendship 0..1. */
     const val URGE_COMPANY_LO = 0.45
@@ -31,8 +31,8 @@ object SocialTuning {
     const val FIRST_MEETING_P = 1.0
 
     /** Quiet after any moment together, minutes (lo..hi, drawn), before the next may start. */
-    const val QUIET_LO_MIN = 14.0
-    const val QUIET_HI_MIN = 35.0
+    const val QUIET_LO_MIN = 5.0 // roaming: was 14
+    const val QUIET_HI_MIN = 12.0 // roaming: was 35
 
     /** A proposal one cat turned down: the director waits this long before asking again. */
     const val DECLINED_S = 90.0
@@ -40,13 +40,13 @@ object SocialTuning {
     /** The quiet after each kind (the blob's `pair.cool`), minutes. */
     val COOL_MIN =
         mapOf(
-            Social.GREET to 45.0,
+            Social.GREET to 25.0,
             Social.HISS to 90.0,
-            Social.CHASE to 75.0,
-            Social.GROOM to 110.0,
+            Social.CHASE to 15.0,
+            Social.GROOM to 40.0,
             Social.NAP to 240.0,
             Social.STANDOFF to 240.0,
-            Social.SHADOW to 25.0,
+            Social.SHADOW to 6.0,
         )
 
     /** The page's friendship gates (PET_PAIR_CFG): chase from, groom from, nap together from. */
@@ -95,7 +95,7 @@ object SocialTuning {
      * A grown cat is sleepy enough to curl up below this energy (plus the lazy share): where a nap
      * becomes eligible for it on its own ([Sleep]).
      */
-    const val SLEEPY_ENERGY = 0.65
+    const val SLEEPY_ENERGY = BrainTuning.Roam.SLEEPY_ADULT // roaming: was 0.65
 
     /** A day napper this rested may be woken by the other cat for a chase or a nose touch. */
     const val ROUSE_ENERGY = 0.75
@@ -107,7 +107,7 @@ object SocialTuning {
     const val CHASE_ENERGY = 0.3
 
     /** A cat that began its activity this recently is not asked (it has only just settled). */
-    const val SETTLED_S = 20.0
+    const val SETTLED_S = 6.0 // roaming: was 20, activities are shorter now
 
     /** A sleeper this deep in its nap is not joined (the page: at least a minute of it left). */
     const val JOIN_LEFT_S = 60.0
@@ -199,7 +199,7 @@ object SocialTuning {
     const val LEAD_CF = 0.12
 
     /** Kitten shadowing: how often, how far behind, how long, when it follows anew. */
-    const val SHADOW_RATE_PER_H = 1.6
+    const val SHADOW_RATE_PER_H = 5.0 // roaming: was 1.6
     const val SHADOW_BEHIND_PX = 52f
     const val SHADOW_LO_MIN = 1.0
     const val SHADOW_HI_MIN = 3.0

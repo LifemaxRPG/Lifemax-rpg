@@ -68,6 +68,14 @@ object Spots {
     const val ROOM_FLOOR = 512
     const val BOWL = 1024
 
+    /**
+     * A place worth a visit (roaming's Explore goes to any place with this flag): set on every
+     * place by [add] unless it carries [NO_VISIT], so a place added to the table (a new room's
+     * sofa, shelf, bowl) is explored without any change to the planner.
+     */
+    const val VISIT = 2048
+    const val NO_VISIT = 4096
+
     private val list = ArrayList<Spot>()
 
     private fun add(
@@ -78,7 +86,18 @@ object Spots {
         flags: Int,
         z: Float = World.ART_Z,
         face: Int = 0,
-    ): Spot = Spot(list.size, id, page, surface, x, z, flags, face).also { list += it }
+    ): Spot =
+        Spot(
+                list.size,
+                id,
+                page,
+                surface,
+                x,
+                z,
+                if (flags and NO_VISIT != 0) flags else flags or VISIT,
+                face,
+            )
+            .also { list += it }
 
     val BED = add("bed", "bed", SurfaceId.BED, 36f, SLEEP or REST or SOFT)
     val SILL = add("sill", "sill", SurfaceId.SILL, 57f, WINDOW or SUNNY or REST or SLEEP)
@@ -107,9 +126,18 @@ object Spots {
     // in front of the tree: at the cats' own floor depth the cat stood under the middle platform,
     // and its ears came out above the platform's front ("poking through the cat tree")
     val SCRATCH_TREE =
-        add("tree post", "tree", SurfaceId.FLOOR, 134f, SCRATCH, z = TREE_FRONT_Z, face = 1)
+        add(
+            "tree post",
+            "tree",
+            SurfaceId.FLOOR,
+            134f,
+            SCRATCH or NO_VISIT,
+            z = TREE_FRONT_Z,
+            face = 1,
+        )
     // the sofa's front, clear of the pouf (at -50 the pouf hid over a third of the cat)
-    val SCRATCH_SOFA = add("sofa arm", "couch", SurfaceId.FLOOR, -60f, SCRATCH, face = -1)
+    val SCRATCH_SOFA =
+        add("sofa arm", "couch", SurfaceId.FLOOR, -60f, SCRATCH or NO_VISIT, face = -1)
     val BOWL_0 =
         add("bowl", null, SurfaceId.FLOOR, Feeding.bowlX(0), BOWL, face = Feeding.facing(0))
     val BOWL_1 =

@@ -34,7 +34,11 @@ internal object Eat : Activity {
         out.act(Rows.GROOM, Feeding.GROOM_SECONDS.toDouble())
     }
 
-    override fun after(drives: Drives) = drives.nudge(Drive.GROOM, 1.0, GROOM_AFTER)
+    override fun after(drives: Drives) {
+        drives.nudge(Drive.GROOM, 1.0, GROOM_AFTER)
+        // a full belly: the cat is drowsy (roaming)
+        drives.nudge(Drive.ENERGY, 0.0, BrainTuning.Roam.MEAL_DROWSY)
+    }
 }
 
 /**
@@ -106,6 +110,10 @@ object Catalogue {
                 Beg,
                 Scratch,
                 Knead,
+                // roaming: looking about, zoomies and play on its own
+                Explore,
+                Zoomies,
+                SoloPlay,
                 // reflexes only (the selector passes them by): the owner's game, making way
                 OwnerPlay,
                 MakeWay,

@@ -139,6 +139,7 @@ class CatMind(
         book.standing(slot, exec.surface, exec.x)
         if (exec.weak != persona.weak) exec.weak = persona.weak
         sitter()
+        tally()
         integrate()
         mood.quantum(persona, runner.activity, drives[Drive.ENERGY], schedule.peak(hour))
         reflexes()
@@ -191,6 +192,15 @@ class CatMind(
 
     override var toy: ToyBody? = null
         private set
+
+    override var stillS = 0.0
+        private set
+
+    override var sinceMealS = Double.MAX_VALUE
+        private set
+
+    override val looseToy: ToyBody?
+        get() = house.toys?.nearestPickable(exec.x, SurfaceId.FLOOR)
 
     private var playOp = ""
 
@@ -267,6 +277,7 @@ class CatMind(
         if (!touring) demoStops.clear()
         when (a.id) {
             Eat.id -> {
+                sinceMealS = 0.0
                 mood.bump(t.EAT_VALENCE, t.EAT_AROUSAL)
                 if (sitterDue) {
                     sitterDue = false
@@ -289,6 +300,13 @@ class CatMind(
         schedule.plan(profile.id, dayKey, persona.lazy, house.restDay)
         rng = Rng(Rng.hash("${profile.id}|$dayKey|choice"))
         sitterMeals = 0
+    }
+
+    /** Roaming's clocks: how long the cat has been still, how long since its meal. */
+    private fun tally() {
+        val q = BrainTuning.Time.QUANTUM_S
+        stillS = if (runner.activity.lively || exec.moving) 0.0 else stillS + q
+        if (sinceMealS < Double.MAX_VALUE) sinceMealS += q
     }
 
     private fun sitter() {

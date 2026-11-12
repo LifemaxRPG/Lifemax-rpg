@@ -5,6 +5,7 @@
    "date": "2026-11-07",
    "title": "Overview drag-and-drop & navigation polish",
    "changes": [
+    "Your cats now get about: they explore every perch, the window and the rugs, play and race round the house (kittens most), keep each other company, and rest in short, varied breaks instead of lying around. They still sleep at night, when tired and after a meal.",
     "Settings > Data & advanced > Food database now has a Download button that fetches the USDA branded foods from GitHub (about 18 MB) and imports them, so you no longer need to pick a file.",
     "Life Director: a long session name in the middle of the dial now wraps inside the ring instead of running past it.",
     "Life Director: workout-plan sessions with an \"&\" in their name (like Active Mobility & Structural Recovery) now show a plain \"&\" instead of \"&amp;\".",
