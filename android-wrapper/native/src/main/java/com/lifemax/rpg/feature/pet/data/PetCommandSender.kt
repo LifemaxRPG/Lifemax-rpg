@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.pet.data
 
+import com.lifemax.rpg.feature.pet.domain.CatteryCommand
 import com.lifemax.rpg.feature.pet.domain.PetCommands
 import com.lifemax.rpg.feature.pet.domain.PetReply
 import com.lifemax.rpg.feature.pet.domain.PetStroke
@@ -49,7 +50,11 @@ class PetCommandSender(private val send: (command: String, payload: JSONObject) 
                 .put("level", level.toDouble()),
         )
 
+    override fun cattery(op: String, command: CatteryCommand) =
+        send(CATTERY, catteryPayload(op, command))
+
     companion object {
+        const val CATTERY = "cattery"
         const val FEED = "feed"
         const val BLINK = "blink"
         const val VACATION = "vacation"
@@ -58,7 +63,7 @@ class PetCommandSender(private val send: (command: String, payload: JSONObject) 
         const val BUY_TOY = "buyToy"
         const val EXPAND = "expand"
         const val TOUCH = "touch"
-        val ALL = setOf(FEED, BLINK, VACATION, RENAME, FOCUS, BUY_TOY, EXPAND, TOUCH)
+        val ALL = setOf(FEED, BLINK, VACATION, RENAME, FOCUS, BUY_TOY, EXPAND, TOUCH, CATTERY)
     }
 }
 

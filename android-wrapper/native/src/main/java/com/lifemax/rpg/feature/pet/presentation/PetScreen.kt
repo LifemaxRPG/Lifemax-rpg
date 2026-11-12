@@ -82,6 +82,8 @@ class PetActions(
     val playToy: (String?) -> Unit = {},
     /** DEVELOPER DEMO: the "Demo parkour" button (developer mode only, `pet.demo.v1`). */
     val demo: () -> Unit = {},
+    /** A cattery screen from the entry card (`pet.cattery.v1`). */
+    val catteryOpen: (com.lifemax.rpg.feature.pet.domain.CatteryScreen) -> Unit = {},
 )
 
 /** The page's actions that stay on the page in this release, as the screen names them to it. */
@@ -157,6 +159,7 @@ fun PetScreen(
                         )
                     }
                     petPanelItems(p, ui, actions)
+                    petCatteryItem(p, actions)
                     item("more") {
                         MoreRow(p, Modifier.padding(12.dp, 14.dp, 12.dp, 0.dp)) {
                             actions.handOver(PetHandOver.MORE)
@@ -332,7 +335,7 @@ private fun ViewRoomChip(text: String, onClick: () -> Unit, modifier: Modifier =
  * away.
  */
 @Composable
-private fun NoticeToast(
+internal fun NoticeToast(
     notice: PetNotice,
     p: PetProjection,
     onShown: (PetNotice) -> Unit,

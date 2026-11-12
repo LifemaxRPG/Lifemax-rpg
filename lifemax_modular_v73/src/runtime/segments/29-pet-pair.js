@@ -406,9 +406,11 @@ function petPairAdopt(coat,name,trait){
     vacation:{on:!!(state.pet&&state.pet.vacation.on),since:state.pet&&state.pet.vacation.on?now:0},gifts:0,lastGiftDay:'',alive:true,passed:0,seen:{},greeted:0};
   state.petPair=null;petPairData();return state.pet2;
 }
-function petPairAdoptClick(){
+function petPairAdoptClick(){petPairAdoptWith((document.getElementById('petNameIn')||{}).value)}
+/* the click's work with the name given (the native Adoption screen has its own name field) */
+function petPairAdoptWith(name){
   if(!state.pet||!state.pet.alive||(state.pet2&&state.pet2.alive))return;
-  const p=petPairAdopt(window.__petCoat||'gray',(document.getElementById('petNameIn')||{}).value,window.__petTrait||'playful');
+  const p=petPairAdopt(window.__petCoat||'gray',name,window.__petTrait||'playful');
   const P=PET_PAIR;P.adopting=false;P.arrival=true;P.focus=1;if(P.rt2)petPairDrop();P.focus=1;
   save();toast(p.name+' has moved in. Tap a name, or a cat in the room, to switch.');petSync();
 }

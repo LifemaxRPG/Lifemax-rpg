@@ -48,6 +48,7 @@ fun PetRoute(
                 demo = vm::demoPressed,
                 noticeShown = vm::noticeShown,
                 openRoom = vm::openRoom,
+                catteryOpen = vm::openCattery,
             )
         }
     val looks =
@@ -79,20 +80,29 @@ fun PetRoute(
             }
         }
     }
+    val screen = vm.catteryScreen
+    val catteryActions =
+        remember(vm) {
+            CatteryActions(
+                back = vm::closeCattery,
+                send = vm::cattery,
+                noticeShown = vm::noticeShown,
+            )
+        }
     val depthNote: (() -> String)? = if (p.demo != null) LiveDepth::readout else null
     val touchable = p.touch != null
     // a finger on a cat chooses it: the page's own focus command, so the card follows with the
     // camera
     val onCat: (Int) -> Unit = { i -> vm.pet?.let { CatSelection.tapped(it, i) }?.let(vm::focus) }
     val touch = if (touchable) RoomTouch(onBowl = vm::feed, onCat = onCat) else null
-    PetScreen(
-        p,
-        PetUi(vm.waiting, vm.notice, vm.toyTray, depthNote),
-        actions,
-        topInsetDp,
-        bottomInsetDp,
-    ) { modifier ->
-        PetRoom(p, room, visible && !vm.fullRoom, modifier, touch, still)
+    val ui = PetUi(vm.waiting, vm.notice, vm.toyTray, depthNote)
+    if (screen != null && p.cattery != null) {
+        // a cattery screen covers the Cat tab: its room is not composed, so its clock stops
+        CatteryHost(p, screen, ui, catteryActions, topInsetDp, bottomInsetDp)
+    } else {
+        PetScreen(p, ui, actions, topInsetDp, bottomInsetDp) { modifier ->
+            PetRoom(p, room, visible && !vm.fullRoom, modifier, touch, still)
+        }
     }
     if (touchable && vm.fullRoom && room is RoomState.Ready) {
         PetFullRoom(

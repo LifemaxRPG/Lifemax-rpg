@@ -117,6 +117,10 @@ data class PetProjection(
      * on, for a screen that said the capability; null otherwise (the button is hidden).
      */
     val demo: PetDemo? = null,
+    /**
+     * The cattery, breeding lab, adoption and memorial (`pet.cattery.v1`); null from an older page.
+     */
+    val cattery: PetCattery? = null,
 )
 
 /** The developer demo button, in the page's words: its [label] and the spoken [hint]. */
