@@ -10,6 +10,7 @@
     "Your cat's coat now holds steady while it sits, loafs or sleeps: the little shading speckles no longer flip between frames, which was most noticeable on black cats. Kitten faces also get a complete outline.",
     "Cat tab: a cat sitting still, such as on the cat tree, now keeps one head pose for several seconds instead of changing it about three times a second, so it no longer looks restless; blinking and breathing are unchanged.",
     "Native Cat (beta, Settings > Appearance): the Cat tab now has a Cattery, a Breeding lab, adopting a second cat and an In memory list. Pick a mother and a father, see the page's forecast, then keep or release each kitten, bring one home, rename or release a cattery cat (with a confirmation).",
+    "Your cats now get about: they explore every perch, the window and the rugs, play and race round the house (kittens most), keep each other company, and rest in short, varied breaks instead of lying around. They still sleep at night, when tired and after a meal.",
     "Settings > Data & advanced > Food database now has a Download button that fetches the USDA branded foods from GitHub (about 18 MB) and imports them, so you no longer need to pick a file.",
     "Life Director: a long session name in the middle of the dial now wraps inside the ring instead of running past it.",
     "Life Director: workout-plan sessions with an \"&\" in their name (like Active Mobility & Structural Recovery) now show a plain \"&\" instead of \"&amp;\".",

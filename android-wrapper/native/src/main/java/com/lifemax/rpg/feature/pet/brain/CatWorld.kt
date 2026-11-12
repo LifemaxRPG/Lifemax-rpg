@@ -198,6 +198,11 @@ class CatWorld(
         return ArrayList(reports).also { reports.clear() }
     }
 
+    override fun mateX(slot: Int): Float? {
+        val other = minds.firstOrNull { it.slot != slot }?.exec ?: return null
+        return if (other.surface == SurfaceId.FLOOR) other.x else null
+    }
+
     override fun crowded(slot: Int): Boolean {
         // a moment together (curled up, a nose touch) is the one time two cats may be this close
         if (social.sharing()) return false

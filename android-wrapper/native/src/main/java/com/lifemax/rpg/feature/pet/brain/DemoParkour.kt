@@ -41,7 +41,7 @@ internal object DemoParkour {
             else -> null
         }
 
-    private val IDLE = setOf("loaf", "wander", "window watch", "groom", "knead")
+    private val IDLE = setOf("loaf", "explore", "wander", "window watch", "groom", "knead")
 
     /** 0 for a cat doing nothing much (the demo's first choice), 1 for one doing something. */
     fun busyRank(activity: Activity): Int = if (activity.id in IDLE) 0 else 1

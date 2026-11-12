@@ -120,7 +120,10 @@ class SocialDayTest {
         )
         val meet = r.of(Social.GREET) + r.of(Social.HISS)
         assertTrue("strangers meet: $r", meet in 1.0..10.0)
-        assertTrue("strangers mostly hiss: $r", r.of(Social.HISS) >= r.of(Social.GREET))
+        // the page's chance of a hiss at a first nose touch is 59 % at this friendship; a dozen
+        // meetings in three days (roaming: there are more of them) can fall short of half by
+        // chance, so the bound is a good share of them, not more than half
+        assertTrue("strangers hiss: $r", r.of(Social.HISS) >= HISS_SHARE * meet)
     }
 
     @Test
@@ -331,7 +334,10 @@ class SocialDayTest {
         // in
         // front of the tree reshuffled the friends' day from 7 h: its second cat is awake 37.3 %
         const val MIN_AWAKE = 0.37
-        const val MAX_PASSING_QUANTA = 400
+        // roaming: was 400; the cats move ten times as much, so they cross about 180 times a day
+        // (a crossing is a few quanta); the overlap guard still parts any that stay
+        const val MAX_PASSING_QUANTA = 800
+        const val HISS_SHARE = 0.25
         const val ROUTE_S = 120.0
         const val STUCK_STEPS = 20 * 120
         const val CHECK_QUANTA = 60

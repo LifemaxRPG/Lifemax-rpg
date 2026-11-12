@@ -40,6 +40,21 @@ interface MindView {
 
     /** The toy the owner offered for the game being played, or null. */
     val toy: ToyBody?
+
+    /** Where the other cat stands on the floor, or null (none, or up on a perch). */
+    val mateX: Float?
+
+    /** Simulated ms since the world began, as of the last think quantum. */
+    val nowMs: Long
+
+    /** Seconds the cat has been still: nothing lively and not on the move (roaming). */
+    val stillS: Double
+
+    /** Seconds since the cat last ate; large when it has not. */
+    val sinceMealS: Double
+
+    /** A toy lying on the floor that the cat could play with on its own, or null. */
+    val looseToy: ToyBody?
 }
 
 /**
@@ -65,6 +80,13 @@ interface Activity {
 
     /** Resumed after a reflex interrupted it, when still wanted (plan 1.5). */
     val resumable: Boolean
+        get() = false
+
+    /**
+     * The cat is getting about (it explores, plays, travels, looks from a perch): it counts as
+     * moving, not still, for its restlessness (see [BrainTuning.Roam]).
+     */
+    val lively: Boolean
         get() = false
 
     /** How hard it is on energy while awake (multiplies the drain). */

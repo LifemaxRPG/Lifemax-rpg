@@ -22,6 +22,11 @@ interface House {
     /** The house's toys, once the host has given them (null in a headless or fast world). */
     val toys: ToyField?
 
+    /**
+     * Where the other cat stands on the floor (null: none, or up on a perch), seen by cat [slot].
+     */
+    fun mateX(slot: Int): Float? = null
+
     /** Another cat stands on top of cat [slot] (see [BrainTuning.Apart]). */
     fun crowded(slot: Int): Boolean
 
@@ -75,7 +80,7 @@ class CatMind(
     private var sitterMeals = 0
 
     /** Simulated ms since the world began, as of the last quantum. */
-    var nowMs = 0L
+    override var nowMs = 0L
         private set
 
     override var hour = 0.0
@@ -139,6 +144,7 @@ class CatMind(
         book.standing(slot, exec.surface, exec.x)
         if (exec.weak != persona.weak) exec.weak = persona.weak
         sitter()
+        tally()
         integrate()
         mood.quantum(persona, runner.activity, drives[Drive.ENERGY], schedule.peak(hour))
         reflexes()
@@ -170,6 +176,9 @@ class CatMind(
         persona.vacation = vacation
     }
 
+    override val mateX: Float?
+        get() = house.mateX(slot)
+
     /** Another cat stands on top of this one. */
     fun crowded(): Boolean = house.crowded(slot)
 
@@ -191,6 +200,15 @@ class CatMind(
 
     override var toy: ToyBody? = null
         private set
+
+    override var stillS = 0.0
+        private set
+
+    override var sinceMealS = Double.MAX_VALUE
+        private set
+
+    override val looseToy: ToyBody?
+        get() = house.toys?.nearestPickable(exec.x, SurfaceId.FLOOR)
 
     private var playOp = ""
 
@@ -267,6 +285,7 @@ class CatMind(
         if (!touring) demoStops.clear()
         when (a.id) {
             Eat.id -> {
+                sinceMealS = 0.0
                 mood.bump(t.EAT_VALENCE, t.EAT_AROUSAL)
                 if (sitterDue) {
                     sitterDue = false
@@ -289,6 +308,13 @@ class CatMind(
         schedule.plan(profile.id, dayKey, persona.lazy, house.restDay)
         rng = Rng(Rng.hash("${profile.id}|$dayKey|choice"))
         sitterMeals = 0
+    }
+
+    /** Roaming's clocks: how long the cat has been still, how long since its meal. */
+    private fun tally() {
+        val q = BrainTuning.Time.QUANTUM_S
+        stillS = if (runner.activity.lively || exec.moving) 0.0 else stillS + q
+        if (sinceMealS < Double.MAX_VALUE) sinceMealS += q
     }
 
     private fun sitter() {

@@ -8,6 +8,7 @@ import com.lifemax.rpg.feature.pet.body.World
 /** Wander (plan 1.8): to another room's floor, sniffing about and sitting a while. */
 internal object Wander : Activity {
     override val id = "wander"
+    override val lively = true
     override val mainDrive = Drive.CURIOSITY
     override val exertion = 1.3
     override val arousal = 0.15
@@ -21,8 +22,8 @@ internal object Wander : Activity {
     private const val TERRITORY = 0.15
     private const val CURIOSITY_TAU = 5.0 * BrainTuning.Time.MINUTE
     private const val PLAY_TAU = 14.0 * BrainTuning.Time.MINUTE
-    private const val SIT_LO = 8.0
-    private const val SIT_HI = 22.0
+    private val SIT_LO = BrainTuning.Roam.WANDER_SIT_LO_S
+    private val SIT_HI = BrainTuning.Roam.WANDER_SIT_HI_S
     private const val STROLL_LO = 20f
     private const val STROLL_HI = 50f
 
@@ -39,10 +40,14 @@ internal object Wander : Activity {
         val d = m.drives
         val want =
             CURIOSITY * d[Drive.CURIOSITY] + PLAY * d[Drive.PLAY] + TERRITORY * d[Drive.TERRITORY]
-        return BASE * want * m.persona.exploreWeight * m.schedule.activeFactor(m.hour)
+        return BASE * want * m.persona.exploreWeight * Roaming.boost(m)
     }
 
-    override fun suits(m: MindView, spot: Spot) = spot.room != World.roomOf(m.x)
+    override fun suits(m: MindView, spot: Spot): Boolean {
+        val mate = m.mateX
+        if (mate != null && Math.abs(spot.x - mate) < BrainTuning.Roam.MATE_GAP_PX) return false
+        return spot.room != World.roomOf(m.x)
+    }
 
     override fun reason(m: MindView) = "curious"
 
@@ -81,12 +86,12 @@ internal object WindowWatch : Activity {
     private const val BASE = 0.9
     private const val CURVE = 1.2
     private const val TAU = 3.5 * BrainTuning.Time.MINUTE
-    private const val SIT_LO = 10.0
-    private const val SIT_HI = 25.0
+    private const val SIT_LO = 6.0
+    private const val SIT_HI = 14.0
     private const val LOOK_LO = 3.0
     private const val LOOK_HI = 6.0
-    private const val LOAF_LO = 40.0
-    private const val LOAF_HI = 90.0
+    private const val LOAF_LO = 15.0
+    private const val LOAF_HI = 35.0
     private const val CHATTER = 0.15f
 
     override fun satisfies(d: Drive) = if (d == Drive.CURIOSITY) TAU else 0.0
@@ -97,7 +102,8 @@ internal object WindowWatch : Activity {
         BASE *
             Curves.rise(m.drives[Drive.CURIOSITY], CURVE) *
             Math.sqrt(m.persona.exploreWeight) *
-            m.schedule.daylight(m.hour)
+            m.schedule.daylight(m.hour) *
+            Roaming.boost(m)
 
     override fun placeFactor(m: MindView, spot: Spot) = Beats.taste(m, spot) * Beats.cosy(m, spot)
 
@@ -151,8 +157,8 @@ internal object ParkourVisit : Activity {
     private const val SURVEY_HI = 8.0
     private const val LOOK_LO = 3.0
     private const val LOOK_HI = 5.0
-    private const val SIT_LO = 20.0
-    private const val SIT_HI = 45.0
+    private val SIT_LO = BrainTuning.Roam.PERCH_SIT_LO_S
+    private val SIT_HI = BrainTuning.Roam.PERCH_SIT_HI_S
 
     override fun satisfies(d: Drive) =
         when (d) {
@@ -167,7 +173,7 @@ internal object ParkourVisit : Activity {
     override fun appeal(m: MindView): Double {
         val d = m.drives
         val want = maxOf(d[Drive.TERRITORY], CURIOSITY * d[Drive.CURIOSITY], PLAY * d[Drive.PLAY])
-        return BASE * want * m.persona.parkourWeight * m.schedule.activeFactor(m.hour)
+        return BASE * want * m.persona.parkourWeight * Roaming.boost(m)
     }
 
     override fun placeFactor(m: MindView, spot: Spot) = Beats.taste(m, spot)
@@ -197,6 +203,7 @@ internal object ParkourVisit : Activity {
 /** Scratching (plan 1.8): the tree post or the sofa arm, marking the house. */
 internal object Scratch : Activity {
     override val id = "scratch"
+    override val lively = true
     override val mainDrive = Drive.TERRITORY
     override val exertion = 1.2
     override val arousal = 0.35

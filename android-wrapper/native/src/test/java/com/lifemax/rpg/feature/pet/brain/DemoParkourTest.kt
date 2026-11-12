@@ -33,8 +33,13 @@ class DemoParkourTest {
     /** Both cats loafing in their own place in the open, rested. */
     private fun loafing(): Pair<CatWorld, WorldClock> {
         val (w, c) = world()
-        w.minds[0].force("loaf", Spots.RUG, LONG_S)
-        w.minds[1].force("loaf", Spots.LIVING_RUG, LONG_S)
+        // the cats start wherever their first pick put them, maybe by these places or up on a
+        // perch: each is put down at its own place first
+        for ((slot, spot) in listOf(Spots.RUG, Spots.LIVING_RUG).withIndex()) {
+            w.book.release(slot)
+            w.minds[slot].exec.place(spot.surface, spot.x, spot.z)
+            w.minds[slot].force("loaf", spot, LONG_S)
+        }
         return w to c
     }
 

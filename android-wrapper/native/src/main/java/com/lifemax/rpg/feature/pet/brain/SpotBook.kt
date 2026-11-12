@@ -23,6 +23,7 @@ class SpotBook(private val cats: Int) {
     private val staySpot = IntArray(cats) { NONE }
     private val stayX = FloatArray(cats)
     private val passMask = IntArray(cats)
+    private val visits = Array(cats) { IntArray(BrainTuning.Roam.REVISIT.size) { NONE } }
     private val likes = Array(cats) { DoubleArray(Spots.count) { BrainTuning.Places.DEFAULT_LIKE } }
 
     /** Seeds cat [slot]'s likings from the page's (0..100 by PET_SPOTS id). */
@@ -42,6 +43,28 @@ class SpotBook(private val cats: Int) {
         likes[slot][spot.index] += (1.0 - likes[slot][spot.index]) * share
     }
 
+    /**
+     * Cat [slot] visited [spot] (an activity ended there): it is the newest of the cat's last few
+     * places. The same place twice in a row counts once.
+     */
+    fun visited(slot: Int, spot: Spot) {
+        val v = visits[slot]
+        if (v[0] == spot.index) return
+        var at = v.indexOf(spot.index)
+        if (at < 0) at = v.size - 1
+        for (k in at downTo 1) v[k] = v[k - 1]
+        v[0] = spot.index
+    }
+
+    /**
+     * How fresh [spot] is for cat [slot], 0..1: the newest of its last places counts the least (see
+     * [BrainTuning.Roam.REVISIT]), a place not among them counts 1.
+     */
+    fun fresh(slot: Int, spot: Spot): Double {
+        val k = visits[slot].indexOf(spot.index)
+        return if (k < 0) 1.0 else BrainTuning.Roam.REVISIT[k]
+    }
+
     /** The place cat [slot] is going to (or rests at), or null. */
     fun claimOf(slot: Int): Spot? = claimSpot[slot].let { if (it == NONE) null else Spots.all[it] }
 
@@ -56,6 +79,8 @@ class SpotBook(private val cats: Int) {
             if (!clear(spot, x, staySpot[o], stayX[o])) return false
             if (spot.single && (passMask[o] and bit(spot.surface)) != 0) return false
             if ((passes and held(o)) != 0) return false
+            // two cats do not cross over the same perch at the same time (they now move a lot)
+            if ((passes and passMask[o]) != 0) return false
         }
         return true
     }

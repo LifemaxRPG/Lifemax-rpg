@@ -100,7 +100,9 @@ class BrainReplayTest {
         assertEquals("resume", resumed.why)
         assertEquals("bed", resumed.place)
         // it had about 30 min of its 40 left; the resumed sleep plays that, not a fresh nap
-        val explained = world.minds[0].runner.explain.entries().map { it.reason }
+        // (read from the changes seen: the explain ring holds only the last picks, and the cat now
+        // picks something new every half minute)
+        val explained = seen.map { it.second.why }
         assertTrue(explained.toString(), explained.containsAll(listOf("forced", "fed", "resume")))
         assertTrue("resumed for $resumedFor s", resumedFor in 25.0 * 60..31.0 * 60)
     }

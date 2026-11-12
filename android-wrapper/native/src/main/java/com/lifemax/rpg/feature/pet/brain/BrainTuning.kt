@@ -33,12 +33,12 @@ object BrainTuning {
         val RISE_TAU =
             doubleArrayOf(
                 0.0,
-                3.0 * Time.HOUR, // play (boredom)
-                95.0 * Time.MINUTE, // curiosity
+                40.0 * Time.MINUTE, // play (boredom); roaming: was 3 h
+                30.0 * Time.MINUTE, // curiosity; roaming: was 95 min
                 4.0 * Time.HOUR, // social (the owner): faster while the owner is there
-                2.5 * Time.HOUR, // company (the other cat)
+                60.0 * Time.MINUTE, // company (the other cat); roaming: was 2.5 h
                 110.0 * Time.MINUTE, // comfort
-                2.6 * Time.HOUR, // territory
+                70.0 * Time.MINUTE, // territory; roaming: was 2.6 h
                 2.2 * Time.HOUR, // groom
             )
 
@@ -54,6 +54,151 @@ object BrainTuning {
         /** A drive never sits exactly on its bound, so curves keep a little slope. */
         const val FLOOR = 0.0
         const val CEIL = 1.0
+    }
+
+    /**
+     * Roaming: the dials that make awake cats explore, play and move about instead of lying about
+     * (docs/specs/CAT_TAB_PLAN.md "Roaming"). A cat that has been still for a while grows restless
+     * (`1 - e^(-still/tau)`, quicker for a kitten, slower for a calm cat); restlessness, energy and
+     * the time of day make up its urge to get up, and that urge scales every lively activity
+     * (explore, zoomies, play, wander, window, perches) up and the rest (loaf) down. Rests are
+     * short and varied. Sleep needs the night, a nap window, a meal or real tiredness. The other
+     * retuned numbers (drive rise times, durations, cooldowns) are in [Drives], [Schedule],
+     * [Durations] and [Cooldowns], marked "roaming". Every number here is seconds unless a name
+     * says minutes (`_MIN`), a share or a gain.
+     */
+    object Roam {
+        /** Still this long (s) and an adult is 63% restless; a kitten's time is [KITTEN_TAU]. */
+        const val RESTLESS_TAU_S = 50.0
+        const val KITTEN_TAU = 0.4
+
+        /** A lazy cat's time grows by up to this share (a calm Lily waits longer than Ted). */
+        const val LAZY_TAU_GAIN = 0.8
+
+        /** Restlessness never falls below this (a cat just moved still has the odd itch). */
+        const val RESTLESS_FLOOR = 0.5
+
+        /** Energy gate: no urge at [ENERGY_LO], full at [ENERGY_LO] + [ENERGY_SPAN]. */
+        const val ENERGY_LO = 0.12
+        const val ENERGY_SPAN = 0.4
+
+        /** The urge in a nap window, in bed hours, and its ceiling at the dawn and dusk peaks. */
+        const val NAP_WINDOW_URGE = 0.6
+        const val BED_URGE = 0.25
+        const val PEAK_URGE_MAX = 1.4
+
+        /** How much of the rest (loaf) appeal restlessness takes away (0 none, 1 all). */
+        const val REST_DAMP = 0.8
+
+        /** A rest's length, seconds, before the persona; a kitten's is [KITTEN_REST] of that. */
+        const val REST_LO_S = 15.0
+        const val REST_HI_S = 60.0
+        const val KITTEN_REST = 0.5
+
+        /**
+         * A tired cat rests longer: below [REST_TIRED_FROM] energy the length grows up to
+         * ×(1+gain).
+         */
+        const val REST_TIRED_FROM = 0.6
+        const val REST_TIRED_GAIN = 1.5
+
+        /**
+         * A rest is not one long lie: chunks of loafing (s), then a sit, a wash, a look about or a
+         * slow blink, in these shares; no posture lasts longer than [REST_CHUNK_HI_S] (the
+         * measurement's cap is a little more).
+         */
+        const val REST_CHUNK_LO_S = 12.0
+        const val REST_CHUNK_HI_S = 35.0
+        const val REST_SIT_LO_S = 5.0
+        const val REST_SIT_HI_S = 14.0
+        const val REST_WASH_LO_S = 4.0
+        const val REST_WASH_HI_S = 10.0
+        const val REST_LOOK_LO_S = 3.0
+        const val REST_LOOK_HI_S = 6.0
+        const val REST_SHARE_LOAF = 0.2
+        const val REST_SHARE_SIT = 0.35
+        const val REST_SHARE_WASH = 0.25
+        const val REST_SHARE_LOOK = 0.2
+
+        /** Explore: a look at a place (any perch, the window, a bowl, the rug), 10..38 s there. */
+        const val EXPLORE_BASE = 1.0
+        const val EXPLORE_ENERGY = 0.18
+        const val EXPLORE_LO_S = 4.0
+        const val EXPLORE_HI_S = 14.0
+
+        /** Shorter sits in the older lively activities: a wander's, a perch visit's (s). */
+        const val WANDER_SIT_LO_S = 4.0
+        const val WANDER_SIT_HI_S = 10.0
+        const val PERCH_SIT_LO_S = 8.0
+        const val PERCH_SIT_HI_S = 20.0
+
+        /** Curiosity's share of the appeal: [EXPLORE_CURIOSITY_FLOOR] at 0 up to 1 at full. */
+        const val EXPLORE_CURIOSITY_FLOOR = 0.5
+
+        /** Explore thinks of this share of the places at a time (and each one costs a route). */
+        const val EXPLORE_SAMPLE = 0.4
+
+        /** Another cat's bowl is worth a sniff, less than the cat's own places. */
+        const val OTHER_BOWL = 0.5
+
+        /**
+         * A place visited lately is less interesting: × by how many visits ago (newest first), so a
+         * cat goes round the whole house before it revisits the first place. Not visited: 1.
+         */
+        val REVISIT = doubleArrayOf(0.2, 0.35, 0.5, 0.65, 0.8, 0.9)
+
+        /** Zoomies: a kitten's (or a playful cat's) mad dash across the floor. */
+        const val ZOOM_BASE = 0.55
+        const val ZOOM_ENERGY = 0.35
+        const val ZOOM_LEGS_LO = 3
+        const val ZOOM_LEGS_HI = 5
+        const val ZOOM_LEG_MIN_PX = 70f
+        const val ZOOM_LEG_MAX_PX = 260f
+
+        /** A burst of running or stalking keeps this far from the other cat on the floor (px). */
+        const val MATE_GAP_PX = 80f
+
+        /** The floor depths a zoomie runs at (in front of the furniture), and a burst's length. */
+        const val ZOOM_Z_LO = 50f
+        const val ZOOM_Z_HI = 68f
+        const val ZOOM_LO_S = 10.0
+        const val ZOOM_HI_S = 22.0
+        const val ZOOM_COOLDOWN_MIN = 5.0
+        const val ZOOM_AFTER_SIT_S = 3.0
+        const val ZOOM_AFTER_WASH_S = 5.0
+
+        /** Zoomies lean on the dawn and dusk peaks by this gain on the peak (1 = no lean). */
+        const val ZOOM_PEAK_GAIN = 1.8
+
+        /** Solo play: with a toy lying about (rounds), or stalking something unseen. */
+        const val SOLO_BASE = 0.7
+        const val SOLO_ENERGY = 0.3
+        const val SOLO_COOLDOWN_MIN = 4.0
+        const val SOLO_LO_S = 12.0
+        const val SOLO_HI_S = 25.0
+        const val SOLO_ROUNDS_KITTEN = 2
+        const val SOLO_ROUNDS_ADULT = 1
+        const val SOLO_TOY_REACH_PX = 220f
+        const val SOLO_STALK_S = 1.4
+        const val SOLO_POUNCE_PX = 60f
+        const val SOLO_SWAT_LO_S = 2.0
+        const val SOLO_SWAT_HI_S = 4.5
+        const val SOLO_ROLL_CHANCE = 0.4f
+
+        /**
+         * Sleep needs the night, or energy below [TIRED], or, in a nap window, below these (a lazy
+         * cat's a little above), or a meal just eaten ([MEAL_DOZE_MIN]).
+         */
+        const val SLEEPY_ADULT = 0.5
+        const val SLEEPY_KITTEN = 0.6
+        const val TIRED = 0.28
+
+        /** After a meal a cat dozes for this long if its energy is below [MEAL_DOZE_ENERGY]. */
+        const val MEAL_DOZE_MIN = 30.0
+        const val MEAL_DOZE_ENERGY = 0.75
+
+        /** A meal makes a cat drowsy: energy goes this share of the way to 0. */
+        const val MEAL_DROWSY = 0.12
     }
 
     /** Valence and arousal (plan 1.7): half-lives and baselines. */
@@ -126,7 +271,7 @@ object BrainTuning {
         const val LAZY_SLEEPY = 0.08
 
         /** A kitten is ready to nap sooner (sleep becomes eligible below this energy). */
-        const val KITTEN_SLEEPY = 0.85
+        const val KITTEN_SLEEPY = Roam.SLEEPY_KITTEN // roaming: was 0.85
 
         /** A weak cat lies about more than it sleeps: loaf ×, sleep × (plan 1.4). */
         const val WEAK_LOAF = 1.5
@@ -154,9 +299,9 @@ object BrainTuning {
         const val DUSK_HI_H = 20.0
         const val DUSK_HALF_H = 1.0
         const val NAPS_MIN = 2
-        const val NAPS_MAX = 4
-        const val NAP_LEN_LO_H = 0.8
-        const val NAP_LEN_HI_H = 1.8
+        const val NAPS_MAX = 3 // roaming: was 4
+        const val NAP_LEN_LO_H = 0.5 // roaming: was 0.8
+        const val NAP_LEN_HI_H = 1.3 // roaming: was 1.8
 
         /** Nap window starts are drawn from these hours, weighted to early afternoon. */
         val NAP_STARTS = doubleArrayOf(10.0, 12.5, 13.5, 14.5, 15.5, 20.5)
@@ -200,8 +345,9 @@ object BrainTuning {
         const val WATCHDOG_SLACK_S = 120.0
 
         /** Route costs are cached per standing spot rounded to this many px. */
-        const val ROUTE_CACHE_PX = 12f
-        const val ROUTE_CACHE_MAX = 512
+        const val ROUTE_CACHE_PX =
+            40f // roaming: was 12; this only prices a way, the real one is planned exactly
+        const val ROUTE_CACHE_MAX = 4096 // roaming: was 512; cats pick every half minute now
     }
 
     /** Place liking (plan 1.5 memory): page likes and the world's own dwell memory. */
@@ -308,18 +454,18 @@ object BrainTuning {
 
     /** Durations, minutes (plan 1.8 table), before the persona's duration multiplier. */
     object Durations {
-        const val NAP_LO_MIN = 30.0
-        const val NAP_HI_MIN = 120.0
+        const val NAP_LO_MIN = 20.0 // roaming: was 30
+        const val NAP_HI_MIN = 70.0 // roaming: was 120
         const val LOAF_LO_MIN = 8.0
         const val LOAF_HI_MIN = 35.0
-        const val GROOM_LO_MIN = 0.6
-        const val GROOM_HI_MIN = 3.0
-        const val WANDER_LO_MIN = 1.0
-        const val WANDER_HI_MIN = 4.0
-        const val WINDOW_LO_MIN = 6.0
-        const val WINDOW_HI_MIN = 25.0
-        const val PARKOUR_LO_MIN = 3.0
-        const val PARKOUR_HI_MIN = 12.0
+        const val GROOM_LO_MIN = 0.4 // roaming: was 0.6
+        const val GROOM_HI_MIN = 1.5 // roaming: was 3
+        const val WANDER_LO_MIN = 0.3 // roaming: was 1
+        const val WANDER_HI_MIN = 1.0 // roaming: was 4
+        const val WINDOW_LO_MIN = 1.0 // roaming: was 6
+        const val WINDOW_HI_MIN = 3.5 // roaming: was 25
+        const val PARKOUR_LO_MIN = 0.8 // roaming: was 3
+        const val PARKOUR_HI_MIN = 3.0 // roaming: was 12
         const val BEG_LO_MIN = 0.5
         const val BEG_HI_MIN = 2.0
         const val SCRATCH_LO_S = 6.0
@@ -343,10 +489,10 @@ object BrainTuning {
     /** Cooldowns after an activity ends, minutes. */
     object Cooldowns {
         const val GROOM_MIN = 20.0
-        const val WANDER_MIN = 15.0
-        const val WINDOW_MIN = 30.0
-        const val PARKOUR_MIN = 120.0
-        const val SCRATCH_MIN = 90.0
+        const val WANDER_MIN = 3.0 // roaming: was 15
+        const val WINDOW_MIN = 8.0 // roaming: was 30
+        const val PARKOUR_MIN = 10.0 // roaming: was 120
+        const val SCRATCH_MIN = 25.0 // roaming: was 90
         const val KNEAD_MIN = 60.0
         const val BEG_MIN = 3.0
         const val LOAF_MIN = 0.0

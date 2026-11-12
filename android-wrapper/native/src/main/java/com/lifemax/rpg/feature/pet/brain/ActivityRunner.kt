@@ -316,7 +316,10 @@ class ActivityRunner(
         for (k in recent.size - 1 downTo 1) recent[k] = recent[k - 1]
         recent[0] = i
         val p = place ?: m.here
-        if (p != null && arrived) m.book.learn(m.slot, p, atPlaceS / BrainTuning.Time.HOUR)
+        if (p != null && arrived) {
+            m.book.learn(m.slot, p, atPlaceS / BrainTuning.Time.HOUR)
+            m.book.visited(m.slot, p)
+        }
         m.ended(a, if (arrived) atPlaceS else 0.0)
     }
 
