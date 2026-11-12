@@ -209,10 +209,10 @@ function petBreedGo(){
   kits.forEach(function(d){petDnaRegister(petDnaPheno(d).key)});
   C.litter={mom:m.name,dad:f.name,kits:kits,at:Date.now()};save();toast(m.name+' had '+kits.length+' kitten'+(kits.length===1?'':'s'));petBreedRefresh();
 }
-function petBreedAdd(d){
+function petBreedAdd(d,born){
   const C=petCattery();if(C.cats.length>=PET_CATTERY_MAX){toast('The cattery is full. Release a cat first.');return false}
   const taken=petBreedRoster().map(function(e){return e.name});
-  C.cats.push({id:'c'+Date.now().toString(36)+Math.floor(Math.random()*1296).toString(36),name:petBreedName(taken),dna:d,born:Date.now()});return true;
+  C.cats.push({id:'c'+Date.now().toString(36)+Math.floor(Math.random()*1296).toString(36),name:petBreedName(taken),dna:d,born:born==null?Date.now():born});return true;
 }
 function petBreedKeep(i){const L=petCattery().litter;if(!L||!L.kits[i])return;if(!petBreedAdd(L.kits[i]))return;L.kits.splice(i,1);save();petBreedRefresh()}
 function petBreedDrop(i){const L=petCattery().litter;if(!L||!L.kits[i])return;L.kits.splice(i,1);save();petBreedRefresh()}
@@ -227,7 +227,7 @@ function petBreedRename(k){
 }
 function petBreedStray(){
   const r=petRng((Math.random()*4294967295)>>>0),d=petDnaRandom(r,{sex:Math.random()<0.5?'XX':'XY'});d.gen=0;petDnaRegister(petDnaPheno(d).key);
-  if(petBreedAdd(d)){save();petBreedRefresh()}
+  if(petBreedAdd(d,Date.now()-30*86400000)){save();petBreedRefresh()}
 }
 function petBreedHome(k){
   const C=petCattery(),c=C.cats.find(function(x){return x.id===k});

@@ -1754,7 +1754,7 @@
   },
   {
    "file": "src/runtime/segments/32-pet-dna.js",
-   "bytes": 58848,
+   "bytes": 58968,
    "statement_count": 106,
    "tags": [
     "pet",
@@ -2037,7 +2037,7 @@
   },
   {
    "file": "src/runtime/segments/37-pet-morph.js",
-   "bytes": 22992,
+   "bytes": 23036,
    "statement_count": 57,
    "tags": [
     "pet",

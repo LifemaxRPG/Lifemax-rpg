@@ -392,14 +392,13 @@ Per `CLAUDE.md`, switching to the larger model (`/model`) is worth it for WP-C2 
 Recorded, not fixed: CT6b ports the lab, the cattery and the adoption flows with the page's rules unchanged. Each of these
 is what the page does now; the native screens show the same.
 
-- **CD01. "Another stray" is called an adult but is stored as a newborn.** The button's text says "A random unrelated adult
-  joins the cattery" (`petBreedHtml`, `37-pet-morph.js:163`), but `petBreedAdd` stores `born: Date.now()` (`:212`). The cattery
-  card then reads "0 d old" and a stray brought home starts as a kitten (`petBreedHome` copies `born`). The native screen shows the
-  page's words and the page's age.
-- **CD02. The adoption litter outlives the adoption.** `window.__petLitter` (`32-pet-dna.js:482,668`) is not cleared when a
-  kitten is adopted (`petAdoptWith`, `petPairAdoptWith`), so the next intro (after a passing and "Open the door again") offers
-  the same four kittens, one of which is the cat that died or is at home. The pair adoption resets it when opened
-  (`petPairAdoptOpen`); the first-cat intro does not. The native Adoption screen resets it on `view` as the pair card does.
+- **CD01. "Another stray" was called an adult but stored as a newborn.** Fixed (Native API 159): `petBreedStray` now stores `born` 30
+  days ago (`petBreedAdd(d, born)`), so the cattery card reads "30 d old" and a stray brought home starts as an adult. The button's
+  words are unchanged. Kept kittens are still newborns. Page test: `native-pet-cattery.test.js` (the button and the native command
+  both give a 30-day-old stray).
+- **CD02. The adoption litter outlived the adoption.** Fixed (Native API 159): the wrapped `petAdopt` and `petPairAdopt`
+  (`32-pet-dna.js`) clear `window.__petLitter` once a kitten is adopted, so the next intro (after a passing and "Open the door
+  again") offers a new litter. The pair adoption still resets it when opened. Page test: `native-pet-cattery.test.js`.
 - **CD03. The lab's "no mate" note pointed at a button the lab does not have.** The page's lab said "Try Another litter below to find a
   mate" (`37-pet-morph.js:151`) but "Another litter" is the intro's button. Fixed for the native screen (section 8.4): its
   note now says "Use Another stray below to find a mate" and the lab screen has an Another stray button when there is no mother or no
@@ -477,7 +476,7 @@ home as the second cat, with both parents recorded and generation 1, and the nat
 the slot is taken. So the system is reachable on the native tab (when "Native Cat (beta)" is on) from the Cat tab's entry card
 (Cattery, Breeding lab). **One dead end was found and fixed:** with no mother or no fertile father the lab told the player to use a button
 that is not on it (CD03); the native lab now has Another stray. Things that still make it feel unfinished, all owner decisions (section 9):
-the stray arrives as a newborn (CD01), any pair may breed (CD06), the beta is off by default.
+(the stray arrived as a newborn, CD01, fixed since), any pair may breed (CD06), the beta is off by default.
 
 ### 8.5 Not verified
 
@@ -493,7 +492,7 @@ couch where a floor was expected, line 198) and is left alone.
 | # | Gap | Recommended default |
 |---|---|---|
 | Q1, Q2, Q4 | Breeding as part of the cats' life (WP-C5): waiting time, who may breed, naming | Keep the lab as is for now; later add adults only (30 days), no parent-child or siblings, one litter per mother per 14 days, owner names on keep |
-| Q10 / CD01 | "Another stray" is a newborn but the button says adult | Make it an adult (`born` 30 days ago); it is the only way to find a mate without a second cat |
+| Q10 / CD01 | "Another stray" is a newborn but the button says adult | Done (Native API 159): adult, `born` 30 days ago |
 | Q8 | Native Cat tab on by default (WP-C11) | Not yet: first accept the moments, adoption and memorial on the phone for a week |
 | Q9 | Album and scrapbook on the phone (WP-C8) | Later, after WP-C2 produces the rest of the moments |
 | Q6 | Native sound (WP-C9) | Port the purr and the meow only if the purr is late on the phone |

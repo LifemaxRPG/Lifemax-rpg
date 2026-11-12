@@ -222,9 +222,14 @@ class WorldSync {
                 if (theirs != null && theirs != epoch) {
                     held = true
                     staleEpoch = theirs
-                } else if (reply.rev != null && reply.rev > rev) {
-                    rev = reply.rev // a newer revision is stored: write the next one
-                } else writeRetryAt = now + HostTuning.RETRY_MS
+                } else {
+                    // The page refuses a revision only when it already stores that one or a newer
+                    // one, so the stored revision is at least ours: resending the same revision
+                    // could never be taken. Adopt what the page says, or ours when it says nothing
+                    // newer, and write the next one.
+                    rev = maxOf(rev, reply.rev ?: 0L, save.rev)
+                    writeRetryAt = now
+                }
             }
             "size" ->
                 if (trimLevel < HostTuning.TRIM_LEVEL_LAST) {

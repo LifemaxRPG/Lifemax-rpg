@@ -653,6 +653,7 @@ petLoadImg=function(src){if(typeof src==='string'&&src.indexOf('dna:')===0)retur
     const sv=save;let p;save=function(){};try{p=adopt.call(this,ph.key,name,ph.trait)}finally{save=sv}
     p.dna=d;p.sex=ph.sex;delete p.brain;
     if(PET_RT&&PET_RT.ready)petDnaEnsureSheets(PET_RT,ph.key);
+    window.__petLitter=null; /* CD02: the litter is spent once one of its kittens is adopted */
     save();return p};
   if(typeof petPairAdopt==='function'){const pa=petPairAdopt;
     petPairAdopt=function(coat,name,trait){
@@ -661,7 +662,7 @@ petLoadImg=function(src){if(typeof src==='string'&&src.indexOf('dna:')===0)retur
       const ph=petDnaPheno(d);petDnaRegister(ph.key);
       const sv=save;let p;save=function(){};try{p=pa.call(this,ph.key,name,ph.trait)}finally{save=sv}
       p.dna=d;p.sex=ph.sex;delete p.brain;
-      if(PET_RT&&PET_RT.ready)petDnaEnsureSheets(PET_RT,ph.key);return p}}
+      if(PET_RT&&PET_RT.ready)petDnaEnsureSheets(PET_RT,ph.key);window.__petLitter=null;return p}}
   const pick=petPickCoat;
   petPickCoat=function(c){window.__petLegacy=true;window.__petDnaNext=null;document.querySelectorAll('#petCoats .pet-kit').forEach(function(b){b.classList.remove('on')});return pick.apply(this,arguments)};
   /* the intro: a litter instead of four coat buttons and a personality picker */

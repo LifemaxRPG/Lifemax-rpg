@@ -182,6 +182,39 @@ class WorldSyncTest {
     }
 
     @Test
+    fun aStaleReplyThatDoesNotNameANewerRevisionStillMovesOnToTheNextRevision() {
+        // the reply to revision 11 was lost, the page kept 11 and then refuses a resend as stale
+        // while naming a revision no newer than ours (or none): the same revision must not be sent
+        // forever
+        for (named in listOf(10L, 11L, null)) {
+            val s = WorldSync().also { it.reset(epoch = 3, rev = 10) }
+            val out = ArrayList<Pair<WorldCommand, String>>()
+            val send = { c: WorldCommand, id: String ->
+                out += c to id
+                true
+            }
+            var t = 5_000_000L
+            s.markDirty()
+            s.pump(t, true, false, { blob }, send)
+            t += HostTuning.REPLY_TIMEOUT_MS
+            s.pump(t, true, false, { blob }, send) // no answer: the same revision again
+            assertEquals(11L, (out.last().first as SaveWorld).rev)
+            s.onReply(
+                WorldReply("world", out.last().second, false, false, "", "stale", 3, named),
+                t,
+            )
+            assertFalse(s.held)
+            t += HostTuning.RETRY_MS
+            s.pump(t, true, false, { blob }, send)
+            val next = out.last().first as SaveWorld
+            assertEquals("named=$named", 12L, next.rev)
+            s.onReply(WorldReply("world", out.last().second, true, true, "", "", 3, 12), t)
+            assertEquals(12L, s.rev)
+            assertFalse(s.isDirty)
+        }
+    }
+
+    @Test
     fun aSizeRefusalTrimsLevelByLevelThenGivesUpUntilTheNextChange() {
         val big =
             blob.copy(

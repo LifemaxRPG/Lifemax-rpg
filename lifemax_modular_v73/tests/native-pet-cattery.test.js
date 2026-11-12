@@ -59,6 +59,24 @@ const CASES = [
     }
     ok('no page errors in the parity runs', p.errors.length === 0, p.errors);
 
+    /* CD01: "Another stray" is an adult (born 30 days ago), by the button and by the command; a kept kitten is still a newborn */
+    const stray = await p.evaluate(async ([setup]) => {
+      const age = () => { const cs = state.cattery.cats; return (Date.now() - cs[cs.length - 1].born) / 86400000 };
+      await setCats(setup); seed(); (0, eval)('petBreedStray()'); const button = age();
+      await setCats(setup); seed(); await NativePet.commands.cattery({ kind: 'stray', op: 'cd01' }); const command = age();
+      return { button, command };
+    }, [BASE(false)]);
+    ok('CD01: a stray brought in by the button or the command is an adult (30 days old), not a newborn', Math.abs(stray.button - 30) < 0.01 && Math.abs(stray.command - 30) < 0.01, stray);
+
+    /* CD02: a litter is spent once a kitten of it is adopted (first cat and second cat), so the next intro shows new kittens */
+    const spent = await p.evaluate(async ([pair, nocat]) => {
+      const o = {};
+      await setCats(pair); seed(); await NativePet.commands.cattery({ kind: 'view', view: 'adopt' }); await NativePet.commands.cattery({ kind: 'adopt', op: 'cd02a', mode: 'pair', kit: 2, name: 'Nori' }); o.pair = window.__petLitter == null;
+      await setCats(nocat); seed(); await NativePet.commands.cattery({ kind: 'view', view: 'adopt' }); await NativePet.commands.cattery({ kind: 'adopt', op: 'cd02b', mode: 'first', kit: 1, name: 'Mango' }); o.first = window.__petLitter == null;
+      return o;
+    }, [PAIR, NOCAT]);
+    ok('CD02: adopting a kitten (second cat, first cat) spends the litter, so the next intro offers new kittens', spent.pair && spent.first, spent);
+
     /* 2. repeat-safety: the same operation twice records once; a litter is not rolled twice */
     let r = await p.evaluate(async ([setup, AT]) => {
       await setCats(setup); seed();
