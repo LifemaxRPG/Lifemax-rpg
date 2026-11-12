@@ -32,91 +32,91 @@
    7.50 meow        f1 floor    x=  87.00 z= 35.0 y=132.00
    7.75 meow        f2 floor    x=  87.00 z= 35.0 y=132.00
    8.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-   8.25 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-   8.50 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-   8.75 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-   9.00 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-   9.25 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+   8.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+   8.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+   8.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+   9.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+   9.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
    9.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-   9.75 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  10.00 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  10.25 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  10.50 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  10.75 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+   9.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  10.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  10.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  10.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  10.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   11.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  11.25 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  11.50 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  11.75 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  12.00 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  11.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  11.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  11.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  12.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   12.25 meow        f0 floor    x=  87.00 z= 35.0 y=132.00
   12.50 meow        f1 floor    x=  87.00 z= 35.0 y=132.00
   12.75 meow        f3 floor    x=  87.00 z= 35.0 y=132.00
   13.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  13.25 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  13.50 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  13.75 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  14.00 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  14.25 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  13.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  13.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  13.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  14.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  14.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   14.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  14.75 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  15.00 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  15.25 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  15.50 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
-  15.75 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  14.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  15.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  15.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  15.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  15.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   16.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  16.25 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  16.50 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  16.75 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  17.00 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  16.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  16.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  16.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  17.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   17.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   17.50 meow        f1 floor    x=  87.00 z= 35.0 y=132.00
   17.75 meow        f2 floor    x=  87.00 z= 35.0 y=132.00
   18.00 meow        f3 floor    x=  87.00 z= 35.0 y=132.00
   18.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  18.50 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  18.75 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  19.00 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  19.25 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  18.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  18.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  19.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  19.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   19.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  19.75 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  20.00 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  20.25 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  20.50 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  20.75 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  19.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  20.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  20.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  20.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  20.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   21.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  21.25 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  21.50 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  21.75 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  22.00 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  22.25 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  21.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  21.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  21.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  22.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  22.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   22.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  22.75 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  23.00 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  23.25 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
+  22.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  23.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  23.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   23.50 meow        f0 floor    x=  87.00 z= 35.0 y=132.00
   23.75 meow        f1 floor    x=  87.00 z= 35.0 y=132.00
   24.00 meow        f3 floor    x=  87.00 z= 35.0 y=132.00
   24.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  24.50 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  24.75 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  25.00 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  25.25 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  25.50 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  24.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  24.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  25.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  25.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  25.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   25.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  26.00 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  26.25 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  26.50 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  26.75 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  26.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  26.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  26.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  26.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   27.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   27.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  27.50 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  27.75 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  28.00 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  28.25 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  27.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  27.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  28.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  28.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   28.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
-  28.75 idle_sit    f1 floor    x=  87.00 z= 35.0 y=132.00
-  29.00 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  29.25 idle_sit    f2 floor    x=  87.00 z= 35.0 y=132.00
-  29.50 idle_sit    f6 floor    x=  87.00 z= 35.0 y=132.00
-  29.75 idle_sit    f7 floor    x=  87.00 z= 35.0 y=132.00
+  28.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  29.00 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  29.25 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  29.50 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
+  29.75 idle_sit    f0 floor    x=  87.00 z= 35.0 y=132.00
   30.00 meow        f1 floor    x=  87.00 z= 35.0 y=132.00

@@ -62,39 +62,39 @@
  5.300 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  21.98,104.05
  5.400 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,103.99
  5.500 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 5.600 cat x=  36.00 idle_sit f1 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 5.700 cat x=  36.00 idle_sit f1 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 5.800 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 5.900 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 6.000 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 6.100 cat x=  36.00 idle_sit f6 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 6.200 cat x=  36.00 idle_sit f6 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 5.600 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 5.700 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 5.800 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 5.900 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 6.000 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 6.100 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 6.200 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
  6.233   ! StepDone plan=1 step=4 last
- 6.300 cat x=  36.00 idle_sit f6 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 6.400 cat x=  36.00 idle_sit f7 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 6.500 cat x=  36.00 idle_sit f7 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 6.600 cat x=  36.00 idle_sit f7 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 6.300 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 6.400 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 6.500 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 6.600 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
  6.700 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
  6.800 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
  6.900 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.000 cat x=  36.00 idle_sit f1 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.100 cat x=  36.00 idle_sit f1 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.200 cat x=  36.00 idle_sit f1 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.300 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.400 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.500 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.600 cat x=  36.00 idle_sit f6 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.700 cat x=  36.00 idle_sit f6 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.800 cat x=  36.00 idle_sit f7 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 7.900 cat x=  36.00 idle_sit f7 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 8.000 cat x=  36.00 idle_sit f7 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.000 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.100 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.200 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.300 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.400 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.500 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.600 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.700 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.800 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 7.900 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 8.000 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
  8.100 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
  8.200 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
  8.300 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 8.400 cat x=  36.00 idle_sit f1 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 8.500 cat x=  36.00 idle_sit f1 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 8.600 cat x=  36.00 idle_sit f1 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 8.700 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 8.800 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 8.900 cat x=  36.00 idle_sit f2 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
- 9.000 cat x=  36.00 idle_sit f6 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 8.400 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 8.500 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 8.600 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 8.700 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 8.800 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 8.900 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
+ 9.000 cat x=  36.00 idle_sit f0 flip | toy REST  x=  34.00 y=124.50 v=    0.0,    0.0 a=+0.00 sq=-1.00,1.00 | mouth  22.00,104.00
