@@ -223,7 +223,15 @@ class LiveBrainEndToEndTest {
         }
         second.minutes(60)
         assertEquals("replayed once", 1, second.port.sent.count { it.first == "moment" })
-        assertEquals(setOf("first_glass"), page.cats[0].fx.toSet())
+        // the first zoomies are now reported too (once per cat, kept in fx), so fx is the glass
+        // moment, replayed
+        // once, plus at most that one
+        val fx = page.cats[0].fx.toSet()
+        assertTrue("first_glass kept: $fx", "first_glass" in fx)
+        assertTrue(
+            "only the known first moments: $fx",
+            fx.all { it == "first_glass" || it == "first_zoomies" },
+        )
         assertTrue(WorldBlobJson.decode(page.stored!!.blob).outbox.isEmpty())
 
         // the view closes for two hours: frozen, then caught up on the next open
