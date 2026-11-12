@@ -2485,6 +2485,8 @@ const LifeMaxHost = (function () {
     return out;
   };
   /* Class training plan (Plan tab): each upcoming plan day becomes a date-bound session to place. */
+  /* the workout plan's day label is kept as escaped HTML (esc at construction); Life Director draws text itself, so it reads the plain words */
+  const plainLabel = (s) => String(s).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
   H.readPlanSessions = function (nowEpoch, tz, days) {
     if (!H.connected() || typeof planDay !== 'function' || !state.plan) return [];
     const U = LifeDirectorEngine.util, out = [], p = U.localParts(nowEpoch, tz);
@@ -2495,7 +2497,7 @@ const LifeMaxHost = (function () {
       let done = false; try { done = typeof dayDone === 'function' && dayDone(key); } catch (e) { /* ignore */ }
       const start = U.zonedToEpoch(ymd.y, ymd.mo, ymd.d, 0, tz), nx = U.ymdAdd(ymd, 1), end = U.zonedToEpoch(nx.y, nx.mo, nx.d, 0, tz);
       const tag = KIND_TAG[d.kind] || ATTR_TAG[d.primary] || 'fitness';
-      out.push({ id: 'plan:' + key, title: 'Plan: ' + (d.label || 'Session'), tier: 'CORE', tag, status: done ? 'COMPLETED' : 'ACTIVE', requiredCount: 1, progressCount: done ? 1 : 0,
+      out.push({ id: 'plan:' + key, title: 'Plan: ' + (d.label ? plainLabel(d.label) : 'Session'), tier: 'CORE', tag, status: done ? 'COMPLETED' : 'ACTIVE', requiredCount: 1, progressCount: done ? 1 : 0,
         sessionMinutes: Math.max(30, Math.min(90, (d.min || d.minutes || d.items.length * 8) | 0)), exclusive: true, windowStartEpoch: start, deadlineEpoch: end,
         hostRef: { plan: key, done }, source: 'lifemax-plan' });
     }

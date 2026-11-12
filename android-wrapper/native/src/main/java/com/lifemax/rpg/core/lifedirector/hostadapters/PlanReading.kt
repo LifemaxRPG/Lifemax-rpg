@@ -10,6 +10,17 @@ import com.lifemax.rpg.core.quests.HandTemplate
  * session (HA-21). The plan's days come from [PlanDays]; the dates are the plan zone's.
  */
 internal object PlanReading {
+    /**
+     * HA-17 (LA12): the workout plan keeps a day's label as escaped HTML; Life Director draws text,
+     * so it reads the plain words. The page's order: the five entities `esc` writes, `&amp;` last.
+     */
+    private fun plainLabel(s: String): String =
+        s.replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .replace("&#39;", "'")
+            .replace("&amp;", "&")
+
     private const val MIN_MINUTES = 30.0
     private const val MAX_MINUTES = 90.0
     private const val MINUTES_PER_ITEM = 8.0
@@ -49,7 +60,9 @@ internal object PlanReading {
             out +=
                 PlanSession(
                     key = key,
-                    title = "Plan: " + (d.label?.takeIf { it.isNotEmpty() } ?: "Session"),
+                    title =
+                        "Plan: " +
+                            (d.label?.takeIf { it.isNotEmpty() }?.let(::plainLabel) ?: "Session"),
                     tag = tag,
                     done = done,
                     sessionMinutes = maxOf(MIN_MINUTES, minOf(MAX_MINUTES, toInt32(hint))),

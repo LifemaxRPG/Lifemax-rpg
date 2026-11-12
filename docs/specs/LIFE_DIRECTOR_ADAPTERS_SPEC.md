@@ -23,7 +23,7 @@ Contents
 7. Activities from elsewhere (HA-20)
 8. Meals (HA-22, HA-23)
 9. Sequences, the golden cases and the mutation checks (HA-1, HA-24)
-10. Defects (LA01 to LA11) and native deviations (DV-A1 to DV-A3)
+10. Defects (LA01 to LA12) and native deviations (DV-A1 to DV-A3)
 11. Bridging to WP-LD9's host interface
 12. Open questions for the owner
 
@@ -312,6 +312,7 @@ way the filler matches, so the answer cannot change.
 | LA09 | HA-16 | A daily quest whose `day` is not one of `sun` to `sat` exactly (`funday`, and so `Mon` or `monday`) gets `onlyDays: []`, which the engine's `normalizeQuest` reads as no limit (LDQ-1, `engine.js:580`): the quest is planned every day instead of on its day. Executed (`quests/mixed/*`). |
 | LA10 | HA-2 | The player id is derived from the save's birth time and name; renaming then resetting Life Director gives a new id, so completion event ids made before and after differ (LDH-5). Read. |
 | LA11 | HA-15 | A bounty the board refuses for a lock answers `{completed: false, xp, name}`, a shape that looks paid; `afterEvent` reads only `completed` (`logic.js:297`). Executed (`bounty/locked`). |
+| LA12 | HA-17 | FIXED in the page and native. The workout plan keeps a day's label as escaped HTML (`label: esc(s.title)`, runtime 14), and `readPlanSessions` used it as text, so Life Director drew "Active Mobility &amp; Structural Recovery". The title is now the plain words: the five entities `esc` writes are undone, `&amp;` last (`plainLabel`; native `PlanReading.plainLabel`). 70 recorded `plan` cases re-recorded, each differing only in the decoded Plan title (checked). Still open: the activity the economy logs when a plan day is finished is named `Plan: <label>` from the same label (`FixedAwards.kt`, page `planToggle`), so a saved activity can carry the escaped text; that name is part of the economy's recorded behaviour and is not changed here. Executed. |
 
 Native deviations:
 
