@@ -64,6 +64,7 @@ internal class CountingCanvas : RoomCanvas {
         sh: Int,
         dx: Int,
         dy: Int,
+        alpha: Float,
     ) {
         calls++
     }

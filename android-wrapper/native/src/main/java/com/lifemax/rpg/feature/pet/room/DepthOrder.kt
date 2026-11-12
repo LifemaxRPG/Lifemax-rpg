@@ -162,7 +162,7 @@ internal class DepthOrder(capacity: Int) {
 
     companion object {
         /** The code of cat `i` is `CAT + i`. */
-        const val CAT = 2000
+        const val CAT = 200_000
 
         /** The most cats a room has. */
         const val MAX_CATS = 2

@@ -63,7 +63,9 @@ internal interface RoomCanvas {
      * Draw the [sw] x [sh] part of [image] at ([sx], [sy]) with its top left at ([dx], [dy]),
      * unscaled: a picture the room renders while it runs (one camera step of the solid furniture,
      * [VolumeSheets]). A canvas that caches a bitmap of it keeps one per [slot] (0 until
-     * [MAX_SHEETS]) for as long as that slot's [version] stays the same.
+     * [MAX_SHEETS]) for as long as that slot's [version] stays the same. [alpha] (0 to 1) scales
+     * how opaque it is drawn: below 1 only while a piece cross-fades between two camera steps
+     * ([StepMix]); at 1 the pixels are drawn exactly as they are.
      */
     fun sheet(
         image: ArgbImage,
@@ -75,6 +77,7 @@ internal interface RoomCanvas {
         sh: Int,
         dx: Int,
         dy: Int,
+        alpha: Float,
     )
 
     companion object {
