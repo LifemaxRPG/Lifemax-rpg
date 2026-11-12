@@ -107,7 +107,7 @@
       intro: "Pair a mother with a father to roll a litter. Each kitten gets a random half of each parent's genes, so keep the ones that lean toward your goal and breed those. Cats you keep wait here as genomes; bring one home when your second cat slot is free.",
       goal: g.k + (g.up ? "+" : "-"), options,
       best: best ? "Best in your roster: " + best.name + " at " + petDnaPheno(best.dna).morph[g.k].toFixed(2) + "× " + PET_MORPH[g.k].n + " (generation " + (best.dna.gen || 0) + ")." : "",
-      note: moms.length && dads.length ? "" : "You need at least one female and one fertile male. " + (moms.length ? "" : "No female yet. ") + (dads.length ? "" : "No fertile male yet. ") + "Try Another litter below to find a mate.",
+      note: moms.length && dads.length ? "" : "You need at least one female and one fertile male. " + (moms.length ? "" : "No female yet. ") + (dads.length ? "" : "No fertile male yet. ") + "Use Another stray below to find a mate.",
       moms: listed(moms), dads: listed(dads), mom, dad, forecast, litter,
     };
   }

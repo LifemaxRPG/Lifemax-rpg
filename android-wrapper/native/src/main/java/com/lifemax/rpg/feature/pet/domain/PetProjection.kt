@@ -121,6 +121,12 @@ data class PetProjection(
      * The cattery, breeding lab, adoption and memorial (`pet.cattery.v1`); null from an older page.
      */
     val cattery: PetCattery? = null,
+    /**
+     * With no cat at home (`pet.empty.v1`): the cattery screen that takes the place of the room,
+     * the first cat's adoption or the memorial of one that has passed. Then [cats] is empty and
+     * every other field of the card is blank; only [cattery], [notice] and the theme mean anything.
+     */
+    val empty: CatteryScreen? = null,
 )
 
 /** The developer demo button, in the page's words: its [label] and the spoken [hint]. */

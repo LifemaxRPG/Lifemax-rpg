@@ -42,7 +42,7 @@ internal object MindState {
             innate = kept?.innate.orEmpty(),
             counters = kept?.counters ?: QuirkCounters(0, 0, 0, 0),
             rhythm = kept?.rhythm ?: List(WorldContract.HOURS) { 0 },
-            fx = kept?.fx.orEmpty(),
+            fx = m.fx.toList(),
             rng = kept?.rng?.takeIf { kept.day == dayKey } ?: streams(m.profile.id, dayKey),
             day = dayKey,
             wake = round3(m.schedule.wake),
@@ -64,6 +64,8 @@ internal object MindState {
         m.mood.set(saved.mood.v, saved.mood.a)
         m.trust = saved.trust.tru
         m.book.seedLikes(m.slot, saved.spots)
+        m.fx.clear()
+        m.fx.addAll(saved.fx)
         m.book.release(m.slot)
         put(m, saved.pos)
     }

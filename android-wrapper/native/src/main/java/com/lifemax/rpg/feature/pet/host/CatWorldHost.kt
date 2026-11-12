@@ -89,11 +89,21 @@ class CatWorldHost(
         WorldClock.SubStepListener { step, think ->
             val b = brain ?: return@SubStepListener
             b.step(step, think)
-            if (think) {
-                val reports = b.takeReports()
-                if (reports.isNotEmpty()) reports.forEach(sync::enqueue)
-            }
+            if (think) drainReports()
         }
+
+    /** Hands what the brain wants the page to record to the sync (moments, dwell, games). */
+    private fun drainReports() {
+        val reports = brain?.takeReports() ?: return
+        if (reports.isNotEmpty()) reports.forEach(sync::enqueue)
+    }
+
+    /** The brain hands over what it has gathered (time at places and toys), then it is queued. */
+    private fun flushBrain() {
+        val b = brain ?: return
+        b.flush()
+        drainReports()
+    }
 
     /** Whether the world exists: the screens draw [house] instead of their own autopilot rooms. */
     @Volatile
@@ -248,6 +258,7 @@ class CatWorldHost(
             if (views.remove(view) && views.isEmpty()) {
                 ownerAct(OWNER_CLOSE)
                 cues.hidden()
+                flushBrain()
                 markIfChanged(true)
                 pump(true)
             }
@@ -262,6 +273,7 @@ class CatWorldHost(
         synchronized(lock) {
             if (active) {
                 needAnchor = true
+                flushBrain()
                 markIfChanged(true)
                 pump(true)
             }
@@ -272,6 +284,7 @@ class CatWorldHost(
     fun flush() {
         synchronized(lock) {
             if (active) {
+                flushBrain()
                 markIfChanged(true)
                 pump(true)
             }

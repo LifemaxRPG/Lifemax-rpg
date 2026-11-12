@@ -28,9 +28,12 @@ import org.json.JSONObject
  * opens the screen's own toy tray and the native cats play (the page counts the game with `play`);
  * an older page still takes Play, and the rest of the Cat page, to its own view. With
  * `pet.social.v1` the page records the moments the two cats share (`social`, CB5). A genetic coat's
- * sheets are asked of the page with `coat` (`pet.coat.v1`). Each cat's proportions come with the
- * projection (`pet.rig.v1`). The cats' world block (`pet.world.v1`, the native brain's contract) is
- * kept in [WorldFeed]. Everything that is not specific to it lives in [ComposeTabPlugin].
+ * sheets are asked of the page with `coat` (`pet.coat.v1`). With `pet.empty.v1` the tab also opens
+ * with no cat at home, on the cattery's Adoption and Memorial screens. The `moment`, `gift` and
+ * `dwell` reports of the native brain go to the page through `pet.world.v1`. Each cat's proportions
+ * come with the projection (`pet.rig.v1`). The cats' world block (`pet.world.v1`, the native
+ * brain's contract) is kept in [WorldFeed]. Everything that is not specific to it lives in
+ * [ComposeTabPlugin].
  */
 @CapacitorPlugin(name = "NativePet")
 class NativePetPlugin : ComposeTabPlugin() {
@@ -58,6 +61,7 @@ class NativePetPlugin : ComposeTabPlugin() {
             WorldContract.SOCIAL_CAPABILITY,
             "pet.demo.v1",
             "pet.cattery.v1",
+            "pet.empty.v1",
         )
 
     /**

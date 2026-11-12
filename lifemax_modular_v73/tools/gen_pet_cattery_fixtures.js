@@ -7,6 +7,8 @@
      pet-cattery-labFull.json    a full cattery with a litter: the page's "cattery is full" line
      pet-cattery-adopt.json      adopting a second cat: four kittens of a litter
      pet-cattery-memorial.json   In memory: two cats that have passed
+     pet-empty-adopt.json        no cat at home (pet.empty.v1): the intro, the first cat's adoption screen open (WP-C4)
+     pet-empty-memorial.json     a cat has passed (pet.empty.v1): the memorial screen open
      pet-cattery-replies.json    breed, a repeat, a stale keep, a release and a refused rename answered, in the kit's envelope
    Random numbers are seeded, so a regeneration is stable.
    Regenerate only when the block or a reply changes:  NODE_PATH=$(npm root -g) node tools/gen_pet_cattery_fixtures.js [built html] */
@@ -14,9 +16,10 @@ const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const file = require('../tests/current-page')(process.argv[2]);
 const { start } = require('../tests/native-pet-panels.capture');
-const { AT, BASE, FULL, PAIR } = require('../tests/native-pet-cattery.scenarios');
+const { AT, BASE, FULL, PAIR, NOCAT, DEAD } = require('../tests/native-pet-cattery.scenarios');
 const OUT = path.join(__dirname, '..', '..', 'android-wrapper', 'native', 'src', 'test', 'resources', 'fixtures');
 const CAPS = ['pet.projection.v1', 'pet.coat.v1', 'pet.cattery.v1'];
+const EMPTY_CAPS = [...CAPS, 'pet.empty.v1'];
 const SEED = `window.seed=(n)=>{let s=(n||777)>>>0;Math.random=()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}};window.seed()`;
 const MEMORIAL = `state.petMemorial=[{name:'Pepper',coat:'ginger',days:12,passed:now-9*864e5,bond:2,album:null},{name:'Luna',coat:state.pet.coat,days:1,passed:now-3*864e5,bond:5,album:null}]`;
 const STATES = {
@@ -42,6 +45,18 @@ const STATES = {
       }, [setup, view, SEED]);
       fs.writeFileSync(path.join(OUT, 'pet-cattery-' + name + '.json'), JSON.stringify(snap, null, 1) + '\n');
       console.log('wrote pet-cattery-' + name, JSON.stringify(snap).length, 'bytes', p.errors.length ? p.errors : '');
+      await p.context().close();
+    }
+    for (const [name, setup, view] of [['adopt', NOCAT, 'adopt'], ['memorial', DEAD, 'memorial']]) {
+      const p = await start(b, file, { caps: EMPTY_CAPS });
+      const snap = await p.evaluate(async ([setup, view, SEED]) => {
+        (0, eval)(SEED); await setCats(setup); seed();
+        navigate('pet'); await until(() => showing(), 8000);
+        seed(); await command('cattery', { kind: 'view', view });
+        return JSON.parse(JSON.stringify(Object.assign(latest(), { webSessionId: 'pet-fixture', sequence: 1 })));
+      }, [setup, view, SEED]);
+      fs.writeFileSync(path.join(OUT, 'pet-empty-' + name + '.json'), JSON.stringify(snap, null, 1) + '\n');
+      console.log('wrote pet-empty-' + name, JSON.stringify(snap).length, 'bytes', p.errors.length ? p.errors : '');
       await p.context().close();
     }
     const p = await start(b, file, { caps: CAPS });

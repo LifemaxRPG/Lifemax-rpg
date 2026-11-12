@@ -76,9 +76,11 @@ fun CatteryHost(
     actions: CatteryActions,
     topInsetDp: Float = 64f,
     bottomInsetDp: Float = 72f,
+    /** The only thing on the tab (no cat at home): no Back, nowhere behind it to go. */
+    root: Boolean = false,
 ) {
     val cattery = p.cattery ?: return
-    BackHandler(onBack = actions.back)
+    if (!root) BackHandler(onBack = actions.back)
     PageTheme(remember(p.tokens, p.light) { PageColors(p.tokens, p.light) }) {
         val c = LocalPageColors.current
         val words = cattery.words
@@ -86,12 +88,12 @@ fun CatteryHost(
         val detail = cattery.detail.takeIf { cattery.view == screen }
         val busy = ui.waiting != null
         // an adoption that happened (or cannot happen) leaves nothing to show: back to the Cat tab
-        val gone = detail is CatteryDetail.Adopt && detail.mode.isEmpty()
+        val gone = detail is CatteryDetail.Adopt && detail.mode.isEmpty() && !root
         LaunchedEffect(gone) { if (gone) actions.back() }
         Box(Modifier.fillMaxSize().background(c.bg)) {
             Column(Modifier.fillMaxSize()) {
                 Spacer(Modifier.height(topInsetDp.dp))
-                CatteryHeader(titleOf(screen, words), words.back, actions.back)
+                CatteryHeader(titleOf(screen, words), words.back, actions.back.takeUnless { root })
                 HorizontalDivider(color = c.line)
                 LazyColumn(
                     Modifier.weight(1f),
@@ -164,23 +166,30 @@ private fun titleOf(screen: CatteryScreen, w: CatteryWords) =
 
 /** The header: a Back button (48 dp) and the screen's title as a heading. */
 @Composable
-private fun CatteryHeader(title: String, back: String, onBack: () -> Unit) {
+private fun CatteryHeader(title: String, back: String, onBack: (() -> Unit)?) {
     val c = LocalPageColors.current
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            "‹",
-            Modifier.semantics { contentDescription = back }
-                .tapTarget(Role.Button, onClick = onBack)
-                .padding(horizontal = 14.dp, vertical = 4.dp),
-            color = c.accent,
-            fontSize = 28.sp,
-        )
+        if (onBack != null)
+            Text(
+                "‹",
+                Modifier.semantics { contentDescription = back }
+                    .tapTarget(Role.Button, onClick = onBack)
+                    .padding(horizontal = 14.dp, vertical = 4.dp),
+                color = c.accent,
+                fontSize = 28.sp,
+            )
         Text(
             title,
-            Modifier.weight(1f).semantics { heading() },
+            Modifier.weight(1f)
+                .semantics { heading() }
+                .padding(
+                    start = if (onBack == null) 14.dp else 0.dp,
+                    top = if (onBack == null) 12.dp else 0.dp,
+                    bottom = if (onBack == null) 12.dp else 0.dp,
+                ),
             color = c.text,
             fontSize = 20.sp,
             fontWeight = FontWeight(650),
@@ -262,6 +271,17 @@ private fun LazyListScope.labItems(
     }
     if (d.best.isNotEmpty()) item("best") { PetNote(d.best, Modifier.padding(top = 8.dp)) }
     if (d.note.isNotEmpty()) item("note") { PetNote(d.note, Modifier.padding(top = 10.dp)) }
+    // no mother or no fertile father to pair: the way to find one is here, not a screen away
+    if (d.moms.isEmpty() || d.dads.isEmpty())
+        item("stray") {
+            Column(
+                Modifier.padding(top = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                CatteryButton(w.stray, w.stray, enabled = !busy) { send(CatteryCommand.Stray) }
+                PetNote(w.strayHint, size = 12.sp)
+            }
+        }
     if (d.moms.isNotEmpty() && d.dads.isNotEmpty()) {
         item("pair") {
             Column(

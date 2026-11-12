@@ -461,5 +461,7 @@
   if (window.NativePetPlay) commands.play = NativePetPlay.command((c) => !!window.NativePet && NativePet.has(c));
   // a moment the native cats shared (pet.social.v1): its report may come while the cards show
   if (window.NativePetSocial) commands.social = NativePetSocial.command((c) => tab.has(c) || (!!window.NativePet && NativePet.has(c)));
+  // what the native cats noticed for the album and the likes (moment, gift, dwell; pet.world.v1): may come while the cards show
+  if (window.NativePetMoments) for (const k of ["moment", "gift", "dwell"]) commands[k] = NativePetMoments.command(k, (c) => tab.has(c) || (!!window.NativePet && NativePet.has(c)));
   window.NativeOverviewCardsProjection.commands = commands;
 })();

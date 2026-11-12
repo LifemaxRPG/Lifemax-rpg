@@ -321,7 +321,7 @@ function renderPetView(force){
   if(!force&&v.dataset.stamp===stamp){if(mode==='room')petRenderStatus(false);return}
   v.dataset.stamp=stamp;
   if(mode==='intro'){v.innerHTML=petIntroHtml();petInit().then(petCoatPreviewDraw)}
-  else if(mode==='memorial'){v.innerHTML=petMemorialHtml(p);petInit().then(function(rt){const cv=document.getElementById('petMemCanvas');if(!cv)return;const m=rt.A.anims.sleep_w,x=cv.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(rt.sheets[p.coat],0,m.row*rt.A.H,rt.A.W,rt.A.H,0,0,144,96)})}
+  else if(mode==='memorial'){v.innerHTML=petMemorialHtml(p);petInit().then(function(rt){const cv=document.getElementById('petMemCanvas');if(!cv)return;const sh=rt.sheets[p.coat];if(!sh)return;const m=rt.A.anims.sleep_w,x=cv.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(sh,0,m.row*rt.A.H,rt.A.W,rt.A.H,0,0,144,96)})}
   else{v.innerHTML=petRoomHtml(p);const dv=document.getElementById('petDev');if(dv)dv.innerHTML=petDevHtml();petBindCanvas(document.getElementById('petCanvas'));petInit().then(function(){petRenderStatus(true);petBlitSoon()})}
 }
 function petBlitSoon(){const rt=PET_RT;if(rt&&rt.ready){petDraw(rt);petBlit(rt)}}

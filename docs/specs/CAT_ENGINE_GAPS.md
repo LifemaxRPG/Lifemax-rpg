@@ -1,6 +1,6 @@
 # Native cat engine: what is still missing
 
-Status: audit, docs only. Nothing in this file changes code. It lists what the native cat engine
+Status: sections 1 to 7 are the audit (docs only, written before any code changed); section 8 records what was built from it (work packages C0, C1, C4 and the breeding check) and section 9 the decisions still open. The audit lists what the native cat engine
 (Kotlin, `android-wrapper/native/src/main/java/com/lifemax/rpg/feature/pet`) still lacks compared with
 the web page's pet system, so the owner can decide what to fill.
 
@@ -400,8 +400,10 @@ is what the page does now; the native screens show the same.
   kitten is adopted (`petAdoptWith`, `petPairAdoptWith`), so the next intro (after a passing and "Open the door again") offers
   the same four kittens, one of which is the cat that died or is at home. The pair adoption resets it when opened
   (`petPairAdoptOpen`); the first-cat intro does not. The native Adoption screen resets it on `view` as the pair card does.
-- **CD03. The lab's "no mate" note points at a button the lab does not have.** "Try Another litter below to find a mate"
-  (`37-pet-morph.js:151`): "Another litter" is the intro's button; the lab's is "Another stray". Native shows the page's sentence.
+- **CD03. The lab's "no mate" note pointed at a button the lab does not have.** The page's lab said "Try Another litter below to find a
+  mate" (`37-pet-morph.js:151`) but "Another litter" is the intro's button. Fixed for the native screen (section 8.4): its
+  note now says "Use Another stray below to find a mate" and the lab screen has an Another stray button when there is no mother or no
+  fertile father to pair. The page's own lab is unchanged.
 - **CD04. Breeding again throws away an unkept litter without asking.** `petBreedGo` replaces `cattery.litter` (`:207`), so the
   kittens not yet kept or released are lost on the next Breed. Nothing confirms it. The native screen sends the litter's `at` stamp
   with Keep and Release so a stale tap is refused, but Breed itself behaves as the page does.
@@ -409,7 +411,93 @@ is what the page does now; the native screens show the same.
   to the owner; the native field stops typing at 14, and the `cattery` command refuses a longer name rather than cutting it.
 - **CD06. Any sex-valid pair may breed, including kittens a day old, parent and child, and full siblings.** Known (section 1.1) and
   listed here because the native Breed button shows the same pairs; WP-C5 decides.
-- **CD07. The first-cat intro and the memorial cannot open natively yet.** `blocked()` in `50-native-pet.js` keeps the page's view
-  for a missing or dead cat (WP-C4), so the native Adoption screen for a first cat and "Open the door again" are built and tested
-  through the command but unreachable on the phone until `blocked()` is relaxed. Native reaches Adoption for a second cat and the
-  Memorial list while a cat lives.
+- **CD07. The first-cat intro and the memorial could not open natively.** `blocked()` in `50-native-pet.js` kept the page's view for a
+  missing or dead cat. Fixed (WP-C4, Native API 157): a screen that says `pet.empty.v1` (and has `pet.cattery.v1`) now gets the tab with
+  no cat at home, on the cattery's Adoption (first cat) or Memorial screen; an older screen is blocked as before.
+
+---
+
+## 8. What was done about this audit (work packages C0, C1, C4 and the breeding check)
+
+Status: built and tested locally (Native API 157); not run on a phone. Page tests, the local Kotlin run and what is unverified are listed
+at the end of each part.
+
+### 8.1 WP-C0: the open "unverified" items, checked by reading the callers and running the page's own tests
+
+| Item (section) | Result | How |
+|---|---|---|
+| Does the page still record glass, zoomies, blink, favourites and quirks while native owns the cat? (2.2, 2.6) | **No, except what the commands reach.** The room loop is what calls `petBrainFrame`, `petLikesTick` (`24-pet-depth.js:217`) and `petBrainSession`; `petWantRun` is false while native owns the view (`native-cat-world.test.js`: "the web peek loop stays off", passes). So: no first glass, comfort, zoomies, belly, vigil or trophy; no daily likes credit, so no new favourite place or toy; the night-owl quirk count stops. The feed, play and stroke commands call the page's own functions, which still count the meals, toy, gentle-stroke quirks (`k`, `t`, `g`) and the album's gift, blink and respect events. | grep of callers; page tests |
+| Does the album's pair and bond detection still work? (2.6) | Yes: pair nap, level and rank are read from `state.petPair`, which the `social` command writes; bond and growth are read from the cat. | `native-pet-social.test.js` (36 pass) |
+| Does the box show the cat sunk? (2.4) | **No.** No sink code in native `body/` or `brain/` (grep `sink`: only the touch sink). `SurfaceId.BOX` exists with `BOX_FRONT_Z` for occlusion only. Still a WP-C6 art check. | grep |
+| Page tests with the native brain on | All pass at this base: `native-cat-world` 63, `native-pet-cattery` 46, `native-pet-social` 36, `native-pet-play` 28, `native-pet` 51, `pet-album` 48, `native-pet-panels` 137, `native-pet-touch` 25, `native-pet-demo` 9. | run |
+
+Not done: a run on the phone.
+
+### 8.2 WP-C1: moment, gift and dwell reports
+
+Page side (new segment `50-native-pet-moments.js`, tests `native-pet-moments.test.js`, 68 checks): the three commands the plan had named
+and nobody had built.
+- `moment {op, cat, kind, at, quirk?}`: first_glass, first_co, first_zoomies, first_belly, first_vigil, first_trophy, blink, respect, quirk. It
+  sets what the web brain would have (`mem.fx` through `petMemCore`, `qk.acq`) and lets the album look again, so the album's own rules (three a
+  week, no repeats) apply. Repeat-safe by op (`state.petMomentOps`, last 40); ok only once stored, a refused save is taken back and silent.
+- `gift {op, cat}`: refused unless the cat is Devoted and has not given one today; counts the gift as the page's own tap does.
+- `dwell {op, cat, day, spots, toys}`: credits the likes as the page's daily credit does: 0.7 points an hour in a place (the page gives 1 for
+  a nap, 0.8 a rest, 0.5 otherwise), 0.5 a minute with a toy, old habits fade 5 % when a new day is credited; a day older than a week or in the
+  future is refused. These constants are the page's `SPOT_PER_HOUR` and `TOY_PER_MIN`: dials, not measured on a phone.
+
+Native side (Native API 157; `brain/Dwell.kt`, `CatMind`, `CatWorld`, `MindState`, `CatWorldHost`; tests `brain/DwellMomentsTest`):
+- **Dwell is produced.** Each cat counts the seconds it spends at a page place and with a page toy (solo play), per local day, and reports it
+  when ten minutes have gathered, when the day ends, when the view closes or the app stops, and for the catch-up's story. Counting allocates
+  nothing.
+- **First zoomies is produced**, once per cat for good, only while the owner has a view open; it is kept in the saved cat (`fx`) so a restart
+  does not report it again.
+- Blink and respect: the owner's slow-blink button and strokes already reach the page through their own commands (`blink`, `touch`), which
+  call the page's own brain events, so the page records them; native does not report them a second time.
+
+Still not produced natively (they need the CB3 owner interaction work, WP-C2): first glass, comfort, belly, vigil, trophy, the gift staged and
+tapped (the page command is ready; nothing stages a gift or draws one to tap), and the night-owl quirk count (the other three quirk counters
+are counted page-side by the feed, play and stroke commands).
+
+### 8.3 WP-C4: the intro and the memorial on the native Cat tab
+
+`pet.empty.v1` (Native API 157). For a screen that says it and `pet.cattery.v1`, the tab no longer steps aside for no cat or a dead cat: the
+page sends a projection with no cat in it (`empty: {screen: "adopt" | "memorial"}` and the cattery block), and the screen shows the cattery's
+Adoption (the first cat's litter of four, name, "Welcome home") or Memorial ("Open the door again") with no room behind it. Adopting a first
+cat makes the ordinary Cat card; reopening the door turns the memorial into the adoption; a cat that passes while the tab is open turns it
+into the memorial instead of closing it. An older screen is blocked as before. Page tests `native-pet-empty.test.js` (16 checks), Kotlin
+`PetEmptyTest` (decoder, 8 malformed variants refused) and `PetEmptyViewModelTest` (the screen is asked for once, never in a loop). One page
+bug found on the way and fixed: the page's own memorial threw when the dead cat's coat was a genetic one whose sheet was not built
+(`17-runtime.js`).
+
+### 8.4 Breeding, end to end
+
+`native-pet-breeding-path.test.js` drives the native cattery's commands the way a player does: one male at home, empty cattery, the lab says
+there is no mate, Another stray until a mother and a father exist (2 strays at the test's seed), Breed, Keep, Bring home. The kitten lives at
+home as the second cat, with both parents recorded and generation 1, and the native screen can draw it; a second kitten cannot come home while
+the slot is taken. So the system is reachable on the native tab (when "Native Cat (beta)" is on) from the Cat tab's entry card
+(Cattery, Breeding lab). **One dead end was found and fixed:** with no mother or no fertile father the lab told the player to use a button
+that is not on it (CD03); the native lab now has Another stray. Things that still make it feel unfinished, all owner decisions (section 9):
+the stray arrives as a newborn (CD01), any pair may breed (CD06), the beta is off by default.
+
+### 8.5 Not verified
+
+Nothing here was run on a phone or in the full Gradle build (screenshots, Paparazzi, `RoomAllocationTest`). Kotlin was compiled and tested with
+`kotlinc` and JUnit on the JVM for the headless packages (body, brain, world, host, art, room), and for the pet `domain`, `data` and
+`PetViewModel` with stubs for two core types (`HapticScale`, `haptics`). The two new Compose changes (`PetRoute.EmptyHome`, the header without
+a Back arrow, the lab's stray button) are type-checked only by reading: `presentation` Compose files were not compiled here.
+`LiveBrainEndToEndTest.sixHoursOfTheRealBrainWithTheOwnerAKillAndAnOfflineGap` fails the same way at the base commit (a cat found on the
+couch where a floor was expected, line 198) and is left alone.
+
+## 9. Gaps that still need an owner decision, with the recommended default
+
+| # | Gap | Recommended default |
+|---|---|---|
+| Q1, Q2, Q4 | Breeding as part of the cats' life (WP-C5): waiting time, who may breed, naming | Keep the lab as is for now; later add adults only (30 days), no parent-child or siblings, one litter per mother per 14 days, owner names on keep |
+| Q10 / CD01 | "Another stray" is a newborn but the button says adult | Make it an adult (`born` 30 days ago); it is the only way to find a mate without a second cat |
+| Q8 | Native Cat tab on by default (WP-C11) | Not yet: first accept the moments, adoption and memorial on the phone for a week |
+| Q9 | Album and scrapbook on the phone (WP-C8) | Later, after WP-C2 produces the rest of the moments |
+| Q6 | Native sound (WP-C9) | Port the purr and the meow only if the purr is late on the phone |
+| Q7 | Head and eye look-at (WP-C10) | One spike with screenshots |
+| Q5 | Thirst and a litter tray | No |
+| new | Favourites' calibration under native: 0.7 points an hour in a place, 0.5 a minute with a toy | Keep; look at "Favorite place" after a week on the phone and adjust `SPOT_PER_HOUR` and `TOY_PER_MIN` |
+| new | A gift from a native cat (staged, drawn, tappable) | Build with WP-C2/C6 once the art for a gift exists; the page command is ready |

@@ -5,7 +5,9 @@
    play, the toys and the pair stay on the page (docs/specs/CAT_TAB_PLAN.md, CT1). Touch (CT2, pet.touch.v1): the screen's cats
    answer a finger by themselves, and the `touch` command is the page's side of it: the brain's petting rules and the day's count
    (petPetDone), and the sound of the purr, which stays here. The intro (no cat yet) and the memorial
-   (a cat that has passed) are the page's: blocked() keeps the screen away from them. The tab lifecycle is NativeTabKit's. */
+   (a cat that has passed) are the page's unless the screen says pet.empty.v1 (it can draw the cattery's Adoption and Memorial screens,
+   pet.cattery.v1): then the tab opens on them with a projection that has no cat in it, only `empty: {screen}` and the cattery block
+   (work package C4); blocked() keeps the screen away from them for an older screen. The tab lifecycle is NativeTabKit's. */
 (function () {
   const COAT = "pet.coat.v1"; // a genetic (dna_) coat's sheets, asked of the page with the `coat` command
   const TOUCH = "pet.touch.v1"; // touch: the screen's cats answer a finger at once and tell the page, which keeps the books
@@ -21,6 +23,7 @@
   const PURR_KEEP_MS = 100; // the page's purr loop is fed this often while the screen covers the room loop
   const PURR_LIMIT_MS = 120000; // a purr no stroke ever ended (the screen died) stops by itself
   const GENTLE_GAP_MS = 20 * 60000; // a gentle stroke counts toward the cat's quirks once in 20 minutes
+  const EMPTY = "pet.empty.v1"; // the screen draws the intro and the memorial itself, when no cat is at home
   const RIG = "pet.rig.v1"; // each cat's proportions (ear, tail, leg, body, whisker multipliers), so native re-assembles the art as the page does
   const LEGACY_COATS = ["ginger", "gray", "black", "tuxedo"]; // the coats native ships art for
   const NAME_MAX = 14; // what petRename keeps
@@ -69,6 +72,17 @@
     if (!p || !p.alive) return false;
     return LEGACY_COATS.includes(p.coat) || (!!tab && tab.has(COAT) && typeof petCoatKnown === "function" && petCoatKnown(p.coat));
   }
+  /** which of the cattery's screens takes the place of the room with no cat at home: the first cat's adoption, or the memorial of one
+      that has passed; "" with a living cat */
+  const emptyScreen = () => (!state.pet ? "adopt" : !state.pet.alive ? "memorial" : "");
+  /** the screen can show it: it said so, and it has the cattery screens it is made of */
+  const canEmpty = () => !!tab && tab.has(EMPTY) && tab.has("pet.cattery.v1") && !!window.NativePetCattery && emptyScreen() !== "";
+  /** the projection with no cat in it: the screen to show and the cattery block that fills it (its words, the open screen's detail) */
+  function emptyProjection() {
+    const out = NativePetCattery.extend({ empty: { screen: emptyScreen() } }, tab);
+    delete out.words;
+    return out;
+  }
   /** one cat as the room needs it: its coat, growth stage (-1 grown, 0..5 a kitten) and hunger (the weak rows), and its name, which seeds its habits;
       for a screen with pet.rig.v1 also its proportions (rig), left out for a cat the art fits as drawn */
   function look(p) {
@@ -109,6 +123,7 @@
     return parts.length ? parts.join(" · ") + " today" : "";
   }
   function projection() {
+    if (canEmpty()) return emptyProjection();
     const now = Date.now(), p = state.pet, cats = house();
     // whose card the screen shows: the cat the page's switcher has focused, as the page's own commands act on it
     const f = cats.length > 1 && petPairOn() ? PET_PAIR.focus : 0, cat = cats[f], d = petStatusData(cat, now);
@@ -396,8 +411,9 @@
     warm: true, // the screen says at once whether it can ask for a genetic coat
     notices: true,
     render: "renderPetView",
-    // the intro and the memorial are the page's; so is a visit the owner handed to the page, the full-screen room and a level-up
-    blocked: () => handedOver || !drawable(state.pet) || document.body.classList.contains("pet-full-open") || !!document.querySelector(".luov"),
+    // the intro and the memorial are the page's unless the screen draws them (pet.empty.v1); so is a visit the owner handed to the page,
+    // the full-screen room and a level-up
+    blocked: () => handedOver || (!drawable(state.pet) && !canEmpty()) || document.body.classList.contains("pet-full-open") || !!document.querySelector(".luov"),
     arrive() {
       handedOver = false;
       since = Date.now();

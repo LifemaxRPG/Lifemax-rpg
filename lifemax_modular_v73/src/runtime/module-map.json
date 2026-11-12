@@ -932,7 +932,7 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 38886,
+   "bytes": 38912,
    "statement_count": 74,
    "tags": [
     "pet",
@@ -3637,7 +3637,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-pet.js",
-   "bytes": 22238,
+   "bytes": 23516,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3666,7 +3666,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-pet-cattery.js",
-   "bytes": 19173,
+   "bytes": 19172,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3738,6 +3738,21 @@
     "window.toast",
     "window.setTimeout",
     "window.NativePetSocial"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-pet-moments.js",
+   "bytes": 10787,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "pet",
+    "moments"
+   ],
+   "symbols": [
+    "window.writeSave",
+    "window.toast",
+    "window.NativePetMoments"
    ]
   },
   {
@@ -3922,7 +3937,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
-   "bytes": 24519,
+   "bytes": 24830,
    "statement_count": 1,
    "tags": [
     "native",
