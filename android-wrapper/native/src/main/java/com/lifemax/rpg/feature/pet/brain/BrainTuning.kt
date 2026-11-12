@@ -135,6 +135,9 @@ object BrainTuning {
         /** Curiosity's share of the appeal: [EXPLORE_CURIOSITY_FLOOR] at 0 up to 1 at full. */
         const val EXPLORE_CURIOSITY_FLOOR = 0.5
 
+        /** Explore thinks of this share of the places at a time (and each one costs a route). */
+        const val EXPLORE_SAMPLE = 0.4
+
         /** Another cat's bowl is worth a sniff, less than the cat's own places. */
         const val OTHER_BOWL = 0.5
 
@@ -151,6 +154,9 @@ object BrainTuning {
         const val ZOOM_LEGS_HI = 5
         const val ZOOM_LEG_MIN_PX = 70f
         const val ZOOM_LEG_MAX_PX = 260f
+
+        /** A burst of running or stalking keeps this far from the other cat on the floor (px). */
+        const val MATE_GAP_PX = 80f
 
         /** The floor depths a zoomie runs at (in front of the furniture), and a burst's length. */
         const val ZOOM_Z_LO = 50f
@@ -184,7 +190,7 @@ object BrainTuning {
          * cat's a little above), or a meal just eaten ([MEAL_DOZE_MIN]).
          */
         const val SLEEPY_ADULT = 0.5
-        const val SLEEPY_KITTEN = 0.5
+        const val SLEEPY_KITTEN = 0.6
         const val TIRED = 0.28
 
         /** After a meal a cat dozes for this long if its energy is below [MEAL_DOZE_ENERGY]. */
@@ -339,8 +345,9 @@ object BrainTuning {
         const val WATCHDOG_SLACK_S = 120.0
 
         /** Route costs are cached per standing spot rounded to this many px. */
-        const val ROUTE_CACHE_PX = 12f
-        const val ROUTE_CACHE_MAX = 512
+        const val ROUTE_CACHE_PX =
+            40f // roaming: was 12; this only prices a way, the real one is planned exactly
+        const val ROUTE_CACHE_MAX = 4096 // roaming: was 512; cats pick every half minute now
     }
 
     /** Place liking (plan 1.5 memory): page likes and the world's own dwell memory. */

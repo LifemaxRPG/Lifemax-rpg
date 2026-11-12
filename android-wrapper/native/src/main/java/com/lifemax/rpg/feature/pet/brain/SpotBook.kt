@@ -79,6 +79,8 @@ class SpotBook(private val cats: Int) {
             if (!clear(spot, x, staySpot[o], stayX[o])) return false
             if (spot.single && (passMask[o] and bit(spot.surface)) != 0) return false
             if ((passes and held(o)) != 0) return false
+            // two cats do not cross over the same perch at the same time (they now move a lot)
+            if ((passes and passMask[o]) != 0) return false
         }
         return true
     }

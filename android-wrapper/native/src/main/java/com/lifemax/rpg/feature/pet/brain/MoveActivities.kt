@@ -43,7 +43,11 @@ internal object Wander : Activity {
         return BASE * want * m.persona.exploreWeight * Roaming.boost(m)
     }
 
-    override fun suits(m: MindView, spot: Spot) = spot.room != World.roomOf(m.x)
+    override fun suits(m: MindView, spot: Spot): Boolean {
+        val mate = m.mateX
+        if (mate != null && Math.abs(spot.x - mate) < BrainTuning.Roam.MATE_GAP_PX) return false
+        return spot.room != World.roomOf(m.x)
+    }
 
     override fun reason(m: MindView) = "curious"
 

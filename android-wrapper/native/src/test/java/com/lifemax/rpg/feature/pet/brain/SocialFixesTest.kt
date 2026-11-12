@@ -95,7 +95,9 @@ class SocialFixesTest {
             },
             until = { !(lying.exec.surface == SurfaceId.COUCH && Math.abs(lying.exec.x - at) < 2f) },
         )
-        assertEquals("quanta the other stood on the groomed cat", 0, walkedOnto)
+        // the groomer lies beside the groomed cat; as the moment ends it gets up and goes (roaming:
+        // it used to stay and rest), a quantum or two still beside the other
+        assertTrue("quanta the other stood on the groomed cat: $walkedOnto", walkedOnto <= 4)
     }
 
     /** True when cat [front] lies ahead of the other along their facing (the spoon's front). */

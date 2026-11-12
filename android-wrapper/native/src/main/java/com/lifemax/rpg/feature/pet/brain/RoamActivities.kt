@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.pet.brain
 import com.lifemax.rpg.feature.pet.body.Occluders
 import com.lifemax.rpg.feature.pet.body.PlanStep
 import com.lifemax.rpg.feature.pet.body.Rng
+import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.World
 
 /**
@@ -47,6 +48,15 @@ internal object Roaming {
         return s * (1.0 + r.REST_TIRED_GAIN * tired / r.REST_TIRED_FROM)
     }
 
+    /** [x] moved out to [BrainTuning.Roam.MATE_GAP_PX] from the other cat on the floor ([mate]). */
+    fun clearOfMate(x: Float, mate: Float?): Float {
+        if (mate == null || Math.abs(x - mate) >= r.MATE_GAP_PX) return x
+        val side = if (x >= mate) 1 else -1
+        val moved = mate + side * r.MATE_GAP_PX
+        return if (moved in World.HOUSE_MIN_X..World.HOUSE_MAX_X) moved
+        else mate - side * r.MATE_GAP_PX
+    }
+
     private const val HALF = 0.5
     private const val BOOST_MIN = 0.5
     private const val BOOST_GAIN = 1.5
@@ -74,6 +84,14 @@ internal object Explore : Activity {
     private const val LOOK_LO = 2.0
     private const val LOOK_HI = 4.0
     private const val SNIFF_AGAIN = 0.8f
+    private const val SAMPLE_WINDOW_MS = 5000L
+    private const val MIX_A = -1640531535
+    private const val MIX_B = -2048144789
+    private const val MIX_C = -1028477387
+    private const val MIX_D = 739982445
+    private const val SHIFT_A = 15
+    private const val SHIFT_B = 12
+    private const val MASK = 0xFFFF
 
     override fun satisfies(d: Drive) = if (d == Drive.CURIOSITY) CURIOSITY_TAU else 0.0
 
@@ -87,7 +105,22 @@ internal object Explore : Activity {
         return r.EXPLORE_BASE * Roaming.urge(m) * m.persona.exploreWeight * curious
     }
 
-    override fun suits(m: MindView, spot: Spot) = spot !== m.here
+    /**
+     * A cat thinks of some of the places, not all: a share of the table, a different one every few
+     * seconds (the same for the same cat at the same time, so a day replays), which is also what
+     * keeps a pick cheap (every place considered is a route to measure).
+     */
+    override fun suits(m: MindView, spot: Spot): Boolean {
+        if (spot === m.here) return false
+        // not to a floor place where the other cat stands (they would be on top of each other)
+        val mate = m.mateX
+        if (mate != null && spot.onFloor && Math.abs(spot.x - mate) < r.MATE_GAP_PX) return false
+        var h =
+            spot.index * MIX_A xor (m.nowMs / SAMPLE_WINDOW_MS).toInt() * MIX_B xor m.slot * MIX_C
+        h = (h xor (h ushr SHIFT_A)) * MIX_D
+        h = h xor (h ushr SHIFT_B)
+        return (h and MASK) < r.EXPLORE_SAMPLE * (MASK + 1)
+    }
 
     override fun placeFactor(m: MindView, spot: Spot): Double {
         val other = if (spot.has(Spots.BOWL) && spot !== Spots.bowl(m.slot)) r.OTHER_BOWL else 1.0
@@ -133,14 +166,13 @@ internal object Explore : Activity {
 /**
  * Zoomies (roaming): a burst of mad galloping back and forth across the floor, three to five legs,
  * then a sit and a wash as if nothing happened. Kittens and playful cats, with energy, most at the
- * dawn and dusk peaks. Only on the floor (a cat up on a perch first gets down), only to places a
- * cat can be seen at.
+ * dawn and dusk peaks. A cat on the floor does it (one up on a perch comes down by other activities
+ * first), and only to places a cat can be seen at.
  */
 internal object Zoomies : Activity {
     override val id = "zoomies"
     override val mainDrive = Drive.PLAY
     override val lively = true
-    override val onFloor = true
     override val exertion = 2.0
     override val arousal = 0.8
     override val cooldownMin = BrainTuning.Roam.ZOOM_COOLDOWN_MIN
@@ -153,7 +185,8 @@ internal object Zoomies : Activity {
 
     override fun satisfies(d: Drive) = if (d == Drive.PLAY) PLAY_TAU else 0.0
 
-    override fun eligible(m: MindView) = m.drives[Drive.ENERGY] > r.ZOOM_ENERGY && !m.persona.weak
+    override fun eligible(m: MindView) =
+        m.surface == SurfaceId.FLOOR && m.drives[Drive.ENERGY] > r.ZOOM_ENERGY && !m.persona.weak
 
     override fun appeal(m: MindView): Double {
         val play = PLAY_FLOOR + (1.0 - PLAY_FLOOR) * m.drives[Drive.PLAY]
@@ -180,6 +213,7 @@ internal object Zoomies : Activity {
                 dir = -dir
                 to = clamp(x + dir * rng.range(r.ZOOM_LEG_MIN_PX, r.ZOOM_LEG_MAX_PX))
             }
+            to = Roaming.clearOfMate(to, m.mateX)
             val z = Occluders.visibleZ(to, rng.range(r.ZOOM_Z_LO, r.ZOOM_Z_HI))
             out.dash(to, z)
             x = to
@@ -203,7 +237,6 @@ internal object SoloPlay : Activity {
     override val id = "solo play"
     override val mainDrive = Drive.PLAY
     override val lively = true
-    override val onFloor = true
     override val exertion = 1.6
     override val arousal = 0.6
     override val cooldownMin = BrainTuning.Roam.SOLO_COOLDOWN_MIN
@@ -228,7 +261,8 @@ internal object SoloPlay : Activity {
 
     override fun satisfies(d: Drive) = if (d == Drive.PLAY) PLAY_TAU else 0.0
 
-    override fun eligible(m: MindView) = m.drives[Drive.ENERGY] > r.SOLO_ENERGY && !m.persona.weak
+    override fun eligible(m: MindView) =
+        m.surface == SurfaceId.FLOOR && m.drives[Drive.ENERGY] > r.SOLO_ENERGY && !m.persona.weak
 
     override fun appeal(m: MindView): Double {
         val play = PLAY_FLOOR + (1.0 - PLAY_FLOOR) * m.drives[Drive.PLAY]
@@ -250,11 +284,14 @@ internal object SoloPlay : Activity {
         val dir = rng.sign()
         out.act(Rows.CROUCH, r.SOLO_STALK_S.toDouble())
         val to =
-            (m.x + dir * r.SOLO_POUNCE_PX).coerceIn(
-                World.HOUSE_MIN_X + EDGE_PX,
-                World.HOUSE_MAX_X - EDGE_PX,
+            Roaming.clearOfMate(
+                (m.x + dir * r.SOLO_POUNCE_PX).coerceIn(
+                    World.HOUSE_MIN_X + EDGE_PX,
+                    World.HOUSE_MAX_X - EDGE_PX,
+                ),
+                m.mateX,
             )
-        out.dash(to, null)
+        out.dash(to, Occluders.visibleZ(to, rng.range(r.ZOOM_Z_LO, r.ZOOM_Z_HI)))
         out.act(Rows.BAT, Beats.seconds(rng, r.SOLO_SWAT_LO_S, r.SOLO_SWAT_HI_S))
         if (rng.chance(r.SOLO_ROLL_CHANCE)) out.act(Rows.ROLL, ROLL_S)
         out.act(Rows.SIT, SIT_S)

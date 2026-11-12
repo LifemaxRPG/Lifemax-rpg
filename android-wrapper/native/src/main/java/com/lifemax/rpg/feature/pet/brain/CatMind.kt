@@ -22,6 +22,11 @@ interface House {
     /** The house's toys, once the host has given them (null in a headless or fast world). */
     val toys: ToyField?
 
+    /**
+     * Where the other cat stands on the floor (null: none, or up on a perch), seen by cat [slot].
+     */
+    fun mateX(slot: Int): Float? = null
+
     /** Another cat stands on top of cat [slot] (see [BrainTuning.Apart]). */
     fun crowded(slot: Int): Boolean
 
@@ -75,7 +80,7 @@ class CatMind(
     private var sitterMeals = 0
 
     /** Simulated ms since the world began, as of the last quantum. */
-    var nowMs = 0L
+    override var nowMs = 0L
         private set
 
     override var hour = 0.0
@@ -170,6 +175,9 @@ class CatMind(
         persona.hungerStage = stage
         persona.vacation = vacation
     }
+
+    override val mateX: Float?
+        get() = house.mateX(slot)
 
     /** Another cat stands on top of this one. */
     fun crowded(): Boolean = house.crowded(slot)

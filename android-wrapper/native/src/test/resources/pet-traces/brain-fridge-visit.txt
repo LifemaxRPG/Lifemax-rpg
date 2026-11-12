@@ -1,97 +1,97 @@
    0.25 # parkour visit @ fridge (forced)
-   0.25 walk        f1 couch    x= -72.77 z= 35.0 y=109.00
-   0.50 walk        f3 couch    x= -65.69 z= 35.0 y=109.00
-   0.75 walk        f5 couch    x= -62.24 z= 35.0 y=109.00
-   1.00 jump_up     f1 couch    x= -62.00 z= 35.0 y=109.00
-   1.25 jump_air    f0 couch    x= -54.35 z= 35.0 y= 94.55
-   1.50 jump_air    f1 couch    x= -40.85 z= 35.0 y= 94.51
-   1.75 jump_air    f1 couch    x= -27.35 z= 35.0 y=126.97
-   2.00 jump_land   f2 floor    x= -26.00 z= 35.0 y=132.00
-   2.25 walk        f0 floor    x= -25.54 z= 35.0 y=132.00
-   2.50 walk        f2 floor    x= -20.03 z= 35.0 y=132.00
-   2.75 walk        f5 floor    x= -11.73 z= 35.0 y=132.00
-   3.00 walk        f0 floor    x=  -3.43 z= 35.0 y=132.00
-   3.25 walk        f3 floor    x=   4.87 z= 35.0 y=132.00
-   3.50 walk        f6 floor    x=  13.16 z= 35.0 y=132.00
-   3.75 walk        f1 floor    x=  21.46 z= 35.0 y=132.00
-   4.00 walk        f4 floor    x=  29.76 z= 35.0 y=132.00
-   4.25 walk        f7 floor    x=  38.06 z= 35.0 y=132.00
-   4.50 walk        f3 floor    x=  46.36 z= 35.0 y=132.00
-   4.75 walk        f6 floor    x=  54.65 z= 35.0 y=132.00
-   5.00 walk        f1 floor    x=  62.95 z= 35.0 y=132.00
-   5.25 walk        f4 floor    x=  71.25 z= 35.0 y=132.00
-   5.50 walk        f7 floor    x=  79.55 z= 35.0 y=132.00
-   5.75 walk        f2 floor    x=  87.84 z= 35.0 y=132.00
-   6.00 walk        f5 floor    x=  96.14 z= 35.0 y=132.00
-   6.25 walk        f0 floor    x= 104.44 z= 35.0 y=132.00
-   6.50 walk        f3 floor    x= 112.73 z= 35.0 y=132.00
-   6.75 walk        f7 floor    x= 121.03 z= 35.0 y=132.00
-   7.00 walk        f2 floor    x= 129.33 z= 35.0 y=132.00
-   7.25 walk        f5 floor    x= 137.62 z= 35.0 y=132.00
-   7.50 walk        f0 floor    x= 145.92 z= 35.0 y=132.00
-   7.75 walk        f3 floor    x= 154.22 z= 35.0 y=132.00
-   8.00 walk        f6 floor    x= 162.51 z= 35.0 y=132.00
-   8.25 walk        f1 floor    x= 170.81 z= 35.0 y=132.00
-   8.50 walk        f4 floor    x= 179.10 z= 35.0 y=132.00
-   8.75 walk        f7 floor    x= 187.40 z= 35.0 y=132.00
-   9.00 walk        f3 floor    x= 195.70 z= 35.0 y=132.00
-   9.25 walk        f6 floor    x= 203.99 z= 35.0 y=132.00
-   9.50 walk        f1 floor    x= 212.29 z= 35.0 y=132.00
-   9.75 walk        f4 floor    x= 220.58 z= 35.0 y=132.00
-  10.00 walk        f7 floor    x= 228.88 z= 35.0 y=132.00
-  10.25 walk        f2 floor    x= 236.28 z= 35.0 y=132.00
-  10.50 walk        f3 floor    x= 239.75 z= 35.0 y=132.00
-  10.75 jump_up     f0 floor    x= 240.00 z= 35.0 y=132.00
-  11.00 jump_up     f0 floor    x= 240.00 z= 35.0 y=132.00
-  11.25 jump_up     f0 floor    x= 240.00 z= 35.0 y=132.00
-  11.50 walk        f2 floor    x= 245.77 z= 35.0 y=132.00
-  11.75 jump_air    f0 floor    x= 265.67 z= 35.0 y=102.10
-  12.00 jump_air    f1 floor    x= 287.81 z= 35.0 y= 87.02
-  12.25 turn        f0 counter  x= 298.00 z= 35.0 y= 91.00
-  12.50 turn        f2 counter  x= 298.00 z= 35.0 y= 91.00
-  12.75 jump_up     f0 counter  x= 298.00 z= 35.0 y= 91.00 flip
-  13.00 jump_up     f0 counter  x= 298.00 z= 35.0 y= 91.00 flip
-  13.25 jump_up     f0 counter  x= 298.00 z= 35.0 y= 91.00 flip
-  13.50 walk        f0 counter  x= 297.77 z= 35.0 y= 91.00 flip
-  13.75 run         f2 counter  x= 288.38 z= 35.0 y= 91.00 flip
-  14.00 jump_air    f0 counter  x= 267.24 z= 35.0 y= 43.84 flip
-  14.25 jump_air    f0 counter  x= 245.95 z= 35.0 y= 27.01 flip
-  14.50 jump_land   f1 fridge   x= 235.00 z= 35.0 y= 31.00 flip
-  14.75 jump_land   f2 fridge   x= 235.00 z= 35.0 y= 31.00 flip
-  15.00 walk        f1 fridge   x= 231.98 z= 35.0 y= 31.00 flip
-  15.25 walk        f2 fridge   x= 227.04 z= 35.0 y= 31.00 flip
-  15.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  15.75 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  16.00 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  16.25 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+   0.25 walk        f1 pouf     x= -31.02 z= 35.0 y=127.00
+   0.50 jump_up     f0 pouf     x= -29.00 z= 35.0 y=127.00
+   0.75 jump_up     f2 pouf     x= -29.00 z= 35.0 y=127.00
+   1.00 jump_air    f1 pouf     x= -16.31 z= 35.0 y=118.76
+   1.25 jump_land   f0 floor    x=  -5.00 z= 35.0 y=132.00
+   1.50 jump_land   f2 floor    x=  -5.00 z= 35.0 y=132.00
+   1.75 walk        f0 floor    x=  -3.40 z= 35.0 y=132.00
+   2.00 walk        f3 floor    x=   3.74 z= 35.0 y=132.00
+   2.25 walk        f6 floor    x=  12.04 z= 35.0 y=132.00
+   2.50 walk        f1 floor    x=  20.33 z= 35.0 y=132.00
+   2.75 walk        f4 floor    x=  28.63 z= 35.0 y=132.00
+   3.00 walk        f7 floor    x=  36.93 z= 35.0 y=132.00
+   3.25 walk        f2 floor    x=  45.23 z= 35.0 y=132.00
+   3.50 walk        f5 floor    x=  53.53 z= 35.0 y=132.00
+   3.75 walk        f1 floor    x=  61.83 z= 35.0 y=132.00
+   4.00 walk        f4 floor    x=  70.12 z= 35.0 y=132.00
+   4.25 walk        f7 floor    x=  78.42 z= 35.0 y=132.00
+   4.50 walk        f2 floor    x=  86.72 z= 35.0 y=132.00
+   4.75 walk        f5 floor    x=  95.02 z= 35.0 y=132.00
+   5.00 walk        f0 floor    x= 103.32 z= 35.0 y=132.00
+   5.25 walk        f3 floor    x= 111.61 z= 35.0 y=132.00
+   5.50 walk        f6 floor    x= 119.91 z= 35.0 y=132.00
+   5.75 walk        f1 floor    x= 128.21 z= 35.0 y=132.00
+   6.00 walk        f5 floor    x= 136.50 z= 35.0 y=132.00
+   6.25 walk        f0 floor    x= 144.80 z= 35.0 y=132.00
+   6.50 walk        f3 floor    x= 153.10 z= 35.0 y=132.00
+   6.75 walk        f6 floor    x= 161.40 z= 35.0 y=132.00
+   7.00 walk        f1 floor    x= 169.69 z= 35.0 y=132.00
+   7.25 walk        f4 floor    x= 177.99 z= 35.0 y=132.00
+   7.50 walk        f7 floor    x= 186.28 z= 35.0 y=132.00
+   7.75 walk        f2 floor    x= 194.58 z= 35.0 y=132.00
+   8.00 walk        f5 floor    x= 202.88 z= 35.0 y=132.00
+   8.25 walk        f1 floor    x= 211.17 z= 35.0 y=132.00
+   8.50 walk        f4 floor    x= 219.47 z= 35.0 y=132.00
+   8.75 walk        f7 floor    x= 227.76 z= 35.0 y=132.00
+   9.00 walk        f2 floor    x= 235.50 z= 35.0 y=132.00
+   9.25 walk        f3 floor    x= 239.52 z= 35.0 y=132.00
+   9.50 jump_up     f0 floor    x= 240.00 z= 35.0 y=132.00
+   9.75 jump_up     f0 floor    x= 240.00 z= 35.0 y=132.00
+  10.00 jump_up     f0 floor    x= 240.00 z= 35.0 y=132.00
+  10.25 walk        f1 floor    x= 244.22 z= 35.0 y=132.00
+  10.50 jump_air    f0 floor    x= 262.72 z= 35.0 y=106.57
+  10.75 jump_air    f0 floor    x= 284.86 z= 35.0 y= 87.15
+  11.00 turn        f0 counter  x= 298.00 z= 35.0 y= 91.00
+  11.25 turn        f2 counter  x= 298.00 z= 35.0 y= 91.00
+  11.50 jump_up     f0 counter  x= 298.00 z= 35.0 y= 91.00 flip
+  11.75 jump_up     f0 counter  x= 298.00 z= 35.0 y= 91.00 flip
+  12.00 jump_up     f0 counter  x= 298.00 z= 35.0 y= 91.00 flip
+  12.25 jump_up     f0 counter  x= 297.98 z= 35.0 y= 91.00 flip
+  12.50 run         f2 counter  x= 290.42 z= 35.0 y= 91.00 flip
+  12.75 jump_air    f0 counter  x= 270.08 z= 35.0 y= 48.54 flip
+  13.00 jump_air    f0 counter  x= 248.79 z= 35.0 y= 27.37 flip
+  13.25 jump_land   f1 fridge   x= 235.00 z= 35.0 y= 31.00 flip
+  13.50 jump_land   f2 fridge   x= 235.00 z= 35.0 y= 31.00 flip
+  13.75 walk        f0 fridge   x= 232.74 z= 35.0 y= 31.00 flip
+  14.00 walk        f2 fridge   x= 227.46 z= 35.0 y= 31.00 flip
+  14.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  14.50 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  14.75 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  15.00 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  15.25 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  15.50 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  15.75 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  16.00 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  16.25 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   16.50 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   16.75 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  17.00 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  17.25 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  17.50 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  17.75 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  18.00 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  18.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  17.00 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  17.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  17.50 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  17.75 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  18.00 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  18.25 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   18.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   18.75 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  19.00 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  19.25 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  19.50 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  19.75 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  20.00 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  20.25 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  19.00 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  19.25 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  19.50 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  19.75 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  20.00 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  20.25 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   20.50 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   20.75 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  21.00 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  21.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  21.50 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  21.75 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  22.00 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  22.25 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  22.50 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  22.75 lookup      f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  23.00 lookup      f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  23.25 lookup      f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  23.50 lookup      f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  23.75 lookup      f3 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  24.00 lookup      f3 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  21.00 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  21.25 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  21.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  21.75 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  22.00 lookup      f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  22.25 lookup      f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  22.50 lookup      f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  22.75 lookup      f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  23.00 lookup      f3 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  23.25 lookup      f3 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  23.50 lookup      f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  23.75 lookup      f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  24.00 lookup      f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip

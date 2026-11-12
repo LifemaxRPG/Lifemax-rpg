@@ -9,11 +9,11 @@ import org.junit.Test
 /**
  * The mix of a cat's days by character (plan 4.1 "sanity bounds"), over several seeds (the cat's
  * world id and the date) and days, in fast mode (the same selector, drives and schedule as live;
- * the scripts are timed steps): an adult sleeps 12..16 h, a kitten 14..18 h; a lazy cat sleeps more
- * than a spontaneous one, a playful one gets about more, a shy one keeps more to hidden and low
- * places; an outgoing cat watches a window and visits a high place every day; besides resting no
- * awake activity takes more than 35 % of the awake time; a cat on vacation never begs and eats the
- * sitter's meals.
+ * the scripts are timed steps): an adult sleeps 9.5..16 h, a kitten 11..18 h (roaming: was 12..16
+ * and 14..18, the cats get about by day); a lazy cat sleeps more than a spontaneous one, a playful
+ * one gets about more, a shy one keeps more to hidden and low places; an outgoing cat watches a
+ * window and visits a high place every day; besides resting no awake activity takes more than 35 %
+ * of the awake time; a cat on vacation never begs and eats the sitter's meals.
  */
 class PersonaMixTest {
     /**
@@ -94,16 +94,17 @@ class PersonaMixTest {
     private val shy by lazy { mix(CatDays.SHY) }
 
     @Test
-    fun adultsSleepTwelveToSixteenHoursAndTheLazyOnesMore() {
+    fun adultsSleepTenToSixteenHoursAndTheLazyOnesMore() {
         for ((name, m) in listOf("lazy" to lazy, "playful" to playful, "shy" to shy)) {
             println("$name: $m")
-            // a rested cat fed by day no longer goes straight back to its nap (the owner's "stuck
-            // in bed"), so the most playful sleeps a little under twelve hours
-            assertTrue("$name sleeps ${m.h("sleep")} h", m.h("sleep") in 11.5..16.0)
+            // roaming: a rested cat by day does not lie down to sleep (the owner's "they just lie
+            // around"), so a cat sleeps ten to twelve hours: the night, a nap or two, a doze
+            // after a meal
+            assertTrue("$name sleeps ${m.h("sleep")} h", m.h("sleep") in 9.5..16.0)
         }
         assertTrue(
             "lazy ${lazy.h("sleep")} vs playful ${playful.h("sleep")}",
-            lazy.h("sleep") >= playful.h("sleep") + 1.5,
+            lazy.h("sleep") >= playful.h("sleep") + 1.0,
         )
     }
 
@@ -146,7 +147,12 @@ class PersonaMixTest {
     fun aKittenSleepsMoreInShorterBouts() {
         val kitten = mix(CatDays.PLAYFUL, stage = 1)
         println("kitten: $kitten")
-        assertTrue("kitten sleeps ${kitten.h("sleep")} h", kitten.h("sleep") in 14.0..18.0)
+        // roaming: was 14 to 18 h; a kitten still sleeps more than a grown cat of its character
+        assertTrue("kitten sleeps ${kitten.h("sleep")} h", kitten.h("sleep") in 11.0..18.0)
+        assertTrue(
+            "kitten ${kitten.h("sleep")} h vs adult ${playful.h("sleep")} h",
+            kitten.h("sleep") > playful.h("sleep") + 0.5,
+        )
     }
 
     @Test

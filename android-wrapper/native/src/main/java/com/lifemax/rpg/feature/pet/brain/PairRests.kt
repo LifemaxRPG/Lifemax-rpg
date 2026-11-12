@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.pet.brain
 
+import com.lifemax.rpg.feature.pet.body.Occluders
 import com.lifemax.rpg.feature.pet.body.PairPose
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.World
@@ -200,6 +201,9 @@ internal fun PairPlays.standoffEnd(o: Moment, winner: Int): Stage {
         val x = inHouse(l.exec.x + dir * range(t.RETREAT_LO, t.RETREAT_HI))
         l.exec.route(SurfaceId.FLOOR, x)?.let {
             sl.route(it.steps)
+            // it stops there to sit and wash: in view, not under the cat tree's platform
+            val z = Occluders.visibleZ(x, World.ART_Z)
+            if (z != World.ART_Z) sl.stroll(x, z)
             vacated = true
         }
     }

@@ -129,6 +129,9 @@ internal object CatchUpRun {
             "eat" to "ate",
             "beg" to "waited for food",
             "play" to "played",
+            "explore" to "had a look round",
+            "zoomies" to "raced about",
+            "solo play" to "played",
             "make way" to "moved over",
             "greet" to "touched noses",
             "chase" to "played chase",
@@ -169,10 +172,11 @@ internal object PairLines {
 internal object CatchUpTuning {
     /**
      * The longest stretch played (the end of a longer gap; the host caps a gap at a day). Bounded
-     * by its cost: the fast world plays about an hour of two cats in 40 ms on a desktop JVM, and
-     * the catch-up runs on the frame that reopens the room.
+     * by its cost: the fast world plays about twenty minutes of two cats in 45 ms on a desktop JVM
+     * (cats pick something new every half minute now, roaming: an hour was 135 ms), and the
+     * catch-up runs on the frame that reopens the room.
      */
-    const val SIM_MAX_MS = 3_600_000L
+    const val SIM_MAX_MS = 1_200_000L
 
     /** A gap shorter than this is not played. */
     const val MIN_MS = 60_000L

@@ -14,8 +14,8 @@ import org.junit.Test
  *
  * Before (two days, awake 08:00 to 21:00, Ted / Lily): moving share of awake time 3% / 2%, asleep
  * 53% / 44% of the daytime, 2.5 / 1.8 places per awake 10 minutes, whole 20 minute windows lying or
- * sitting still (1200 s), no play. After: 32% / 21% moving, asleep 29% / 22%, 12.3 / 11.0 places,
- * longest stretch still 178 s / 187 s, an hour or more of zoomies and play a day for Ted.
+ * sitting still (1200 s), no play. After: 32% / 20% moving, asleep 30% / 25%, 14.6 / 12.2 places,
+ * longest stretch still 178 s / 197 s, over an hour of zoomies and play a day for Ted.
  */
 class RoamingTest {
     private companion object {
@@ -45,7 +45,7 @@ class RoamingTest {
 
     @Test
     fun awakeCatsMoveAboutDuringTheDay() {
-        // before: 0.03 and 0.02; after: about 0.32 and 0.21
+        // before: 0.03 and 0.02; after: about 0.32 and 0.20
         assertTrue("Ted ${active(TED)}", active(TED) >= 0.25)
         assertTrue("Lily ${active(LILY)}", active(LILY) >= 0.15)
     }
@@ -57,7 +57,7 @@ class RoamingTest {
 
     @Test
     fun catsVisitManyPlacesInTenMinutes() {
-        // before: 2.5 and 1.8 places per awake 10 minutes; after: 12.3 and 11.0
+        // before: 2.5 and 1.8 places per awake 10 minutes; after: 14.6 and 12.2
         for (cat in listOf(TED, LILY)) {
             val w = days.flatMap { awakeWindows(it, cat, 10) }
             val mean = w.sumOf { it.places.size } / w.size.toDouble()
@@ -67,7 +67,7 @@ class RoamingTest {
 
     @Test
     fun noPostureIsHeldForLongWhileAwake() {
-        // before: whole 20 minute windows (1200 s) lying or sitting; after: at most 187 s
+        // before: whole 20 minute windows (1200 s) lying or sitting; after: at most 197 s
         for (cat in listOf(TED, LILY)) {
             for (t in days) for (w in awakeWindows(t, cat, 20)) {
                 assertTrue("cat $cat still ${w.longestStillS} s", w.longestStillS <= 300.0)

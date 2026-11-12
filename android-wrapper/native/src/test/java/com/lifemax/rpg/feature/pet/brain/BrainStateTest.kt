@@ -49,7 +49,10 @@ class BrainStateTest {
             val was = w.minds[m.slot]
             assertEquals(was.exec.surface, m.exec.surface)
             assertEquals(was.exec.x, m.exec.x, 0.01f)
-            assertEquals(was.runner.activity.id, m.runner.activity.id)
+            // an activity of seconds (a look round, a dash) is not taken up again after a
+            // restart; one with at least a minute left is
+            if (was.runner.seconds - was.runner.atPlaceS >= LONG_ENOUGH_S)
+                assertEquals(was.runner.activity.id, m.runner.activity.id)
             assertEquals(was.mood.valence, m.mood.valence, 0.001)
         }
         // what a later phase owns rides through untouched
@@ -92,6 +95,10 @@ class BrainStateTest {
         }
         run(w, c, 10) // and the brain goes on playing them
         assertTrue(bodies.all { it.planId > 0 })
+    }
+
+    private companion object {
+        const val LONG_ENOUGH_S = 60.0
     }
 
     private fun blobOf(s: BrainState) =

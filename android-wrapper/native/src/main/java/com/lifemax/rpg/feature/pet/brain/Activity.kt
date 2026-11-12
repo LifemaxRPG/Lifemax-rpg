@@ -41,6 +41,12 @@ interface MindView {
     /** The toy the owner offered for the game being played, or null. */
     val toy: ToyBody?
 
+    /** Where the other cat stands on the floor, or null (none, or up on a perch). */
+    val mateX: Float?
+
+    /** Simulated ms since the world began, as of the last think quantum. */
+    val nowMs: Long
+
     /** Seconds the cat has been still: nothing lively and not on the move (roaming). */
     val stillS: Double
 
