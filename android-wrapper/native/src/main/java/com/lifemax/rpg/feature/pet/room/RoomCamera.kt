@@ -15,6 +15,9 @@ import kotlin.math.roundToInt
  * - A cat that rests never makes the room drift: while nothing travels, offsets under [DEAD_ZONE]
  *   are left alone, and once the camera has started it settles on a whole pixel.
  * - A jump of more than [CUT] px (a cat put somewhere new) is a cut, not a pan.
+ * - A glide ([glideTo], the owner chose the other cat) is a pan however far the cat is: no cut, a
+ *   steady ease at [TRANSIT_RATE] until the camera is within [TRANSIT_END] px, then the ordinary
+ *   follow takes over (its dead zone and whole-pixel settle).
  * - [left] keeps the view inside the house.
  *
  * Plain arithmetic on a few floats: nothing here allocates.
@@ -25,12 +28,24 @@ internal class RoomCamera(startX: Float = 0f) {
         private set
 
     private var going = false
+    private var transit = false
 
     /** Put the camera at [x] at once. */
     fun cutTo(x: Float) {
         cx = x
         going = false
+        transit = false
     }
+
+    /** Pan to wherever the next [update] aims, however far (a new cat was chosen). */
+    fun glideTo() {
+        transit = true
+        going = true
+    }
+
+    /** Whether a [glideTo] is still under way. */
+    val gliding: Boolean
+        get() = transit
 
     /**
      * Move toward [target] (a world x, with any lead already added) for [dt] seconds. [moving] and
@@ -38,6 +53,13 @@ internal class RoomCamera(startX: Float = 0f) {
      */
     fun update(target: Float, moving: Boolean, running: Boolean, dt: Float) {
         val d = target - cx
+        if (transit) {
+            if (abs(d) < TRANSIT_END) transit = false
+            else {
+                cx += d * (1f - exp(-TRANSIT_RATE * dt))
+                return
+            }
+        }
         if (abs(d) > CUT) {
             cx = target
             going = false
@@ -69,6 +91,12 @@ internal class RoomCamera(startX: Float = 0f) {
         const val REST_RATE = 1.6f
         const val WALK_RATE = 2.6f
         const val RUN_RATE = 4.2f
+
+        /** The glide's ease rate: 95 per cent of the way in about a second. */
+        const val TRANSIT_RATE = 3.2f
+
+        /** The glide hands over to the ordinary follow this close to the target (px). */
+        const val TRANSIT_END = 24f
     }
 }
 
@@ -86,12 +114,38 @@ internal class CameraDirector(val camera: RoomCamera = RoomCamera()) {
     private var focus = 0
     private var stillFor = 0f
     private var placed = false
+    private var chosen = NONE
 
-    /** Follow [first] (and [second], if any) for [dt] seconds. */
-    fun update(first: CatBody, second: CatBody?, dt: Float) {
+    /**
+     * Follow [first] (and [second], if any) for [dt] seconds. With [selected] (0 for [first], 1 for
+     * [second], [NONE] for no choice) the camera frames that cat and keeps following it as it
+     * walks, whatever the other does: a change of the choice glides to the new cat ([RoomCamera.
+     * glideTo]), or cuts with [cutOnChange] (reduced motion) and when there was no choice before.
+     */
+    fun update(
+        first: CatBody,
+        second: CatBody?,
+        dt: Float,
+        selected: Int = NONE,
+        cutOnChange: Boolean = false,
+    ) {
         if (!placed) {
             placed = true
             camera.cutTo(startTarget(first, second))
+        }
+        val pick = if (selected == 1 && second == null) NONE else selected
+        if (pick != chosen) {
+            val was = chosen
+            chosen = pick
+            if (pick != NONE) {
+                val cat = if (pick == 0) first else second!!
+                if (was == NONE || cutOnChange) camera.cutTo(aim(cat)) else camera.glideTo()
+            }
+        }
+        if (pick != NONE) {
+            val cat = if (pick == 0) first else second!!
+            camera.update(aim(cat), cat.isTravelling, cat.isRunning, dt)
+            return
         }
         if (second == null) {
             followOne(first, dt)
@@ -130,15 +184,31 @@ internal class CameraDirector(val camera: RoomCamera = RoomCamera()) {
     }
 
     private fun followOne(cat: CatBody, dt: Float) {
-        val moving = cat.isTravelling
-        val lead = if (cat.isRunning) RoomCamera.RUN_LEAD else RoomCamera.LEAD
-        val target = cat.pose.x + if (moving) cat.pose.facing * lead else 0f
-        camera.update(target, moving, cat.isRunning, dt)
+        camera.update(aim(cat), cat.isTravelling, cat.isRunning, dt)
     }
 
+    private fun aim(cat: CatBody): Float =
+        CameraAim.target(cat.pose.x, cat.pose.facing, cat.isTravelling, cat.isRunning)
+
     companion object {
+        /** No cat chosen: the director's own rule ([PATIENCE], [CLOSE]). */
+        const val NONE = -1
+
         /** Two cats this close (feet to feet) share the frame. */
         const val CLOSE = 110f
         const val PATIENCE = 0.6f
+    }
+}
+
+/** Where the camera aims for a cat (pure, so a test can pin it). */
+internal object CameraAim {
+    /**
+     * The world x the camera aims at for a cat standing at [x] facing [facing] (-1 or 1): the cat
+     * itself, and while it travels a lead ahead of it ([RoomCamera.LEAD], [RoomCamera.RUN_LEAD]
+     * running), the web's own rule.
+     */
+    fun target(x: Float, facing: Int, moving: Boolean, running: Boolean): Float {
+        val lead = if (running) RoomCamera.RUN_LEAD else RoomCamera.LEAD
+        return x + if (moving) facing * lead else 0f
     }
 }

@@ -63,9 +63,10 @@ internal object SwayTuning {
 internal class DepthSway(
     reducedMotion: Boolean = false,
     private val idleAmplitude: Float = SwayTuning.IDLE_AMPLITUDE,
+    private val restAngle: Float = 0f,
 ) {
-    /** The idle drift and the tilt alone (the spring), -1 to 1. */
-    var idle = 0f
+    /** The idle drift, the tilt and the resting view angle alone (the spring), -1 to 1. */
+    var idle = if (reducedMotion) 0f else restAngle.coerceIn(-1f, 1f)
         private set
 
     /** The pan of the room camera ([PanFollow.pan]) added to the spring; 0 unless [follow]ing. */
@@ -77,11 +78,11 @@ internal class DepthSway(
         get() = (idle + pan).coerceIn(-1f, 1f)
 
     /** The [position] the room is drawn at: it holds still while the camera is at rest. */
-    var shown = 0f
+    var shown = idle
         private set
 
     /** The [idle] the room is drawn at, held with [shown]. */
-    var shownIdle = 0f
+    var shownIdle = idle
         private set
 
     private var shownView = 0f
@@ -194,7 +195,7 @@ internal class DepthSway(
         val a = sin(TURN * (t / SwayTuning.IDLE_PERIOD_A_S))
         val b = sin(TURN * (t / SwayTuning.IDLE_PERIOD_B_S + SwayTuning.IDLE_PHASE_B))
         val idle = idleAmplitude * (a * (1f - SwayTuning.IDLE_MIX) + b * SwayTuning.IDLE_MIX)
-        return (idle + tilt * SwayTuning.TILT_RANGE).coerceIn(-1f, 1f)
+        return (restAngle + idle + tilt * SwayTuning.TILT_RANGE).coerceIn(-1f, 1f)
     }
 
     private companion object {

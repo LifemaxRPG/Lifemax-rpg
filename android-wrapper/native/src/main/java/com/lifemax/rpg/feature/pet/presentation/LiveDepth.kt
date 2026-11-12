@@ -9,6 +9,8 @@ import androidx.compose.ui.platform.LocalView
 import com.lifemax.rpg.feature.pet.room.DepthGuard
 import com.lifemax.rpg.feature.pet.room.DepthLevel
 import com.lifemax.rpg.feature.pet.room.GuardTuning
+import com.lifemax.rpg.feature.pet.room.LayerOffsets
+import com.lifemax.rpg.feature.pet.room.LiveDepthTuning
 import com.lifemax.rpg.feature.pet.room.RoomStyle
 
 /**
@@ -23,14 +25,36 @@ import com.lifemax.rpg.feature.pet.room.RoomStyle
  * with [record] once a frame from the room that is running.
  */
 internal object LiveDepth {
-    private val guard = DepthGuard(DepthLevel.RICH) { System.nanoTime() / NANOS_PER_MS }
+    private val guard = DepthGuard(LiveDepthTuning.BEST_LEVEL) { System.nanoTime() / NANOS_PER_MS }
 
     /** The level to draw at; null is the classic flat room. */
     var level: DepthLevel? by mutableStateOf(guard.level)
         private set
 
     /** The style of a live room at the current level ([reducedMotion]: the rest picture only). */
-    fun style(reducedMotion: Boolean): RoomStyle = RoomStyle.live(level, reducedMotion)
+    fun style(reducedMotion: Boolean): RoomStyle =
+        RoomStyle.live(level, reducedMotion, LiveDepthTuning.VIEW_ANGLE)
+
+    /** The pixel offsets of the layers as the room is drawn now (the stage reports them). */
+    @Volatile private var wallPx = 0
+    @Volatile private var nearPx = 0
+
+    /** A live stage's layers as drawn this frame: the wall's shift and the nearest row's. */
+    fun reportOffsets(wall: Int, near: Int) {
+        wallPx = wall
+        nearPx = near
+    }
+
+    /**
+     * What the phone is doing, for the Developer-mode readout of the Cat tab: the level in use, why
+     * the guard chose it, its load, and the skew in pixels (never saved or logged).
+     */
+    fun readout(): String {
+        val lv = level?.name ?: "flat (classic room)"
+        val load = Math.round(guard.load * PERCENT)
+        return "Depth $lv (best ${LiveDepthTuning.BEST_LEVEL.name}), ${guard.reason}, load $load%, " +
+            "changes ${guard.changes}, skew ${LayerOffsets(wallPx, nearPx)}"
+    }
 
     /**
      * One frame of a running live room: [workMs] of main-thread time (its step and drawing),
@@ -44,6 +68,7 @@ internal object LiveDepth {
     fun resume() = guard.resume()
 
     private const val NANOS_PER_MS = 1_000_000L
+    private const val PERCENT = 100
 }
 
 /** The style of a live room now: the guard's level, or the rest picture with [reducedMotion]. */

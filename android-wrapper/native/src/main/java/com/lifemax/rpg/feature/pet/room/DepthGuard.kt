@@ -13,16 +13,36 @@ internal object GuardTuning {
     /**
      * Frames ignored after the guard starts or resumes: the first frames make the room's pictures.
      */
-    const val WARMUP_FRAMES = 45
+    const val WARMUP_FRAMES = 90
 
     /** Step down when the average cost is above this share of a frame's budget. */
     const val DOWN_ABOVE = 0.6f
 
     /** A step up needs the average below this share, and below it for [CALM_MS]. */
-    const val UP_BELOW = 0.3f
+    const val UP_BELOW = 0.4f
 
-    /** How long the room must have been calm to step up one level: two minutes. */
-    const val CALM_MS = 120_000L
+    /** How long the room must have been calm to step up one level: one minute. */
+    const val CALM_MS = 60_000L
+
+    /**
+     * The classic flat room is only for a phone that cannot draw the room at all: the average must
+     * be above this share of a frame's budget at SUBTLE (the room's own work longer than a frame).
+     */
+    const val FLAT_ABOVE = 1.0f
+
+    /**
+     * The budget is never judged tighter than this (60 Hz): on a 120 Hz display 0.6 of a 120 Hz
+     * frame (5 ms) was a normal cost of the room, and a phone whose adaptive refresh rate runs the
+     * screen slower than its nominal rate made every frame "late" and left the room flat for good.
+     */
+    const val MIN_BUDGET_MS = 1000f / 60f
+
+    /**
+     * A frame counts as dropped (its overrun adds to its cost) only when it lasted more than this
+     * many budgets: a frame at half or a third of the refresh rate is the system's choice, not a
+     * slow room.
+     */
+    const val STALL_BUDGETS = 3f
 
     /** After any change nothing changes again for this long, so the new level is judged fairly. */
     const val HOLD_MS = 4_000L
@@ -45,9 +65,11 @@ internal object GuardTuning {
  * ([record]: the milliseconds the room took on the main thread, and how long the frame lasted) and
  * answers with the [level] to draw at: [best] (the live rooms use [DepthLevel.RICH]), then each
  * level below it down to [DepthLevel.SUBTLE], then null (the classic flat room).
- * - **Down.** A frame's cost is the larger of its own work and how far the frame ran past the
- *   budget. When the average of the last [GuardTuning.WINDOW] frames is above
- *   [GuardTuning.DOWN_ABOVE] of the budget, the level drops one step.
+ * - **Down.** A frame's cost is its own work, or, for a frame that lasted more than
+ *   [GuardTuning.STALL_BUDGETS] budgets, how far it ran past the budget. The budget is the
+ *   display's, but never tighter than 60 Hz ([GuardTuning.MIN_BUDGET_MS]). When the average of the
+ *   last [GuardTuning.WINDOW] frames is above [GuardTuning.DOWN_ABOVE] of the budget, the level
+ *   drops one step.
  * - **Up.** Only when the average has stayed below [GuardTuning.UP_BELOW] for [GuardTuning.CALM_MS]
  *   without a break. A step up is on probation for [GuardTuning.PROBATION_MS]: if it has to be
  *   undone then, the next calm needed doubles (up to [GuardTuning.MAX_BACKOFF] times), so a phone
@@ -67,6 +89,10 @@ internal class DepthGuard(
 ) {
     /** The level to draw at; null means the classic flat room. */
     var level: DepthLevel? = best
+        private set
+
+    /** Why the level is what it is, in a few words (the developer readout; never logged). */
+    var reason: String = "start at best level"
         private set
 
     /** How many times the level has changed (for tests and the owner's curiosity, never logged). */
@@ -100,8 +126,9 @@ internal class DepthGuard(
             skip--
             return false
         }
-        val over = intervalMs - budgetMs
-        val cost = maxOf(workMs, over).coerceAtLeast(0f) / budgetMs
+        val budget = maxOf(budgetMs, GuardTuning.MIN_BUDGET_MS)
+        val over = if (intervalMs > GuardTuning.STALL_BUDGETS * budget) intervalMs - budget else 0f
+        val cost = maxOf(workMs, over).coerceAtLeast(0f) / budget
         add(cost.coerceAtMost(GuardTuning.MAX_SAMPLE_BUDGETS))
         if (filled < costs.size) return false
         val now = clock()
@@ -113,7 +140,7 @@ internal class DepthGuard(
             backoff = 1
         }
         if (now < heldUntil) return false
-        if (average > GuardTuning.DOWN_ABOVE) return stepDown(now)
+        if (average > GuardTuning.DOWN_ABOVE) return stepDown(now, average)
         val calm = calmSince != NOT_CALM && now - calmSince >= GuardTuning.CALM_MS * backoff
         return calm && stepUp(now)
     }
@@ -125,16 +152,17 @@ internal class DepthGuard(
         calmSince = NOT_CALM
     }
 
-    private fun stepDown(now: Long): Boolean {
+    private fun stepDown(now: Long, average: Float): Boolean {
         val lower =
             when (level) {
                 DepthLevel.RICH -> DepthLevel.MEDIUM
                 DepthLevel.MEDIUM -> DepthLevel.SUBTLE
-                DepthLevel.SUBTLE -> null
+                DepthLevel.SUBTLE -> if (average > GuardTuning.FLAT_ABOVE) null else return false
                 null -> return false
             }
         if (now < probationUntil) backoff = minOf(backoff * 2, GuardTuning.MAX_BACKOFF)
         probationUntil = Long.MIN_VALUE
+        reason = "down: load ${pct(average)}% of a frame, over ${pct(GuardTuning.DOWN_ABOVE)}%"
         return change(lower, now)
     }
 
@@ -148,6 +176,7 @@ internal class DepthGuard(
             }
         if (higher.ordinal > best.ordinal) return false
         probationUntil = now + GuardTuning.PROBATION_MS
+        reason = "up: load ${pct(load0())}% for ${GuardTuning.CALM_MS * backoff / 1000} s"
         return change(higher, now)
     }
 
@@ -160,6 +189,10 @@ internal class DepthGuard(
         skip = GuardTuning.WARMUP_FRAMES
         return true
     }
+
+    private fun pct(share: Float): Int = Math.round(share * PERCENT)
+
+    private fun load0(): Float = if (filled == 0) 0f else sum / filled
 
     private fun add(cost: Float) {
         if (filled == costs.size) sum -= costs[next] else filled++
@@ -176,5 +209,6 @@ internal class DepthGuard(
 
     private companion object {
         const val NOT_CALM = Long.MIN_VALUE
+        const val PERCENT = 100
     }
 }
