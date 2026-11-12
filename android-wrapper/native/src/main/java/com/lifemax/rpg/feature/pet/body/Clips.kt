@@ -39,7 +39,7 @@ enum class Posture {
  *   clips that are not locomotion. Playing at `speed / stridePx` cycles per second means no slip.
  * @property shadowHalfWidth half width of the ground shadow in art pixels.
  * @property cheapBeat true when letting the clip finish is a short, natural beat.
- * @property openFrames for clips that blink: the frames with open eyes, played slowly.
+ * @property openFrames for clips that blink: the frames with open eyes, held one after another.
  * @property blinkFrames for clips that blink: the frames of one blink.
  */
 class Clip(
@@ -95,9 +95,10 @@ object Clips {
     /** The first lab row of the main sheet: right after the page's 28 rows. */
     private const val LAB_ROW0 = 28
     private val NONE = IntArray(0)
-    private val SIT_OPEN = intArrayOf(0, 1, 2, 6, 7)
+    /** Open-eyed frames in the order held: the three near-identical rest frames first. */
+    private val SIT_OPEN = intArrayOf(0, 6, 7, 1, 2)
     private val SIT_BLINK = intArrayOf(3, 4, 5)
-    private val SIT_W_OPEN = intArrayOf(0, 1, 6, 7)
+    private val SIT_W_OPEN = intArrayOf(0, 6, 7, 1)
     private val SIT_W_BLINK = intArrayOf(2, 3, 4, 5)
 
     private val list = ArrayList<Clip>()

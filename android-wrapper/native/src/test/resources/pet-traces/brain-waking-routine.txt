@@ -63,16 +63,16 @@
   15.25 shake       f0 bed      x=  36.00 z= 35.0 y=128.00
   15.50 shake       f4 bed      x=  36.00 z= 35.0 y=128.00
   15.75 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
-  16.00 idle_sit    f1 bed      x=  36.00 z= 35.0 y=128.00
-  16.25 idle_sit    f2 bed      x=  36.00 z= 35.0 y=128.00
-  16.50 idle_sit    f6 bed      x=  36.00 z= 35.0 y=128.00
-  16.75 idle_sit    f7 bed      x=  36.00 z= 35.0 y=128.00
+  16.00 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
+  16.25 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
+  16.50 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
+  16.75 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
   17.00 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
   17.25 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
-  17.50 idle_sit    f1 bed      x=  36.00 z= 35.0 y=128.00
-  17.75 idle_sit    f2 bed      x=  36.00 z= 35.0 y=128.00
-  18.00 idle_sit    f6 bed      x=  36.00 z= 35.0 y=128.00
-  18.25 idle_sit    f7 bed      x=  36.00 z= 35.0 y=128.00
+  17.50 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
+  17.75 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
+  18.00 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
+  18.25 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
   18.50 # loaf @ behind the bed (rests)
   18.50 idle_sit    f0 bed      x=  36.00 z= 35.0 y=128.00
   18.75 jump_air    f1 bed      x=  38.56 z= 35.0 y=121.45
@@ -84,21 +84,21 @@
   20.25 walk_back   f1 floor    x=  40.00 z= 16.5 y=123.84
   20.50 walk_back   f2 floor    x=  40.00 z= 12.6 y=122.14
   20.75 idle_sit    f0 floor    x=  40.00 z= 10.1 y=121.12
-  21.00 idle_sit    f1 floor    x=  40.00 z= 10.0 y=121.12
-  21.25 idle_sit    f1 floor    x=  40.00 z= 10.0 y=121.12
-  21.50 idle_sit    f2 floor    x=  40.00 z= 10.0 y=121.12
-  21.75 idle_sit    f6 floor    x=  40.00 z= 10.0 y=121.12
-  22.00 idle_sit    f7 floor    x=  40.00 z= 10.0 y=121.12
+  21.00 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  21.25 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  21.50 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  21.75 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  22.00 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
   22.25 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
-  22.50 idle_sit    f1 floor    x=  40.00 z= 10.0 y=121.12
-  22.75 idle_sit    f2 floor    x=  40.00 z= 10.0 y=121.12
-  23.00 idle_sit    f6 floor    x=  40.00 z= 10.0 y=121.12
-  23.25 idle_sit    f6 floor    x=  40.00 z= 10.0 y=121.12
-  23.50 idle_sit    f7 floor    x=  40.00 z= 10.0 y=121.12
+  22.50 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  22.75 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  23.00 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  23.25 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  23.50 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
   23.75 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
-  24.00 idle_sit    f1 floor    x=  40.00 z= 10.0 y=121.12
-  24.25 idle_sit    f2 floor    x=  40.00 z= 10.0 y=121.12
-  24.50 idle_sit    f6 floor    x=  40.00 z= 10.0 y=121.12
+  24.00 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  24.25 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
+  24.50 idle_sit    f0 floor    x=  40.00 z= 10.0 y=121.12
   24.75 loaf        f0 floor    x=  40.00 z= 10.0 y=121.12
   25.00 loaf        f0 floor    x=  40.00 z= 10.0 y=121.12
   25.25 loaf        f1 floor    x=  40.00 z= 10.0 y=121.12

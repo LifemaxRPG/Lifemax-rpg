@@ -401,6 +401,13 @@ object Tuning {
     object Blink {
         const val GAP_MIN_S = 4f
         const val GAP_MAX_S = 11f
+
+        /**
+         * Seconds a sitting cat keeps one of its open-eyed frames before the next (the web changed
+         * it every 0.29 s, which on the cat tree read as a head that never settled: see
+         * docs/specs/PET_SPRITE_STEADINESS.md, "A sitting cat's head").
+         */
+        const val OPEN_HOLD_S = 6f
     }
 
     object Look {

@@ -60,39 +60,39 @@
  5.300 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  58.06 y=103.29 v=  -76.8,    7.1 a=-3.71 sq=-1.00,1.00 air | mouth  84.00,108.00
  5.400 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  50.44 y=105.72 v=  -75.6,   38.7 a=-4.88 sq=-1.00,1.00 air | mouth  84.00,108.00
  5.500 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  42.94 y=111.28 v=  -74.5,   69.9 a=-6.04 sq=-1.00,1.00 air | mouth  84.00,108.00
- 5.600 cat x=  98.00 idle_sit f1 flip | toy FREE  x=  35.55 y=119.93 v=  -73.4,  100.6 a=-7.21 sq=-1.00,1.00 air | mouth  84.00,108.00
- 5.700 cat x=  98.00 idle_sit f1 flip | toy FREE  x=  28.91 y=121.23 v=  -61.5,  -30.8 a=-8.38 sq=-0.97,1.06 air | mouth  84.00,108.00
- 5.800 cat x=  98.00 idle_sit f1 flip | toy FREE  x=  22.81 y=119.90 v=  -60.5,    1.4 a=-9.55 sq=-1.00,1.01 air | mouth  84.00,108.00
- 5.900 cat x=  98.00 idle_sit f2 flip | toy FREE  x=  16.80 y=121.76 v=  -59.6,   33.1 a=-10.72 sq=-1.00,1.00 air | mouth  84.00,108.00
- 6.000 cat x=  98.00 idle_sit f2 flip | toy FREE  x=  10.89 y=126.76 v=  -58.8,   64.4 a=-11.89 sq=-1.00,1.00 air | mouth  84.00,108.00
- 6.100 cat x=  98.00 idle_sit f2 flip | toy FREE  x=   5.79 y=126.18 v=  -49.2,   -3.7 a=-13.06 sq=-1.00,1.00 air | mouth  84.00,108.00
- 6.200 cat x=  98.00 idle_sit f6 flip | toy FREE  x=   0.91 y=127.50 v=  -41.2,    0.0 a=-14.23 sq=-1.03,0.94 | mouth  84.00,108.00
- 6.300 cat x=  98.00 idle_sit f6 flip | toy FREE  x=  -2.32 y=127.50 v=   21.3,    0.0 a=-14.87 sq=0.97,1.00 | mouth  84.00,108.00
- 6.400 cat x=  98.00 idle_sit f6 flip | toy FREE  x=  -0.36 y=127.50 v=   18.3,    0.0 a=-14.43 sq=1.00,1.00 | mouth  84.00,108.00
- 6.500 cat x=  98.00 idle_sit f7 flip | toy FREE  x=   1.33 y=127.50 v=   15.8,    0.0 a=-14.06 sq=1.00,1.00 | mouth  84.00,108.00
- 6.600 cat x=  98.00 idle_sit f7 flip | toy FREE  x=   2.78 y=127.50 v=   13.6,    0.0 a=-13.73 sq=1.00,1.00 | mouth  84.00,108.00
- 6.700 cat x=  98.00 idle_sit f7 flip | toy FREE  x=   4.04 y=127.50 v=   11.7,    0.0 a=-13.46 sq=1.00,1.00 | mouth  84.00,108.00
+ 5.600 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  35.55 y=119.93 v=  -73.4,  100.6 a=-7.21 sq=-1.00,1.00 air | mouth  84.00,108.00
+ 5.700 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  28.91 y=121.23 v=  -61.5,  -30.8 a=-8.38 sq=-0.97,1.06 air | mouth  84.00,108.00
+ 5.800 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  22.81 y=119.90 v=  -60.5,    1.4 a=-9.55 sq=-1.00,1.01 air | mouth  84.00,108.00
+ 5.900 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  16.80 y=121.76 v=  -59.6,   33.1 a=-10.72 sq=-1.00,1.00 air | mouth  84.00,108.00
+ 6.000 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  10.89 y=126.76 v=  -58.8,   64.4 a=-11.89 sq=-1.00,1.00 air | mouth  84.00,108.00
+ 6.100 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   5.79 y=126.18 v=  -49.2,   -3.7 a=-13.06 sq=-1.00,1.00 air | mouth  84.00,108.00
+ 6.200 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   0.91 y=127.50 v=  -41.2,    0.0 a=-14.23 sq=-1.03,0.94 | mouth  84.00,108.00
+ 6.300 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  -2.32 y=127.50 v=   21.3,    0.0 a=-14.87 sq=0.97,1.00 | mouth  84.00,108.00
+ 6.400 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  -0.36 y=127.50 v=   18.3,    0.0 a=-14.43 sq=1.00,1.00 | mouth  84.00,108.00
+ 6.500 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   1.33 y=127.50 v=   15.8,    0.0 a=-14.06 sq=1.00,1.00 | mouth  84.00,108.00
+ 6.600 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   2.78 y=127.50 v=   13.6,    0.0 a=-13.73 sq=1.00,1.00 | mouth  84.00,108.00
+ 6.700 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   4.04 y=127.50 v=   11.7,    0.0 a=-13.46 sq=1.00,1.00 | mouth  84.00,108.00
  6.800 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   5.11 y=127.50 v=   10.0,    0.0 a=-13.22 sq=1.00,1.00 | mouth  84.00,108.00
  6.900 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   6.04 y=127.50 v=    8.6,    0.0 a=-13.01 sq=1.00,1.00 | mouth  84.00,108.00
- 7.000 cat x=  98.00 idle_sit f1 flip | toy FREE  x=   6.84 y=127.50 v=    7.4,    0.0 a=-12.83 sq=1.00,1.00 | mouth  84.00,108.00
- 7.100 cat x=  98.00 idle_sit f1 flip | toy FREE  x=   7.53 y=127.50 v=    6.4,    0.0 a=-12.68 sq=1.00,1.00 | mouth  84.00,108.00
- 7.200 cat x=  98.00 idle_sit f1 flip | toy FREE  x=   8.12 y=127.50 v=    5.5,    0.0 a=-12.55 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.000 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   6.84 y=127.50 v=    7.4,    0.0 a=-12.83 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.100 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   7.53 y=127.50 v=    6.4,    0.0 a=-12.68 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.200 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   8.12 y=127.50 v=    5.5,    0.0 a=-12.55 sq=1.00,1.00 | mouth  84.00,108.00
  7.300   ! StepDone plan=1 step=3 last
- 7.300 cat x=  98.00 idle_sit f2 flip | toy FREE  x=   8.63 y=127.50 v=    4.7,    0.0 a=-12.44 sq=1.00,1.00 | mouth  84.00,108.00
- 7.400 cat x=  98.00 idle_sit f2 flip | toy FREE  x=   9.07 y=127.50 v=    4.1,    0.0 a=-12.34 sq=1.00,1.00 | mouth  84.00,108.00
- 7.500 cat x=  98.00 idle_sit f2 flip | toy FREE  x=   9.44 y=127.50 v=    3.5,    0.0 a=-12.25 sq=1.00,1.00 | mouth  84.00,108.00
- 7.600 cat x=  98.00 idle_sit f6 flip | toy FREE  x=   9.77 y=127.50 v=    3.0,    0.0 a=-12.18 sq=1.00,1.00 | mouth  84.00,108.00
- 7.700 cat x=  98.00 idle_sit f6 flip | toy FREE  x=  10.05 y=127.50 v=    2.6,    0.0 a=-12.12 sq=1.00,1.00 | mouth  84.00,108.00
- 7.800 cat x=  98.00 idle_sit f6 flip | toy FREE  x=  10.29 y=127.50 v=    2.2,    0.0 a=-12.07 sq=1.00,1.00 | mouth  84.00,108.00
- 7.900 cat x=  98.00 idle_sit f7 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
- 8.000 cat x=  98.00 idle_sit f7 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
- 8.100 cat x=  98.00 idle_sit f7 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.300 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   8.63 y=127.50 v=    4.7,    0.0 a=-12.44 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.400 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   9.07 y=127.50 v=    4.1,    0.0 a=-12.34 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.500 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   9.44 y=127.50 v=    3.5,    0.0 a=-12.25 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.600 cat x=  98.00 idle_sit f0 flip | toy FREE  x=   9.77 y=127.50 v=    3.0,    0.0 a=-12.18 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.700 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  10.05 y=127.50 v=    2.6,    0.0 a=-12.12 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.800 cat x=  98.00 idle_sit f0 flip | toy FREE  x=  10.29 y=127.50 v=    2.2,    0.0 a=-12.07 sq=1.00,1.00 | mouth  84.00,108.00
+ 7.900 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 8.000 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 8.100 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
  8.200 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
  8.300 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
  8.400 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
- 8.500 cat x=  98.00 idle_sit f1 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
- 8.600 cat x=  98.00 idle_sit f1 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
- 8.700 cat x=  98.00 idle_sit f1 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
- 8.800 cat x=  98.00 idle_sit f2 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
- 8.900 cat x=  98.00 idle_sit f2 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
- 9.000 cat x=  98.00 idle_sit f6 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 8.500 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 8.600 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 8.700 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 8.800 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 8.900 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00
+ 9.000 cat x=  98.00 idle_sit f0 flip | toy REST  x=  10.44 y=127.50 v=    0.0,    0.0 a=-12.03 sq=1.00,1.00 | mouth  84.00,108.00

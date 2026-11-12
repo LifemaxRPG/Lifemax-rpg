@@ -61,34 +61,34 @@
   15.00 walk        f1 fridge   x= 231.98 z= 35.0 y= 31.00 flip
   15.25 walk        f2 fridge   x= 227.04 z= 35.0 y= 31.00 flip
   15.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  15.75 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  16.00 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  16.25 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  16.50 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  16.75 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  15.75 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  16.00 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  16.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  16.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  16.75 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   17.00 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  17.25 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  17.50 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  17.75 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  18.00 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  17.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  17.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  17.75 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  18.00 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   18.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   18.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  18.75 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  19.00 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  19.25 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  19.50 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  18.75 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  19.00 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  19.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  19.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   19.75 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  20.00 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  20.25 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  20.50 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  20.75 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  21.00 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  20.00 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  20.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  20.50 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  20.75 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  21.00 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   21.25 idle_sit    f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  21.50 idle_sit    f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  21.75 idle_sit    f2 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  21.50 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  21.75 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   22.00 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  22.25 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
-  22.50 idle_sit    f7 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  22.25 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
+  22.50 idle_sit    f6 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   22.75 lookup      f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   23.00 lookup      f0 fridge   x= 226.00 z= 35.0 y= 31.00 flip
   23.25 lookup      f1 fridge   x= 226.00 z= 35.0 y= 31.00 flip
