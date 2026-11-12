@@ -147,8 +147,17 @@ internal class SoftCanvas(private val art: RoomArt, private val topExtra: Int = 
         sh: Int,
         dx: Int,
         dy: Int,
+        alpha: Float,
     ) {
-        for (j in 0 until sh) for (i in 0 until sw) put(dx + i, dy + j, image[sx + i, sy + j])
+        if (alpha >= 1f) {
+            for (j in 0 until sh) for (i in 0 until sw) put(dx + i, dy + j, image[sx + i, sy + j])
+            return
+        }
+        for (j in 0 until sh) for (i in 0 until sw) {
+            val p = image[sx + i, sy + j]
+            val a = Math.round((p ushr 24) * alpha)
+            if (a > 0) put(dx + i, dy + j, (a shl 24) or (p and 0xFFFFFF))
+        }
     }
 
     /** The product of two 8-bit values as the page's canvas rounds it: `(a * b + 255) / 256`. */

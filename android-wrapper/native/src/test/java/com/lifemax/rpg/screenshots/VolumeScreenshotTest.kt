@@ -91,6 +91,46 @@ class VolumeScreenshotTest {
         paparazzi.snapshot(name) { Room(stage) }
     }
 
+    /**
+     * The camera caught between two of the pieces' camera steps while it moves: one frame drawn at
+     * [from] and the next at [to], so the pieces are a cross-fade of the steps on either side of
+     * [to] (a side half faded in), as the room draws them while the camera pans.
+     */
+    private fun shootMoving(
+        centre: Float,
+        from: Float,
+        to: Float,
+        spots: List<Spot>,
+        name: String,
+    ) {
+        val house =
+            HouseLife(
+                spots.map { HouseCat(Autopilot.seedFor("Miso", it.coat), false) },
+                autopilot = false,
+            )
+        spots.forEachIndexed { i, s -> house.bodies[i].placeAt(s.x, s.z, s.surface, s.facing) }
+        val stage =
+            HouseStage(CatArt.room()!!, house, RoomStyle.depth25(DepthLevel.MEDIUM)) { 12.0 }
+        spots.forEachIndexed { i, s -> stage.setSprites(i, CatArt.sprites(s.coat, Growth.ADULT)) }
+        stage.setFedHouse(true)
+        stage.advance(0.8f)
+        stage.lookAt(centre)
+        paparazzi.snapshot(name) {
+            val density = LocalDensity.current
+            Canvas(
+                Modifier.size(
+                    with(density) { (192 * SCALE).toDp() },
+                    with(density) { (144 * SCALE).toDp() },
+                )
+            ) {
+                stage.holdSway(from)
+                stage.draw(this)
+                stage.holdSway(to) // the camera moved: the next frame is drawn between steps
+                stage.draw(this)
+            }
+        }
+    }
+
     @Composable
     private fun Room(stage: HouseStage) {
         val d = LocalDensity.current
@@ -147,6 +187,17 @@ class VolumeScreenshotTest {
             listOf(Spot(150f, SurfaceId.FLOOR, 30f), Spot(60f, SurfaceId.FLOOR, 60f, 1, "gray")),
             DepthLevel.MEDIUM,
             23.0,
+        )
+
+    @Test
+    fun livingRoomWithTheCameraBetweenTwoSteps() =
+        // MEDIUM has four steps a side: 0.625 is half-way from the step at 0.5 to the one at 0.75
+        shootMoving(
+            LIVING,
+            0.5f,
+            0.625f,
+            listOf(Spot(-118f, SurfaceId.COUCH), Spot(-48f, SurfaceId.FLOOR, 50f, -1, "gray")),
+            "living_medium_betweensteps",
         )
 
     private companion object {

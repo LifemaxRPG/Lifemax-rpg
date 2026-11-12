@@ -44,6 +44,8 @@ internal object DepthTuning {
  * reduced motion on) nothing moves and every piece is its painted sprite; with [RoomStyle.volume]
  * off the pieces move but stay flat. A frame draws only cached pictures: a step's pictures are
  * rendered the first time it is needed, and [step] renders one more each frame until all are made.
+ * A piece between two steps is drawn as a cross-fade of both ([StepBlend], [StepMix]), so its sides
+ * come and go smoothly as the camera turns; a camera at rest draws one step alone.
  */
 internal class DepthScene(
     private val art: RoomArt,
@@ -78,13 +80,18 @@ internal class DepthScene(
             if (sways) VolumeSheets.stepsFor(solids, level) else 0,
         )
 
-    /** The step shown now. */
+    /** The step nearest the sway now (the developer readout and tests). */
     var stepIndex = sheets.rest
         private set
 
     private val drawOrder = DepthOrder(sheets.capacity)
     private val mix = StepMix(sheets, furnitureKey)
+    private val blend = Array(solids.size) { StepBlend(sheets.stepsPerSide) }
     private val pieceStep = IntArray(solids.size) { sheets.rest }
+    private val pieceOver = IntArray(solids.size) { -1 }
+    private val pieceWeight = FloatArray(solids.size)
+    private var frameDt = 0f
+    private val readyNow = StepReady { !asyncWarm || sheets.ready(it) }
     private val pieceX =
         FloatArray(solids.size) {
             (solids[it].houseX + solids[it].width / 2f) + RoomLayout.HOUSE_X0
@@ -107,9 +114,20 @@ internal class DepthScene(
     private val shadowed = BooleanArray(solids.size)
     private val shadowColour = IntArray(layers.bases.size) { floorShadowColour(layers.base(it)) }
 
-    /** The camera step piece [name] was cut from in the last [paintScene] (tests and tuning). */
+    /**
+     * The camera step nearest to where piece [name] was drawn in the last [paintScene] (tests and
+     * tuning; between two steps it is drawn as a cross-fade of both, [positionOf]).
+     */
     fun stepOf(name: String): Int {
-        for (p in solids.indices) if (solids[p].name == name) return pieceStep[p]
+        for (p in solids.indices) if (solids[p].name == name) return blend[p].nearest
+        error("no solid piece $name")
+    }
+
+    /**
+     * Where piece [name] was drawn in the last [paintScene], in camera steps (tests and tuning).
+     */
+    fun positionOf(name: String): Float {
+        for (p in solids.indices) if (solids[p].name == name) return blend[p].shown
         error("no solid piece $name")
     }
 
@@ -163,6 +181,9 @@ internal class DepthScene(
         sheets.release()
         mix.clear()
         pieceStep.fill(sheets.rest)
+        pieceOver.fill(-1)
+        pieceWeight.fill(0f)
+        for (b in blend) b.reset()
         stepIndex = sheets.rest
     }
 
@@ -177,6 +198,7 @@ internal class DepthScene(
     /** Advance the sway by [dt] seconds, and make one more step's pictures if any are missing. */
     fun step(dt: Float) {
         sway.step(dt)
+        frameDt += dt
         if (!asyncWarm) sheets.warmOne()
     }
 
@@ -349,34 +371,33 @@ internal class DepthScene(
     }
 
     /**
-     * The camera step each piece is cut from. Without the camera-follow parallax every piece takes
-     * the step of the sway; with it each takes the step of its own yaw: the idle drift and tilt
-     * plus where it sits against the middle of the screen ([PanFollow.perspective]).
+     * The camera steps each piece is drawn from. Without the camera-follow parallax every piece
+     * follows the sway; with it each follows its own yaw: the idle drift and tilt plus where it
+     * sits against the middle of the screen ([PanFollow.perspective]). A piece between two steps is
+     * a cross-fade of both ([StepBlend]); with a background warmer it never waits for a step that
+     * is not made.
      */
     private fun chooseSteps() {
         stepIndex = sheets.indexOf(swing, stepIndex)
+        if (asyncWarm && !sheets.ready(sheets.rest)) {
+            sheets.step(sheets.rest) // nothing made yet: the rest picture, once, whoever is late
+        }
+        val dt = frameDt
+        frameDt = 0f
         for (p in solids.indices) {
             val want =
                 if (follows) {
-                    sheets.indexOf(
-                        (sway.shownIdle + sway.shownPerspective(pieceX[p])).coerceIn(-1f, 1f),
-                        pieceStep[p],
-                    )
+                    (sway.shownIdle + sway.shownPerspective(pieceX[p])).coerceIn(-1f, 1f)
                 } else {
-                    stepIndex
+                    swing
                 }
-            pieceStep[p] = usable(want)
+            val b = blend[p]
+            b.update(want, dt, readyNow)
+            pieceStep[p] = b.base
+            pieceOver[p] = b.over
+            pieceWeight[p] = b.weight
         }
-        mix.update(pieceStep)
-    }
-
-    /** [want] if its pictures are made, else (with a background warmer) the nearest that are. */
-    private fun usable(want: Int): Int {
-        if (!asyncWarm || sheets.ready(want)) return want
-        val near = sheets.nearestReady(want)
-        if (near >= 0) return near
-        sheets.step(sheets.rest) // nothing made yet: the rest picture, once, whoever is late
-        return sheets.rest
+        mix.update(pieceStep, pieceOver, pieceWeight)
     }
 
     /** Where cat [i] stands: on a piece's surface (at the surface's depth) or on the floor. */
@@ -443,7 +464,7 @@ internal class DepthScene(
      * the step the piece is drawn at, so the cat does not slide on the seat.
      */
     private fun onPiece(p: Int, row: Float, depth: Float): Int {
-        val own = sheets.swayOf(pieceStep[p])
+        val own = blend[p].sway
         val inside = (swing - own) * level.depthGain * depth
         return Parallax.shift(1f, swing * Parallax.gainAtRow(row, level) + inside)
     }
@@ -459,6 +480,8 @@ internal class DepthScene(
      * One strip of a band of a piece: the piece's contact shadow first if it is its first drawn.
      */
     private fun paintBand(c: RoomCanvas, b: Int) {
+        val alpha = mix.alpha[b]
+        if (alpha < MIN_ALPHA) return
         val p = mix.piece[b]
         val piece = solids[p]
         val volume = piece.volume!!
@@ -486,6 +509,7 @@ internal class DepthScene(
             mix.h(b),
             piece.houseX + shift + mix.dx(b),
             piece.y + mix.dy(b),
+            alpha,
         )
     }
 
@@ -499,6 +523,9 @@ internal class DepthScene(
         /** rgba(255,236,160,.16) and rgba(150,170,255,.12), as the classic room's window light. */
         const val DAY_LIGHT = (41 shl 24) or 0xFFECA0
         const val NIGHT_LIGHT = (31 shl 24) or 0x96AAFF
+
+        /** A band of a cross-fade fainter than this draws nothing a screen could show. */
+        const val MIN_ALPHA = 1f / 512f
 
         /** The darkest colour of a room's floor: the colour its furniture's shadows are. */
         fun floorShadowColour(base: ArgbImage): Int {

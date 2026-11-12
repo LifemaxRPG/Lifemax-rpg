@@ -25,6 +25,13 @@ internal object SheetTuning {
      * is a thin side or a scattering of books does not keep the whole piece's box.
      */
     const val STRIP = 12
+
+    /**
+     * A band's pixels are kept in up to this many groups, by which neighbouring steps also cover
+     * them ([VolumeStep.fade]): the base of a cross-fade fades out only what the step faded in does
+     * not cover.
+     */
+    const val CLASSES = 4
 }
 
 /**
@@ -69,6 +76,12 @@ internal interface BandSet {
  * piece's entries are contiguous, from [first] to [end] (they never overlap, so their order among
  * themselves does not matter). [order] is the drawing order of the entries and the atlas furniture
  * without the cats: [FURNITURE] plus an index for the furniture, the entry otherwise.
+ *
+ * [fade] says which neighbouring steps do not cover an entry's pixels: [FADE_DOWN] the step below
+ * (`i - 1`), [FADE_UP] the one above (`i + 1`); only a step's neighbours farther from rest are
+ * looked at, as a step is the base of a cross-fade only with those ([StepBlend]). Drawn as the base
+ * of a cross-fade to such a neighbour, an entry with that bit fades out as the neighbour fades in,
+ * and one without it stays: that is a cross-fade of the two pictures, exactly.
  */
 internal class VolumeStep(
     val image: ArgbImage,
@@ -85,13 +98,20 @@ internal class VolumeStep(
     override val first: IntArray,
     override val end: IntArray,
     override val order: IntArray,
+    val fade: ByteArray = ByteArray(count),
 ) : BandSet {
     override val orderSize: Int
         get() = order.size
 
     companion object {
         /** The code of atlas furniture `k` in [order] is `FURNITURE + k`. */
-        const val FURNITURE = 1000
+        const val FURNITURE = 100_000
+
+        /** [fade]: the step below does not cover these pixels. */
+        const val FADE_DOWN: Byte = 1
+
+        /** [fade]: the step above does not cover these pixels. */
+        const val FADE_UP: Byte = 2
     }
 }
 
@@ -123,22 +143,33 @@ internal class VolumeSheets(
     private val steps = AtomicReferenceArray<VolumeStep?>(2 * stepsPerSide + 1)
 
     private val lock = Any()
-    private val frame =
-        VolumeFrame(
-            pieces.maxOf {
-                val m = it.volume!!.model
-                VolumeRaster.size(m, level.depthGain, level.pitch)
-            }
-        )
+    private val frameSize =
+        pieces.maxOfOrNull {
+            val m = it.volume!!.model
+            VolumeRaster.size(m, level.depthGain, level.pitch)
+        } ?: 1
+    private val frame = VolumeFrame(frameSize)
 
-    /** The most entries (band strips plus furniture) a step's order can have. */
+    /** A neighbouring step's picture of the same piece: which pixels it covers. */
+    private val neighbour = VolumeFrame(frameSize)
+
+    /** For each pixel of [frame], the [VolumeStep.fade] bits. */
+    private val fadeOf = ByteArray(frameSize)
+
+    /**
+     * The most entries (band strips plus furniture) an order can have: the strips of two steps (a
+     * cross-fade, [StepMix]) in every group of pixels, and the furniture.
+     */
     val capacity: Int =
         furnitureKey.size +
-            pieces.sumOf {
-                val m = it.volume!!.model
-                val h = m.height + ceil(m.depth * level.pitch).toInt() + 1
-                (h + SheetTuning.STRIP - 1) / SheetTuning.STRIP * SheetTuning.MAX_BANDS
-            }
+            2 *
+                pieces.sumOf {
+                    val m = it.volume!!.model
+                    val h = m.height + ceil(m.depth * level.pitch).toInt() + 1
+                    (h + SheetTuning.STRIP - 1) / SheetTuning.STRIP *
+                        SheetTuning.MAX_BANDS *
+                        SheetTuning.CLASSES
+                }
 
     /** The first canvas version of this set's sheets; step `i` is `version + i`. */
     val version = VERSIONS.getAndAdd(VERSION_SPAN)
@@ -243,14 +274,22 @@ internal class VolumeSheets(
         for ((p, piece) in pieces.withIndex()) {
             val volume = piece.volume!!
             VolumeRaster.render(volume.model, vx, vy, volume.wall, frame)
+            fadeOf.fill(0, 0, frame.width * frame.height)
+            // a step is the base of a cross-fade only to its neighbours farther from rest
+            if (i >= stepsPerSide && i + 1 < count)
+                markFade(volume.model, i + 1, VolumeStep.FADE_UP)
+            if (i <= stepsPerSide && i > 0) markFade(volume.model, i - 1, VolumeStep.FADE_DOWN)
             first[p] = bands.size
             for (top in 0 until frame.height step SheetTuning.STRIP) {
                 val bottom = minOf(top + SheetTuning.STRIP, frame.height)
                 bound(frame, top, bottom)
                 for (b in SheetTuning.MAX_BANDS - 1 downTo 0) {
-                    if (x1[b] < 0) continue
-                    val cut = cut(frame, b, x0[b], y0[b], x1[b], y1[b])
-                    bands.add(Band(p, b, volume.sortFront - (b + 0.5f), cut))
+                    for (f in 0 until SheetTuning.CLASSES) {
+                        val k = b * SheetTuning.CLASSES + f
+                        if (x1[k] < 0) continue
+                        val cut = cut(frame, k, x0[k], y0[k], x1[k], y1[k])
+                        bands.add(Band(p, b, f.toByte(), volume.sortFront - (b + 0.5f), cut))
+                    }
                 }
             }
             end[p] = bands.size
@@ -258,17 +297,44 @@ internal class VolumeSheets(
         return pack(bands, first, end)
     }
 
-    private class Band(val piece: Int, val band: Int, val key: Float, val pixels: Cut)
+    /**
+     * Set [bit] on every pixel of [frame] (the piece [model] at the step being made) that step [j]
+     * does not cover: those fade out when this step is the base of a cross-fade to [j].
+     */
+    private fun markFade(model: VolumeModel, j: Int, bit: Byte) {
+        val sway = swayOf(j)
+        VolumeRaster.cover(model, -sway * level.depthGain, -level.pitchAt(sway), neighbour)
+        for (y in 0 until frame.height) for (x in 0 until frame.width) {
+            val at = y * frame.width + x
+            if (frame.colour[at] == 0) continue
+            val nx = frame.x0 + x - neighbour.x0
+            val ny = frame.y0 + y - neighbour.y0
+            val covered =
+                nx in 0 until neighbour.width &&
+                    ny in 0 until neighbour.height &&
+                    neighbour.colour[ny * neighbour.width + nx] != 0
+            if (!covered) fadeOf[at] = (fadeOf[at].toInt() or bit.toInt()).toByte()
+        }
+    }
+
+    private class Band(
+        val piece: Int,
+        val band: Int,
+        val fade: Byte,
+        val key: Float,
+        val pixels: Cut,
+    )
 
     private class Cut(val x: Int, val y: Int, val w: Int, val h: Int, val argb: IntArray)
 
-    private val x0 = IntArray(SheetTuning.MAX_BANDS)
-    private val y0 = IntArray(SheetTuning.MAX_BANDS)
-    private val x1 = IntArray(SheetTuning.MAX_BANDS)
-    private val y1 = IntArray(SheetTuning.MAX_BANDS)
+    private val x0 = IntArray(SheetTuning.MAX_BANDS * SheetTuning.CLASSES)
+    private val y0 = IntArray(SheetTuning.MAX_BANDS * SheetTuning.CLASSES)
+    private val x1 = IntArray(SheetTuning.MAX_BANDS * SheetTuning.CLASSES)
+    private val y1 = IntArray(SheetTuning.MAX_BANDS * SheetTuning.CLASSES)
 
     /**
-     * The box of every band's pixels on rows [top] until [bottom] (x1 -1 for none), in one pass.
+     * The box of every group's pixels on rows [top] until [bottom] (x1 -1 for none), in one pass:
+     * group `band * CLASSES + fade bits`.
      */
     private fun bound(frame: VolumeFrame, top: Int, bottom: Int) {
         x0.fill(Int.MAX_VALUE)
@@ -278,7 +344,7 @@ internal class VolumeSheets(
         for (y in top until bottom) for (x in 0 until frame.width) {
             val at = y * frame.width + x
             if (frame.colour[at] == 0) continue
-            val b = bandOf(frame, at)
+            val b = groupOf(frame, at)
             x0[b] = minOf(x0[b], x)
             y0[b] = minOf(y0[b], y)
             x1[b] = maxOf(x1[b], x)
@@ -286,7 +352,7 @@ internal class VolumeSheets(
         }
     }
 
-    /** The pixels of [frame] in band [b] inside the box ([x0], [y0])..([x1], [y1]). */
+    /** The pixels of [frame] in group [b] inside the box ([x0], [y0])..([x1], [y1]). */
     private fun cut(frame: VolumeFrame, b: Int, x0: Int, y0: Int, x1: Int, y1: Int): Cut {
         val w = x1 - x0 + 1
         val h = y1 - y0 + 1
@@ -301,8 +367,11 @@ internal class VolumeSheets(
     private fun bandOf(frame: VolumeFrame, at: Int): Int =
         VolumeRaster.band(frame.depth[at]).coerceIn(0, SheetTuning.MAX_BANDS - 1)
 
+    private fun groupOf(frame: VolumeFrame, at: Int): Int =
+        bandOf(frame, at) * SheetTuning.CLASSES + fadeOf[at]
+
     private fun inBand(frame: VolumeFrame, at: Int, b: Int): Boolean =
-        frame.colour[at] != 0 && bandOf(frame, at) == b
+        frame.colour[at] != 0 && groupOf(frame, at) == b
 
     /** Shelf-pack the bands into one image and work out the drawing order. */
     private fun pack(bands: List<Band>, first: IntArray, end: IntArray): VolumeStep {
@@ -354,6 +423,7 @@ internal class VolumeSheets(
             first = first,
             end = end,
             order = IntArray(order.size) { k -> codeOf(order[k], n) },
+            fade = ByteArray(n) { bands[it].fade },
         )
     }
 

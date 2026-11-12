@@ -102,6 +102,15 @@ internal object VolumeRaster {
      * [backed]: the piece's back stands against the wall (its sides darken where they meet it).
      */
     fun render(model: VolumeModel, vx: Float, vy: Float, backed: Boolean, out: VolumeFrame) {
+        cover(model, vx, vy, out)
+        shade(model, backed, out)
+    }
+
+    /**
+     * Which pixels [model] covers seen with offsets ([vx], [vy]), and at what depth, into [out]:
+     * [render] without the shading of the faces (a covered pixel has a colour, the painted one).
+     */
+    fun cover(model: VolumeModel, vx: Float, vy: Float, out: VolumeFrame) {
         val rx = model.depth * vx
         val ry = model.depth * vy
         out.x0 = if (rx < 0f) -span(rx) else 0
@@ -112,7 +121,6 @@ internal object VolumeRaster {
         for (y in 0 until out.height) for (x in 0 until out.width) {
             cast(model, x + out.x0, y + out.y0, vx, vy, out, y * out.width + x)
         }
-        shade(model, backed, out)
     }
 
     /**

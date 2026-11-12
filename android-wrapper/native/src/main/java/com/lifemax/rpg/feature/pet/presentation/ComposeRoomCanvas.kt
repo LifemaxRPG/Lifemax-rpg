@@ -156,6 +156,7 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
         sh: Int,
         dx: Int,
         dy: Int,
+        alpha: Float,
     ) {
         if (sheets[slot] == null || sheetVersions[slot] != version) {
             sheets[slot] = bitmap(image)
@@ -167,6 +168,7 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
             srcSize = IntSize(sw, sh),
             dstOffset = IntOffset(px(dx), py(dy)),
             dstSize = IntSize(sw * scale, sh * scale),
+            alpha = alpha.coerceIn(0f, 1f),
             filterQuality = FilterQuality.None,
         )
     }

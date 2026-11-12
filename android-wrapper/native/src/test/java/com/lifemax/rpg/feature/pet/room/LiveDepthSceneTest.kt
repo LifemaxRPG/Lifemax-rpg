@@ -154,6 +154,12 @@ class LiveDepthSceneTest {
         assertEquals(1, d.sheets.made)
         assertTrue(resting.pixels.count { it == SOFA_OUTLINE } > 100)
         d.warm()
+        // the steps made since fade in over a few frames (never a jump), then the picture is the
+        // same
+        repeat(120) {
+            d.step(DT)
+            s.paint()
+        }
         assertEquals(warmed, s.paint().pixels.toList())
     }
 
