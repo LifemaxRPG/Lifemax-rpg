@@ -8,6 +8,7 @@ import com.lifemax.rpg.feature.pet.body.HouseLife
 import com.lifemax.rpg.feature.pet.body.PlanStep
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.World
+import com.lifemax.rpg.feature.pet.light.Weather
 import com.lifemax.rpg.feature.pet.presentation.CatArt
 import com.lifemax.rpg.feature.pet.presentation.CatSprites
 import com.lifemax.rpg.feature.pet.presentation.HouseStage
@@ -73,6 +74,7 @@ internal object LiveDepthShots {
         hold: Boolean,
         style: RoomStyle = RECORDED_STYLE,
         swayAt: Float = 0f,
+        weather: () -> Weather = { Weather.CLEAR },
     ): HouseStage {
         val house =
             HouseLife(
@@ -84,7 +86,7 @@ internal object LiveDepthShots {
             house.bodies[it].placeAt(s.x, s.z, s.surface, s.facing)
             if (s.plan.isNotEmpty()) house.bodies[it].replacePlan(1, s.plan)
         }
-        val stage = HouseStage(CatArt.room()!!, house, style) { hour }
+        val stage = HouseStage(CatArt.room()!!, house, style, weather) { hour }
         looks.forEachIndexed { i, look -> stage.setSprites(i, sprites(look)) }
         stage.setFedHouse(looks.none { it.weak })
         stage.advance(seconds)

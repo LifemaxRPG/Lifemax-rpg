@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import com.lifemax.rpg.feature.pet.art.CatLightKey
 import com.lifemax.rpg.feature.pet.body.CatLife
 import com.lifemax.rpg.feature.pet.body.CatPose
 import com.lifemax.rpg.feature.pet.body.World
@@ -94,7 +95,8 @@ private fun DrawScope.drawSprite(
  * cat's steady drawing ([SpritePlan], [SpriteSteady]) says. With a [tint] every opaque pixel is
  * that colour instead (the rim light is the cat's silhouette so). With a rig the frame is the
  * composed one (ears, tail, whiskers, proportions) unless the cat is the art as drawn; [motion]
- * false keeps the parts as drawn (reduced motion).
+ * false keeps the parts as drawn (reduced motion). [light] is the cat's held light key
+ * ([CatLighting]); the neutral key draws exactly what was always drawn.
  */
 internal fun DrawScope.drawSpriteAt(
     pose: CatPose,
@@ -104,6 +106,7 @@ internal fun DrawScope.drawSpriteAt(
     footY: Float,
     tint: Color? = null,
     motion: Boolean = true,
+    light: Int = CatLightKey.NEUTRAL,
 ) {
     val sheet = sprites.sheet(pose.clip) ?: return
     val frameW = sprites.frameWidth
@@ -119,10 +122,13 @@ internal fun DrawScope.drawSpriteAt(
         RigPainter.frames,
         s,
         motion,
+        light,
     )
-    val image = if (plan.slot >= 0) RigPainter.image(plan.slot, plan.fresh) else sheet
+    // a lit cat with no rig picture draws its sheet's row lit by the key (its top at row 0)
+    val litRow = if (plan.slot >= 0) null else sprites.litRow(pose.clip, plan.light)
+    val image = if (plan.slot >= 0) RigPainter.image(plan.slot, plan.fresh) else litRow ?: sheet
     val srcX = if (plan.slot >= 0) 0 else sprites.frame(pose.clip, pose.frame) * frameW
-    val srcY = if (plan.slot >= 0) 0 else sprites.top(pose.clip)
+    val srcY = if (plan.slot >= 0 || litRow != null) 0 else sprites.top(pose.clip)
     val filter = if (tint == null) null else ColorFilter.tint(tint, BlendMode.SrcIn)
     val count = plan.bands(s, bands)
     withTransform({

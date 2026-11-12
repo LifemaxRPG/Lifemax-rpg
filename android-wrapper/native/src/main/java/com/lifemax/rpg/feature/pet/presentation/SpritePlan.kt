@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.pet.presentation
 
+import com.lifemax.rpg.feature.pet.art.CatLightKey
 import com.lifemax.rpg.feature.pet.art.RigCompose
 import com.lifemax.rpg.feature.pet.art.RigFrames
 import com.lifemax.rpg.feature.pet.art.RigSet
@@ -22,6 +23,14 @@ import com.lifemax.rpg.feature.pet.body.CatPose
 internal class SpritePlan {
     /** The rig slot of [RigFrames] to draw, or -1 for the sheet's own frame. */
     var slot = -1
+        private set
+
+    /**
+     * The light key the picture is drawn in ([CatLightKey]): the rig's slot is composed from art
+     * lit by it, and without a rig slot the sheet's row lit by it is drawn. Neutral draws the art
+     * exactly as it has always been drawn.
+     */
+    var light = CatLightKey.NEUTRAL
         private set
 
     /** True if [slot] was composed by this plan (its bitmap is out of date). */
@@ -76,9 +85,12 @@ internal class SpritePlan {
         frames: RigFrames,
         s: Int,
         motion: Boolean,
+        light: Int = CatLightKey.NEUTRAL,
     ) {
         steady.read(pose, rig?.kitten ?: false, motion, s)
-        slot = if (rig == null) -1 else frames.slotFor(rig, pose.clip, pose.frame, steady.grid)
+        this.light = light
+        slot =
+            if (rig == null) -1 else frames.slotFor(rig, pose.clip, pose.frame, steady.grid, light)
         fresh = slot >= 0 && frames.wasComposed
         val marginLeft = if (slot >= 0) RigCompose.MARGIN_LEFT else 0
         val marginTop = if (slot >= 0) RigCompose.MARGIN_TOP else 0

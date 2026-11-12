@@ -15,6 +15,7 @@ import com.lifemax.rpg.feature.pet.body.TouchSink
 import com.lifemax.rpg.feature.pet.body.ToyField
 import com.lifemax.rpg.feature.pet.body.Tuning
 import com.lifemax.rpg.feature.pet.host.CatWorldHost
+import com.lifemax.rpg.feature.pet.light.Weather
 import com.lifemax.rpg.feature.pet.room.CameraDirector
 import com.lifemax.rpg.feature.pet.room.CatLayer
 import com.lifemax.rpg.feature.pet.room.ContactShadow
@@ -50,14 +51,21 @@ import kotlinx.coroutines.withContext
  * @param kit the room's art.
  * @param house the cats of the house.
  * @param hourNow the local time of day as a number of hours, 0 to 24; asked about once a second
- *   while the clock runs, so a test can fix the hour.
+ *   while the clock runs, so a test can fix the hour. The developer's preview hour
+ *   ([LiveLight.previewHour]) overrides it while set.
+ * @param weatherNow the weather outside, asked once a frame for the cats' light (a test can fix
+ *   it). Before [hourNow], so a trailing lambda still fixes the hour.
  */
 internal class HouseStage(
     val kit: RoomKit,
     val house: HouseLife,
     style: RoomStyle = RoomStyle.CLASSIC,
+    weatherNow: () -> Weather = LiveLight::weather,
     private val hourNow: () -> Double = ::localHour,
 ) : CatLayer {
+    /** The cats' light (off unless the developer switch is on): CAT_LIGHTING_PLAN WP-L3. */
+    private val lighting = CatLighting(weatherNow, LiveLight::active)
+
     private var scene = RoomScene(kit.art, style)
 
     /** How the room is drawn now ([useStyle] changes it). */
@@ -392,13 +400,16 @@ internal class HouseStage(
         screenCentre = director.camera.left(view) + view / 2f
         drawn = true
         val started = System.nanoTime()
+        val shownHour = LiveLight.previewHour ?: hour
+        lighting.begin(shownHour)
+        LiveLight.report(lighting)
         canvas.begin(target, s, originX, originY)
         toyPainter.begin(toys, target, s, originX, originY)
-        scene.paintBackdrop(canvas, hour, clock, topExtra)
+        scene.paintBackdrop(canvas, shownHour, clock, topExtra)
         scene.paintScene(canvas, this)
         toyPainter.rest()
         particles.paint(canvas)
-        scene.paintOverlay(canvas, hour, topExtra)
+        scene.paintOverlay(canvas, shownHour, topExtra)
         drawNanos = System.nanoTime() - started
     }
 
@@ -451,7 +462,8 @@ internal class HouseStage(
                 scope.drawSpriteAt(pose, sprites[k]!!, scale, x, footY, tint, secondaryMotion)
             }
         }
-        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, motion = secondaryMotion)
+        val light = lighting.keyFor(pose, clock, i)
+        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, null, secondaryMotion, light)
         toyPainter.held(house.bodies[k], shift)
     }
 
@@ -465,7 +477,8 @@ internal class HouseStage(
         val shadowX = originX + (pose.shadowX - houseX) * scale
         val shadowY = originY + pose.shadowY * scale
         scope.drawShadowAt(pose, scale, shadowX, shadowY)
-        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, motion = secondaryMotion)
+        val light = lighting.keyFor(pose, clock, i)
+        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, null, secondaryMotion, light)
         toyPainter.held(house.bodies[k], 0)
     }
 

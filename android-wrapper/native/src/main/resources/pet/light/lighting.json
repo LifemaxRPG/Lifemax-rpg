@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "day": [7.5, 17.5],
+  "patch": {
+    "day": {"halfSteps": 2, "tint": "sun"},
+    "night": {"halfSteps": 1, "tint": "moon"}
+  },
+  "sill": {
+    "surfaces": ["sill", "lsill", "ksill"],
+    "day": {"halfSteps": 2, "tint": "sun"},
+    "twilight": {"halfSteps": 1, "tint": "dusk"},
+    "night": {"halfSteps": 1, "tint": "moon"}
+  },
+  "shade": {"box": -2, "mid": -2},
+  "nightTint": "night",
+  "weather": {
+    "clear": {"sun": 1.0},
+    "overcast": {"sun": 0.35},
+    "rain": {"sun": 0.0}
+  },
+  "points": [
+    {"id": "floor-lamp", "room": "living", "x": -172, "reach": 40, "inner": 16, "halfSteps": 2, "tint": "lamp", "when": "dark"}
+  ],
+  "rooms": {"bath": 0, "study": 0, "living": 0, "bedroom": 0, "kitchen": 0, "sun": 0}
+}

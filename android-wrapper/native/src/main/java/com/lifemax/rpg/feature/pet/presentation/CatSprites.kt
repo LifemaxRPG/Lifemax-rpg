@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.pet.presentation
 
 import androidx.compose.ui.graphics.ImageBitmap
+import com.lifemax.rpg.feature.pet.art.CatLightKey
 import com.lifemax.rpg.feature.pet.art.RigSet
 
 /**
@@ -19,13 +20,25 @@ internal class CatSprites(
     private val onDepthSheet: BooleanArray,
     /** The rig that moves this cat's ears, tail and whiskers, or null: draw the sheet as it is. */
     val rig: RigSet? = null,
+    /**
+     * The cat's sheet rows lit by a light key (docs/specs/CAT_LIGHTING_PLAN.md WP-L3), or null: the
+     * cat is always drawn as it is.
+     */
+    val lit: LitSheets? = null,
 ) {
     /** The same sprites with [rig] (or none): sheets and tables are shared. */
     fun withRig(rig: RigSet?) =
-        CatSprites(frameWidth, frameHeight, side, depth, rows, frames, feet, onDepthSheet, rig)
+        CatSprites(frameWidth, frameHeight, side, depth, rows, frames, feet, onDepthSheet, rig, lit)
 
     /** The sheet [clip] is on, or null when this cat has no such sheet (draw nothing). */
     fun sheet(clip: Int): ImageBitmap? = if (onDepthSheet[clip]) depth else side
+
+    /**
+     * The row of [clip]'s frames lit by [light], its top at picture row 0; null for the neutral
+     * light or when it cannot be had (then [sheet] at [top] is drawn, as always).
+     */
+    fun litRow(clip: Int, light: Int): ImageBitmap? =
+        if (light == CatLightKey.NEUTRAL) null else lit?.image(onDepthSheet[clip], top(clip), light)
 
     /** Sheet pixel row of the top of [clip]'s frames. */
     fun top(clip: Int): Int = rows[clip] * frameHeight

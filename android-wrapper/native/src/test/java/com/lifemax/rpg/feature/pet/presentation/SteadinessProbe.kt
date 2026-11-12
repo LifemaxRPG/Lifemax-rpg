@@ -1,7 +1,10 @@
 package com.lifemax.rpg.feature.pet.presentation
 
+import com.lifemax.rpg.feature.pet.art.CatLightKey
 import com.lifemax.rpg.feature.pet.art.CoatFixtures
+import com.lifemax.rpg.feature.pet.art.CoatLook
 import com.lifemax.rpg.feature.pet.art.FakeCoatBridge
+import com.lifemax.rpg.feature.pet.art.LitRecolour
 import com.lifemax.rpg.feature.pet.art.PageCoatSource
 import com.lifemax.rpg.feature.pet.art.PetArt
 import com.lifemax.rpg.feature.pet.art.PetArtResources
@@ -96,6 +99,9 @@ internal object SteadinessProbe {
         /** The turn or squash and stretch moved a step (steady renderer only). */
         BODY,
 
+        /** The cat's held light key changed (docs/specs/CAT_LIGHTING_PLAN.md section 7). */
+        LIGHT,
+
         /** Nothing the art, the rig or the body meant changed. */
         NONE,
     }
@@ -139,6 +145,17 @@ internal object SteadinessProbe {
         /** One line per changed step when not null. */
         var trace: StringBuilder? = null
 
+        /**
+         * The light key the steady renderer draws each frame in, from the pose and the run's time
+         * in seconds; null draws every frame neutral, as the app does with lighting off.
+         */
+        var lightOf: ((CatPose, Double) -> Int)? = null
+
+        /** The light keys drawn, frame by frame. */
+        val lights = ArrayList<Int>()
+
+        private var drawnFrames = 0
+
         /** Draw [pose] (paws at the room's rounding of its position) and measure the change. */
         fun frame(pose: CatPose) {
             if (!hasArt(pose.clip)) return
@@ -180,6 +197,7 @@ internal object SteadinessProbe {
                     keys[K_RIG] != lastKeys[K_RIG] -> Cause.RIG
                     keys[K_BREATH] != lastKeys[K_BREATH] -> Cause.BREATH
                     keys[K_BODY] != lastKeys[K_BODY] -> Cause.BODY
+                    keys[K_LIGHT] != lastKeys[K_LIGHT] -> Cause.LIGHT
                     else -> Cause.NONE
                 }
             causes.add(cause)
@@ -237,6 +255,27 @@ internal object SteadinessProbe {
             val f = Math.floorMod(pose.frame, Clips.all[pose.clip].frames)
             return sheetFrames.getOrPut(pose.clip * FRAME_SPAN + f) {
                 art.frame(look.coat, look.stage, Clips.all[pose.clip].name, f)!!.pixels
+            }
+        }
+
+        private val litFrames = HashMap<Long, IntArray>()
+
+        /** The art frame lit by [light], as the app's lit rows have it (no rig picture). */
+        private fun litSheet(pose: CatPose, light: Int): IntArray {
+            if (rig.has(pose.clip)) return rig.source(pose.clip, pose.frame, light)
+            val clip = Clips.all[pose.clip]
+            val f = Math.floorMod(pose.frame, clip.frames)
+            return litFrames.getOrPut((light * 1024L + pose.clip) * FRAME_SPAN + f) {
+                val anim = art.growth.resolve(look.stage, clip.name, art.anims)!!
+                val sheet = art.sheet(look.coat, SheetKind.of(look.stage, anim.depth))!!
+                val palette = art.palette(look.coat)!!
+                LitRecolour.region(
+                        sheet,
+                        palette,
+                        art.anims.frameRect(anim, f),
+                        CatLightKey.light(light, CoatLook.of(palette)),
+                    )
+                    .pixels
             }
         }
 
@@ -301,7 +340,10 @@ internal object SteadinessProbe {
             feet: Int,
             keys: LongArray,
         ): SpriteDraw {
-            plan.plan(pose, rig, feet, FRAME_W, FRAME_H, steady, frames, s, motion = true)
+            val light = lightOf?.invoke(pose, drawnFrames++ / HZ.toDouble()) ?: 0
+            lights.add(light)
+            plan.plan(pose, rig, feet, FRAME_W, FRAME_H, steady, frames, s, motion = true, light)
+            keys[K_LIGHT] = light.toLong()
             keys[K_ART] = artKey(pose)
             keys[K_RIG] = steady.grid.key()
             keys[K_BREATH] = plan.rise.toLong()
@@ -309,7 +351,9 @@ internal object SteadinessProbe {
                 (plan.turnDeg * 1000).roundToInt() * 1_000_000L +
                     (plan.scaleX * 1000).roundToInt() * 1000L +
                     (plan.scaleY * 1000).roundToInt()
-            val pixels = if (plan.slot >= 0) frames.pixels(plan.slot).copyOf() else sheet(pose)
+            val pixels =
+                if (plan.slot >= 0) frames.pixels(plan.slot).copyOf()
+                else if (light != 0) litSheet(pose, light) else sheet(pose)
             val n = plan.bands(s, bandOut)
             val bands =
                 List(n) {
@@ -369,10 +413,11 @@ internal object SteadinessProbe {
     const val FRAME_H = RigFrames.FRAME_HEIGHT
     private const val HISTORY = 3
     private const val FRAME_SPAN = 64L
-    private const val KEYS = 4
+    private const val KEYS = 5
     private const val K_ART = 0
     private const val K_RIG = 1
     private const val K_BREATH = 2
     private const val K_BODY = 3
+    private const val K_LIGHT = 4
     private val DNA = listOf("calico", "silver")
 }
