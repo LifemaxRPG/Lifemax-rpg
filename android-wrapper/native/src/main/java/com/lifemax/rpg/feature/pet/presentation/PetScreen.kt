@@ -55,6 +55,11 @@ class PetUi(
     val notice: PetNotice? = null,
     /** The toy tray under Play is open (`pet.play.v1`). */
     val toyTray: Boolean = false,
+    /**
+     * DEVELOPER MODE: what the depth is doing on this phone, asked for twice a second; null (the
+     * default) shows nothing.
+     */
+    val depthNote: (() -> String)? = null,
 )
 
 /** Everything the screen can ask for, so the screen itself holds no state of the page's. */
@@ -275,6 +280,7 @@ private fun Buttons(p: PetProjection, ui: PetUi, actions: PetActions) {
                 small = true,
             )
         }
+        ui.depthNote?.let { DepthReadout(it, Modifier.padding(horizontal = 2.dp)) }
     }
 }
 

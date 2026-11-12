@@ -111,7 +111,11 @@ internal fun HouseLiveView(
             }
         }
     }
-    val touchable = if (touch != null) Modifier.petTouch(stage, touch.onBowl) else Modifier
+    // a still room is drawn once; choosing the other cat moves its camera, so draw it again
+    val chosen = stage.selectedCat
+    LaunchedEffect(stage, chosen, still) { if (still) frame.longValue++ }
+    val touchable =
+        if (touch != null) Modifier.petTouch(stage, touch.onBowl, touch.onCat) else Modifier
     val fullScreen = touch?.fullScreen == true
     Canvas(modifier.then(touchable)) {
         frame.longValue // redraw on every step of the clock

@@ -1,5 +1,8 @@
 package com.lifemax.rpg.feature.pet.presentation
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.lifemax.rpg.feature.pet.body.Beat
@@ -249,6 +252,31 @@ internal class HouseStage(
         trimDepth()
     }
 
+    /**
+     * The cat the owner chose (the page's focus, which the card shows), an index of the house, or
+     * [CameraDirector.NONE]: then the camera frames it and follows it ([select]). Snapshot state so
+     * a still room (reduced motion) is drawn again when it changes.
+     */
+    var selectedCat by mutableIntStateOf(CameraDirector.NONE)
+        private set
+
+    /**
+     * Frame cat [cat] with the camera (the Cat tab's selection; [CameraDirector.NONE] gives the
+     * camera back to its own rule). The camera glides to the cat, or cuts with reduced motion and
+     * when nothing was chosen before; it then follows the cat as it walks.
+     */
+    fun select(cat: Int) {
+        if (cat == selectedCat) return
+        selectedCat = if (cat in 0 until house.count) cat else CameraDirector.NONE
+        frameCats()
+    }
+
+    /** The slot of the selected cat among the visible cats, or [CameraDirector.NONE]. */
+    private fun selectedSlot(): Int {
+        for (k in 0 until visibleCount) if (visible[k] == selectedCat) return k
+        return CameraDirector.NONE
+    }
+
     /** The milliseconds the last frame's step and drawing took on this thread. */
     var workMs = 0f
         private set
@@ -295,6 +323,7 @@ internal class HouseStage(
         scene.depth?.let {
             it.follow(if (drawn) screenCentre else director.camera.cx)
             it.step(dt)
+            LiveDepth.reportOffsets(it.wallShiftNow, it.nearShiftNow)
         }
         if (bowlFullFor > 0f) {
             bowlFullFor -= dt
@@ -319,14 +348,26 @@ internal class HouseStage(
     /** Frame the cats with the camera (the first time, it cuts to them). */
     private fun frameCats() {
         if (visibleCount == 0) return
-        director.update(house.bodies[visible[0]], second(), 0f)
+        director.update(
+            house.bodies[visible[0]],
+            second(),
+            0f,
+            selectedSlot(),
+            cutOnChange = !secondaryMotion,
+        )
     }
 
     private fun second(): CatBody? = if (visibleCount > 1) house.bodies[visible[1]] else null
 
     private fun followCats(dt: Float) {
         if (visibleCount == 0) return
-        director.update(house.bodies[visible[0]], second(), dt)
+        director.update(
+            house.bodies[visible[0]],
+            second(),
+            dt,
+            selectedSlot(),
+            cutOnChange = !secondaryMotion,
+        )
     }
 
     // ------------------------------------------------------------------ drawing

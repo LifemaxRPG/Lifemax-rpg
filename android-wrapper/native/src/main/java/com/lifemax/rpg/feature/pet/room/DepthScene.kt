@@ -57,7 +57,12 @@ internal class DepthScene(
      * The camera's sway; set its tilt from a sensor, read its position to see where it is. The live
      * rooms have no idle drift ([RoomStyle.idleDrift]): their camera moves only when it pans.
      */
-    val sway = DepthSway(style.reducedMotion, if (style.idleDrift) level.idleAmplitude else 0f)
+    val sway =
+        DepthSway(
+            style.reducedMotion,
+            if (style.idleDrift) level.idleAmplitude else 0f,
+            style.viewAngle,
+        )
 
     private val solids = layers.pieces.filter { it.volume != null }
     private val sways = style.parallax && style.volume && !style.reducedMotion
@@ -178,6 +183,14 @@ internal class DepthScene(
     /** The sway the room moves with ([DepthSway.shown], held at rest): 0 when parallax is off. */
     private val swing: Float
         get() = if (style.parallax) sway.shown else 0f
+
+    /** The wall's shift in pixels as the room is drawn now (the developer readout). */
+    val wallShiftNow: Int
+        get() = Parallax.wallShift(swing, level)
+
+    /** The nearest floor row's shift in pixels as drawn now (the developer readout). */
+    val nearShiftNow: Int
+        get() = Parallax.shiftAtRow(swing, LiveDepthTuning.NEAR_ROW, level)
 
     /** The shift of a floor object (a cat, a prop) at depth [z], for the cat's own layer. */
     fun shiftAtZ(z: Float): Int = Parallax.shiftAtZ(swing, z, level)

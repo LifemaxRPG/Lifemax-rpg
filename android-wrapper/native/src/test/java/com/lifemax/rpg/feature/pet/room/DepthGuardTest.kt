@@ -81,34 +81,38 @@ class DepthGuardTest {
     }
 
     @Test
-    fun aFrameCostsTheLargerOfItsWorkAndItsOverrun() {
+    fun aStalledFrameCostsItsOverrunEvenWithLittleWork() {
         val g = guard()
         g.feed(warm, 0.3f)
-        // little work, but every frame lasts two budgets: the phone drops frames
+        // little work, but every frame lasts four budgets: the phone drops frames. (A frame of two
+        // or three budgets is the system's adaptive refresh rate, not a slow room: see
+        // ViewAngleTest.)
         repeat(window) {
-            now += 33
-            g.record(2f, 2 * budget, budget)
+            now += 66
+            g.record(2f, 4 * budget, budget)
         }
         assertEquals(DepthLevel.SUBTLE, g.level)
     }
 
     @Test
-    fun theBudgetFollowsTheDisplay() {
-        // 7 ms of work is half a frame at 60 Hz and nearly all of one at 120 Hz
-        val slow = guard()
-        slow.feed(warm + window, 0f)
-        repeat(3 * window) {
-            now += 16
-            slow.record(7f, 16.7f, 16.7f)
+    fun theBudgetIsTheDisplaysButNeverTighterThan60Hz() {
+        // 7 ms of work is a normal cost of the room on any display; 11 ms is not
+        for (budgetMs in floatArrayOf(16.7f, 8.3f)) {
+            val ok = guard()
+            ok.feed(warm + window, 0f)
+            repeat(3 * window) {
+                now += 8
+                ok.record(7f, budgetMs, budgetMs)
+            }
+            assertEquals("7 ms on a $budgetMs ms frame", DepthLevel.MEDIUM, ok.level)
+            val slow = guard()
+            slow.feed(warm + window, 0f)
+            repeat(3 * window) {
+                now += 8
+                slow.record(11f, budgetMs, budgetMs)
+            }
+            assertEquals("11 ms on a $budgetMs ms frame", DepthLevel.SUBTLE, slow.level)
         }
-        assertEquals(DepthLevel.MEDIUM, slow.level)
-        val fast = guard()
-        fast.feed(warm + window, 0f)
-        repeat(3 * window) {
-            now += 8
-            fast.record(7f, 8.3f, 8.3f)
-        }
-        assertEquals(DepthLevel.SUBTLE, fast.level)
     }
 
     @Test
@@ -184,7 +188,7 @@ class DepthGuardTest {
                 last = now
             }
         }
-        assertTrue("changes in half an hour: ${g.changes}", g.changes in 1..7)
+        assertTrue("changes in half an hour: ${g.changes}", g.changes in 1..14)
         assertTrue("closest changes $closest ms apart", closest >= GuardTuning.HOLD_MS)
     }
 

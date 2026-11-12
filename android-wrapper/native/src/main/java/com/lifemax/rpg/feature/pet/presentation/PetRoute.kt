@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.pet.presentation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
@@ -9,6 +10,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.lifemax.rpg.core.designsystem.feedback.LocalPageBuzz
 import com.lifemax.rpg.feature.pet.domain.PetProjection
+import com.lifemax.rpg.feature.pet.room.CameraDirector
 
 /**
  * The Cat tab for the plugin: the screen over the view model, with the live room. [onAction] hands
@@ -60,6 +62,10 @@ fun PetRoute(
         // the owner's care reaches the cats in the room as it arrives
         LaunchedEffect(vm.reactionVersion, room) { vm.drainReactions().forEach { stage.react(it) } }
         SideEffect { stage.touchSink = PetTouchSink(vm, buzz) { vm.pet?.touch?.haptics } }
+        // the camera frames the cat the card shows (the page's focus, one source of truth)
+        val framed = CatSelection.cameraCat(p)
+        LaunchedEffect(stage, framed) { stage.select(framed) }
+        DisposableEffect(stage) { onDispose { stage.select(CameraDirector.NONE) } }
         // how each cat takes touch is the page's: its trust, its trait, its saturation now
         LaunchedEffect(p.touch, stage) {
             p.touch?.profiles?.forEachIndexed { i, t ->
@@ -73,10 +79,19 @@ fun PetRoute(
             }
         }
     }
+    val depthNote: (() -> String)? = if (p.demo != null) LiveDepth::readout else null
     val touchable = p.touch != null
-    val touch = if (touchable) RoomTouch(onBowl = vm::feed) else null
-    PetScreen(p, PetUi(vm.waiting, vm.notice, vm.toyTray), actions, topInsetDp, bottomInsetDp) {
-        modifier ->
+    // a finger on a cat chooses it: the page's own focus command, so the card follows with the
+    // camera
+    val onCat: (Int) -> Unit = { i -> vm.pet?.let { CatSelection.tapped(it, i) }?.let(vm::focus) }
+    val touch = if (touchable) RoomTouch(onBowl = vm::feed, onCat = onCat) else null
+    PetScreen(
+        p,
+        PetUi(vm.waiting, vm.notice, vm.toyTray, depthNote),
+        actions,
+        topInsetDp,
+        bottomInsetDp,
+    ) { modifier ->
         PetRoom(p, room, visible && !vm.fullRoom, modifier, touch, still)
     }
     if (touchable && vm.fullRoom && room is RoomState.Ready) {
@@ -87,6 +102,7 @@ fun PetRoute(
             still = still,
             onBowl = vm::feed,
             onClose = vm::closeRoom,
+            onCat = onCat,
         )
     }
 }

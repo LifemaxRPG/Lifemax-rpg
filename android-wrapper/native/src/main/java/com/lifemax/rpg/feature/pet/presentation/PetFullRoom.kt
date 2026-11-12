@@ -46,6 +46,7 @@ internal fun PetFullRoom(
     still: Boolean,
     onBowl: () -> Unit,
     onClose: () -> Unit,
+    onCat: (Int) -> Unit = {},
 ) {
     Dialog(
         onDismissRequest = onClose,
@@ -62,7 +63,7 @@ internal fun PetFullRoom(
                 hide(WindowInsetsCompat.Type.systemBars())
             }
         }
-        PetFullRoomContent(p, room, running, still, onBowl, onClose)
+        PetFullRoomContent(p, room, running, still, onBowl, onClose, onCat)
     }
 }
 
@@ -78,6 +79,7 @@ internal fun PetFullRoomContent(
     still: Boolean,
     onBowl: () -> Unit,
     onClose: () -> Unit,
+    onCat: (Int) -> Unit = {},
 ) {
     val names = p.cats.joinToString(" and ") { it.name }
     Box(Modifier.fillMaxSize().background(FullRoomDark)) {
@@ -87,7 +89,7 @@ internal fun PetFullRoomContent(
             still = still,
             modifier =
                 Modifier.fillMaxSize().semantics { contentDescription = "$names in the room" },
-            touch = RoomTouch(fullScreen = true, onBowl = onBowl),
+            touch = RoomTouch(fullScreen = true, onBowl = onBowl, onCat = onCat),
         )
         Box(
             Modifier.align(Alignment.TopEnd)

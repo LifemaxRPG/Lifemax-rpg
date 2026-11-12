@@ -27,6 +27,9 @@ package com.lifemax.rpg.feature.pet.room
  *   own. The live rooms have it off (the "room shake" fix, PET_TAB_INVENTORY.md): whole-pixel steps
  *   of a drift read on a phone as the room shaking while the camera stands still, so there the room
  *   moves only when the camera pans (or the phone tilts).
+ * @property viewAngle the sway the camera rests at (-1 to 1, [LiveDepthTuning.VIEW_ANGLE] in the
+ *   live rooms): a permanent small angle so the layers are always offset and the room is never dead
+ *   on. 0 is the old rest picture. Ignored with [reducedMotion].
  * @property level how strong the depth is ([DepthLevel]): every effect scales with it.
  * @property reducedMotion no sway at all: the room stays at rest (the owner's "reduce motion"
  *   setting), and only the rest picture of each piece is ever rendered.
@@ -41,6 +44,7 @@ internal data class RoomStyle(
     val reducedMotion: Boolean = false,
     val cameraFollow: Boolean = false,
     val idleDrift: Boolean = true,
+    val viewAngle: Float = 0f,
     val level: DepthLevel = DepthLevel.SUBTLE,
 ) {
     /** True for any 2.5D effect: the room needs its layer art. */
@@ -75,12 +79,22 @@ internal data class RoomStyle(
          * performance guard's last step). The rim light is off at every live level: the pale copy
          * of the cat one art pixel to the side read on the phone as a light outline.
          */
-        fun live(level: DepthLevel?, reducedMotion: Boolean = false): RoomStyle =
+        fun live(
+            level: DepthLevel?,
+            reducedMotion: Boolean = false,
+            viewAngle: Float = 0f,
+        ): RoomStyle =
             when {
                 level == null -> CLASSIC
                 reducedMotion -> depth25(level).copy(reducedMotion = true, rimLight = false)
                 else ->
-                    depth25(level).copy(cameraFollow = true, idleDrift = false, rimLight = false)
+                    depth25(level)
+                        .copy(
+                            cameraFollow = true,
+                            idleDrift = false,
+                            rimLight = false,
+                            viewAngle = viewAngle,
+                        )
             }
     }
 }
