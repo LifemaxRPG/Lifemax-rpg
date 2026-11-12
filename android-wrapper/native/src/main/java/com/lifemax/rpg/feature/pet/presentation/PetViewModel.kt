@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.lifemax.rpg.feature.pet.brain.PlayAnswer
+import com.lifemax.rpg.feature.pet.domain.CatteryCommand
+import com.lifemax.rpg.feature.pet.domain.CatteryScreen
 import com.lifemax.rpg.feature.pet.domain.NoPetCommands
 import com.lifemax.rpg.feature.pet.domain.PetCommands
 import com.lifemax.rpg.feature.pet.domain.PetNotice
@@ -78,6 +80,10 @@ class PetViewModel(
     var fullRoom by mutableStateOf(false)
         private set
 
+    /** The cattery screen showing over the Cat tab (`pet.cattery.v1`), or null. */
+    var catteryScreen by mutableStateOf<CatteryScreen?>(null)
+        private set
+
     /** Whether the toy tray under Play is open (`pet.play.v1`). */
     var toyTray by mutableStateOf(false)
         private set
@@ -134,6 +140,8 @@ class PetViewModel(
                 ?: tray.toys.firstOrNull())
             ?.id
 
+    private val catteryOps = HashMap<String, String>()
+    private var catteryAsked: CatteryCommand? = null
     private val reactions = ArrayDeque<PetReaction>()
     private val strokes = HashMap<String, Int>()
     private var showing = false
@@ -151,6 +159,7 @@ class PetViewModel(
         notice = null
         waiting = null
         fullRoom = false
+        catteryScreen = null
         strokes.clear()
         cuesBaselined = false
         projected()
@@ -163,6 +172,7 @@ class PetViewModel(
         notice = null
         waiting = null
         fullRoom = false
+        catteryScreen = null
         strokes.clear()
         reactions.clear()
     }
@@ -251,11 +261,44 @@ class PetViewModel(
         send(PET_EXPAND) { commands.expandGenome(open) }
     }
 
+    /**
+     * Open a cattery screen: the page sends that screen's detail while it is open, so it is asked
+     * for at once, even when another command is still being answered.
+     */
+    fun openCattery(screen: CatteryScreen) {
+        if (!showing || pet?.cattery == null) return
+        catteryScreen = screen
+        sendCattery(CatteryCommand.View(screen))
+    }
+
+    /** Back from a cattery screen to the Cat tab; the page stops sending the detail. */
+    fun closeCattery() {
+        if (catteryScreen == null) return
+        catteryScreen = null
+        if (waiting == null) sendCattery(CatteryCommand.View(null))
+    }
+
+    /**
+     * A cattery command. A command that changes things carries an operation id, kept until the page
+     * answers, so the same tap repeated after an answer that never came records at most once.
+     */
+    fun cattery(command: CatteryCommand) {
+        if (waiting != null || catteryScreen == null) return
+        sendCattery(command)
+    }
+
+    private fun sendCattery(command: CatteryCommand) {
+        val op = if (command.changes) catteryOps.getOrPut(command.toString()) { newId() } else ""
+        catteryAsked = command
+        send(PET_CATTERY) { commands.cattery(op, command) }
+    }
+
     fun onReply(reply: PetReply) {
         val stroked = strokes.remove(reply.requestId)
         if (stroked != null) return strokeAnswered(stroked, reply)
         if (reply.requestId != requestId) return
         waiting = null
+        if (reply.command == PET_CATTERY) catteryAnswered(reply)
         // a meal that landed or was refused is final; one the page could not store may be sent
         // again
         if (reply.command == PET_FEED && (reply.ok || reply.why.isNotEmpty())) feedOp = null
@@ -265,6 +308,15 @@ class PetViewModel(
             "blink" -> queue(PetReaction.Blink(cat))
             "bowl" -> queue(PetReaction.Bowl(cat))
         }
+    }
+
+    /**
+     * The page answered a cattery command: its operation id is spent; a screen it refused closes.
+     */
+    private fun catteryAnswered(reply: PetReply) {
+        val asked = catteryAsked ?: return
+        catteryOps.remove(asked.toString())
+        if (asked is CatteryCommand.View && asked.screen != null && !reply.ok) catteryScreen = null
     }
 
     /** The message has shown to the end. */
@@ -317,6 +369,7 @@ class PetViewModel(
         const val PET_FOCUS = "focus"
         const val PET_BUY_TOY = "buyToy"
         const val PET_EXPAND = "expand"
+        const val PET_CATTERY = "cattery"
 
         /** The page's words for a toy: the favourite, and one the cat loves. */
         const val FAVOURITE = "Favorite"

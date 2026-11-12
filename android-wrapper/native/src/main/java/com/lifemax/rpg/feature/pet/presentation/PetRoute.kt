@@ -46,6 +46,7 @@ fun PetRoute(
                 demo = vm::demoPressed,
                 noticeShown = vm::noticeShown,
                 openRoom = vm::openRoom,
+                catteryOpen = vm::openCattery,
             )
         }
     val looks =
@@ -73,11 +74,25 @@ fun PetRoute(
             }
         }
     }
+    val screen = vm.catteryScreen
+    val catteryActions =
+        remember(vm) {
+            CatteryActions(
+                back = vm::closeCattery,
+                send = vm::cattery,
+                noticeShown = vm::noticeShown,
+            )
+        }
     val touchable = p.touch != null
     val touch = if (touchable) RoomTouch(onBowl = vm::feed) else null
-    PetScreen(p, PetUi(vm.waiting, vm.notice, vm.toyTray), actions, topInsetDp, bottomInsetDp) {
-        modifier ->
-        PetRoom(p, room, visible && !vm.fullRoom, modifier, touch, still)
+    val ui = PetUi(vm.waiting, vm.notice, vm.toyTray)
+    if (screen != null && p.cattery != null) {
+        // a cattery screen covers the Cat tab: its room is not composed, so its clock stops
+        CatteryHost(p, screen, ui, catteryActions, topInsetDp, bottomInsetDp)
+    } else {
+        PetScreen(p, ui, actions, topInsetDp, bottomInsetDp) { modifier ->
+            PetRoom(p, room, visible && !vm.fullRoom, modifier, touch, still)
+        }
     }
     if (touchable && vm.fullRoom && room is RoomState.Ready) {
         PetFullRoom(

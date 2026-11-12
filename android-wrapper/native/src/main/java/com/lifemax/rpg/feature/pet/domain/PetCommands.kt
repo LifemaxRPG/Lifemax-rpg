@@ -51,6 +51,13 @@ interface PetCommands {
      */
     fun stroke(op: String, stroke: PetStroke): String = ""
 
+    /**
+     * One of the cattery screens' commands (`pet.cattery.v1`). [op] is the operation id of a
+     * command that changes things ([CatteryCommand.changes]); a repeat with the same id records
+     * once.
+     */
+    fun cattery(op: String, command: CatteryCommand): String = ""
+
     /** The cat purrs at [level] (0 to 1), or stops with 0 (`touch` / `purr`): the page's sound. */
     fun purr(cat: Int, level: Float): String = ""
 }

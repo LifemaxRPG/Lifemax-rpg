@@ -105,7 +105,7 @@ internal fun JSONObject.exactly(
 
 internal fun decodePet(j: JSONObject, session: String, sequence: Long): PetProjection {
     // `world` (pet.world.v1) is the cat brain's block, read by WorldFeed and not part of this card
-    j.exactly(TOP_KEYS, optional = TOUCH_KEYS + "panels" + "world" + "play" + "demo")
+    j.exactly(TOP_KEYS, optional = TOUCH_KEYS + "panels" + "world" + "play" + "demo" + "cattery")
     val cats = j.getJSONArray("cats")
     require(cats.length() in 1..MAX_CATS) { "A house has one or two cats" }
     val looks =
@@ -181,6 +181,7 @@ internal fun decodePet(j: JSONObject, session: String, sequence: Long): PetProje
         touch = decodeTouch(j, looks.size),
         play = decodePlay(j),
         demo = decodeDemo(j),
+        cattery = decodeCattery(j),
     )
 }
 

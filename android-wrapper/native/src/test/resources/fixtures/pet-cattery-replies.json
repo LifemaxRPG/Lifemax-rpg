@@ -1,0 +1,74 @@
+{
+ "view": {
+  "reply": {
+   "command": "cattery",
+   "requestId": "f-view-2",
+   "ok": true,
+   "changed": false,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "breed": {
+  "reply": {
+   "command": "cattery",
+   "requestId": "f-breed-3",
+   "ok": true,
+   "changed": true,
+   "message": "Ted had 2 kittens",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "breedAgain": {
+  "reply": {
+   "command": "cattery",
+   "requestId": "f-breed-4",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "keepStale": {
+  "reply": {
+   "command": "cattery",
+   "requestId": "f-keep-5",
+   "ok": false,
+   "changed": false,
+   "message": "That litter has changed.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "release": {
+  "reply": {
+   "command": "cattery",
+   "requestId": "f-release-6",
+   "ok": true,
+   "changed": true,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "renameBlank": {
+  "reply": {
+   "command": "cattery",
+   "requestId": "f-rename-7",
+   "ok": false,
+   "changed": false,
+   "message": "A name needs 1 to 14 characters.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ }
+}

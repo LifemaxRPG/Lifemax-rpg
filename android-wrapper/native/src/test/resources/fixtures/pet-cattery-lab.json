@@ -1,0 +1,372 @@
+{
+ "protocol": 1,
+ "webSessionId": "pet-fixture",
+ "sequence": 1,
+ "cats": [
+  {
+   "name": "Ted",
+   "coat": "dna_black_0_m_3_0_n_0_4",
+   "stage": -1,
+   "weak": false
+  }
+ ],
+ "focus": 0,
+ "name": "Ted",
+ "eyebrow": "COMPANION · FRIENDLY",
+ "hearts": 3,
+ "mood": "",
+ "bond": {
+  "pct": 0,
+  "text": "Friendly · 0% to Fond"
+ },
+ "grow": null,
+ "lastMeal": {
+  "value": "5 h",
+  "label": "last meal"
+ },
+ "mealsToday": "0 / 2",
+ "days": "40",
+ "favs": {
+  "place": "Still deciding",
+  "toy": "Still deciding"
+ },
+ "hint": "Try dragging your finger across the floor. Ted may follow.",
+ "feed": {
+  "label": "Feed Ted",
+  "wait": false
+ },
+ "care": {
+  "how": "How it works. Feed about twice a day, at least four hours apart. A hungry cat tells you with its behavior, never with a notification. A cat that goes a very long time with no food will get weak, and about a week without food can be fatal.",
+  "bond": "Bond. It grows from regular meals, gentle petting (3 a day count) and play (2 a day count). Strays are shy at first. Close friends greet you, follow your finger, rub against you and sometimes bring gifts.",
+  "vacationHint": "Pauses hunger while you are away. Turn it off when you are back.",
+  "vacation": false,
+  "name": "Ted",
+  "nameMax": 14
+ },
+ "together": "",
+ "words": {
+  "room": "View room",
+  "play": "Play",
+  "blink": "Slow blink",
+  "blinkHint": "A slow blink is how cats say they feel safe",
+  "careTitle": "Care and settings",
+  "vacationTitle": "Vacation mode",
+  "nameLabel": "Name",
+  "rename": "Rename",
+  "moreTitle": "More on the Cat page",
+  "moreText": "Anything else about your cats opens on the page."
+ },
+ "cue": {
+  "fed": []
+ },
+ "cattery": {
+  "words": {
+   "cattery": "Cattery",
+   "lab": "Breeding lab",
+   "memorial": "In memory",
+   "adoptTitle": "A second cat",
+   "adoptHint": "Another stray has been seen by the kitchen window. Two cats keep each other company: they meet, play chase, groom each other and nap together.",
+   "adoptButton": "Meet",
+   "mother": "Mother",
+   "father": "Father",
+   "goal": "Goal",
+   "breed": "Breed",
+   "keep": "Keep",
+   "release": "Release",
+   "keepAll": "Keep all",
+   "releaseAll": "Release all",
+   "home": "Bring home",
+   "homeTaken": "Your second cat slot is taken",
+   "stray": "Another stray",
+   "strayHint": "A random unrelated adult joins the cattery. Handy for fresh genes.",
+   "rename": "Rename",
+   "nameLabel": "Name",
+   "newLitter": "Another litter",
+   "adopt": "Welcome home",
+   "letIn": "Let them in",
+   "reopen": "Open the door again",
+   "none": "No cats of yours have passed away.",
+   "cancel": "Cancel",
+   "save": "Save",
+   "back": "Back"
+  },
+  "entry": {
+   "cats": 3,
+   "max": 16,
+   "memorial": 0,
+   "adopt": "pair"
+  },
+  "view": "lab",
+  "detail": {
+   "kind": "lab",
+   "intro": "Pair a mother with a father to roll a litter. Each kitten gets a random half of each parent's genes, so keep the ones that lean toward your goal and breed those. Cats you keep wait here as genomes; bring one home when your second cat slot is free.",
+   "goal": "em+",
+   "options": [
+    {
+     "value": "em+",
+     "label": "Longest/largest ears (enormous)"
+    },
+    {
+     "value": "em-",
+     "label": "Shortest/smallest ears (tiny)"
+    },
+    {
+     "value": "ew+",
+     "label": "Longest/largest ear base (broad)"
+    },
+    {
+     "value": "ew-",
+     "label": "Shortest/smallest ear base (narrow)"
+    },
+    {
+     "value": "tl+",
+     "label": "Longest/largest tail (long)"
+    },
+    {
+     "value": "tl-",
+     "label": "Shortest/smallest tail (stubby)"
+    },
+    {
+     "value": "lg+",
+     "label": "Longest/largest legs (leggy)"
+    },
+    {
+     "value": "lg-",
+     "label": "Shortest/smallest legs (short)"
+    },
+    {
+     "value": "bl+",
+     "label": "Longest/largest body (long and lean)"
+    },
+    {
+     "value": "bl-",
+     "label": "Shortest/smallest body (cobby)"
+    },
+    {
+     "value": "wk+",
+     "label": "Longest/largest whiskers (long)"
+    },
+    {
+     "value": "wk-",
+     "label": "Shortest/smallest whiskers (short)"
+    }
+   ],
+   "best": "Best in your roster: Olive at 1.31× ears (generation 0).",
+   "note": "",
+   "moms": [
+    {
+     "key": "h0",
+     "name": "Ted",
+     "home": true
+    },
+    {
+     "key": "c2",
+     "name": "Olive",
+     "home": false
+    }
+   ],
+   "dads": [
+    {
+     "key": "c1",
+     "name": "Basil",
+     "home": false
+    }
+   ],
+   "mom": "h0",
+   "dad": "c1",
+   "forecast": "Expected ears: 0.77× on average, usually between 0.61× and 0.97×.",
+   "litter": {
+    "at": 1793361600000,
+    "title": "Litter of 3",
+    "parents": "Ted × Basil",
+    "kits": [
+     {
+      "id": "lit0",
+      "name": "Kitten 1",
+      "female": true,
+      "sub": "Torbie · generation 0",
+      "chips": [
+       {
+        "label": "ears 0.9×",
+        "title": "Ear length",
+        "goal": true
+       },
+       {
+        "label": "ear base 1.0×",
+        "title": "Ear width",
+        "goal": false
+       },
+       {
+        "label": "tail 0.8×",
+        "title": "Tail length",
+        "goal": false
+       },
+       {
+        "label": "legs 1.1×",
+        "title": "Leg length",
+        "goal": false
+       },
+       {
+        "label": "body 1.1×",
+        "title": "Body length",
+        "goal": false
+       },
+       {
+        "label": "whiskers 0.6×",
+        "title": "Whisker length",
+        "goal": false
+       }
+      ],
+      "preview": {
+       "coat": "dna_black_1_m_0_0_n_0_1",
+       "stage": -1,
+       "rig": {
+        "em": 0.93,
+        "ew": 0.98,
+        "tl": 0.77,
+        "lg": 1.11,
+        "bl": 1.15,
+        "wk": 0.55,
+        "bob": false
+       },
+       "sleep": false
+      },
+      "home": false,
+      "ask": "Release Kitten 1? She will not come back."
+     },
+     {
+      "id": "lit1",
+      "name": "Kitten 2",
+      "female": false,
+      "sub": "Black with a white locket · generation 0",
+      "chips": [
+       {
+        "label": "ears 0.6×",
+        "title": "Ear length",
+        "goal": true
+       },
+       {
+        "label": "ear base 1.1×",
+        "title": "Ear width",
+        "goal": false
+       },
+       {
+        "label": "tail 1.3×",
+        "title": "Tail length",
+        "goal": false
+       },
+       {
+        "label": "legs 0.8×",
+        "title": "Leg length",
+        "goal": false
+       },
+       {
+        "label": "body 0.9×",
+        "title": "Body length",
+        "goal": false
+       },
+       {
+        "label": "whiskers 1.0×",
+        "title": "Whisker length",
+        "goal": false
+       }
+      ],
+      "preview": {
+       "coat": "dna_black_0_n_1_0_n_0_1",
+       "stage": -1,
+       "rig": {
+        "em": 0.58,
+        "ew": 1.11,
+        "tl": 1.28,
+        "lg": 0.84,
+        "bl": 0.94,
+        "wk": 1,
+        "bob": false
+       },
+       "sleep": false
+      },
+      "home": false,
+      "ask": "Release Kitten 2? He will not come back."
+     },
+     {
+      "id": "lit2",
+      "name": "Kitten 3",
+      "female": false,
+      "sub": "Brown classic tabby · generation 0",
+      "chips": [
+       {
+        "label": "ears 0.8×",
+        "title": "Ear length",
+        "goal": true
+       },
+       {
+        "label": "ear base 0.9×",
+        "title": "Ear width",
+        "goal": false
+       },
+       {
+        "label": "tail 1.3×",
+        "title": "Tail length",
+        "goal": false
+       },
+       {
+        "label": "legs 1.0×",
+        "title": "Leg length",
+        "goal": false
+       },
+       {
+        "label": "body 0.8×",
+        "title": "Body length",
+        "goal": false
+       },
+       {
+        "label": "whiskers 1.3×",
+        "title": "Whisker length",
+        "goal": false
+       }
+      ],
+      "preview": {
+       "coat": "dna_black_0_c_0_0_n_0_4",
+       "stage": -1,
+       "rig": {
+        "em": 0.8,
+        "ew": 0.91,
+        "tl": 1.26,
+        "lg": 0.96,
+        "bl": 0.85,
+        "wk": 1.31,
+        "bob": false
+       },
+       "sleep": false
+      },
+      "home": false,
+      "ask": "Release Kitten 3? He will not come back."
+     }
+    ],
+    "full": false,
+    "fullNote": "The cattery is full (16). Release a cat before keeping more."
+   }
+  }
+ },
+ "notice": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

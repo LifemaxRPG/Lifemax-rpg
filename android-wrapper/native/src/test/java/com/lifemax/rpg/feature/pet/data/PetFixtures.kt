@@ -33,6 +33,30 @@ internal object PetFixtures {
             .getJSONObject(key)
             .getJSONObject("reply")
 
+    /**
+     * The cattery projection named [name] (`entry`, `cattery`, `lab`, `labNoMate`, `labFull`,
+     * `adopt`, `memorial`).
+     */
+    fun cattery(name: String): JSONObject = projection("cattery-$name")
+
+    /**
+     * What the page answered to a `cattery` command (`breed`, `breedAgain`, `keepStale`, ...), in
+     * the kit's envelope.
+     */
+    fun catteryReply(key: String): JSONObject =
+        JSONObject(
+                PetFixtures::class
+                    .java
+                    .getResource("/fixtures/pet-cattery-replies.json")!!
+                    .readText()
+            )
+            .getJSONObject(key)
+            .getJSONObject("reply")
+
+    /** The cattery fixtures' names. */
+    val CATTERY_VIEWS =
+        listOf("entry", "cattery", "lab", "labNoMate", "labFull", "adopt", "memorial")
+
     /** The cat states the panels fixtures (`pet-panels-<state>.json`, `pet.panels.v1`) cover. */
     val PANEL_STATES =
         listOf(

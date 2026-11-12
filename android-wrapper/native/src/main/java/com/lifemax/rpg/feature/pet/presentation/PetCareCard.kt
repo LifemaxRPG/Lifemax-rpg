@@ -98,7 +98,7 @@ private fun CareBody(
             }
             PageCheck(care.vacation, pending = waiting == "vacation")
         }
-        CompositionLocalProvider(LocalFormKitLook provides remember(c) { formLook(c) }) {
+        CompositionLocalProvider(LocalFormKitLook provides remember(c) { petFormLook(c) }) {
             RenameField(p, waiting, onRename)
         }
     }
@@ -145,7 +145,7 @@ private fun RenameField(p: PetProjection, waiting: String?, onRename: (String) -
 }
 
 /** The page's fields in the Cat tab's colours: its background as the well, its line as the edge. */
-private fun formLook(c: PageColors) =
+internal fun petFormLook(c: PageColors) =
     FormKitLook(
         ink = c.text,
         ink2 = c.muted,
