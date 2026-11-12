@@ -7,6 +7,7 @@
    "changes": [
     "Cat tab: choosing a cat (tap it in the room, or switch cats on the Together card) now pans the camera to that cat and keeps following it, also in the full-screen room.",
     "Cat tab: the room now always has a gentle 3D view angle, so the furniture shows its sides and near and far layers are offset even when nothing moves; it also keeps the strongest 3D level on phones that run the screen slower than their top refresh rate.",
+    "Your cat's coat now holds steady while it sits, loafs or sleeps: the little shading speckles no longer flip between frames, which was most noticeable on black cats. Kitten faces also get a complete outline.",
     "Settings > Data & advanced > Food database now has a Download button that fetches the USDA branded foods from GitHub (about 18 MB) and imports them, so you no longer need to pick a file.",
     "Life Director: a long session name in the middle of the dial now wraps inside the ring instead of running past it.",
     "Life Director: workout-plan sessions with an \"&\" in their name (like Active Mobility & Structural Recovery) now show a plain \"&\" instead of \"&amp;\".",
