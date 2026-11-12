@@ -5,7 +5,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import com.lifemax.rpg.feature.pet.art.Anim
+import com.lifemax.rpg.feature.pet.art.CatPalette
 import com.lifemax.rpg.feature.pet.art.IndexSheet
+import com.lifemax.rpg.feature.pet.art.LitRows
 import com.lifemax.rpg.feature.pet.art.OutlineGaps
 import com.lifemax.rpg.feature.pet.art.PageCoatSource
 import com.lifemax.rpg.feature.pet.art.PetArt
@@ -81,6 +83,8 @@ internal object CatArt {
         /** The side view's index sheet as drawn: mended by [RestingFloor]. */
         var sideSheet: IndexSheet? = null
         var side: ImageBitmap? = null
+        /** The depth view's index sheet, kept for its lit rows. */
+        var depthSheet: IndexSheet? = null
         var depth: ImageBitmap? = null
         var built: CatSprites? = null
         var rigged: CatSprites? = null
@@ -168,6 +172,7 @@ internal object CatArt {
             val palette = art.palette(coat)
             if (sheet != null && palette != null) {
                 if (t.fits(sheet, depthRows = true)) {
+                    entry.depthSheet = sheet
                     entry.depth = bitmap(Recolour.sheet(sheet, palette))
                     entry.built = null
                 } else {
@@ -185,8 +190,20 @@ internal object CatArt {
                     t.frames,
                     t.feet,
                     t.onDepth,
+                    lit = litSheets(entry, art.palette(coat), t),
                 )
                 .also { entry.built = it }
+    }
+
+    /**
+     * The cat's lit rows (docs/specs/CAT_LIGHTING_PLAN.md WP-L3), made from the very index sheets
+     * the plain bitmaps are made from (after the mends), so a light only changes which colour each
+     * drawn pixel looks up. Nothing is recoloured until a light other than neutral asks.
+     */
+    private fun litSheets(entry: Entry, palette: CatPalette?, t: Tables): LitSheets? {
+        val side = entry.sideSheet ?: return null
+        palette ?: return null
+        return LitSheets(LitRows(side, entry.depthSheet, palette, t.frameHeight))
     }
 
     /** [built] with the rig of this cat; [built] itself if the rig cannot be had. */

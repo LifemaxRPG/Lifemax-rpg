@@ -60,6 +60,11 @@ class PetUi(
      * default) shows nothing.
      */
     val depthNote: (() -> String)? = null,
+    /**
+     * DEVELOPER MODE: the cat lighting switches and the preview hour ([LightingDevPanel]); false
+     * (the default) shows nothing.
+     */
+    val lightControls: Boolean = false,
 )
 
 /** Everything the screen can ask for, so the screen itself holds no state of the page's. */
@@ -283,6 +288,7 @@ private fun Buttons(p: PetProjection, ui: PetUi, actions: PetActions) {
                 small = true,
             )
         }
+        if (ui.lightControls) LightingDevPanel()
         ui.depthNote?.let { DepthReadout(it, Modifier.padding(horizontal = 2.dp)) }
     }
 }

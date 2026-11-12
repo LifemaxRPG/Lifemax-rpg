@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.pet.presentation
 
+import com.lifemax.rpg.feature.pet.art.CatLightKey
+import com.lifemax.rpg.feature.pet.art.LightTint
 import com.lifemax.rpg.feature.pet.art.RigGrid
 import com.lifemax.rpg.feature.pet.body.CatPose
 import com.lifemax.rpg.feature.pet.body.Clips
@@ -78,6 +80,101 @@ internal class SteadyStep(private val hold: Double = SteadyTuning.HOLD) {
 }
 
 /**
+ * A cat's light, held so it cannot flicker (docs/specs/CAT_LIGHTING_PLAN.md section 7, rule 3). The
+ * target (half-steps of shade, a tint, flattened or not, from the room's light at the cat) is
+ * smoothed toward over [LightHoldTuning.SMOOTH_S], held on whole half-steps with [SteadyStep]'s
+ * hysteresis, and a new key is only shown once it has been asked for [LightHoldTuning.PERSIST_S]
+ * and at least [LightHoldTuning.MIN_GAP_S] after the last change. A cat standing on the edge of a
+ * sun patch, or hovering across it by a fraction of a pixel, changes key at most once; a resting
+ * cat in an unchanging light draws one key forever. The first target is shown at once (a screenshot
+ * is the light itself). [follow] with the same time twice changes nothing.
+ */
+internal class LightHold {
+    /** The key drawn now ([CatLightKey]). */
+    var key = CatLightKey.NEUTRAL
+        private set
+
+    /** How many times [key] changed (the readout and the tests). */
+    var changes = 0
+        private set
+
+    private val step = SteadyStep()
+    private var smooth = 0.0
+    private var last = Double.NaN
+    private var changedAt = Double.NEGATIVE_INFINITY
+    private var pending = CatLightKey.NEUTRAL
+    private var pendingFor = 0.0
+
+    /**
+     * Follow the target light [halfSteps], [tint] and [flatten] at time [now] in seconds; returns
+     * the key to draw.
+     */
+    fun follow(halfSteps: Double, tint: LightTint, flatten: Boolean, now: Double): Int {
+        if (last.isNaN()) {
+            smooth = halfSteps
+            last = now
+            key = CatLightKey.pack(step.follow(halfSteps), tint, flatten)
+            changedAt = now
+            pending = key
+            return key
+        }
+        val dt = (now - last).coerceAtLeast(0.0)
+        last = now
+        if (dt == 0.0) return key
+        smooth += (halfSteps - smooth) * (1.0 - Math.exp(-dt / LightHoldTuning.SMOOTH_S))
+        val wanted = CatLightKey.pack(step.follow(smooth), tint, flatten)
+        if (wanted == key) {
+            pending = key
+            pendingFor = 0.0
+            return key
+        }
+        if (wanted == CatLightKey.withFlatten(key, CatLightKey.flatten(wanted))) {
+            // only the side changed: the cat turned, which redraws it anyway (an art step)
+            key = wanted
+            pending = key
+            pendingFor = 0.0
+            return key
+        }
+        if (wanted != pending) {
+            pending = wanted
+            pendingFor = 0.0
+        } else {
+            pendingFor += dt
+        }
+        if (
+            pendingFor >= LightHoldTuning.PERSIST_S && now - changedAt >= LightHoldTuning.MIN_GAP_S
+        ) {
+            key = wanted
+            changedAt = now
+            changes++
+            pendingFor = 0.0
+        }
+        return key
+    }
+
+    /** Back to no light; the next [follow] is shown at once. */
+    fun reset() {
+        key = CatLightKey.NEUTRAL
+        step.reset()
+        last = Double.NaN
+        pending = CatLightKey.NEUTRAL
+        pendingFor = 0.0
+    }
+}
+
+/** The numbers of [LightHold]. */
+internal object LightHoldTuning {
+    /** The light at a cat is smoothed toward its target over about this long. */
+    const val SMOOTH_S = 0.3
+
+    /** A new light key must be asked for this long before it shows. */
+    const val PERSIST_S = 0.25
+
+    /** A cat's light key changes at most once in this long. */
+    const val MIN_GAP_S = 0.75
+}
+
+/**
  * What of one cat's pose is drawn, held steady: its turn, squash and stretch ([turnDeg], [scaleX],
  * [scaleY]), how many device pixels its back has risen with the breath ([rise]) and the rig's grid
  * point for ears, tail and whiskers ([grid]), each on whole steps with hysteresis (see
@@ -103,6 +200,12 @@ internal class SpriteSteady {
     /** Device pixels the rows above the breath's cut are lifted (negative: sunk). */
     var rise = 0
         private set
+
+    /**
+     * The cat's light key, held steady (docs/specs/CAT_LIGHTING_PLAN.md section 7): the stage feeds
+     * it a target each frame; [LightHold.key] is what is drawn. Neutral until fed.
+     */
+    val light = LightHold()
 
     private val turn = SteadyStep()
     private val width = SteadyStep()

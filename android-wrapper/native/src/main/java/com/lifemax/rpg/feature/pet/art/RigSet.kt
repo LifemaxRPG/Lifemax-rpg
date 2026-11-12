@@ -47,19 +47,35 @@ class RigSet(
     fun rigFrame(clip: Int, frame: Int): RigFrame =
         layerOf(anims[clip])!!.kind.frame(animIndex[clip], frame)
 
-    /** The art frame [frame] of [clip] in ARGB, recoloured once and kept; [has] must be true. */
-    fun source(clip: Int, frame: Int): IntArray {
+    /**
+     * The art frame [frame] of [clip] in ARGB, recoloured once and kept; [has] must be true. With a
+     * [light] other than [CatLightKey.NEUTRAL] the frame is lit (docs/specs/CAT_LIGHTING_PLAN.md
+     * WP-L3) and kept beside the unlit one; the neutral frame is exactly [Recolour]'s, as always.
+     */
+    fun source(clip: Int, frame: Int, light: Int = CatLightKey.NEUTRAL): IntArray {
         val anim = anims[clip]
         val f = Math.floorMod(frame, anim.frames)
         val slot = clip * maxFrames + f
-        sources[slot]?.let {
+        val store =
+            if (light == CatLightKey.NEUTRAL) sources
+            else lit.getOrPut(light) { arrayOfNulls(sources.size) }
+        store[slot]?.let {
             return it
         }
         val layer = layerOf(anim)!!
-        return Recolour.region(layer.sheet, layer.palette, table.frameRect(anim, f)).pixels.also {
-            sources[slot] = it
-        }
+        val rect = table.frameRect(anim, f)
+        val image =
+            if (light == CatLightKey.NEUTRAL) Recolour.region(layer.sheet, layer.palette, rect)
+            else {
+                val look = looks.getOrPut(layer) { CoatLook.of(layer.palette) }
+                LitRecolour.region(layer.sheet, layer.palette, rect, CatLightKey.light(light, look))
+            }
+        return image.pixels.also { store[slot] = it }
     }
+
+    /** The lit art frames by light key, made as the rig needs them. */
+    private val lit = HashMap<Int, Array<IntArray?>>()
+    private val looks = HashMap<RigLayer, CoatLook>()
 }
 
 /**
@@ -90,20 +106,27 @@ class RigFrames(capacity: Int = DEFAULT_CAPACITY) {
         private set
 
     /**
-     * The slot of the composed frame of [set] for [clip] and [frame] at [grid], or -1. A fresh slot
+     * The slot of the composed frame of [set] for [clip] and [frame] at [grid] under [light] (a
+     * [CatLightKey]; the neutral key gives the very key the cache always had), or -1. A fresh slot
      * (see [wasComposed]) has to be uploaded by the caller; its pixels are [pixels].
      */
-    fun slotFor(set: RigSet, clip: Int, frame: Int, grid: RigGrid): Int {
+    fun slotFor(
+        set: RigSet,
+        clip: Int,
+        frame: Int,
+        grid: RigGrid,
+        light: Int = CatLightKey.NEUTRAL,
+    ): Int {
         fresh = false
         if (!set.has(clip) || (set.morph.neutral && grid.neutral)) return -1
         val f = Math.floorMod(frame, set.frames(clip))
-        val key = keyOf(set.id, clip, f, grid)
+        val key = keyOf(set.id, clip, f, grid) + light * LIGHT_STRIDE
         val hit = cache.find(key)
         if (hit >= 0) return hit
         val slot = cache.claim(key)
         grid.toPose(pose)
         composer.compose(
-            set.source(clip, f),
+            set.source(clip, f, light),
             set.rigFrame(clip, f),
             set.morph,
             pose,
@@ -142,5 +165,9 @@ class RigFrames(capacity: Int = DEFAULT_CAPACITY) {
         private const val SET_SPAN = 1 shl 14
         private const val CLIP_SPAN = 64
         private const val FRAME_SPAN = 16
+
+        /** The light key is the top part of the cache key, so the neutral key (0) adds nothing. */
+        private const val LIGHT_STRIDE: Long =
+            1L * SET_SPAN * CLIP_SPAN * FRAME_SPAN * RigGrid.POINTS
     }
 }

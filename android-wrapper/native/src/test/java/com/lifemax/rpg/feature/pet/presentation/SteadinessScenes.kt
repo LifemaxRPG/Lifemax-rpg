@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.pet.presentation
 import com.lifemax.rpg.feature.pet.art.CoatFixtures
 import com.lifemax.rpg.feature.pet.art.RigMorph
 import com.lifemax.rpg.feature.pet.body.CatBody
+import com.lifemax.rpg.feature.pet.body.CatPose
 import com.lifemax.rpg.feature.pet.body.HouseCat
 import com.lifemax.rpg.feature.pet.body.HouseLife
 import com.lifemax.rpg.feature.pet.body.PlanStep
@@ -77,17 +78,25 @@ internal object SteadinessScenes {
         s: Int,
         seconds: Float,
         seed: Int = 7,
+        lightOf: ((CatPose, Double) -> Int)? = null,
     ): Run {
         val body = CatBody(seed = seed)
         body.replacePlan(1, listOf(PlanStep.Act(row, seconds + SETTLE_S + 1f)))
-        return play(body, look, renderer, s, seconds, SETTLE_S)
+        return play(body, look, renderer, s, seconds, SETTLE_S, lightOf)
     }
 
     /** A cat moving by [plan] for [seconds]. */
-    fun move(look: Look, plan: (CatBody) -> Unit, renderer: Renderer, s: Int, seconds: Float): Run {
+    fun move(
+        look: Look,
+        plan: (CatBody) -> Unit,
+        renderer: Renderer,
+        s: Int,
+        seconds: Float,
+        lightOf: ((CatPose, Double) -> Int)? = null,
+    ): Run {
         val body = CatBody(seed = 5, startX = 60f)
         plan(body)
-        return play(body, look, renderer, s, seconds, settle = 0.2f)
+        return play(body, look, renderer, s, seconds, settle = 0.2f, lightOf = lightOf)
     }
 
     /** Two cats living [seconds] of their day in the house (the Overview card's room). */
@@ -109,10 +118,12 @@ internal object SteadinessScenes {
         s: Int,
         seconds: Float,
         settle: Float,
+        lightOf: ((CatPose, Double) -> Int)? = null,
     ): Run {
         val dt = 1f / SteadinessProbe.HZ
         repeat((settle * SteadinessProbe.HZ).toInt()) { body.step(dt) }
         val run = Run(look, renderer, s, 1)
+        run.lightOf = lightOf
         repeat((seconds * SteadinessProbe.HZ).toInt()) {
             body.step(dt)
             run.frame(body.pose)

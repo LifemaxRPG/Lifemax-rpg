@@ -31,6 +31,12 @@ internal object LiveDepth {
     var level: DepthLevel? by mutableStateOf(guard.level)
         private set
 
+    /**
+     * Whether the guard is at its best level: cat lighting is shed below it (CAT_LIGHTING_PLAN).
+     */
+    val atBest: Boolean
+        get() = level == LiveDepthTuning.BEST_LEVEL
+
     /** The style of a live room at the current level ([reducedMotion]: the rest picture only). */
     fun style(reducedMotion: Boolean): RoomStyle =
         RoomStyle.live(level, reducedMotion, LiveDepthTuning.VIEW_ANGLE)
