@@ -50,6 +50,12 @@ interface Brain {
     fun takeReports(): List<WorldCommand> = emptyList()
 
     /**
+     * The view closed or the app stopped: the brain hands what it has gathered (time spent at
+     * places and toys) to [takeReports] now rather than at its usual interval.
+     */
+    fun flush() {}
+
+    /**
      * Whether this brain moves the bodies itself ([bind] hands them over) rather than the autopilot
      * of the shipped house.
      */

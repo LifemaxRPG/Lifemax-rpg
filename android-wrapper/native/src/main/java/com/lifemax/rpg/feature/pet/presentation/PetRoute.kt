@@ -32,6 +32,11 @@ fun PetRoute(
 ) {
     val p = vm.pet ?: return
     LaunchedEffect(visible) { if (!visible) vm.hidden() }
+    // no cat at home (pet.empty.v1): the first cat's adoption or the memorial, with no room
+    if (p.empty != null) {
+        EmptyHome(vm, p, topInsetDp, bottomInsetDp)
+        return
+    }
     val actions =
         remember(vm) {
             PetActions(
@@ -148,4 +153,22 @@ internal fun HouseStage.react(reaction: PetReaction) {
         is PetReaction.Blink -> slowBlink(reaction.cat)
         is PetReaction.LevelUp -> petting.levelUp(reaction.cat)
     }
+}
+
+/**
+ * The Cat tab with no cat at home: the page's intro (a first cat to adopt) or its memorial (a cat
+ * has passed, and the door can open again) as the cattery's Adoption and Memorial screens, with no
+ * room behind them. Back has nowhere to go (the tab is all there is), so the system Back leaves the
+ * tab as it does from any other tab; the screen asks the page for its detail at once.
+ */
+@Composable
+private fun EmptyHome(vm: PetViewModel, p: PetProjection, topInsetDp: Float, bottomInsetDp: Float) {
+    val screen = p.empty ?: return
+    val actions =
+        remember(vm) {
+            CatteryActions(back = {}, send = vm::cattery, noticeShown = vm::noticeShown)
+        }
+    LaunchedEffect(vm.catteryScreen == null, screen) { vm.openEmpty(screen) }
+    val ui = PetUi(vm.waiting, vm.notice, vm.toyTray, null)
+    CatteryHost(p, vm.catteryScreen ?: screen, ui, actions, topInsetDp, bottomInsetDp, root = true)
 }

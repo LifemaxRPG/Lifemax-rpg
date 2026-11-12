@@ -41,6 +41,7 @@ internal object CatchUpRun {
                 for (slot in fast.names.indices) tally.add(slot, fast.now(slot))
             }
         }
+        fast.flush()
         val end = fast.export()
         world.restore(end)
         // what the two did together in the story is told to the page as it happened

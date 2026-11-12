@@ -193,6 +193,12 @@ class CatWorld(
         reports += c
     }
 
+    override fun epochMs(): Long = clock.epochMs()
+
+    override fun flush() {
+        for (m in minds) m.flushDwell()
+    }
+
     override fun takeReports(): List<WorldCommand> {
         if (reports.isEmpty()) return emptyList()
         return ArrayList(reports).also { reports.clear() }

@@ -7924,6 +7924,9 @@
  "window.NativePetDemo": [
   "src/runtime/segments/50-native-pet-demo.js"
  ],
+ "window.NativePetMoments": [
+  "src/runtime/segments/50-native-pet-moments.js"
+ ],
  "window.NativePetPanels": [
   "src/runtime/segments/50-native-pet-panels.js"
  ],
@@ -8118,7 +8121,8 @@
  ],
  "window.toast": [
   "src/runtime/segments/05-shadow-boot.js",
-  "src/runtime/segments/50-native-pet-social.js"
+  "src/runtime/segments/50-native-pet-social.js",
+  "src/runtime/segments/50-native-pet-moments.js"
  ],
  "window.toggleDevMode": [
   "src/runtime/segments/50-native-pet-demo.js"
@@ -8128,7 +8132,8 @@
   "src/runtime/segments/50-native-pet.js",
   "src/runtime/segments/50-native-pet-panels.js",
   "src/runtime/segments/50-native-pet-play.js",
-  "src/runtime/segments/50-native-pet-social.js"
+  "src/runtime/segments/50-native-pet-social.js",
+  "src/runtime/segments/50-native-pet-moments.js"
  ],
  "wireAudioElement": [
   "src/runtime/segments/08-runtime.js"

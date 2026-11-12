@@ -5,8 +5,11 @@ import com.lifemax.rpg.feature.pet.body.Rng
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.ToyBody
 import com.lifemax.rpg.feature.pet.body.ToyField
+import com.lifemax.rpg.feature.pet.world.MomentReport
+import com.lifemax.rpg.feature.pet.world.OpIds
 import com.lifemax.rpg.feature.pet.world.PlayDone
 import com.lifemax.rpg.feature.pet.world.WorldCommand
+import com.lifemax.rpg.feature.pet.world.WorldContract
 
 /** What the house tells each of its cats: the owner, the day, how many cats live here. */
 interface House {
@@ -35,6 +38,9 @@ interface House {
 
     /** Queues [c] for the page. */
     fun report(c: WorldCommand)
+
+    /** The world's clock as epoch ms (what a report is dated and named by); 0 where unknown. */
+    fun epochMs(): Long = 0L
 
     /**
      * Cat [slot] is being restored lying curled up with the other cat (both saved in the nap, side
@@ -75,6 +81,19 @@ class CatMind(
     private val beg = registry.find(Beg.id)
     private val begIndex = beg?.let { registry.indexOf(it) } ?: -1
     private var fedPending = false
+
+    /**
+     * The first moments already reported for this cat (the blob's `fx`, restored with the cat): a
+     * first is reported once, ever.
+     */
+    internal val fx = LinkedHashSet<String>()
+
+    /** Where the cat spent its time, for the page's favourite place and toy (`dwell`). */
+    private val dwell = Dwell(profile.id)
+
+    /** The page toy the cat is playing with alone now (null: none), for [dwell]. */
+    private var soloToy: String? = null
+    private var dayKey = ""
     private var ownerCame = false
     private var sitterDue = false
     private var sitterMeals = 0
@@ -300,11 +319,20 @@ class CatMind(
                 mood.bump(BrainTuning.Play.VALENCE, BrainTuning.Play.AROUSAL)
             }
             ParkourVisit.id -> mood.bump(0.0, t.LAND_AROUSAL)
+            // the owner saw the zoomies (the web needs the room view open too)
+            Zoomies.id -> if (house.ownerPresent) firstMoment("first_zoomies")
+            SoloPlay.id ->
+                soloToy =
+                    looseToy
+                        ?.takeIf { Math.abs(it.x - exec.x) <= BrainTuning.Roam.SOLO_TOY_REACH_PX }
+                        ?.kind
+                        ?.key
         }
     }
 
     private fun newDay(localDay: Long, dayKey: String) {
         day = localDay
+        this.dayKey = dayKey
         schedule.plan(profile.id, dayKey, persona.lazy, house.restDay)
         rng = Rng(Rng.hash("${profile.id}|$dayKey|choice"))
         sitterMeals = 0
@@ -315,6 +343,34 @@ class CatMind(
         val q = BrainTuning.Time.QUANTUM_S
         stillS = if (runner.activity.lively || exec.moving) 0.0 else stillS + q
         if (sinceMealS < Double.MAX_VALUE) sinceMealS += q
+        val toy = if (runner.activity === SoloPlay) soloToy else null
+        val report = dwell.add(dayKey, here?.pageId, toy, q, house.epochMs())
+        if (report != null) house.report(report)
+    }
+
+    /** Hands what has gathered of the cat's time at places and toys to the page now. */
+    fun flushDwell() {
+        dwell.take(house.epochMs())?.let(house::report)
+    }
+
+    /**
+     * The first moment [kind] (a [MomentReport.MOMENT_KINDS] name) happened to the cat while the
+     * owner watched: reported once, ever; a returned blink and a respected boundary are kept as
+     * `first_blink` and `first_respect`, the others by their own name.
+     */
+    internal fun firstMoment(kind: String) {
+        val key = if (kind == "blink" || kind == "respect") "first_$kind" else kind
+        require(key in WorldContract.FIRST_MOMENTS) { "no first moment $kind" }
+        if (!fx.add(key)) return
+        house.report(
+            MomentReport(
+                OpIds.firstMoment(profile.id, kind),
+                profile.id,
+                kind,
+                house.epochMs(),
+                null,
+            )
+        )
     }
 
     private fun sitter() {

@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.pet.data
 import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.pet.art.RigMorph
 import com.lifemax.rpg.feature.pet.art.RigWire
+import com.lifemax.rpg.feature.pet.domain.CatteryScreen
 import com.lifemax.rpg.feature.pet.domain.PetBond
 import com.lifemax.rpg.feature.pet.domain.PetCare
 import com.lifemax.rpg.feature.pet.domain.PetCatLook
@@ -103,7 +104,57 @@ internal fun JSONObject.exactly(
     }
 }
 
+/** The keys of a projection with no cat at home (`pet.empty.v1`). */
+private val EMPTY_KEYS =
+    setOf("protocol", "webSessionId", "sequence", "notice", "tokens", "light", "empty", "cattery")
+
+/**
+ * A projection with no cat at home: the page's intro or memorial, which the screen draws as the
+ * cattery's Adoption and Memorial screens. Only the screen to show, the cattery block, the notice
+ * and the theme are read; the card's own fields are blank.
+ */
+private fun decodeEmpty(j: JSONObject, session: String, sequence: Long): PetProjection {
+    j.exactly(EMPTY_KEYS)
+    val screen =
+        CatteryScreen.of(j.obj("empty", setOf("screen")).str("screen"))?.takeIf {
+            it == CatteryScreen.ADOPT || it == CatteryScreen.MEMORIAL
+        } ?: throw IllegalArgumentException("empty screen")
+    val cattery = decodeCattery(j) ?: throw IllegalArgumentException("empty needs the cattery")
+    val none = PetWords("", "", "", "", "", "", "", "", "", "")
+    return PetProjection(
+        session = session,
+        sequence = sequence,
+        cats = emptyList(),
+        focus = 0,
+        name = "",
+        eyebrow = "",
+        hearts = 0,
+        mood = "",
+        bond = PetBond(0, ""),
+        growth = null,
+        lastMeal = PetMeal("", ""),
+        mealsToday = "",
+        daysTogether = "",
+        favourites = PetFavourites("", ""),
+        hint = "",
+        feed = PetFeed("", true),
+        care = PetCare("", "", "", false, "", 1),
+        together = "",
+        words = none,
+        fedCues = emptyList(),
+        notice =
+            j.objOrNull("notice", setOf("id", "text"))?.let {
+                PetNotice(it.long("id"), it.str("text"))
+            },
+        tokens = j.getJSONObject("tokens").pageTokens(),
+        light = j.bool("light"),
+        cattery = cattery,
+        empty = screen,
+    )
+}
+
 internal fun decodePet(j: JSONObject, session: String, sequence: Long): PetProjection {
+    if (j.has("empty")) return decodeEmpty(j, session, sequence)
     // `world` (pet.world.v1) is the cat brain's block, read by WorldFeed and not part of this card
     j.exactly(TOP_KEYS, optional = TOUCH_KEYS + "panels" + "world" + "play" + "demo" + "cattery")
     val cats = j.getJSONArray("cats")

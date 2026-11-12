@@ -160,6 +160,7 @@ class PetViewModel(
         waiting = null
         fullRoom = false
         catteryScreen = null
+        emptyAsked = null
         strokes.clear()
         cuesBaselined = false
         projected()
@@ -173,6 +174,7 @@ class PetViewModel(
         waiting = null
         fullRoom = false
         catteryScreen = null
+        emptyAsked = null
         strokes.clear()
         reactions.clear()
     }
@@ -271,6 +273,21 @@ class PetViewModel(
         sendCattery(CatteryCommand.View(screen))
     }
 
+    private var emptyAsked: CatteryScreen? = null
+
+    /**
+     * With no cat at home the tab is the cattery screen the page names ([screen]: the first cat's
+     * adoption, or the memorial). It is asked for once per arrival, not again after a refusal, so a
+     * page that will not show it does not hear the same request in a loop.
+     */
+    fun openEmpty(screen: CatteryScreen) {
+        if (!showing || pet?.cattery == null) return
+        if (catteryScreen != null && catteryScreen == screen) return
+        if (emptyAsked == screen) return
+        emptyAsked = screen
+        openCattery(screen)
+    }
+
     /** Back from a cattery screen to the Cat tab; the page stops sending the detail. */
     fun closeCattery() {
         if (catteryScreen == null) return
@@ -317,6 +334,17 @@ class PetViewModel(
         val asked = catteryAsked ?: return
         catteryOps.remove(asked.toString())
         if (asked is CatteryCommand.View && asked.screen != null && !reply.ok) catteryScreen = null
+        // a first cat adopted, or the door opened again: the screen it came from has done its work
+        // (the next projection brings the Cat tab, or the adoption that follows a memorial)
+        if (
+            reply.ok &&
+                reply.changed &&
+                (asked is CatteryCommand.Adopt || asked is CatteryCommand.Reopen)
+        ) {
+            catteryScreen = null
+            emptyAsked = null
+            if (asked is CatteryCommand.Adopt) sendCattery(CatteryCommand.View(null))
+        }
     }
 
     /** The message has shown to the end. */
