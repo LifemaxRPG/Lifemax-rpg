@@ -324,3 +324,18 @@ I could not read their plans (none of them is in `docs/specs/` on this base), so
 3. After seeing it on the phone: black-cat handling (OQ-L5) and the in-sprite rim (OQ-L6).
 4. Whether the native room may differ from the page's room (dusk and dawn patches, moon patch) (OQ-L11).
 5. Whether to do WP-L6 (lit furniture) and WP-L10 (full directional lighting) at all after L1 to L5.
+
+## Appendix A. WP-L1 baseline (recorded)
+
+`DepthFrameCostTest` on the JVM test harness (kotlinc and JUnit, 4 cores, one run; the numbers are noisy and ordered by JIT warm-up, so read them as a rough floor, not a ranking of the levels). Painter only, counting canvas, ms per frame: classic 0.038, SUBTLE 0.067, MEDIUM 0.046, RICH 0.013. With the software canvas that blits every strip: classic 7.8, SUBTLE 8.4, MEDIUM 10.4, RICH 7.2. Making all 9 camera steps of MEDIUM: 24 ms total (2.7 each); their bitmaps 3.51 MB, 168 strips in the rest step. Allocation numbers and the developer readout skeleton and `weatherNow` injection were **not** done in this pass (no weather type exists yet, the readout needs the app to check); they move to WP-L3/L8 where they have a consumer. The phone's real cost is still only knowable on the phone.
+
+## Appendix B. WP-L2 index report (recorded, `ShadeSplitTest`)
+
+Built: `art/ShadeSplit.kt`, `art/CoatLook.kt`, `art/LitRecolour.kt` (not wired into the app). Findings that correct section 1.3 and 3.1:
+
+- **Shipped art (4 coats, 14 sheet kinds each) uses only documented indices**: 0, 10, 20 to 50, 60 to 80, 90 to 110, 120 to 140, 150 to 170, 180 to 210. The table of 3.1 holds for all of it.
+- **The black coat does use stripes** (60 to 80 appear in its kitten and adult sheets), contrary to the sentence in 1.3. Its coat ramp has spread 79 (ginger 119.7, gray 121.3), hence down gain 1.
+- **The page's genetic palettes add indices outside the scheme**: calico has 75 and 85 (lighter orange tones between the stripe tones); colour-point has 220 to 222, 230 to 232, 240 to 242, 250 to 252 (four three-tone point colours). The split leaves them FIXED, so a light does not shade them. Lighting them needs a decision (OQ-L12 below). A test pins this exact list so a new extra fails loudly.
+- Palette health: every shipped and fixture coat ramp strictly brightens. The colour-point coat's coat ramp is almost flat (spread 16.9) and its stripe ramp is partial, so it is flagged and stays flat under light.
+- Not built yet from 3.4: the two virtual levels (below the darkest, above the lightest); they depend on the light colour and belong to WP-L3. The dither phase of `CatLight` is likewise deferred to WP-L3, where its meaning is set.
+- OQ-L12: should the genetic extras (75/85, the 22x to 25x point ramps) shade with the coat? Recommendation: leave them FIXED for L3, and look at calico and colour-point on the phone first.
