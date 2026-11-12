@@ -93,9 +93,12 @@ private fun NowCentre(centre: DialCentre, u: DialUnits, animate: Boolean, onTap:
             maxLines = 1,
         )
     }
+    // 80% of the centre's width: near the top of the circle the ring is narrower than the centre's
+    // box, so a long first line ("Active Mobility & Structural") would reach past the progress
+    // ring.
     Text(
         centre.title,
-        Modifier.fillMaxWidth().padding(top = u.dp(7f)),
+        Modifier.fillMaxWidth(.8f).padding(top = u.dp(7f)),
         style = DirectorText,
         fontSize = u.sp(11.04f),
         fontWeight = FontWeight(650),

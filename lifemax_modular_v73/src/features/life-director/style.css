@@ -548,7 +548,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
 .ld-core-in{gap:0;font-family:var(--ld-font);font-variant-numeric:tabular-nums}
 .ld-core-in .ld-core-k{font-size:.6rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
 .ld-dotk{width:5px;height:5px}
-.ld-core-in .ld-core-t{font-size:.95rem;font-weight:650;letter-spacing:-.015em;line-height:1.2;color:var(--ink)}
+.ld-core-in .ld-core-t{font-size:.95rem;font-weight:650;letter-spacing:-.015em;line-height:1.2;color:var(--ink);max-width:80%} /* the ring is narrower than the centre near the top: a long title stays inside it */
 .ld-core-in .ld-core-big{margin:3px 0 0;font:700 1.9rem/1 var(--ld-font);letter-spacing:-.04em;color:#fff}
 .ld-bt i{font-style:normal;font-size:.5em;font-weight:600;letter-spacing:0;margin-left:1px;color:var(--ink2)}
 .ld-core-in .ld-core-s{margin-top:3px;font-size:.66rem;font-weight:550;color:var(--ink3);letter-spacing:.01em}

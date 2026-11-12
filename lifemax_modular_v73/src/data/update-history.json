@@ -5,6 +5,7 @@
    "date": "2026-11-07",
    "title": "Overview drag-and-drop & navigation polish",
    "changes": [
+    "Life Director: a long session name in the middle of the dial now wraps inside the ring instead of running past it.",
     "Life Director: workout-plan sessions with an \"&\" in their name (like Active Mobility & Structural Recovery) now show a plain \"&\" instead of \"&amp;\".",
     "Life Director: a work shift or sleep that crosses midnight now draws as one solid arc on the dial, with no thin gap at midnight.",
     "Returning to today now winds farther and takes longer based on how many days you travelled. A year away has a much longer rewind than a week away.",
