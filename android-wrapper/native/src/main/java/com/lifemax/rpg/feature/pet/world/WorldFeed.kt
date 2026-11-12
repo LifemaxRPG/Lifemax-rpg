@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.pet.world
 
+import com.lifemax.rpg.feature.pet.room.HouseMap
 import org.json.JSONObject
 
 /**
@@ -11,7 +12,14 @@ import org.json.JSONObject
  * screens decode the block and draw what they always drew; CB2's world host takes it from here.
  * Never throws, logs nothing.
  */
-class WorldFeed {
+class WorldFeed(
+    /**
+     * Told the rooms a block's `house.rooms` opens whenever a block becomes the latest: the app's
+     * one feed opens them in the cat house ([HouseMap.select]); the feeds of tests tell nobody (the
+     * house is process-wide).
+     */
+    private val onHouse: ((Set<String>) -> Unit)? = null
+) {
     @Volatile
     var latest: WorldBlock? = null
         private set
@@ -41,6 +49,7 @@ class WorldFeed {
             }
         val held = latest
         if (held != null && decoded.seq <= held.seq) return false
+        onHouse?.invoke(decoded.houseRooms)
         latest = decoded
         return true
     }
@@ -53,6 +62,6 @@ class WorldFeed {
         const val KEY = "world"
 
         /** One feed for the process: both screens draw the same cats. */
-        val shared = WorldFeed()
+        val shared = WorldFeed { rooms -> HouseMap.select(rooms) } // before the art is made
     }
 }

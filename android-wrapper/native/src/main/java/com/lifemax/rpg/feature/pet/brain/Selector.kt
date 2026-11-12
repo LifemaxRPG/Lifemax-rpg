@@ -111,6 +111,7 @@ class Selector(private val registry: ActivityRegistry) {
             for (spot in Spots.all) {
                 if (
                     (spot.flags and a.placeFlags) == 0 ||
+                        !spot.open ||
                         spot.hidden ||
                         !allowed(m, spot) ||
                         !a.suits(m, spot)

@@ -51,9 +51,15 @@ object WorldContract {
     /** The page's depth (z): 0 the back wall to 100 the glass. */
     const val Z_MAX = 100.0
 
-    /** House x in room pixels: the three rooms side by side (PET_HX0..PET_HX1). */
-    const val HOUSE_X_MIN = -192.0
-    const val HOUSE_X_MAX = 384.0
+    /**
+     * House x in room pixels: the widest house, the three first rooms with the three that open
+     * later on either side (`pet/room/house.json`); what a cat may stand on today is the open part.
+     */
+    const val HOUSE_X_MIN = -576.0
+    const val HOUSE_X_MAX = 576.0
+
+    /** The most rooms the page may list as open (`house.rooms`). */
+    const val MAX_HOUSE_ROOMS = 8
 
     /** The latest time any field may name (year 2200), and the longest dev clock shift (a year). */
     const val TIME_MAX = 7_258_118_400_000L

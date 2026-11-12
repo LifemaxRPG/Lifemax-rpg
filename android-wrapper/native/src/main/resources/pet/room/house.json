@@ -1,0 +1,9 @@
+{"version":1,"roomWidth":192,"roomHeight":144,"wallMargin":38,
+"rooms":[
+ {"id":"bath","name":"Bathroom","x0":-576,"cut":-384,"stroll":[-552,-406],"window":null,"floorLight":false,"core":false,"unlockBond":4},
+ {"id":"study","name":"Study","x0":-384,"cut":-192,"stroll":[-364,-214],"window":-348,"floorLight":true,"core":false,"unlockBond":3},
+ {"id":"living","name":"Living room","x0":-192,"cut":-4,"stroll":[-140,-74],"window":-152,"floorLight":true,"core":true},
+ {"id":"bedroom","name":"Bedroom","x0":0,"cut":196,"stroll":[16,170],"window":0,"floorLight":true,"core":true},
+ {"id":"kitchen","name":"Kitchen","x0":192,"cut":384,"stroll":[218,328],"window":280,"floorLight":false,"core":true},
+ {"id":"sun","name":"Sunroom","x0":384,"cut":null,"stroll":[408,552],"window":424,"floorLight":true,"core":false,"unlockBond":2}
+]}

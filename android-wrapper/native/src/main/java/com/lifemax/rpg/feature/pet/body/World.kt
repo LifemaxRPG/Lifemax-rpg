@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.pet.body
 
+import com.lifemax.rpg.feature.pet.room.HouseMap
 import kotlin.math.floor
 
 /** Every place the cat can stand. The names are the web room's own surface keys. */
@@ -50,8 +51,13 @@ class Surface(
  * on both sides of the bridge.
  */
 object World {
-    const val HOUSE_MIN_X = -154f
-    const val HOUSE_MAX_X = 346f
+    /** The farthest left and right a cat's feet may stand: the open rooms' walls ([HouseMap]). */
+    val HOUSE_MIN_X: Float
+        get() = HouseMap.current.walkMin
+
+    val HOUSE_MAX_X: Float
+        get() = HouseMap.current.walkMax
+
     const val ART_Z = 35f
     const val MAX_Z = 100f
     const val HORIZON_Y = 98f
@@ -60,8 +66,6 @@ object World {
     /** The box is entered and left this much nearer the viewer than its own depth. */
     const val BOX_FRONT_Z = 9f
 
-    private const val LIVING_END = -4f
-    private const val KITCHEN_START = 196f
     private const val SCALE_AT_BACK_PCT = 55
     private const val SCALE_RANGE_PCT = 130f
     private const val WALK_SPEED_BASE_PCT = 70
@@ -90,7 +94,7 @@ object World {
 
     private val table: Array<Surface> =
         arrayOf(
-            Surface(SurfaceId.FLOOR, FLOOR_Y_ART, HOUSE_MIN_X, HOUSE_MAX_X, ART_Z),
+            Surface(SurfaceId.FLOOR, FLOOR_Y_ART, -154f, 346f, ART_Z), // replaced by [floor]
             flat(SurfaceId.BED, 128f, 36f, 36f),
             flat(SurfaceId.SILL, 74f, 38f, 76f),
             flat(SurfaceId.MID, 100f, 146f, 158f),
@@ -107,8 +111,21 @@ object World {
             flat(SurfaceId.TABLE, 105f, -22f, -12f),
         )
 
+    private var floorMap: HouseMap? = null
+    private var floorSurface = table[SurfaceId.FLOOR.ordinal]
+
+    /** The floor spans the open rooms; it is made again when the open rooms change. */
+    private fun floor(): Surface {
+        val map = HouseMap.current
+        if (map !== floorMap) {
+            floorSurface = Surface(SurfaceId.FLOOR, FLOOR_Y_ART, map.walkMin, map.walkMax, ART_Z)
+            floorMap = map
+        }
+        return floorSurface
+    }
+
     /** The surface record for [id]. */
-    fun surface(id: SurfaceId): Surface = table[id.ordinal]
+    fun surface(id: SurfaceId): Surface = if (id == SurfaceId.FLOOR) floor() else table[id.ordinal]
 
     /** Depth scale in percent, 55 at the back wall to 185 at the glass (petDepthScalePct). */
     fun depthScalePct(z: Float): Int =
@@ -134,9 +151,10 @@ object World {
             floor(Mathx.clamp(z, 0f, MAX_Z) * WALK_SPEED_Z_GAIN_PCT / 100f).toInt()
 
     /**
-     * The room an x is in: 0 living (x < -4), 1 bedroom (to 196), 2 kitchen (the web room split).
+     * The room an x is in, as a place among the open rooms from the left. With the first three: 0
+     * living (x < -4), 1 bedroom (to 196), 2 kitchen (the web room split).
      */
-    fun roomOf(x: Float): Int = if (x < LIVING_END) 0 else if (x < KITCHEN_START) 1 else 2
+    fun roomOf(x: Float): Int = HouseMap.current.roomOf(x)
 
     /** Keep an x inside the walkable house (petClampHouse). */
     fun clampHouse(x: Float): Float = Mathx.clamp(x, HOUSE_MIN_X, HOUSE_MAX_X)

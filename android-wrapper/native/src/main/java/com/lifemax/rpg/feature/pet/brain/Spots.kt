@@ -4,6 +4,7 @@ import com.lifemax.rpg.feature.pet.body.Feeding
 import com.lifemax.rpg.feature.pet.body.Occluders
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.World
+import com.lifemax.rpg.feature.pet.room.HouseMap
 
 /**
  * A place in the house an activity can happen at: a point on a [surface] at house [x] (and floor
@@ -36,8 +37,16 @@ class Spot(
     val low: Boolean
         get() = onFloor || World.surface(surface).prop || surface == SurfaceId.BED
 
-    /** The room the spot is in (0 living, 1 bedroom, 2 kitchen). */
-    val room: Int = World.roomOf(x)
+    /** The room the spot is in, as a place among the open rooms from the left. */
+    val room: Int
+        get() = World.roomOf(x)
+
+    /**
+     * Whether the spot is in a room that is open: a place of a room the cats have not been given
+     * yet ([HouseMap]) is never chosen, so the table can hold every room's places.
+     */
+    val open: Boolean
+        get() = x >= HouseMap.current.x0 && x < HouseMap.current.x1
 
     /**
      * A floor place where nearer furniture would hide most of a resting cat (in either room), or
@@ -142,6 +151,16 @@ object Spots {
         add("bowl", null, SurfaceId.FLOOR, Feeding.bowlX(0), BOWL, face = Feeding.facing(0))
     val BOWL_1 =
         add("bowl", null, SurfaceId.FLOOR, Feeding.bowlX(1), BOWL, face = Feeding.facing(1))
+
+    // The floor places of the rooms that open as the cats grow close (house.json). They are in the
+    // table always and chosen only while their room is open ([Spot.open]); the page has no names
+    // for
+    // them (no pageId), and the classic room never draws them. Raised places (the bench, the desk,
+    // the tub) come with their surfaces.
+    val SUN_PATCH =
+        add("sun patch", null, SurfaceId.FLOOR, 470f, REST or SUNNY or ROOM_FLOOR, z = 48f)
+    val STUDY_RUG = add("study rug", null, SurfaceId.FLOOR, -294f, REST or ROOM_FLOOR, z = 62f)
+    val BATH_MAT = add("bath mat", null, SurfaceId.FLOOR, -496f, REST or ROOM_FLOOR, z = 62f)
 
     /** Every spot, by [Spot.index]. */
     val all: List<Spot> = list

@@ -20,6 +20,9 @@
                          the furniture cut out of the three backdrops (tools/pet_room_cut.js, spec pet_room_cut_spec.js): each room's
                          backdrop with the furniture removed and the wall and floor rebuilt, one sprite per piece, and the manifest
                          (place, depth, flags). The pieces drawn over the base give the backdrop back exactly; the build checks it.
+     room/house.json     the rooms of the cat house in order, where each stands and what opens it (by hand); room/sun.png, study.png, bath.png,
+                         layers_ext.json and the pieces under layers/ and volume/ named there: the rooms that open later, drawn by
+                         tools/gen_pet_room_new.js (placeholder art; docs/specs/CAT_HOUSE_EXPANSION_PLAN.md)
      room/props/<name>.png  the free-standing depth props the room draws between the backdrop and the cats: pouf, cushion, and the
                          two halves of the box (box_back, box_front)
      rig/<kind>.bin      the rig (petRig.html) packed for native: per frame the ears, whiskers, tail and the leg/torso stretch bands;
@@ -30,6 +33,7 @@
 const fs = require('fs'), path = require('path');
 const png = require('./pet_png.js');
 const { layerFiles } = require('./pet_room_cut.js');
+const newRooms = require('./gen_pet_room_new.js');
 const rigPack = require('./rig_pack.js');
 
 const root = path.resolve(__dirname, '..');
@@ -121,6 +125,11 @@ function build() {
     if (img.channels !== 4 || img.width !== p.w || img.height !== p.h) throw new Error(`prop ${name}: ${img.width}x${img.height}, the page says ${p.w}x${p.h}`);
     files.set(`room/props/${name}.png`, png.encode(img));
   }
+  /* the rooms the house grows by (gen_pet_room_new.js draws them) and the house map (written by hand): kept, not regenerated here */
+  for (const [name, buf] of newRooms.build()) files.set('room/' + name, buf);
+  const house = path.join(target, 'room/house.json');
+  if (!fs.existsSync(house)) throw new Error('room/house.json is missing');
+  files.set('room/house.json', fs.readFileSync(house));
   return files;
 }
 

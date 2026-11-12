@@ -10,6 +10,10 @@
      revision, size, the living cats' ids) and stores state.petWorld with writeSave(). ok only once stored, repeat-safe by op.
      A backup restore raises the world epoch (kept beside the save on this phone, so a backup still comes back exactly as made),
      so a world native still holds from before the restore is refused as stale.
+   - the cat house (docs/specs/CAT_HOUSE_EXPANSION_PLAN.md): the block carries `house` {v:1, rooms:[ids]} once the cats' bond has opened
+     extra rooms (the Sunroom at bond 2, the Study at 3, the Bathroom at 4, by the highest bond among cats that are grown or past
+     kitten stage 2); absent while only the first three rooms are open. The page records what opened in state.petHouse
+     {v:1, rooms:{id: unlock time}, seen:[]} with the world command's own save, and never takes a room back.
    - owns(view)/owner(view): which brain runs the cats of a view; the web room loop never runs under a view the native brain owns.
    Nothing here changes what the web room shows: the native screens draw the block through the cat world host (CB2).
    Loaded after 50-native-pet.js (NativePet takes the command) and before 50-native-overview-cards.js. */
@@ -30,6 +34,12 @@
   const ENERGY_FRESH = 0.5;
   const VOICE_MIN = 0.88, VOICE_MAX = 1.14; // the voice pitch the web brain draws within
   const ALREADY = "Already recorded.";
+  /* The rooms the cat house grows by (docs/specs/CAT_HOUSE_EXPANSION_PLAN.md): id and the bond level (petLevel, 0 Stray to 5
+     Devoted) a cat must reach to open it. The ids and levels are those of android-wrapper/native/src/main/resources/pet/room/house.json
+     (tests/native-cat-world.test.js checks the two agree). Rooms open outward from the old house and never close again. */
+  const HOUSE_ROOMS = [["sun", 2], ["study", 3], ["bath", 4]];
+  const HOUSE_MAX_KEYS = 8; // the most keys state.petHouse.rooms may hold
+  const HOUSE_KITTEN_STAGE = 3; // a kitten before this growth stage (0 to 2) is not counted: it stays in the first three rooms
   const EPOCH_KEY = "lifemax_pet_world_epoch_v1"; // this phone's world epoch (not in backups: see epochNow)
   let seq = 0, seqKey = "";
   let dnaMemo = { key: "", ps: null, morph: null, sex: "m" };
@@ -53,6 +63,38 @@
     } catch (e) {
       return 0;
     }
+  }
+  /** The extra rooms of the cat house the cats' bond has opened (the plan's option B): the highest bond among the living cats that are
+      grown or past kitten stage 2 reaches each room's level. Pure: reads the cats, writes nothing. */
+  function houseOpen() {
+    let best = -1;
+    living().forEach(({ p }) => {
+      const g = petGrowIdx(p);
+      if (g === -1 || g >= HOUSE_KITTEN_STAGE) best = Math.max(best, petLevel(p));
+    });
+    return HOUSE_ROOMS.filter((r) => best >= r[1]).map((r) => r[0]);
+  }
+  /** the rooms already recorded in the save (state.petHouse.rooms keys the page knows, each with its unlock time) */
+  function houseKept() {
+    const h = state.petHouse;
+    if (!h || typeof h !== "object" || h.v !== 1 || !h.rooms || typeof h.rooms !== "object") return [];
+    return HOUSE_ROOMS.map((r) => r[0]).filter((id) => own(h.rooms, id) && Number.isInteger(h.rooms[id]));
+  }
+  /** the open rooms: the recorded ones and those the bond opens now, sorted (a room, once open, stays open) */
+  function houseRooms() {
+    return [...new Set([...houseKept(), ...houseOpen()])].sort();
+  }
+  /** Record newly opened rooms in state.petHouse (a new object: the caller keeps the old one to put back if the save fails). Returns
+      whether anything was added; the unlock time is `now`. */
+  function houseRecord(now) {
+    const open = houseOpen(), kept = houseKept(), fresh = open.filter((id) => !kept.includes(id));
+    if (!fresh.length) return false;
+    const rooms = {};
+    kept.forEach((id) => (rooms[id] = state.petHouse.rooms[id]));
+    fresh.forEach((id) => (rooms[id] = Math.round(now)));
+    const seen = state.petHouse && Array.isArray(state.petHouse.seen) ? state.petHouse.seen.filter((id) => typeof id === "string").slice(0, HOUSE_MAX_KEYS) : [];
+    state.petHouse = { v: 1, rooms, seen };
+    return true;
   }
   /** the stored world, when it has the envelope this page writes */
   function stored() {
@@ -145,6 +187,8 @@
     const fed = window.NativePet && typeof NativePet.fedCues === "function" ? NativePet.fedCues(now) : [];
     const block = { v: VERSION, seq: 0, epoch: epochNow(), clockOffsetMs: Math.round((PET_RT && PET_RT.shift) || 0), cats, pair: pair(tab), context: context(),
       cue: { fed, cheer: [] }, stored: w ? { epoch: w.epoch, rev: w.rev, blob: w.blob } : null };
+    const rooms = houseRooms();
+    if (rooms.length) block.house = { v: 1, rooms }; // absent while only the first three rooms are open
     const key = JSON.stringify(Object.assign({}, block, { cue: { fed: fed.map((c) => c.id), cheer: [] } }));
     if (key !== seqKey) {
       seqKey = key;
@@ -224,11 +268,14 @@
       const json = JSON.stringify(blob);
       if (bytes(json) > BLOB_MAX) return refuse("size");
       if (p.epoch !== epochNow() || (w && p.rev <= w.rev)) return refuse("stale");
-      const had = own(state, "petWorld"), before = state.petWorld;
+      const had = own(state, "petWorld"), before = state.petWorld, hadHouse = own(state, "petHouse"), houseBefore = state.petHouse;
       state.petWorld = { epoch: p.epoch, rev: p.rev, at: Date.now(), op: p.op, blob: JSON.parse(json) };
+      houseRecord(Date.now()); // a room the bond opened is written with the world, in the same save
       if (!writeSave()) {
         if (had) state.petWorld = before;
         else delete state.petWorld;
+        if (hadHouse) state.petHouse = houseBefore;
+        else delete state.petHouse;
         return refuse("unsaved", unsavedMessage());
       }
       landed.push(p.op);
@@ -277,6 +324,7 @@
   }
 
   window.petWorldBlock = petWorldBlock;
+  window.petHouseRooms = houseRooms;
   window.petWorldLegacy = petWorldLegacy;
   window.NativeCatWorld = { capability: CAP, extend, command, block: petWorldBlock, legacy: petWorldLegacy, owns, owner };
   if (window.NativePet) NativePet.commands.world = command((c) => NativePet.has(c));

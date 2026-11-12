@@ -160,7 +160,7 @@ class SpotAuditTest {
     /** Every spot, and both cats of a curl-up at each place two cats curl up at, either way. */
     private fun places(): List<Place> {
         val out = ArrayList<Place>()
-        for (s in Spots.all) out += Place(s.id, s, s.x)
+        for (s in Spots.all.filter { it.open }) out += Place(s.id, s, s.x)
         for (s in CURL_SPOTS) {
             val z = if (s.onFloor) s.z else World.surface(s.surface).z
             val gap = PairPose.SNUGGLE.gap(ADULT, ADULT, z)

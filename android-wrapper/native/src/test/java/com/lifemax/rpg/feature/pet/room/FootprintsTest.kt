@@ -59,7 +59,7 @@ class FootprintsTest {
 
     @Test
     fun noFloorWalkGoesThroughFurniture() {
-        val ends = Spots.all.filter { it.onFloor }.map { it.x to it.z }
+        val ends = Spots.all.filter { it.open && it.onFloor }.map { it.x to it.z }
         val starts = ArrayList<Pair<Float, Float>>()
         var x = World.HOUSE_MIN_X
         while (x <= World.HOUSE_MAX_X) {

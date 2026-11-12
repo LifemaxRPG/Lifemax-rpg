@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.pet.art
 
+import com.lifemax.rpg.feature.pet.room.HouseMap
 import com.lifemax.rpg.feature.pet.room.RoomArt
 import com.lifemax.rpg.feature.pet.room.RoomImage
 import com.lifemax.rpg.feature.pet.room.RoomLayerArt
@@ -46,6 +47,7 @@ object PetArtResources {
     internal fun loadRoom(): RoomArt {
         fun png(name: String) =
             PngImage.decode(bytes("room/$name.png") ?: error("missing room/$name.png")).toArgb()
+        HouseMap.lock() // the art below is made of the rooms open now
         val atlas =
             RoomAtlas.parse(
                 bytes("room/items.png") ?: error("missing room/items.png"),
@@ -53,16 +55,19 @@ object PetArtResources {
             )
         return RoomArt(
             atlas,
-            mapOf(
-                RoomImage.LIVING to png("living"),
-                RoomImage.BEDROOM to png("bedroom"),
-                RoomImage.KITCHEN to png("kitchen"),
-                RoomImage.POUF to png("props/pouf"),
-                RoomImage.CUSHION to png("props/cushion"),
-                RoomImage.BOX_BACK to png("props/box_back"),
-                RoomImage.BOX_FRONT to png("props/box_front"),
-            ),
-            RoomLayerArt.parse(text("room/layers.json")) { png(it.removeSuffix(".png")) },
+            HouseMap.current.rooms.associate { RoomImage.backdrop(it.id) to png(it.id) } +
+                mapOf(
+                    RoomImage.POUF to png("props/pouf"),
+                    RoomImage.CUSHION to png("props/cushion"),
+                    RoomImage.BOX_BACK to png("props/box_back"),
+                    RoomImage.BOX_FRONT to png("props/box_front"),
+                ),
+            RoomLayerArt.parse(
+                listOf(text("room/layers.json")) +
+                    listOfNotNull(bytes("room/layers_ext.json")?.toString(Charsets.UTF_8))
+            ) {
+                png(it.removeSuffix(".png"))
+            },
         )
     }
 

@@ -56,7 +56,10 @@ internal object DemoParkour {
         val seed = Rng.hash(m.profile.id)
         var surface = m.exec.surface
         var x = m.exec.x
-        val rest = Spots.all.filter { it.has(Spots.PARKOUR) && m.book.free(m.slot, it, it.x, 0) }
+        val rest =
+            Spots.all.filter {
+                it.open && it.has(Spots.PARKOUR) && m.book.free(m.slot, it, it.x, 0)
+            }
         val remaining = ArrayList(rest)
         val stops = ArrayList<Spot>()
         while (stops.size < BrainTuning.Demo.STOPS && remaining.isNotEmpty()) {

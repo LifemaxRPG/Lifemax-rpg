@@ -300,7 +300,15 @@
     "fed": [],
     "cheer": []
    },
-   "stored": null
+   "stored": null,
+   "house": {
+    "v": 1,
+    "rooms": [
+     "bath",
+     "study",
+     "sun"
+    ]
+   }
   },
   "hungry": {
    "v": 1,
@@ -435,7 +443,14 @@
     "fed": [],
     "cheer": []
    },
-   "stored": null
+   "stored": null,
+   "house": {
+    "v": 1,
+    "rooms": [
+     "study",
+     "sun"
+    ]
+   }
   },
   "vacation": {
    "v": 1,
@@ -570,7 +585,14 @@
     "fed": [],
     "cheer": []
    },
-   "stored": null
+   "stored": null,
+   "house": {
+    "v": 1,
+    "rooms": [
+     "study",
+     "sun"
+    ]
+   }
   },
   "dna": {
    "v": 1,
@@ -705,7 +727,14 @@
     "fed": [],
     "cheer": []
    },
-   "stored": null
+   "stored": null,
+   "house": {
+    "v": 1,
+    "rooms": [
+     "study",
+     "sun"
+    ]
+   }
   },
   "twoCats": {
    "v": 1,
@@ -963,7 +992,14 @@
     "fed": [],
     "cheer": []
    },
-   "stored": null
+   "stored": null,
+   "house": {
+    "v": 1,
+    "rooms": [
+     "study",
+     "sun"
+    ]
+   }
   }
  },
  "legacy": {

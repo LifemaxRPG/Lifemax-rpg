@@ -23,6 +23,12 @@ data class WorldBlock(
     val fedCues: List<FedCue>,
     val cheerCues: List<CheerCue>,
     val stored: StoredWorld?,
+    /**
+     * The ids of the extra rooms the page has opened for the cats (`house.rooms`, from their bond),
+     * empty when the page says none or sends no `house` block. Rooms this game does not know are
+     * kept out by [com.lifemax.rpg.feature.pet.room.HouseMap.select].
+     */
+    val houseRooms: Set<String> = emptySet(),
 )
 
 /**

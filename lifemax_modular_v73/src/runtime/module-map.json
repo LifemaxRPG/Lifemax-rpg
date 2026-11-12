@@ -3681,7 +3681,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-cat-world.js",
-   "bytes": 18247,
+   "bytes": 21667,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3691,6 +3691,7 @@
    "symbols": [
     "window.applyBackup",
     "window.petWorldBlock",
+    "window.petHouseRooms",
     "window.petWorldLegacy",
     "window.NativeCatWorld"
    ]

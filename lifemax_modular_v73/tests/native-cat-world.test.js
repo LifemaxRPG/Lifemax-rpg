@@ -294,6 +294,38 @@ const STATES = {
     ok('owner: the Overview cards own the dashboard cats while they show, and the web peek loop stays off', r.cards === 'native' && r.peek === false, r);
     await p.context().close();
 
+    /* the cat house: rooms that open with the cats' bond (docs/specs/CAT_HOUSE_EXPANSION_PLAN.md, option B) */
+    const house = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'android-wrapper', 'native', 'src', 'main', 'resources', 'pet', 'room', 'house.json'), 'utf8'));
+    const bonds = house.rooms.filter(x => !x.core).map(x => [x.id, x.unlockBond]);
+    const opens = (lvl) => bonds.filter(x => lvl >= x[1]).map(x => x[0]).sort();
+    p = await start(b, { pet: CAT('Ted', '{bondPts:PET_BOND_AT[5]+40}') });
+    await toPet(p);
+    r = await p.evaluate(async () => {
+      const o = { levels: [] }; const pet = state.pet;
+      for (let l = 0; l <= 5; l++) { pet.bondPts = PET_BOND_AT[l]; const w = petWorldBlock(Date.now()); o.levels.push([l, petHouseRooms(), w.house ? w.house.rooms : null]) }
+      pet.bondPts = PET_BOND_AT[5] + 40; pet.born = Date.now() - 12 * 864e5; o.kitten = [petGrowIdx(pet), petHouseRooms(), 'house' in petWorldBlock(Date.now())];
+      pet.born = Date.now() - 40 * 864e5; o.grown = [petGrowIdx(pet), petHouseRooms()];
+      o.block = petWorldBlock(Date.now()); o.before = 'petHouse' in state;
+      o.stored = await command('NativePet', 'world', world(blobFor()));
+      o.kept = state.petHouse || null; o.keys = o.kept ? Object.keys(o.kept.rooms).length : -1;
+      pet.bondPts = 0; const hb = petWorldBlock(Date.now()).house; o.lowered = [petHouseRooms(), hb ? hb.rooms : null];
+      return o;
+    });
+    ok('cat house: the block carries the rooms the highest bond opens, and no `house` key while none is open: ' + JSON.stringify(bonds),
+      r.levels.every(([l, rooms, sent]) => JSON.stringify(rooms) === JSON.stringify(opens(l)) && (opens(l).length ? JSON.stringify(sent) === JSON.stringify(opens(l)) : sent === null)), r.levels);
+    ok('cat house: a young kitten (stage 0 to 2) opens nothing whatever its bond; a grown cat does', r.kitten[0] >= 0 && r.kitten[0] < 3 && r.kitten[1].length === 0 && r.kitten[2] === false && r.grown[0] === -1 && r.grown[1].length === 3, [r.kitten, r.grown]);
+    ok('cat house: building the block writes nothing; the world command records what opened, with the unlock time, in the same save', r.before === false && r.stored.ok && r.kept && r.kept.v === 1 && r.keys === 3 && Object.values(r.kept.rooms).every(Number.isInteger) && Array.isArray(r.kept.seen), [r.before, r.stored, r.kept]);
+    ok('cat house: a room that opened stays open when the bond is lowered', JSON.stringify(r.lowered[0]) === JSON.stringify(opens(5)) && JSON.stringify(r.lowered[1]) === JSON.stringify(opens(5)), r.lowered);
+    r = await p.evaluate(async () => {
+      delete state.petHouse; state.pet.bondPts = PET_BOND_AT[5]; save();
+      const put = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw Error('full') };
+      let full; try { full = await command('NativePet', 'world', world(blobFor({ toys: [] }))) } finally { Storage.prototype.setItem = put }
+      return { full, recorded: 'petHouse' in state, still: petHouseRooms() };
+    });
+    ok('cat house: a save the browser refuses takes the record back too, and the rooms still read from the bond', !r.full.ok && r.full.why === 'unsaved' && r.recorded === false && r.still.length === 3, r);
+    ok('cat house: no page errors', p.errors.length === 0, p.errors);
+    await p.context().close();
+
     /* the goldens the native decoders read */
     const text = JSON.stringify(out, null, 1) + '\n';
     if (process.env.RECORD) { fs.writeFileSync(GOLDEN, text); console.log('wrote ' + GOLDEN) }
