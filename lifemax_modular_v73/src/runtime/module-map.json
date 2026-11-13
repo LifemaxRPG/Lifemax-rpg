@@ -2186,7 +2186,7 @@
   },
   {
    "file": "src/runtime/segments/42-scrubnav.js",
-   "bytes": 15184,
+   "bytes": 15668,
    "statement_count": 28,
    "tags": [
     "navigation",

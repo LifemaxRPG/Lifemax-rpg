@@ -140,4 +140,64 @@ class ScrubMapTest {
         }
         assertEquals(strip - 400f, scroll)
     }
+
+    // ---------------------------------------------------- the neighbours stay in view too
+
+    @Test
+    fun theTabBeforeAndTheTabAfterStayInViewWithTheTarget() {
+        // tabs of 64 dp; the target is tab 3 (192..256), flush with the left edge of a strip
+        // scrolled to
+        // 192: the tab before it (128..192) is cut off, so the strip scrolls back to show it
+        val scroll =
+            ScrubFollow.revealWithNeighbours(192f, 400f, 192f, 256f, 128f, 320f, maxScroll = 600f)
+        assertEquals(118f, scroll)
+        assertTrue(128f >= scroll && 320f <= scroll + 400f)
+    }
+
+    @Test
+    fun theTabAfterTheTargetIsNotCutOffAtTheRightEdgeEither() {
+        // viewport 0..400 and the target 300..364: its next tab (364..428) would be cut off
+        val scroll = ScrubFollow.revealWithNeighbours(0f, 400f, 300f, 364f, 236f, 428f)
+        assertEquals(38f, scroll)
+    }
+
+    @Test
+    fun theFirstAndLastTabsHaveOnlyOneNeighbourAndTheStripStopsAtItsEnds() {
+        assertEquals(0f, ScrubFollow.revealWithNeighbours(40f, 400f, 0f, 64f, null, 128f, 600f))
+        assertEquals(
+            600f,
+            ScrubFollow.revealWithNeighbours(0f, 400f, 936f, 1000f, 872f, null, maxScroll = 600f),
+        )
+    }
+
+    @Test
+    fun whenThreeTabsDoNotFitOnlyTheTargetIsKeptInView() {
+        // a 150 dp viewport cannot hold three 64 dp tabs: it behaves as reveal
+        assertEquals(
+            ScrubFollow.reveal(0f, 150f, 300f, 364f),
+            ScrubFollow.revealWithNeighbours(0f, 150f, 300f, 364f, 236f, 428f),
+        )
+    }
+
+    @Test
+    fun scrubbingThroughAllTabsAlwaysShowsBothNeighbours() {
+        val strip = 14 * 64f
+        var scroll = 0f
+        for (i in 0 until 14) {
+            val left = i * 64f
+            scroll =
+                ScrubFollow.revealWithNeighbours(
+                    scroll,
+                    400f,
+                    left,
+                    left + 64f,
+                    if (i > 0) left - 64f else null,
+                    if (i < 13) left + 128f else null,
+                    strip - 400f,
+                )
+            val from = if (i > 0) left - 64f else left
+            val to = if (i < 13) left + 128f else left + 64f
+            assertTrue("tab $i and its neighbours visible", from >= scroll && to <= scroll + 400f)
+        }
+    }
 }

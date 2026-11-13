@@ -79,4 +79,26 @@ internal object ScrubFollow {
             }
         return min(max(0f, wanted), max(0f, maxScroll))
     }
+
+    /**
+     * As [reveal], but the tabs either side of the target are kept in view too, so the owner always
+     * sees where they came from and what is next ([prevLeft] is the left edge of the tab before it
+     * and [nextRight] the right edge of the tab after it; null at the ends of the bar). When the
+     * three tabs together are wider than the viewport, only the target is kept in view.
+     */
+    fun revealWithNeighbours(
+        scroll: Float,
+        viewport: Float,
+        left: Float,
+        right: Float,
+        prevLeft: Float?,
+        nextRight: Float?,
+        maxScroll: Float = Float.MAX_VALUE,
+    ): Float {
+        val from = prevLeft ?: left
+        val to = nextRight ?: right
+        return if (to - from + 2 * MARGIN > viewport)
+            reveal(scroll, viewport, left, right, maxScroll)
+        else reveal(scroll, viewport, from, to, maxScroll)
+    }
 }

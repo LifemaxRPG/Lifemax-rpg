@@ -116,12 +116,17 @@ function lmaVeilSet(i){
 }
 function lmaScrubItems(){const S=lmaScrub;S.items=S.sb?[...S.sb.querySelectorAll('.navbtn[data-view]')].filter(b=>b.offsetWidth>0):[];return S.items}
 function lmaScrubIndex(v){v=lmaTabKey(v);return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
-/* nudge the strip just enough that tab i is fully visible */
+/* nudge the strip just enough that tab i is fully visible, and so are the tabs either side of it, so you can always see where you came
+   from and what comes next (the first and last tab have only one neighbour; if the three tabs together are wider than the bar, tab i
+   alone is kept in view, as before) */
 function lmaScrubReveal(i){
  const S=lmaScrub,b=S.items[i];if(!b)return;
  if(S.drag){cancelAnimationFrame(lmaBarRaf);lmaBarRaf=0}else if(lmaBarRaf)return;     /* the bar is already gliding to the tab */
- const l=b.offsetLeft,r=l+b.offsetWidth,sl=S.sb.scrollLeft,w=S.sb.clientWidth;
- if(l-10<sl)S.sb.scrollLeft=Math.max(0,l-10);else if(r+10>sl+w)S.sb.scrollLeft=r+10-w;
+ const sl=S.sb.scrollLeft,w=S.sb.clientWidth,pad=10;
+ const first=S.items[Math.max(0,i-1)],last=S.items[Math.min(S.items.length-1,i+1)];
+ let l=first.offsetLeft,r=last.offsetLeft+last.offsetWidth;
+ if(r-l+2*pad>w){l=b.offsetLeft;r=l+b.offsetWidth}      /* three tabs do not fit: keep the current one in view */
+ if(l-pad<sl)S.sb.scrollLeft=Math.max(0,l-pad);else if(r+pad>sl+w)S.sb.scrollLeft=r+pad-w;
 }
 /* show tab i as the current one on the bar right away (the real navigation follows) */
 function lmaScrubMark(i){

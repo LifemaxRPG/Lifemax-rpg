@@ -41,6 +41,22 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     ok(t + 'a moved tab is moved in the list', r.scrub.tabs.map(x => x.key).join() === shown.join(), [r.scrub.tabs.map(x => x.key), shown]);
     await p.evaluate(() => lmaTabsReset()); await p.evaluate(() => navigate('pet')); await p.waitForTimeout(500); r = await scene();
     ok(t + 'on another tab, that tab is the active one', r.scrub.active === 'pet', r.scrub.active);
+    // revealing a tab also reveals the tabs either side of it, so you always see where you came from and what is next
+    const nb = await p.evaluate(() => {
+      lmaScrubInit(); lmaScrubItems(); const S = lmaScrub, sb = S.sb, items = S.items, out = [];
+      const seen = k => { const b = items[k], l = b.offsetLeft, r = l + b.offsetWidth; return l >= sb.scrollLeft - 1 && r <= sb.scrollLeft + sb.clientWidth + 1 };
+      for (const i of [1, 4, items.length - 2, items.length - 1, 0]) {
+        for (const start of ['left', 'right']) {
+          cancelAnimationFrame(lmaBarRaf); lmaBarRaf = 0; S.drag = null;
+          sb.scrollLeft = start === 'left' ? items[i].offsetLeft - 3 : items[i].offsetLeft + items[i].offsetWidth + 3 - sb.clientWidth;
+          lmaScrubReveal(i);
+          out.push({ i, start, cur: seen(i), prev: i === 0 || seen(i - 1), next: i === items.length - 1 || seen(i + 1) });
+        }
+      }
+      return { out, n: items.length, fits: sb.scrollWidth > sb.clientWidth };
+    });
+    ok(t + 'the bar scrolls (there are more tabs than fit)', nb.fits && nb.n > 5, nb);
+    ok(t + 'a revealed tab and both its neighbours are fully on the bar, from either side', nb.out.every(x => x.cur && x.prev && x.next), nb.out.filter(x => !(x.cur && x.prev && x.next)));
     // the look of the bar
     const look = await p.evaluate(() => {
       const bar = document.querySelector('.sidebar'), cs = getComputedStyle(bar), tabs = [...bar.querySelectorAll('.navbtn[data-view]')].filter(b => b.offsetWidth > 0);

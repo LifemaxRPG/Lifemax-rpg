@@ -164,7 +164,15 @@ internal class BarScrubber(private val host: ScrubHost) {
         host.highlight(d.tabs[i])
         val tab = d.tabs[i]
         host.scrollToDp(
-            ScrubFollow.reveal(host.scroll, host.viewport, tab.left, tab.right, host.maxScroll)
+            ScrubFollow.revealWithNeighbours(
+                host.scroll,
+                host.viewport,
+                tab.left,
+                tab.right,
+                d.tabs.getOrNull(i - 1)?.left,
+                d.tabs.getOrNull(i + 1)?.right,
+                host.maxScroll,
+            )
         )
         buzz(d, ScrubBuzz.Tick)
         host.after(SETTLE, SETTLE_MS) { settle(d) }
