@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
@@ -45,10 +46,27 @@ class CatLightingScreenshotTest {
             maxPercentDifference = 0.001,
         )
 
+    /**
+     * The switch back off for the classes that run after this one in the same JVM. Written inside a
+     * mutable snapshot, never straight into the global one: a global write after the last frame
+     * makes Compose's GlobalSnapshotManager post its apply notification to this test's render
+     * session, Paparazzi's teardown throws the session's queue away with it, and that manager then
+     * never sends another one (its `sent` latch stays set and AndroidUiDispatcher.Main stays
+     * "scheduled"). Every later screenshot class in the JVM would lose the state it writes outside
+     * composition: the Life Director guide's spotlight target, the food sheets' snackbar (CI build
+     * 509).
+     */
     @After
     fun lightsOff() {
-        LiveLight.enabled = false
-        LiveLight.previewHour = null
+        lightSwitch(false)
+    }
+
+    /** [LiveLight]'s switches set in a mutable snapshot (see [lightsOff]). */
+    private fun lightSwitch(on: Boolean) {
+        Snapshot.withMutableSnapshot {
+            LiveLight.enabled = on
+            LiveLight.previewHour = null
+        }
     }
 
     private fun card(
@@ -59,7 +77,7 @@ class CatLightingScreenshotTest {
         weather: Weather = Weather.CLEAR,
         style: RoomStyle = RoomStyle.live(DepthLevel.RICH),
     ) {
-        LiveLight.enabled = lit
+        lightSwitch(lit)
         val j =
             JSONObject(
                     javaClass

@@ -23,6 +23,8 @@
      room/house.json     the rooms of the cat house in order, where each stands and what opens it (by hand); room/sun.png, study.png, bath.png,
                          layers_ext.json and the pieces under layers/ and volume/ named there: the rooms that open later, drawn by
                          tools/gen_pet_room_new.js (placeholder art; docs/specs/CAT_HOUSE_EXPANSION_PLAN.md)
+     light/lighting.json the cat lighting tables: day hours, sun and moon patches, sills, shade, weather, lamps (by hand;
+                         docs/specs/CAT_LIGHTING_PLAN.md); kept as it is, like room/house.json
      room/props/<name>.png  the free-standing depth props the room draws between the backdrop and the cats: pouf, cushion, and the
                          two halves of the box (box_back, box_front)
      rig/<kind>.bin      the rig (petRig.html) packed for native: per frame the ears, whiskers, tail and the leg/torso stretch bands;
@@ -130,6 +132,10 @@ function build() {
   const house = path.join(target, 'room/house.json');
   if (!fs.existsSync(house)) throw new Error('room/house.json is missing');
   files.set('room/house.json', fs.readFileSync(house));
+  /* the cat lighting tables (written by hand; docs/specs/CAT_LIGHTING_PLAN.md): kept, not regenerated here */
+  const lighting = path.join(target, 'light/lighting.json');
+  if (!fs.existsSync(lighting)) throw new Error('light/lighting.json is missing');
+  files.set('light/lighting.json', fs.readFileSync(lighting));
   return files;
 }
 
