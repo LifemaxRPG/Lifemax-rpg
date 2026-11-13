@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.feature.pet.room.Solid3d
 import kotlinx.coroutines.delay
 
 /**
@@ -19,6 +20,8 @@ import kotlinx.coroutines.delay
  * - The hour slider previews the room at any time of day, in 15 minute steps; "Play" runs an hour a
  *   second; "Now" goes back to the clock.
  * - "Weather" cycles clear, the seeded weather of the day, overcast and rain.
+ * - "3D furniture" cycles off, the sofa and all: the continuous 3D prototype
+ *   (docs/specs/CAT_3D_ENGINE_PLAN.md, [LiveDepth.solid3d]).
  */
 @Composable
 internal fun LightingDevPanel(modifier: Modifier = Modifier) {
@@ -65,6 +68,16 @@ internal fun LightingDevPanel(modifier: Modifier = Modifier) {
                 small = true,
             )
         }
+        PetSecondaryButton(
+            "3D furniture: ${LiveDepth.solid3d.label}",
+            "Developer: draw furniture in continuous 3D (prototype): off, the sofa, or all",
+            {
+                val all = Solid3d.entries
+                LiveDepth.solid3d = all[(LiveDepth.solid3d.ordinal + 1) % all.size]
+            },
+            Modifier.fillMaxWidth(),
+            small = true,
+        )
         Slider(
             value = (preview ?: 12.0).toFloat(),
             onValueChange = {

@@ -329,6 +329,7 @@ internal class HouseStage(
         particles.step(dt)
         followCats(dt)
         scene.depth?.let {
+            it.solid3d = LiveDepth.solid3d
             it.follow(if (drawn) screenCentre else director.camera.cx)
             it.step(dt)
             LiveDepth.reportOffsets(it.wallShiftNow, it.nearShiftNow)

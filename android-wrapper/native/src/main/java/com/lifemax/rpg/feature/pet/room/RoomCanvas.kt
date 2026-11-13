@@ -80,9 +80,32 @@ internal interface RoomCanvas {
         alpha: Float,
     )
 
+    /**
+     * Draw the [sw] x [sh] part of [image] at ([sx], [sy]) with its top left at ([dx], [dy]),
+     * unscaled and opaque as it is, where the position is in house pixels but need not be whole: a
+     * slice of a piece drawn in continuous 3D ([SolidStack]). A canvas places it at its own nearest
+     * pixel (the screen's canvas at a device pixel, so the piece's sides grow a device pixel at a
+     * time), keeping a bitmap of [image] per [slot] (0 until [MAX_STACKS]) while [version] stays
+     * the same. By default it is drawn at the nearest house pixel, as a [sheet].
+     */
+    fun stack(
+        image: ArgbImage,
+        slot: Int,
+        version: Int,
+        sx: Int,
+        sy: Int,
+        sw: Int,
+        sh: Int,
+        dx: Float,
+        dy: Float,
+    ) = sheet(image, slot, version, sx, sy, sw, sh, Math.round(dx), Math.round(dy), 1f)
+
     companion object {
         /** How many [sheet] pictures a canvas keeps at once: one per camera step. */
         const val MAX_SHEETS = 2 * SheetTuning.MAX_STEPS_PER_SIDE + 1
+
+        /** How many [stack] pictures a canvas keeps at once: one per solid piece. */
+        const val MAX_STACKS = DepthOrder.MAX_PIECES
     }
 }
 

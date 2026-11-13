@@ -262,7 +262,7 @@ internal object VolumeRaster {
      * The palette index of what a side of column [cell] is made of: the painted pixel there, or, if
      * that is the outline, the first pixel inward past it (a few pixels at most).
      */
-    private fun material(model: VolumeModel, cell: Int, face: Byte): Int {
+    fun material(model: VolumeModel, cell: Int, face: Byte): Int {
         val palette = model.palette
         val dx =
             when (face) {

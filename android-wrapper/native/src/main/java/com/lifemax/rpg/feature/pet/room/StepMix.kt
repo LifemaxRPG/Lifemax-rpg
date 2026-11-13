@@ -54,6 +54,27 @@ internal class StepMix(private val sheets: VolumeSheets, private val furnitureKe
     /** Whether band [b] is of the faded-in step (drawn at its piece's weight). */
     private val faded = BooleanArray(capacity)
 
+    /**
+     * Per piece, how many bands of depth it has as a [SolidStack] (drawn in continuous 3D, not from
+     * a step), or 0; what the order was last made with, and each band's number when its piece is a
+     * stack (else -1).
+     */
+    private val stacked = IntArray(pieces)
+    private val stackedNow = IntArray(pieces)
+    val stackBand = IntArray(capacity) { NONE }
+
+    /**
+     * Draw piece [p] as a stack of [bands] bands of depth (0: from its steps again). Its bands then
+     * sort exactly where a step's bands of the same depth would (`sortFront - (band + 0.5)`), so
+     * the cats go between them as before; the order is remade at the next [update].
+     */
+    fun stack(p: Int, bands: Int) {
+        stacked[p] = bands
+    }
+
+    /** Whether piece [p]'s bands in the order now are a stack's. */
+    fun stacked(p: Int): Boolean = stackedNow[p] > 0
+
     private val chosen = IntArray(pieces) { NONE }
     private val chosenOver = IntArray(pieces) { NONE }
     private val chosenStep = arrayOfNulls<VolumeStep>(pieces)
@@ -99,6 +120,10 @@ internal class StepMix(private val sheets: VolumeSheets, private val furnitureKe
     fun update(base: IntArray, over: IntArray, weight: FloatArray): Boolean {
         var same = true
         for (p in 0 until pieces) {
+            if (stacked[p] != stackedNow[p]) {
+                same = false
+                break
+            }
             val o = if (weight[p] > 0f) over[p] else NONE
             if (
                 base[p] != chosen[p] ||
@@ -144,6 +169,23 @@ internal class StepMix(private val sheets: VolumeSheets, private val furnitureKe
                     else -> VolumeStep.FADE_DOWN.toInt()
                 }
             first[p] = count
+            stackedNow[p] = stacked[p]
+            if (stacked[p] > 0) {
+                val sortFront = sheets.pieces[p].volume!!.sortFront
+                for (k in 0 until stacked[p]) {
+                    piece[count] = p
+                    key[count] = sortFront - (k + 0.5f)
+                    source[count] = null
+                    index[count] = 0
+                    slot[count] = NONE
+                    fades[count] = 0
+                    faded[count] = false
+                    stackBand[count] = k
+                    count++
+                }
+                end[p] = count
+                continue
+            }
             for (b in step.first[p] until step.end[p]) {
                 add(p, step, b, i)
                 fades[count - 1] = (step.fade[b].toInt() and bits).toByte()
@@ -165,6 +207,7 @@ internal class StepMix(private val sheets: VolumeSheets, private val furnitureKe
         source[count] = step
         index[count] = b
         slot[count] = i
+        stackBand[count] = NONE
         fades[count] = 0
         faded[count] = false
         count++
@@ -176,6 +219,7 @@ internal class StepMix(private val sheets: VolumeSheets, private val furnitureKe
         chosenOver.fill(NONE)
         chosenStep.fill(null)
         chosenOverStep.fill(null)
+        stackedNow.fill(0)
         source.fill(null)
         count = 0
         orderSize = 0

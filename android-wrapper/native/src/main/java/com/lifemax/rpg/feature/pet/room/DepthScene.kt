@@ -111,6 +111,39 @@ internal class DepthScene(
         require(solids.size <= DepthOrder.MAX_PIECES) { "too many solid pieces for a cat's mask" }
     }
 
+    /**
+     * DEVELOPER PROTOTYPE (docs/specs/CAT_3D_ENGINE_PLAN.md): which pieces are drawn in continuous
+     * 3D ([SolidStack]) instead of from the cached camera steps. [Solid3d.OFF] by default: the room
+     * as it was. Only a room whose pieces turn ([RoomStyle.parallax], [RoomStyle.volume], no
+     * reduced motion) uses it.
+     */
+    var solid3d = Solid3d.OFF
+
+    /** Each piece's stack, made the first time the prototype draws it, then kept. */
+    private val stacks = arrayOfNulls<SolidStack>(solids.size)
+
+    /** Each piece's yaw as the camera wants it now (continuous; a stack is drawn at it). */
+    private val pieceYaw = FloatArray(solids.size)
+
+    /** Whether piece [p] is drawn as a stack this frame. */
+    private fun stackedNow(p: Int): Boolean = sways && solid3d.covers(solids[p].name)
+
+    /** The stack of piece [name] as the prototype draws it (tests, tuning); made if need be. */
+    fun stackOf(name: String): SolidStack {
+        for (p in solids.indices) if (solids[p].name == name) return stackFor(p)
+        error("no solid piece $name")
+    }
+
+    private fun stackFor(p: Int): SolidStack =
+        stacks[p]
+            ?: SolidStack(solids[p].volume!!.model, solids[p].volume!!.wall).also { stacks[p] = it }
+
+    /** The yaw piece [name] was drawn at in the last [paintScene] (tests, tuning). */
+    fun yawOf(name: String): Float {
+        for (p in solids.indices) if (solids[p].name == name) return pieceYaw[p]
+        error("no solid piece $name")
+    }
+
     private val shadowed = BooleanArray(solids.size)
     private val shadowColour = IntArray(layers.bases.size) { floorShadowColour(layers.base(it)) }
 
@@ -391,8 +424,18 @@ internal class DepthScene(
                 } else {
                     swing
                 }
+            pieceYaw[p] = want
             val b = blend[p]
             b.update(want, dt, readyNow)
+            if (stackedNow(p)) {
+                // drawn at the yaw itself; its steps are not drawn, so the order stays as it is
+                mix.stack(p, stackFor(p).bands)
+                pieceStep[p] = sheets.rest
+                pieceOver[p] = -1
+                pieceWeight[p] = 0f
+                continue
+            }
+            mix.stack(p, 0)
             pieceStep[p] = b.base
             pieceOver[p] = b.over
             pieceWeight[p] = b.weight
@@ -464,7 +507,7 @@ internal class DepthScene(
      * the step the piece is drawn at, so the cat does not slide on the seat.
      */
     private fun onPiece(p: Int, row: Float, depth: Float): Int {
-        val own = blend[p].sway
+        val own = if (mix.stacked(p)) pieceYaw[p] else blend[p].sway
         val inside = (swing - own) * level.depthGain * depth
         return Parallax.shift(1f, swing * Parallax.gainAtRow(row, level) + inside)
     }
@@ -498,6 +541,19 @@ internal class DepthScene(
                 DepthTuning.PIECE_SHADOW_STRENGTH * level.shadowStrength,
                 shadowColour[piece.room],
             )
+        }
+        val k = mix.stackBand[b]
+        if (k >= 0) {
+            stacks[p]!!.paintBand(
+                c,
+                p,
+                k,
+                (piece.houseX + shift).toFloat(),
+                piece.y.toFloat(),
+                StackView.vx(pieceYaw[p], level),
+                StackView.vy(pieceYaw[p], level),
+            )
+            return
         }
         c.sheet(
             mix.image(b),
