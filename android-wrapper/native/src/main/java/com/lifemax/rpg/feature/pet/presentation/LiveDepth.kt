@@ -12,6 +12,7 @@ import com.lifemax.rpg.feature.pet.room.GuardTuning
 import com.lifemax.rpg.feature.pet.room.LayerOffsets
 import com.lifemax.rpg.feature.pet.room.LiveDepthTuning
 import com.lifemax.rpg.feature.pet.room.RoomStyle
+import com.lifemax.rpg.feature.pet.room.Solid3d
 
 /**
  * The depth the live rooms (the Overview card, the Cat tab, the full-screen room) are drawn at, for
@@ -30,6 +31,13 @@ internal object LiveDepth {
     /** The level to draw at; null is the classic flat room. */
     var level: DepthLevel? by mutableStateOf(guard.level)
         private set
+
+    /**
+     * DEVELOPER PROTOTYPE (docs/specs/CAT_3D_ENGINE_PLAN.md): which pieces the live rooms draw in
+     * continuous 3D instead of from the cached camera steps; [Solid3d.OFF] (the room as it was) on
+     * every launch, never saved. Set from the developer panel ([LightingDevPanel]).
+     */
+    var solid3d by mutableStateOf(Solid3d.OFF)
 
     /**
      * Whether the guard is at its best level: cat lighting is shed below it (CAT_LIGHTING_PLAN).
@@ -59,7 +67,7 @@ internal object LiveDepth {
         val lv = level?.name ?: "flat (classic room)"
         val load = Math.round(guard.load * PERCENT)
         return "Depth $lv (best ${LiveDepthTuning.BEST_LEVEL.name}), ${guard.reason}, load $load%, " +
-            "changes ${guard.changes}, skew ${LayerOffsets(wallPx, nearPx)}"
+            "changes ${guard.changes}, skew ${LayerOffsets(wallPx, nearPx)}, 3D ${solid3d.label}"
     }
 
     /**

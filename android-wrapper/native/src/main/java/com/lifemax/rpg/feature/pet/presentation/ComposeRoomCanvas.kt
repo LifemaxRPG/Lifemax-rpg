@@ -16,6 +16,7 @@ import com.lifemax.rpg.feature.pet.art.ArgbImage
 import com.lifemax.rpg.feature.pet.room.RoomArt
 import com.lifemax.rpg.feature.pet.room.RoomCanvas
 import com.lifemax.rpg.feature.pet.room.RoomImage
+import kotlin.math.roundToInt
 
 /** The room's pictures as bitmaps, made once from the shipped art. */
 internal class RoomBitmaps(art: RoomArt) {
@@ -46,6 +47,8 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
     private var overlayVersion = Int.MIN_VALUE
     private val sheets = arrayOfNulls<ImageBitmap>(RoomCanvas.MAX_SHEETS)
     private val sheetVersions = IntArray(RoomCanvas.MAX_SHEETS)
+    private val stacks = arrayOfNulls<ImageBitmap>(RoomCanvas.MAX_STACKS)
+    private val stackVersions = IntArray(RoomCanvas.MAX_STACKS)
 
     /**
      * Let go of the bitmaps of the solid pieces' camera steps (the room left the screen); the next
@@ -53,6 +56,7 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
      */
     fun releaseSheets() {
         sheets.fill(null)
+        stacks.fill(null)
     }
 
     /** Draw the next frame into [scope] with the house at ([originX], [originY]), [scale] times. */
@@ -169,6 +173,36 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
             dstOffset = IntOffset(px(dx), py(dy)),
             dstSize = IntSize(sw * scale, sh * scale),
             alpha = alpha.coerceIn(0f, 1f),
+            filterQuality = FilterQuality.None,
+        )
+    }
+
+    /**
+     * A slice of a piece in continuous 3D: placed at the device pixel nearest its house position,
+     * so it moves a device pixel at a time while its own pixels stay whole art pixels.
+     */
+    override fun stack(
+        image: ArgbImage,
+        slot: Int,
+        version: Int,
+        sx: Int,
+        sy: Int,
+        sw: Int,
+        sh: Int,
+        dx: Float,
+        dy: Float,
+    ) {
+        if (stacks[slot] == null || stackVersions[slot] != version) {
+            stacks[slot] = bitmap(image)
+            stackVersions[slot] = version
+        }
+        scope.drawImage(
+            stacks[slot]!!,
+            srcOffset = IntOffset(sx, sy),
+            srcSize = IntSize(sw, sh),
+            dstOffset =
+                IntOffset((originX + dx * scale).roundToInt(), (originY + dy * scale).roundToInt()),
+            dstSize = IntSize(sw * scale, sh * scale),
             filterQuality = FilterQuality.None,
         )
     }
