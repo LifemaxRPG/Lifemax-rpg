@@ -90,6 +90,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(com.lifemax.rpg.bridge.web.NativePlanPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeLifeDirectorPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeRecipesPlugin.class);
+        registerPlugin(com.lifemax.rpg.bridge.web.NativeHabitsPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeMediaPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeJournalPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeAudioPlugin.class);

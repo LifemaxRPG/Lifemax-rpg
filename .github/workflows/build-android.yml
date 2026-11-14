@@ -210,6 +210,32 @@ jobs:
           git commit -m 'Refresh intended cat visual references'
           git push origin HEAD:codex/director-dial-controls
 
+      # First recording (and any intended redraw) of the Habits screen's references. Same rule as the others:
+      # development branch only, a commit tagged [refresh-habits-snapshots]; ordinary pushes only verify.
+      - name: Refresh Habits visual references
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-habits-snapshots]')
+        working-directory: android-wrapper/android
+        run: |
+          ./gradlew --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8' recordPaparazziDebug --tests '*HabitsScreenshotTest*' --stacktrace
+
+      - name: Preserve refreshed Habits visual report
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-habits-snapshots]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Habits-visual-review
+          path: android-wrapper/android/app/build/reports/paparazzi/
+
+      - name: Commit refreshed Habits references
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-habits-snapshots]')
+        run: |
+          find android-wrapper/native/src/test/snapshots/images -maxdepth 1 -type f -name '*_HabitsScreenshotTest*' -print0 | xargs -0 -r git add --
+          git diff --cached --stat
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Refresh intended Habits visual references'
+          git push origin HEAD:codex/director-dial-controls
+
       - name: Verify native tests and screenshots
         working-directory: android-wrapper/android
         run: ./gradlew verifyPaparazziDebug --stacktrace --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
