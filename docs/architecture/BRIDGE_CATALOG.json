@@ -743,6 +743,42 @@
    "directorScope": "director.shadow.v1 (Native API 135, docs/specs/LIFE_DIRECTOR_SHADOW_SPEC.md): every method called with scope: 'director' goes to the Life Director check (app/shadow/DirectorShadowWorker.kt on the same thread, core/directorshadow, its own ring noBackupFilesDir/director-shadow/ring.json): configure {v:1, scope, enabled, sid, page:{build, fingerprint (engine version/store schema), faults}}; base parts of {ops:[...]} (the state's parts from nothing); observe director.save {ops, bytes} (the store codec's round trip on the exact text the store wrote), director.read {ops, read:{nowMs, deviceZone, planZone, planOffset, xp, out}} (the day, now and week read models), director.plan and director.repair {engine:{planZone, planOffset, input, output}} (placement and local repair re-run); summary, copyReport, clear. Page: 50-native-director-shadow.js (switch nativeDirectorShadow: Native Life Director check (beta), Settings, Data & advanced, off by default), told by logic.js (LmaDirectorShadow.saved, .planning) while live. Native writes nothing, answers a state word and counts only",
    "mutationsGate": "no native writes: native never writes the save, sends no command, notifies nothing and uses no network (CONTRACT A10: shadow outputs award nothing and persist no second save)",
    "rollout": "opt-in under Settings, Data & advanced: Native economy check (beta), off by default. Needs economy.shadow.v1 (Native API 106; the comparison from 109; the quests and Daily Hand kinds with economy.shadow.quests.v1 from 110; the Health sync and the day roll's decay with economy.shadow.day.v1 from 111; Copy report, Save case and the card's Clear with economy.shadow.report.v1 from 112); an older app or page simply lacks it (the card then shows the switch and its line only). Off in the demo (NativeShadow is in 50-demo-mode.js OFF). Self-disables after 5 internal errors in 24 h, more than 4 resyncs an hour, or a worker p95 over 2 s; Battery Saver pauses it"
+  },
+  {
+   "feature": "habits",
+   "status": "native-only",
+   "nativePlugin": "NativeHabits",
+   "owner": "native (feature/habits): the data, the rules and the screen; the page owns nothing of it",
+   "pluginSource": "bridge/web/NativeHabitsPlugin.kt (extends ComposeTabPlugin; swipeSource false: the towers are swiped sideways)",
+   "screenSource": "feature/habits/presentation/HabitsScreen.kt (scene: presentation/scene/HabitsStage.kt; sheets: HabitsSheets.kt)",
+   "webModule": "50-native-habits.js (NativeTabKit; the shell's part only: the bar's button, an empty view, open/close/hand-over, the surroundings)",
+   "capabilities": [
+    "habits.v1",
+    "shell.swipe.v1",
+    "shell.swipe.v2",
+    "shell.prime.v1"
+   ],
+   "commands": {},
+   "actions": {},
+   "writes": [],
+   "delegatedInteractions": [],
+   "nativeData": {
+    "rules": "feature/habits/domain/HabitsRules.kt (pure Kotlin; HabitsEngine.kt runs a command, stores it, then takes it)",
+    "store": "feature/habits/data/HabitsFile.kt: files/habits/habits.json, one JSON document, schema v 1 ({v, who, n, stacks, items, log, rough, claimed}); written atomically (temporary file, fsync, the current file renamed to habits.prev.json as a rolling safety copy, the temporary file renamed over it); read strictly: a file from a newer schema is never touched and blocks every change, an unreadable one is moved aside (habits.unreadable-<time>.json) and the safety copy loaded, with a plain message on the screen",
+    "writeFailure": "the change is taken back in memory, the reply is ok:false with 'Could not save your habits to this phone (storage full?). Nothing was changed.', shown as a toast or on the sheet that asked",
+    "clock": "the phone's local date (java.time), read afresh for every command and projection",
+    "backup": "Android device backup and phone-to-phone transfer copy files/habits/ with the rest of the app's files while the owner allows device backup (backup_rules.xml, data_extraction_rules.xml: nothing under files/ but live/ is excluded). NOT in the page's manual export, the automatic backup folder or any restore of the web save: those hold the page's save only"
+   },
+   "readContract": {
+    "snapshotDto": "feature/habits/data/LocalHabitsRepository.kt HabitsSurroundings: {protocol, webSessionId, sequence, v: 1, reducedMotion, haptics, className, pet, tokens, light}: app settings and two facts of the character, nothing of Habits",
+    "decoder": "JSONObject.toHabitsSurroundings (strict; a rejected one keeps the last good)",
+    "fixtures": "none from the page: the screen's states are built by the rules themselves (test HabitsScenarios.kt)",
+    "ordering": "webSessionId and increasing sequence",
+    "invalidation": "every native command republishes at once; the page's 15-second refresh, host resume and foreground return re-read the clock (the day and the sky)"
+   },
+   "mutationsGate": "all writes are native, to the habits file; no page write exists",
+   "rollout": "on wherever the plugin exists (NativeApi 167); no switch, no page version. Without the plugin (a browser, an older APK) the bar's Habits button is removed",
+   "canonicalLayout": true
   }
  ]
 }
