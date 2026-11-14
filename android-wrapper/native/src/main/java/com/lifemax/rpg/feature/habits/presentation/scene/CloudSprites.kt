@@ -67,8 +67,13 @@ internal object CloudSprites {
             CloudSpec(CloudKind.CIRRUS, 288, 80, 61),
         )
 
-    /** The sprites of a [kind], by their index in [SPECS]. */
-    fun of(kind: CloudKind): IntArray = SPECS.indices.filter { SPECS[it].kind == kind }.toIntArray()
+    private val BY_KIND: Array<IntArray> =
+        Array(CloudKind.entries.size) { k ->
+            SPECS.indices.filter { SPECS[it].kind.ordinal == k }.toIntArray()
+        }
+
+    /** The sprites of a [kind], by their index in [SPECS] (kept, so asking allocates nothing). */
+    fun of(kind: CloudKind): IntArray = BY_KIND[kind.ordinal]
 
     /** Bytes the whole pool holds (three ARGB layers each). */
     fun bytes(): Int = SPECS.sumOf { it.w * it.h * 4 * 3 }
