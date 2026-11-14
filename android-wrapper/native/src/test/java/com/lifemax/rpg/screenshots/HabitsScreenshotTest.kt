@@ -244,8 +244,8 @@ class HabitsScreenshotTest {
     }
 
     /**
-     * The blimp at its best, by day: gradient envelope with its highlight and seams, fins, the
-     * gondola and its window, soft volumetric clouds (a heap, a streak, puffs) round it.
+     * The blimp at its best, by day: smooth gradient envelope with its soft specular and seams,
+     * fins, the gondola and its window, painted clouds (a heap, a streak, puffs) round it.
      */
     @Test fun blimpAndCloudsDay() = snap("city", ambientAt = blimpMoment())
 
@@ -254,6 +254,17 @@ class HabitsScreenshotTest {
 
     /** Night: silver-blue clouds with moonlit rims, the cratered crescent moon, lamp-lit trees. */
     @Test fun cloudsAndTreesNight() = snap("park", hour = 23)
+
+    /**
+     * The painted skies close up, on the low park street so the whole sky shows, the clock held at
+     * 45 seconds so the clouds have drifted from their start: crisp white and soft blue-grey
+     * cumulus by day, peach and rose lit from below at dusk, steel-blue with moonlit rims at night.
+     */
+    @Test fun cloudsDay() = snap("park", ambientAt = 45f)
+
+    @Test fun cloudsDusk() = snap("park", hour = 19, ambientAt = 45f)
+
+    @Test fun cloudsNight() = snap("park", hour = 23, ambientAt = 45f)
 
     /**
      * The page's header band (the status bar, the picture, the name, the buttons are the page's,

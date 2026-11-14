@@ -263,6 +263,12 @@ internal object SceneInk {
     val LobbyWallLow = Color(0xFF2C3040)
     val LobbySide = Color(0xFF232634)
     val SignBoard = Color(0xFF1B1F2C)
+
+    /** The glass labels on each floor: a dark translucent panel, a fine bright rim, light type. */
+    val GlassPanel = Color(0xFF0C1426)
+    val GlassRim = Color(0xFFE6EEFF)
+    val GlassInk = Color(0xFFF6F8FF)
+    val GlassInkSoft = Color(0xFFB4C0DA)
     val SignText = Color(0xFFFFF1D6)
     val Shop = Color(0xFF2A3348)
     val ShopLit = Color(0xFFFFD48A)

@@ -196,13 +196,20 @@ private fun floorArt(
     val labelled = p.labelled
     val room = B.W - 2 * B.PLAQUE_X - 10f
     val name =
-        if (labelled) text.layout(b.name, if (ruin) 10.5f else 11.5f, FontWeight.Bold, room * .78f)
+        if (labelled)
+            text.layout(b.name, if (ruin) 10.5f else 11.5f, FontWeight.SemiBold, room * .78f)
         else null
     val count =
         if (labelled && !ruin)
-            text.layout(HabitsCopy.count(b), 8.5f, FontWeight.Medium, room).takeIf {
-                name != null && name.size.width + 7f + it.size.width <= room
-            }
+            text
+                .layout(
+                    HabitsCopy.count(b).uppercase(),
+                    7.5f,
+                    FontWeight.SemiBold,
+                    room,
+                    spacing = .5f,
+                )
+                .takeIf { name != null && name.size.width + 7f + it.size.width <= room }
         else null
     val plaqueW =
         if (name == null) 0f else name.size.width + (count?.let { it.size.width + 7f } ?: 0f) + 10f

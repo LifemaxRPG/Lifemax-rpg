@@ -1,7 +1,11 @@
 package com.lifemax.rpg.feature.habits.presentation.scene
 
 import android.graphics.Bitmap
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
 
 /** A cloud sprite's three layers, as images. */
@@ -36,14 +40,26 @@ internal object SceneSprites {
         }
     }
 
+    /** The film grain, a tile repeated over the picture. */
+    val grain: Brush by lazy {
+        ShaderBrush(
+            ImageShader(
+                image(Grain.pixels(), Grain.SIZE, Grain.SIZE),
+                TileMode.Repeated,
+                TileMode.Repeated,
+            )
+        )
+    }
+
     /** Makes both pools now (call off the main thread). */
     fun warm() {
         clouds
         trees
+        grain
     }
 
     /** What the pools hold, in bytes. */
-    fun bytes(): Int = CloudSprites.bytes() + TreeSprites.bytes()
+    fun bytes(): Int = CloudSprites.bytes() + TreeSprites.bytes() + Grain.SIZE * Grain.SIZE * 4
 
     private fun image(pixels: IntArray, w: Int, h: Int): ImageBitmap =
         Bitmap.createBitmap(pixels, w, h, Bitmap.Config.ARGB_8888).asImageBitmap()

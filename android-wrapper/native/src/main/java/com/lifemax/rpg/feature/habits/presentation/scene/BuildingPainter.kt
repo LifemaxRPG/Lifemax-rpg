@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Matrix
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
@@ -137,6 +139,97 @@ internal class BuildingPainter {
             1f,
         )
 
+    /**
+     * The bloom round a light: a unit circle under a transform, drawn additively (a soft falloff
+     * that brightens what is behind it instead of covering it), as a camera sees a lit window.
+     */
+    private val bloom =
+        Brush.radialGradient(
+            0f to SceneInk.WindowLit.copy(alpha = .55f),
+            .22f to SceneInk.WindowLit.copy(alpha = .28f),
+            .48f to SceneInk.WindowLit.copy(alpha = .1f),
+            .78f to SceneInk.WindowLit.copy(alpha = .025f),
+            1f to Color.Transparent,
+            center = Offset.Zero,
+            radius = 1f,
+        )
+
+    /** Ambient occlusion where a building meets the pavement, and the foot of its wall. */
+    private val aoGround =
+        Brush.verticalGradient(
+            0f to Color(0x6B000000),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = 8f,
+        )
+    private val aoWall =
+        Brush.verticalGradient(
+            0f to Color.Transparent,
+            1f to Color(0x59000000),
+            startY = -14f,
+            endY = 0f,
+        )
+
+    /** Glass: sky reflected at the top of a pane, deepening towards its sill (a unit square). */
+    private val glassSheen =
+        Brush.verticalGradient(
+            0f to Color.White.copy(alpha = .26f),
+            .4f to Color.White.copy(alpha = .05f),
+            1f to Color.Black.copy(alpha = .16f),
+            startY = 0f,
+            endY = 1f,
+        )
+
+    /** The sign board's face, a little lighter at its top. */
+    private val signFace =
+        Brush.verticalGradient(
+            0f to Color(0xFF2A3042),
+            1f to Color(0xFF151925),
+            startY = 0f,
+            endY = 15f,
+        )
+
+    /**
+     * The awning's cloth: lit at its top, in its own shade where it hangs; drawn over its colour.
+     */
+    private val awningShade =
+        Brush.verticalGradient(
+            0f to Color.White.copy(alpha = .28f),
+            .32f to Color.White.copy(alpha = .05f),
+            .78f to Color.Black.copy(alpha = .1f),
+            1f to Color.Black.copy(alpha = .26f),
+            startY = 0f,
+            endY = 15f,
+        )
+
+    /** The shadow the awning throws on the shopfront under it. */
+    private val awningDrop =
+        Brush.verticalGradient(
+            0f to Color(0x66000000),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = 10f,
+        )
+
+    /**
+     * The awning's face, made once for the building's width: the hanging cloth and its scalloped
+     * edge, as one path (the scallops are curves, not circles), in units from the awning's top.
+     */
+    private val awningFace =
+        Path().apply {
+            val half = B.W / 2f
+            moveTo(-half + 6f, 0f)
+            lineTo(half - 6f, 0f)
+            lineTo(half - 1f, 9f)
+            var x = half - 1f
+            while (x - 8f >= -half + .5f) {
+                quadraticBezierTo(x - 4f, 9f + 7.4f, x - 8f, 9f)
+                x -= 8f
+            }
+            lineTo(-half + 1f, 9f)
+            close()
+        }
+
     /** The cone of light under a lamp's lens (lamp units: lens at y -91.5, pavement at 0). */
     private val cone =
         Path().apply {
@@ -193,9 +286,16 @@ internal class BuildingPainter {
             close()
         }
     private val armStroke = Stroke(2f, cap = StrokeCap.Round)
+    private val rim = Stroke(.8f)
 
     /** Which side the light falls from: -1 the left (the trees are lit on it), 1 the right. */
     var lightFrom = -1f
+
+    // the pavement's and the road's brushes, remade when the sky or the window changes
+    private var roadSky: SkyColors? = null
+    private var roadDepth = -1f
+    private var pavementBrush: Brush? = null
+    private var roadBrush: Brush? = null
 
     /** The wind's lean on a tree, as a shear: one matrix, kept (nothing is made per frame). */
     private val shear = Matrix()
@@ -231,9 +331,29 @@ internal class BuildingPainter {
      */
     fun DrawScope.pavement(sky: SkyColors, from: Float, to: Float, depth: Float) {
         val width = to - from
-        drawRect(sky.pavement, Offset(from, 0f), Size(width, PAVEMENT))
+        if (roadSky !== sky || roadDepth != depth) {
+            // the slabs a little lighter at the wall, the road falling away darker towards the
+            // viewer
+            pavementBrush =
+                Brush.verticalGradient(
+                    0f to lerp(sky.pavement, Color.White, .07f),
+                    1f to lerp(sky.pavement, Color.Black, .12f),
+                    startY = 0f,
+                    endY = PAVEMENT,
+                )
+            roadBrush =
+                Brush.verticalGradient(
+                    0f to lerp(sky.road, Color.White, .04f),
+                    1f to lerp(sky.road, Color.Black, .3f),
+                    startY = PAVEMENT + 2.5f,
+                    endY = PAVEMENT + 2.5f + min(depth, 160f),
+                )
+            roadSky = sky
+            roadDepth = depth
+        }
+        drawRect(pavementBrush!!, Offset(from, 0f), Size(width, PAVEMENT))
         drawRect(sky.kerb, Offset(from, PAVEMENT), Size(width, 2.5f))
-        drawRect(sky.road, Offset(from, PAVEMENT + 2.5f), Size(width, depth))
+        drawRect(roadBrush!!, Offset(from, PAVEMENT + 2.5f), Size(width, depth))
         // the kerb catches the light on its top edge and throws a shadow on the road under it
         drawRect(SceneInk.Highlight, Offset(from, PAVEMENT), Size(width, .9f), alpha = .8f)
         drawRect(SceneInk.Occlusion, Offset(from, PAVEMENT + 2.5f), Size(width, 2.2f), alpha = .6f)
@@ -322,7 +442,22 @@ internal class BuildingPainter {
                     else
                         translate(11.5f, -89.5f) {
                             scale(26f, 26f, Offset.Zero) {
-                                drawCircle(halo, 1f, Offset.Zero, alpha = on)
+                                drawCircle(
+                                    halo,
+                                    1f,
+                                    Offset.Zero,
+                                    alpha = on,
+                                    blendMode = BlendMode.Plus,
+                                )
+                            }
+                            scale(58f, 58f, Offset.Zero) {
+                                drawCircle(
+                                    bloom,
+                                    1f,
+                                    Offset.Zero,
+                                    alpha = on * .38f,
+                                    blendMode = BlendMode.Plus,
+                                )
                             }
                         }
                 }
@@ -396,7 +531,7 @@ internal class BuildingPainter {
         val half = B.W / 2f
         park(art, selected, accent, seconds, sky)
         // the building's shadow on the pavement
-        drawRect(SceneInk.Shadow, Offset(-half + 4f, 0f), Size(B.W + B.DX, 5f), alpha = .5f)
+        drawRect(aoGround, Offset(-half + 1f, 0f), Size(B.W + B.DX + 6f, 8f))
         lobby(art, sky, detailed, seconds)
         val lit = lerp(SceneInk.WindowLitDay, SceneInk.WindowLit, sky.dark)
         val glass = lerp(SceneInk.GlassDay, SceneInk.GlassNight, sky.dark)
@@ -461,17 +596,27 @@ internal class BuildingPainter {
         val top = -B.LOBBY_H
         drawRect(SceneInk.LobbyWall, Offset(-half, top), Size(B.W, B.LOBBY_H))
         drawRect(SceneInk.LobbyWallLow, Offset(-half, -10f), Size(B.W, 10f))
+        drawRect(aoWall, Offset(-half, -14f), Size(B.W, 14f))
         drawPath(art.lobbySide, SceneInk.LobbySide)
         if (art.floors.isEmpty()) roofFace(-art.layout.roof, SceneInk.LobbyWall, half)
-        // the sign over the awning, lit at night
-        drawRect(SceneInk.SignBoard, Offset(-half + 10f, top + 4f), Size(B.W - 20f, 15f))
+        // the sign over the awning: a board with a fine rim, lit at night (and glowing)
+        translate(0f, top + 4f) {
+            drawRect(signFace, Offset(-half + 10f, 0f), Size(B.W - 20f, 15f))
+            drawRect(Color.White, Offset(-half + 10f, 0f), Size(B.W - 20f, .7f), alpha = .22f)
+            drawRect(Color.Black, Offset(-half + 10f, 14.3f), Size(B.W - 20f, .7f), alpha = .3f)
+        }
         if (sky.dark > .2f)
-            drawRect(
-                SceneInk.SignText,
-                Offset(-half + 8f, top + 2f),
-                Size(B.W - 16f, 19f),
-                alpha = .07f * sky.dark,
-            )
+            translate(0f, top + 11.5f) {
+                scale(B.W * .56f, 20f, Offset.Zero) {
+                    drawCircle(
+                        bloom,
+                        1f,
+                        Offset.Zero,
+                        alpha = .5f * sky.dark,
+                        blendMode = BlendMode.Plus,
+                    )
+                }
+            }
         if (detailed) {
             val n = art.lobbyName
             drawText(
@@ -480,27 +625,21 @@ internal class BuildingPainter {
                 Offset(-n.size.width / 2f, top + 11.5f - n.size.height / 2f),
             )
         }
-        // the awning, striped, with a scalloped edge
+        // the awning: cloth with stripes, a curved scalloped edge, shaded where it hangs, and the
+        // shadow it throws on the shopfront
         val a0 = top + 21f
-        val a1 = top + 30f
-        path.rewind()
-        path.moveTo(-half + 6f, a0)
-        path.lineTo(half - 6f, a0)
-        path.lineTo(half - 1f, a1)
-        path.lineTo(-half + 1f, a1)
-        path.close()
-        drawPath(path, art.awning)
-        var x = -half + 8f
-        while (x < half - 8f) {
-            drawRect(Color.White, Offset(x, a0), Size(6f, a1 - a0), alpha = .18f)
-            x += 12f
+        translate(0f, a0) {
+            drawPath(awningFace, art.awning)
+            clipPath(awningFace) {
+                var x = -half + 8f
+                while (x < half - 8f) {
+                    drawRect(Color.White, Offset(x, 0f), Size(6f, 17f), alpha = .17f)
+                    x += 12f
+                }
+                drawPath(awningFace, awningShade)
+            }
+            drawRect(awningDrop, Offset(-half + 2f, 9f), Size(B.W - 4f, 10f))
         }
-        x = -half + 5f
-        while (x < half - 1f) {
-            drawCircle(art.awning, 3.6f, Offset(x, a1))
-            x += 8f
-        }
-        drawRect(SceneInk.Occlusion, Offset(-half + 1f, a1 + 3f), Size(B.W - 2f, 2f))
         // the shopfront: a door between two windows, lit at night
         val shop = lerp(SceneInk.Shop, SceneInk.ShopLit, .15f + .8f * sky.dark)
         val w0 = top + 35f
@@ -648,6 +787,19 @@ internal class BuildingPainter {
                         else -> 0f
                     }
                 if (bright > 0f) {
+                    // the bloom of a lit window at night: light spilling past its frame
+                    if (sky.dark > .25f)
+                        translate(x + ww / 2f, y + h / 2f) {
+                            scale(ww * 1.5f, h * 1.55f, Offset.Zero) {
+                                drawCircle(
+                                    bloom,
+                                    1f,
+                                    Offset.Zero,
+                                    alpha = alpha * bright * sky.dark * .75f,
+                                    blendMode = BlendMode.Plus,
+                                )
+                            }
+                        }
                     drawRect(lit, Offset(x, y), Size(ww, h), alpha = alpha * bright)
                     drawRect(
                         SceneInk.WindowLitLow,
@@ -655,7 +807,19 @@ internal class BuildingPainter {
                         Size(ww, h * .45f),
                         alpha = alpha * bright * .45f,
                     )
-                } else drawRect(glass, Offset(x, y), Size(ww, h), alpha = alpha)
+                } else {
+                    drawRect(glass, Offset(x, y), Size(ww, h), alpha = alpha)
+                    translate(x, y) {
+                        scale(ww, h, Offset.Zero) {
+                            drawRect(
+                                glassSheen,
+                                Offset.Zero,
+                                Size(1f, 1f),
+                                alpha = alpha * (1f - .5f * sky.dark),
+                            )
+                        }
+                    }
+                }
             }
             if (on < count)
                 drawPath(fa.reflect, SceneInk.Reflection, alpha = alpha * (1f - .6f * sky.dark))
@@ -746,28 +910,64 @@ internal class BuildingPainter {
         if (ruin && art.craneOn === fa && fa.storey == fa.storeys - 1) crane(top, seconds)
     }
 
-    /** The habit's name on a small plaque at the left of its floor, its count under it. */
+    /**
+     * The habit's name on a small glass label at the left of its floor, its count (in small caps)
+     * beside it: a dark translucent panel with a soft shadow under it, a lighter sheen across its
+     * top and a fine bright edge, in light type, so it reads on a pale stone wall at noon and on a
+     * dark one at night.
+     */
     private fun DrawScope.plaque(fa: FloorArt, alpha: Float) {
         val name = fa.name ?: return
         val x = -B.W / 2f + B.PLAQUE_X
         // set in the band under the windows; a run-down storey's hangs over its boarded windows
         val band = if (fa.piece.kind == PieceKind.RUIN) fa.bottom - fa.top else B.PLAQUE_BAND
         val y = fa.bottom - band / 2f - fa.plaqueH / 2f - if (band == B.PLAQUE_BAND) 1f else 0f
+        val w = fa.plaqueW
+        val h = fa.plaqueH
+        val corner = CornerRadius(min(h / 2f, 5f))
+        // a soft shadow lifts it off the wall
         drawRoundRect(
-            fa.facade.plaque,
-            Offset(x, y),
-            Size(fa.plaqueW, fa.plaqueH),
-            CornerRadius(3f),
+            Color.Black,
+            Offset(x - 1f, y + .6f),
+            Size(w + 2f, h + 2.2f),
+            CornerRadius(corner.x + 1f),
+            alpha = alpha * .2f,
+        )
+        drawRoundRect(SceneInk.GlassPanel, Offset(x, y), Size(w, h), corner, alpha = alpha * .84f)
+        // the sheen across its top half, and the fine rim: bright along the top, faint below
+        drawRoundRect(
+            Color.White,
+            Offset(x + .5f, y + .5f),
+            Size(w - 1f, h * .46f),
+            CornerRadius(corner.x - .5f),
+            alpha = alpha * .09f,
+        )
+        drawRoundRect(
+            SceneInk.GlassRim,
+            Offset(x + .4f, y + .4f),
+            Size(w - .8f, h - .8f),
+            CornerRadius(corner.x - .4f),
+            alpha = alpha * .5f,
+            style = rim,
+        )
+        drawRect(
+            Color.White,
+            Offset(x + corner.x, y + .5f),
+            Size(w - corner.x * 2f, .6f),
+            alpha = alpha * .3f,
+        )
+        val mid = y + h / 2f
+        drawText(
+            name,
+            SceneInk.GlassInk,
+            Offset(x + 5f, mid - name.size.height / 2f),
             alpha = alpha,
         )
-        drawRect(SceneInk.Highlight, Offset(x + 2f, y), Size(fa.plaqueW - 4f, .8f), alpha = alpha)
-        val mid = y + fa.plaqueH / 2f
-        drawText(name, fa.facade.ink, Offset(x + 5f, mid - name.size.height / 2f), alpha = alpha)
         val count = fa.count ?: return
         drawText(
             count,
-            fa.facade.inkSoft,
-            Offset(x + 5f + name.size.width + 7f, mid - count.size.height / 2f + .5f),
+            SceneInk.GlassInkSoft,
+            Offset(x + 5f + name.size.width + 7f, mid - count.size.height / 2f + .3f),
             alpha = alpha,
         )
     }

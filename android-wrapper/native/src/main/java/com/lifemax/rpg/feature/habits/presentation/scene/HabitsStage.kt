@@ -278,6 +278,7 @@ private fun StageCanvas(
     val backdrop = remember(seed) { Backdrop(seed) }
     val sky = remember(p.hour) { skyColors(p.hour) }
     val layer = remember { Paint() }
+    val vignette = remember { VignetteBrush() }
     val scope = rememberCoroutineScope()
     // the painted skies and trees are made once, off the main thread (a still frame waits for them)
     LaunchedEffect(Unit) { withContext(Dispatchers.Default) { SceneSprites.warm() } }
@@ -723,6 +724,11 @@ private fun StageCanvas(
             )
             drawIntoCanvas { it.restore() }
         }
+        // the finish: a very faint vignette (the corners a little deeper) and fine film grain over
+        // the
+        // whole picture, which also breaks up the banding of the sky's gradients
+        drawRect(vignette.brush(this.size.width, this.size.height))
+        drawRect(SceneSprites.grain, alpha = GRAIN)
         if (f.zoom > .02f)
             for (i in layouts.indices) streetName(
                 names[i],
@@ -732,6 +738,31 @@ private fun StageCanvas(
             )
     }
 }
+
+/** The vignette: a radial brush for a view of this size, kept until the view changes size. */
+private class VignetteBrush {
+    private var w = -1f
+    private var h = -1f
+    private var brush: Brush? = null
+
+    fun brush(width: Float, height: Float): Brush {
+        val b = brush
+        if (b != null && w == width && h == height) return b
+        w = width
+        h = height
+        return Brush.radialGradient(
+                0f to Color.Transparent,
+                .6f to Color.Transparent,
+                1f to Color(0x38000010),
+                center = Offset(width / 2f, height * .46f),
+                radius = kotlin.math.hypot(width / 2f, height / 2f) * 1.08f,
+            )
+            .also { brush = it }
+    }
+}
+
+/** How strong the film grain is (alpha of the black and white specks of the tile). */
+private const val GRAIN = .05f
 
 /** The fade under the heading: its brush, kept until the window moves. */
 private class FadeBrush {

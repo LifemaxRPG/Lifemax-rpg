@@ -46,6 +46,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
@@ -352,7 +353,8 @@ private fun Hud(
             Text(
                 HabitsCopy.NEW_FOUNDATION,
                 Modifier.clip(PillShape)
-                    .background(Glass)
+                    .background(GlassBrush)
+                    .border(1.dp, GlassEdge, PillShape)
                     .tapTarget(Role.Button, "Lay a new foundation", actions.newStack)
                     .padding(horizontal = 14.dp),
                 color = sky.ink,
@@ -362,7 +364,8 @@ private fun Hud(
         else if (p.due > 0)
             Box(
                 Modifier.clip(PillShape)
-                    .background(Glass)
+                    .background(GlassBrush)
+                    .border(1.dp, GlassEdge, PillShape)
                     .heightIn(min = 48.dp)
                     .padding(horizontal = 12.dp)
                     .semantics(mergeDescendants = true) {},
@@ -388,7 +391,8 @@ private fun Hud(
             Text(
                 if (ui.city) HabitsCopy.BUILDING else HabitsCopy.STREET,
                 Modifier.clip(PillShape)
-                    .background(Glass)
+                    .background(GlassBrush)
+                    .border(1.dp, GlassEdge, PillShape)
                     .tapTarget(
                         Role.Button,
                         if (ui.city) HabitsCopy.BUILDING_LABEL else HabitsCopy.STREET_LABEL,
@@ -450,8 +454,8 @@ private fun RoughSwitch(on: Boolean, sky: SkyColors, toggle: () -> Unit) {
     val colors = LocalPageColors.current
     Row(
         Modifier.clip(PillShape)
-            .background(if (on) colors.accent.copy(alpha = .28f) else Glass)
-            .border(1.dp, if (on) colors.accent else Color.Transparent, PillShape)
+            .background(if (on) SolidColor(colors.accent.copy(alpha = .28f)) else GlassBrush)
+            .border(1.dp, if (on) SolidColor(colors.accent) else GlassEdge, PillShape)
             .toggleTarget(on, reserve = false) { toggle() }
             .heightIn(min = 40.dp)
             .padding(horizontal = 14.dp, vertical = 8.dp),
@@ -497,7 +501,7 @@ private fun PrimaryButton(
             is PrimaryAction.Knock -> Brush.horizontalGradient(listOf(colors.good, colors.good))
             is PrimaryAction.Claim -> Brush.horizontalGradient(listOf(colors.gold, colors.gold))
             is PrimaryAction.GoTo,
-            PrimaryAction.Complete -> Brush.horizontalGradient(listOf(Glass, Glass))
+            PrimaryAction.Complete -> GlassBrush
             else -> Brush.horizontalGradient(listOf(colors.accent, colors.accentStrong))
         }
     val ink = if (quiet) sky.ink else colors.onAccent
@@ -517,6 +521,7 @@ private fun PrimaryButton(
             }
             .clip(ButtonShape)
             .background(fill)
+            .border(1.dp, if (quiet) GlassEdge else ButtonEdge, ButtonShape)
             .clickable(
                 source,
                 LocalIndication.current,
@@ -755,7 +760,14 @@ private const val HUD_GAP_DP = 6f
 /** What the controls take above the bottom bar at the usual text size: a toast rises over them. */
 private const val CONTROLS_DP = 172f
 
-/** Dark glass over the sky, under words that must read at any hour. */
-private val Glass = Color(0x47000A1E)
+/**
+ * Dark frosted glass over the sky, under words that must read at any hour: a little lighter at the
+ * top, with a fine bright edge that fades down the sides (the light catching its rim).
+ */
+private val GlassBrush: Brush = Brush.verticalGradient(listOf(Color(0x5C0C1630), Color(0x3D000A1E)))
+private val GlassEdge: Brush = Brush.verticalGradient(listOf(Color(0x59FFFFFF), Color(0x14FFFFFF)))
+
+/** The same fine edge on the big button's colour: bright along the top, gone by the bottom. */
+private val ButtonEdge: Brush = Brush.verticalGradient(listOf(Color(0x66FFFFFF), Color(0x0DFFFFFF)))
 private val PillShape = RoundedCornerShape(50)
 private val ButtonShape = RoundedCornerShape(24.dp)
