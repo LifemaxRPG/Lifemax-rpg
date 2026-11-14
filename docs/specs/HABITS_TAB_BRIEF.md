@@ -93,4 +93,9 @@ broken loses a floor per clean day and ends as a tree; a foundation can carry a 
 done; city view shows every tower with a 12-week time-lapse. Saved under the optional key `state.habits` (v 1, shape in the
 header of `logic.js`), written by `writeSave()` with take-back on a failed save. Owner defaults taken for this version: no
 XP, Sparks or streak; Quests separate; no reminders. `window.Habits` exposes the model and the commands (`tests/habits.test.js`).
+Design polish (1.1.0, same data and API): blocks not laid yet today are blueprints and only the next one glows; each tower
+stands on a paved lot with a horizon and two skylines behind; the scene's nodes stay on the page (one `<g>` per stack, by id)
+so changes of stack and view animate; a tall tower keeps a readable size and scrolls (vertical drag); selecting a block
+shortens the scene so the four dials fit above the bottom bar; a cleared habit is a tree on the lot beside the tower; the
+header counts habits being built only ("N / M today", `model().built` and `.due`).
 Not built yet: drag to move a block, reminders, the first-run scorecard, Life Director supplying foundations, a native screen.

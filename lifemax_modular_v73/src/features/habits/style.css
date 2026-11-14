@@ -1,55 +1,94 @@
 /* Habits: a skyline of habit stacks. The scene keeps its own colours (it is a sky); everything around it uses the app's tokens. */
 #view-habits .hb{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:12px;position:relative}
+.hb-below{display:flex;flex-direction:column;gap:12px}
 .hb button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
 .hb button:focus-visible,.hb input:focus-visible,.hb [tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hb-tag{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .hb-hud{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
 .hb-who{min-width:0}.hb-who b{display:block;font-size:20px;font-weight:700;overflow-wrap:anywhere;line-height:1.2}
-.hb-count{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.hb-count strong{display:block;font-size:26px;line-height:1;color:var(--good)}
-.hb-count span{font-size:11px;color:var(--muted)}.hb-count em{font-style:normal;font-weight:700;color:var(--gold)}
+.hb-count{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px;color:var(--muted)}
+.hb-count strong{display:inline-block;font-size:28px;line-height:1;color:var(--good);overflow:hidden;vertical-align:-3px}
+.hb-count strong b{display:inline-block}
+.hb-count strong.roll b{animation:hbRoll .2s ease-out}
+.hb-count em{font-style:normal;font-weight:700;color:var(--gold)}
 
+/* the scene */
 .hb-sky{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line);touch-action:pan-y;background:#0b1228}
-.hb-sky svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
-.hb-tower{transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .5s}
+.hb-sky.tall{touch-action:none}
+.hb-sky svg{display:block;width:100%;height:auto;aspect-ratio:1/1;user-select:none;-webkit-user-select:none}
+.hb-sky.sel svg{aspect-ratio:4/3} /* a block is being tuned: a shorter scene, so its dials are on screen */
+.hb-tower,.hb-par{transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s cubic-bezier(.2,.8,.2,1)}
+.hb-sky.drag .hb-tower,.hb-sky.drag .hb-par{transition:none}
 .hb-blk{cursor:pointer}
-.hb-blk.todo{opacity:.5}
-.hb-blk.sel .hb-face{stroke:#fff;stroke-width:1.6}
-.hb-blk.next{opacity:.85}
-.hb-blk.next .hb-face{stroke:#fff;stroke-width:1.6;animation:hbPulse 1.4s ease-in-out infinite}
-.hb-blk.drop{animation:hbDrop .55s cubic-bezier(.3,1.5,.5,1)}
+.hb-fx,.hb-cat,.hb-dust,.hb-debris,.hb-crack,.hb-seam,.hb-sign,.hb-city{pointer-events:none}
+.hb-ring{fill:none;stroke:#fff;stroke-width:2;stroke-linejoin:round}
+.hb-course{fill:none;stroke:rgba(0,0,0,.22);stroke-width:1}
+/* not laid yet today: a blueprint. Only the next one to lay is outlined solid, glows and pulses */
+.hb-blk.plan .hb-face{stroke:#8ea2ff;stroke-width:1.2;stroke-dasharray:5 4;stroke-linejoin:round}
+.hb-blk.plan .hb-sign{opacity:.6}
+.hb-blk.next{filter:drop-shadow(0 0 5px rgba(185,198,255,.7))}
+.hb-blk.next .hb-face{stroke:#b9c6ff;stroke-width:1.6;stroke-dasharray:none;fill:rgba(185,198,255,.1);animation:hbPulse 1.6s ease-in-out infinite}
+.hb-blk.next .hb-sign{opacity:.95}
 .hb-blk.wob{animation:hbWob 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
-.hb-treat.lit .hb-face{animation:hbGlow 1.8s ease-in-out infinite}
-.hb-ghost polygon{fill:rgba(255,255,255,.06);stroke:rgba(255,255,255,.8);stroke-dasharray:4 4}
+.hb-blk.dip{animation:hbDip .2s ease-out both}
+.hb-blk.drop{animation:hbDrop .55s linear both;transform-box:fill-box;transform-origin:50% 100%}
+.hb-blk.drop.up{animation:hbDrop .55s linear both,hbUp .3s ease-in-out .56s}
+.hb-blk.fall{animation:hbFall .38s ease-in forwards;transform-box:fill-box;transform-origin:50% 100%;pointer-events:none}
+.hb-flash{opacity:0;animation:hbFlash .18s ease-out .26s}
+.hb-dust{fill:rgba(226,232,255,.8);opacity:0;transform-box:fill-box;transform-origin:50% 50%;animation:hbDust .45s ease-out}
+.hb-debris{transform-box:fill-box;transform-origin:50% 50%;animation:hbDebris .5s ease-in forwards}
+.hb-spec{transform:translateX(-140px);animation:hbSpec 6s linear infinite}
+.hb-swp{transform:translateX(-140px);animation:hbSwp .5s ease-in-out .56s}
+.hb-treat.lit{filter:drop-shadow(0 0 6px rgba(255,226,130,.75));animation:hbGlow 1.8s ease-in-out infinite}
+.hb-treat.lit .hb-spec{animation-duration:2.4s}
+.hb-ghost polygon{fill:rgba(8,12,26,.5);stroke:rgba(255,255,255,.85);stroke-width:1.2;stroke-dasharray:4 4}
 .hb-ghost .hb-sign{fill:#fff}
-.hb-sign{font:600 10px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;fill:#0a0f1f;pointer-events:none}
-.hb-sign.lt{fill:#eef2ff}.hb-sign.gold{fill:#f8dc85}
-.hb-fx{pointer-events:none}
-.hb-course{fill:none;stroke:rgba(0,0,0,.2);stroke-width:1}
-.hb .hb-link:disabled{opacity:.35}
-.hb-crack,.hb-seam{fill:none;stroke-width:1.6;pointer-events:none}
-.hb-seam{stroke:#ffe9a3;stroke-width:2.2;stroke-linecap:round}
-.hb-cat,.hb-tree{pointer-events:none}
-.hb-dust{fill:rgba(255,255,255,.7);pointer-events:none;animation:hbDust .6s ease-out forwards}
-@keyframes hbPulse{50%{stroke-opacity:.2}}
-@keyframes hbDrop{0%{transform:translateY(-80px);opacity:0}60%{opacity:1}}
+.hb-sign{font:600 10px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;fill:#0a0f1f}
+.hb-sign.lt{fill:#eef2ff}
+.hb-sign.cue{font-size:9px;font-weight:700;letter-spacing:.03em;fill:#eef2ff}
+.hb-city{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:600}
+.hb-crack,.hb-seam{fill:none;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.hb-crack{stroke:#ffb49c}
+.hb-seam{stroke:#ffe9a3;stroke-width:2.2}
+.hb-tree{cursor:pointer}
+.hb-twk{animation:hbTwk 2.4s ease-in-out infinite}
+.hb-cloud{animation:hbCloud 60s linear infinite}
+.hb-flag{transform-box:fill-box;transform-origin:0 50%;animation:hbFlag 2.2s ease-in-out infinite}
+@keyframes hbPulse{50%{stroke-opacity:.45;fill:rgba(185,198,255,.2)}}
+/* a block falls, squashes on landing, and springs back */
+@keyframes hbDrop{0%{transform:translateY(-140px);opacity:0;animation-timing-function:cubic-bezier(.55,0,.9,.4)}12%{opacity:1}47.3%{transform:translateY(0) scale(1,1);animation-timing-function:ease-out}60%{transform:scale(1.04,.9);animation-timing-function:cubic-bezier(.3,1.6,.5,1)}100%{transform:none}}
+@keyframes hbDip{40%{transform:translateY(3px)}}
+@keyframes hbUp{50%{transform:scale(1.06)}}
+@keyframes hbFlash{0%{opacity:.5}100%{opacity:0}}
+@keyframes hbDust{0%{opacity:.75}100%{opacity:0;transform:translate(var(--dx),8px) scale(2.2)}}
+@keyframes hbFall{100%{transform:translate(26px,60px) rotate(8deg);opacity:0}}
+@keyframes hbDebris{100%{transform:translate(var(--dx),70px) rotate(var(--rot));opacity:0}}
+@keyframes hbSpec{0%{transform:translateX(-140px)}18%,100%{transform:translateX(150px)}}
+@keyframes hbSwp{0%{transform:translateX(-140px)}100%{transform:translateX(150px)}}
 @keyframes hbWob{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg)}}
-@keyframes hbGlow{50%{fill-opacity:.55}}
-@keyframes hbDust{0%{opacity:0}30%{opacity:.8}100%{opacity:0;transform:translate(var(--dx),-10px) scale(2)}}
-.hb-nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:64px;color:#fff;opacity:.7;font-size:26px;text-align:center!important}
-.hb-nav.l{left:0}.hb-nav.r{right:0}
+@keyframes hbGlow{50%{filter:drop-shadow(0 0 2px rgba(255,226,130,.4))}}
+@keyframes hbTwk{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes hbCloud{0%{transform:translateX(-270px)}100%{transform:translateX(420px)}}
+@keyframes hbFlag{50%{transform:scaleX(.82) skewY(6deg)}}
+@keyframes hbRoll{0%{transform:translateY(70%);opacity:0}}
+.hb .hb-nav{position:absolute;top:32%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(8,12,26,.42);color:#fff;display:grid;place-items:center}
+.hb-nav svg{width:36px;height:36px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.hb-nav.prev{left:6px}.hb-nav.next{right:6px}
+.hb-sky.sel .hb-nav{top:26%}
 .hb-view{position:absolute;top:10px;right:10px;font-size:12px;padding:7px 13px!important;border-radius:999px;background:rgba(8,12,26,.66)!important;color:#fff!important;border:1px solid rgba(255,255,255,.22)!important}
 .hb-view.left{right:auto;left:10px}
 .hb-dots{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:6px;pointer-events:none}
-.hb-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.28)}.hb-dots i.on{background:#fff}
+.hb-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.34);box-shadow:0 0 0 1px rgba(8,12,26,.25)}.hb-dots i.on{background:#fff}
 
-.hb .hb-strike{width:100%;border-radius:16px;padding:14px 16px;background:linear-gradient(180deg,#93adff,#6f8cf5);color:#081027;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(111,140,245,.28)}
+/* the one filled button on the tab */
+.hb .hb-strike{width:100%;min-height:64px;box-sizing:border-box;border-radius:16px;padding:10px 16px;background:linear-gradient(180deg,#93adff,#6f8cf5);color:#081027;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px rgba(111,140,245,.28)}
 .hb-strike small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.72}
 .hb-strike b{font-size:17px;overflow-wrap:anywhere}
-.hb-strike .k{font-size:22px;font-weight:700}
-.hb .hb-strike.rest{background:var(--panel2);color:var(--text);box-shadow:none}
-.hb .hb-strike.clean{background:linear-gradient(180deg,#f0a3bd,#d97b9c);box-shadow:0 8px 24px rgba(217,123,156,.25)}
-.hb .hb-strike.claim{background:linear-gradient(180deg,#fbe08c,#e0b548);box-shadow:0 8px 24px rgba(224,181,72,.28)}
+.hb-strike .k{font-size:22px;font-weight:700;display:grid;place-items:center;flex:none}
+.hb-strike .k svg{display:block;fill:currentColor}
+.hb .hb-strike.rest{background:var(--panel2);color:var(--text);box-shadow:none;border:1px solid var(--line)}
+.hb .hb-strike.clean{background:linear-gradient(180deg,#f0a3bd,#d97b9c);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px rgba(217,123,156,.25)}
+.hb .hb-strike.claim{background:linear-gradient(180deg,#fbe08c,#e0b548);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px rgba(224,181,72,.28)}
 .hb .hb-strike:active{transform:translateY(1px)}
 .hb .hb-rough{align-self:flex-start;font-size:12.5px;color:var(--muted);padding:6px 12px;border:1px solid var(--line);border-radius:999px}
 .hb .hb-rough.on{color:var(--warn);border-color:var(--warn)}
@@ -61,13 +100,18 @@
 .hb-say{margin:0;font-size:13px;color:var(--warn)}
 .hb-knobs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .hb .hb-knob{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
-.hb-knob .dial{width:52px;height:52px;border-radius:50%;border:2px solid var(--line);background:radial-gradient(circle at 35% 30%,var(--panel3),var(--bg));display:grid;place-items:center;font-size:17px;font-weight:700;position:relative}
-.hb-knob .dial::after{content:"";position:absolute;top:5px;left:50%;width:2px;height:9px;background:var(--accent);transform-origin:50% 21px;transform:translateX(-50%) rotate(var(--r,0deg));transition:transform .25s}
+.hb-knob .dial{width:52px;height:52px;border-radius:50%;border:2px solid var(--line);background:radial-gradient(circle at 35% 30%,var(--panel3),var(--bg));display:grid;place-items:center;position:relative;color:var(--muted)}
+.hb-knob .dial.on{color:var(--accent)}
+.hb-knob .dial svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hb-knob .dial svg.f{fill:currentColor;stroke:none}
+.hb-knob .dial.ptr svg{transform:translateY(3px) scale(.86)}
+.hb-knob .dial.ptr::after{content:"";position:absolute;top:3px;left:50%;width:3px;height:7px;border-radius:2px;background:var(--text);transform-origin:50% 23px;transform:translateX(-50%) rotate(var(--r,0deg));transition:transform .25s}
 .hb-knob.weak .dial{border-color:var(--warn)}
 .hb-knob .l{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .hb-knob .v{font-size:11.5px;text-align:center;overflow-wrap:anywhere;line-height:1.25}
 .hb-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .hb .hb-link{font-size:13px;color:var(--muted);padding:6px 0}
+.hb .hb-link:disabled{opacity:.35}
 .hb .hb-link.end{color:#e08aa8}
 
 .hb-lapse{display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px}
@@ -82,8 +126,13 @@
 .hb-sheet p{margin:0;font-size:13px;color:var(--muted)}
 .hb-sheet label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
 .hb-sheet input{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px;width:100%;box-sizing:border-box}
+.hb-sheet input::placeholder{color:var(--muted);opacity:.5;font-style:italic}
 .hb-picks{display:flex;flex-wrap:wrap;gap:6px}
 .hb .hb-pick{font-size:13px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .hb .hb-pick.on{border-color:var(--accent);color:var(--text);background:var(--accent-dim)}
 .hb .hb-go{background:var(--accent);color:#0a0f1f;font-weight:700;border-radius:10px;padding:10px 16px}
-@media (prefers-reduced-motion:reduce){.hb-tower{transition:none}.hb-blk.next .hb-face,.hb-blk.drop,.hb-blk.wob,.hb-treat.lit .hb-face,.hb-dust{animation:none}.hb-dust{display:none}}
+/* motion off (the app's setting or the phone's): nothing moves, and the passing effects are not drawn */
+.hb-still .hb-tower,.hb-still .hb-par,.hb-still .dial::after{transition:none!important}
+.hb-still .hb-blk,.hb-still .hb-face,.hb-still .hb-twk,.hb-still .hb-cloud,.hb-still .hb-flag,.hb-still .hb-count b{animation:none!important}
+.hb-still .hb-spec,.hb-still .hb-swp,.hb-still .hb-dust,.hb-still .hb-debris,.hb-still .hb-flash,.hb-still .hb-blk.fall{display:none}
+@media (prefers-reduced-motion:reduce){.hb-tower,.hb-par{transition:none}.hb-blk,.hb-face,.hb-twk,.hb-cloud,.hb-flag,.hb-count b{animation:none!important}.hb-spec,.hb-swp,.hb-dust,.hb-debris,.hb-flash,.hb-blk.fall{display:none}}

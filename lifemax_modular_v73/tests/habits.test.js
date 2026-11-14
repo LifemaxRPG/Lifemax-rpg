@@ -7,7 +7,10 @@
    - a habit to break loses a floor per clean day and ends cleared;
    - the rooftop reward can be claimed only once the stack is done, once a day;
    - a save that is not stored takes the change back and says so;
-   - the screen: the big button lays the next block, a tap on a block opens its dials, the city view and its time-lapse draw;
+   - the header counts today's blocks of the habits being built ("N / M today"); a clean day on a habit being broken is not one;
+   - the screen: the big button lays the next block, a tap on a block opens its dials (on screen, above the bottom bar), the city
+     view and its time-lapse draw; towers and the sky keep their nodes when the stack changes, so they move instead of being
+     redrawn; a tower too tall for the scene keeps a readable size and scrolls;
    - XP, Sparks and activities are untouched by all of it.
    Run: NODE_PATH=$(npm root -g) node tests/habits.test.js [built html] */
 const { chromium } = require('playwright');
@@ -71,6 +74,10 @@ const DAY = 24 * 3600 * 1000;
   await tomorrow();
   ok('tomorrow it is locked again until the stack is done', await p.evaluate(s => { const st = Habits.model().stacks[0]; return !st.claimed && !!st.next && Habits.claim(s) === null }, ids.s));
 
+  ok('a clean day on a habit to break is not a block laid', await p.evaluate(f => {
+    const a = Habits.model(); Habits.lay(f); const b = Habits.model(); Habits.undo(f);
+    return b.laid === a.laid + 1 && b.built === a.built && a.due === 2 && b.due === 2;
+  }, ids.f));
   ok('a habit to break loses a floor per clean day and ends cleared', await (async () => {
     const out = [];
     for (let i = 0; i < 3; i++) { out.push(await p.evaluate(f => { Habits.lay(f); const x = Habits.model().stacks[1].blocks[0]; return x.left + ':' + x.cleared }, ids.f)); await tomorrow() }
@@ -87,14 +94,22 @@ const DAY = 24 * 3600 * 1000;
 
   // the screen
   await p.evaluate(() => Habits.setWho('a reader')); await open();
-  ok('the header says who and counts today', await p.evaluate(() => document.querySelector('.hb-who b').textContent === 'a reader' && document.querySelector('.hb-count strong').textContent === String(Habits.model().laid)));
+  ok('the header says who and counts today', await p.evaluate(() => document.querySelector('.hb-who b').textContent === 'a reader' && document.querySelector('.hb-count').textContent.replace(/\s+/g, ' ').trim() === Habits.model().built + ' / ' + Habits.model().due + ' today'));
   const before = await p.evaluate(() => Habits.model().laid);
   await p.click('#view-habits .hb-strike[data-act=lay]'); await p.clock.runFor(700);
-  ok('the big button lays the next block', await p.evaluate(n => Habits.model().laid === n + 1, before));
+  ok('the big button lays the next block, and the header counts it', await p.evaluate(n => Habits.model().laid === n + 1 && document.querySelector('.hb-count strong').textContent === String(Habits.model().built) && Habits.model().built === 1, before));
   await p.evaluate(() => document.querySelector('#view-habits .hb-tower[data-i="0"] [data-b]').dispatchEvent(new MouseEvent('click', { bubbles: true }))); await p.clock.runFor(300);
   ok('a tap on a block opens its four dials', await p.evaluate(() => document.querySelectorAll('#view-habits .hb-knob').length === 4));
+  ok('the dials are on screen above the bottom bar, and the rough-day pill makes room', await p.evaluate(() => [...document.querySelectorAll('#view-habits .hb-knob .dial')].every(d => { const r = d.getBoundingClientRect(); return r.top > 0 && r.bottom < innerHeight - 64 }) && !document.querySelector('#view-habits .hb-rough') && !!document.querySelector('#view-habits .hb-knob .dial svg')));
   await p.click('#view-habits .hb-knob[data-k=size]'); await p.clock.runFor(200);
   ok('the size dial turns the habit down a size', await p.evaluate(id => state.habits.items.find(x => x.id === id).size === 1, ids.r));
+  const stood = await p.evaluate(() => { window.__tw = [...document.querySelectorAll('#view-habits .hb-tower')]; window.__sky = document.querySelector('#view-habits .hb-bg').firstChild; return window.__tw.map(g => g.style.transform).join('|') });
+  await p.click('#view-habits .hb-nav.next'); await p.clock.runFor(600);
+  ok('towers and the sky keep their nodes across a stack switch, and move', await p.evaluate(was => {
+    const g = [...document.querySelectorAll('#view-habits .hb-tower')];
+    return g.length === 2 && g.every((x, i) => x === window.__tw[i]) && g.map(x => x.style.transform).join('|') !== was && g[1].dataset.i === '1' && document.querySelector('#view-habits .hb-bg').firstChild === window.__sky;
+  }, stood));
+  await p.click('#view-habits .hb-nav.prev'); await p.clock.runFor(600);
   await p.click('#view-habits [data-act=view]'); await p.clock.runFor(700);
   ok('the city view shows every tower and a time-lapse', await p.evaluate(() => document.querySelectorAll('#view-habits .hb-tower').length === 2 && !!document.querySelector('#view-habits [data-act=lapse]') && !document.querySelector('#view-habits .hb-strike')));
   ok('a habit is not drawn before its first day', await p.evaluate(() => Habits.model(addDays(getToday(), -30)).stacks[1].blocks.length === 0));
@@ -109,6 +124,15 @@ const DAY = 24 * 3600 * 1000;
   ok('it survives a reload', await p.evaluate(() => Habits.model().stacks.length === 2 && Habits.model().who === 'an athlete who reads'));
   ok('retiring a habit removes it and its log', await p.evaluate(id => Habits.retire(id) === true && !JSON.stringify(state.habits).includes('"' + id + '"'), ids.j));
   ok('a foundation with habits is not removed; an empty one is', await p.evaluate(({ s, e }) => Habits.removeStack(s) === null && Habits.retire(state.habits.items.find(x => x.stack === e).id) && Habits.removeStack(e) === true, ids));
+  await open();
+  ok('a tall tower keeps a readable size and scrolls with a vertical drag', await p.evaluate(() => {
+    const s = Habits.addStack('After lunch'); for (let i = 0; i < 7; i++) Habits.addHabit(s, { name: 'Habit ' + i }); Habits.render();
+    for (let b; (b = document.querySelector('#view-habits .hb-nav.next'));) b.click();
+    const sky = document.querySelector('#view-habits .hb-sky'), g = document.querySelector('#view-habits .hb-tower[data-id="' + s + '"]'), at = () => g.style.transform;
+    const scale = +/scale\(([\d.]+)\)/.exec(at())[1], was = at(), ev = (t, y) => sky.querySelector('svg').dispatchEvent(new PointerEvent(t, { bubbles: true, clientX: 200, clientY: y, pointerType: 'touch' }));
+    ev('pointerdown', 300); ev('pointermove', 330); ev('pointermove', 360); ev('pointerup', 360);
+    return scale >= 0.9 && sky.classList.contains('tall') && at() !== was && Habits.removeStack(s) === null;
+  }));
   ok('no script errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); srv.close(); process.exit(fail ? 1 : 0);
 })();

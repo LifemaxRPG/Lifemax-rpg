@@ -1,4 +1,4 @@
-/* Habits 1.0.0: habit stacking, built literally (docs/specs/HABITS_TAB_BRIEF.md).
+/* Habits 1.1.0: habit stacking, built literally (docs/specs/HABITS_TAB_BRIEF.md).
    A stack is something you already do ("After coffee"); a habit is a block laid on it, in the order you do them. One button lays the
    next block. A block's material shows how set the habit is (glass, clay, stone, gold, by total repetitions: a missed day never takes
    any away), its height is the habit's size (two minutes, normal, stretch), a crack is one missed day and a wobble is two. A habit
@@ -7,19 +7,41 @@
    Saved under the optional key state.habits (v 1), written by writeSave() only, never read into existence:
      { v, who, n, stacks:[{id,cue,treat}], items:[{id,stack,kind:'build'|'fade',names:[2 min, normal, stretch],size:0..2,born,pair,
        scar,floors}], log:{'YYYY-MM-DD':{itemId:size+1}}, rough:'YYYY-MM-DD'|'', claimed:{'YYYY-MM-DD':[stackId]} }
-   No XP, Sparks or streak are touched here. Dates are the app's local days (getToday, addDays). */
+   No XP, Sparks or streak are touched here. Dates are the app's local days (getToday, addDays).
+
+   On screen (1.1): the scene's SVG, its sky and one <g> per stack (by id) stay on the page; a render redraws only what changed and
+   moves the towers by their style, so a change of stack or of view is animated. A block not laid yet today is a blueprint; the
+   next one glows. A tower too tall for the scene keeps its size and scrolls. Selecting a block shortens the scene so its dials fit. */
 const HabitsFeature=(function(){
- const LINE=66,HW=80,D=28,HS=[40,62,88],ANG=Math.atan(D/HW)*180/Math.PI,MAXW=12;
+ const LINE=66,HW=80,D=28,FH=16,HS=[40,62,88],ANG=Math.atan(D/HW)*180/Math.PI,MAXW=12,BASE=362,HZ=296;
  const NONE=Object.freeze({v:1,who:'',n:0,stacks:[],items:[],log:{},rough:'',claimed:{}});
- const MAT={glass:['rgba(140,168,255,.26)','rgba(140,168,255,.16)','rgba(140,168,255,.10)','#a9bcff'],
-  clay:['#dd9a72','#b46d48','#935438','#3a1d10'],stone:['#a9bbdc','#778bb4','#5d719a','#1c2640'],
-  gold:['#f8dc85','#dcb146','#b98e2d','#4a3708'],fade:['#93506b','#70364f','#582a3e','#2a0f1b'],
-  slab:['#6f7fa6','#4c5b82','#3d4a6d','#101728'],treat:['#f8dc85','#dcb146','#b98e2d','#4a3708'],
-  lock:['rgba(248,220,133,.10)','rgba(248,220,133,.06)','rgba(248,220,133,.04)','#f8dc85']};
+ /* top, left and right face of each material; 'plan' is a block not laid yet today, drawn as a blueprint */
+ const GOLD=['url(#hbGoldT)','url(#hbGoldL)','url(#hbGoldR)'],PLAN='rgba(140,168,255,.07)';
+ const MAT={glass:['rgba(159,216,255,.5)','rgba(159,216,255,.35)','rgba(159,216,255,.2)'],clay:['#e2a37b','#b46d48','#935438'],
+  stone:['#c6d2ea','#94a6ca','#7386ad'],gold:GOLD,treat:GOLD,fade:['#a85c7b','#70364f','#582a3e'],slab:['#6f7fa6','#4c5b82','#3d4a6d'],
+  lock:['#9c8757','#77643a','#5e4f2c'],plan:[PLAN,PLAN,PLAN]};
+ const TINT={glass:'#9fd8ff',clay:'#dd9a72',stone:'#a9bbdc',gold:'#f3cf63'};
  const MATNAME={glass:'Glass · brand new',clay:'Clay · taking shape',stone:'Stone · nearly automatic',gold:'Gold · runs itself',fade:'Coming down'};
+ /* the scene's own colours for night, the hour around sunrise and sunset, and day */
+ const PAL={night:{sky:['#060a18','#0b1330','#1d2c63'],gnd:['#111a3d','#090d1f'],tile:['#1a2447','#151d3b'],line:'rgba(143,165,255,.12)',edge:['#10173a','#0b1029'],far:'#0e1530',near:'#131c3d',haze:'rgba(110,140,255,.2)',halo:'rgba(233,237,255,.18)',ink:'#cfd8ff'},
+  dusk:{sky:['#1d2350','#6b4b7c','#e39a74'],gnd:['#3b2d52','#221a36'],tile:['#4d3d68','#42335b'],line:'rgba(255,214,190,.14)',edge:['#33264a','#281d3c'],far:'#57406f',near:'#412f5c',haze:'rgba(255,196,150,.3)',halo:'rgba(255,200,150,.4)',ink:'#f6e3d6'},
+  day:{sky:['#2f66b8','#6fa5dd','#c4e2f5'],gnd:['#86b392','#5f9276'],tile:['#dbe3ee','#c8d3e2'],line:'rgba(40,60,110,.16)',edge:['#a3b2c8','#8d9db5'],far:'#a4c5e8',near:'#86add9',haze:'rgba(255,255,255,.4)',halo:'rgba(255,243,196,.4)',ink:'#12303a'}};
+ const DEFS='<radialGradient id="hbShade"><stop stop-color="rgba(0,0,0,.55)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></radialGradient>'+
+  '<linearGradient id="hbLit" x1="0" x2="0" y1="0" y2="1"><stop stop-color="rgba(255,255,255,.16)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient>'+
+  '<linearGradient id="hbDim" x1="0" x2="0" y1="0" y2="1"><stop stop-color="rgba(0,0,0,0)"/><stop offset="1" stop-color="rgba(0,0,0,.22)"/></linearGradient>'+
+  '<linearGradient id="hbGoldT" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fff8d2"/><stop offset="1" stop-color="#f1d06a"/></linearGradient>'+
+  '<linearGradient id="hbGoldL" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fff1b0"/><stop offset=".45" stop-color="#e9b93f"/><stop offset="1" stop-color="#a8791c"/></linearGradient>'+
+  '<linearGradient id="hbGoldR" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#e8c558"/><stop offset=".45" stop-color="#c4932b"/><stop offset="1" stop-color="#8a6114"/></linearGradient>'+
+  '<linearGradient id="hbSheen"><stop stop-color="rgba(255,255,255,0)"/><stop offset=".5" stop-color="rgba(255,255,255,.85)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient>';
  const STARTERS=['After waking up','After coffee','After lunch','After getting home','At lights out'];
  const CAT=['X...X...','XX.XX...','XXXXX...','XoXoX..X','XXXXX..X','.XXXXXX.','.XXXXXX.','.XXXXXX.'];
- let root=null,host=null,focus=0,sel=null,city=false,weeks=0,combo=0,laid=0,sheet=null;
+ const ICON='<svg viewBox="0 0 28 28" width="32" height="32" aria-hidden="true"><path d="M14 3 25 8.5 14 14 3 8.5Z" opacity=".4"/><path d="M3 8.5 14 14v11L3 19.5Z" opacity=".85"/><path d="M25 8.5 14 14v11l11-5.5Z" opacity=".62"/></svg>';
+ const GLYPH={cue:'<circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V20M8 10.5h8M5 13.5a7 7 0 0 0 14 0"/>',
+  pair:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  treat:'<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/>'};
+ let root=null,host=null,focus=0,sel=null,city=false,weeks=0,combo=0,laid=0,felled=0,upg=0,sheet=null;
+ /* what is on screen: the nodes that stay (one <g> per stack, by id), and where the focused tower is scrolled to */
+ let ui=null,nodes={},drag=null,moved=0;const view={pan:null,now:0,max:0,k:1,m:null,live:null,n:-1,city:false};
 
  /* ---------- the save ---------- */
  const read=()=>{const h=typeof state!=='undefined'&&state&&state.habits;return h&&h.v===1?h:NONE};
@@ -56,7 +78,9 @@ const HabitsFeature=(function(){
    return {id:s.id,cue:s.cue,treat:s.treat||'',claimed:!!(h.claimed[d]&&h.claimed[d].indexOf(s.id)>=0),blocks,
     next:live?blocks.find(b=>!b.done&&!b.cleared)||null:null};
   });
-  return {day:d,live,who:h.who,rough:live&&h.rough===d,laid:h.log[d]?Object.keys(h.log[d]).length:0,stacks};
+  /* built of due: today's blocks laid, of the habits you are building (a clean day on one you are breaking is not a block laid) */
+  const build=[].concat(...stacks.map(s=>s.blocks)).filter(b=>b.kind!=='fade');
+  return {day:d,live,who:h.who,rough:live&&h.rough===d,laid:h.log[d]?Object.keys(h.log[d]).length:0,built:build.filter(b=>b.done).length,due:build.length,stacks};
  }
 
  /* ---------- commands (each answers whether it was stored) ---------- */
@@ -103,85 +127,177 @@ const HabitsFeature=(function(){
  /* ---------- drawing ---------- */
  const still=()=>typeof lmaMotionOff==='function'&&lmaMotionOff();
  const fit=(s,n)=>s.length>n?s.slice(0,n-1).trimEnd()+'…':s;
- function prism(y,h,m,cls,attrs,k){
-  const c=MAT[m],w=HW*(k||1),d=D*(k||1),dash=m==='lock'?' stroke="'+c[3]+'" stroke-dasharray="4 4"':'';
-  return '<g class="hb-blk '+cls+'" '+attrs+'>'+
-   '<polygon class="hb-face" points="'+(-w)+','+(y+d)+' 0,'+(y+2*d)+' 0,'+(y+2*d+h)+' '+(-w)+','+(y+d+h)+'" fill="'+c[1]+'"'+dash+'/>'+
-   '<polygon class="hb-face" points="'+w+','+(y+d)+' 0,'+(y+2*d)+' 0,'+(y+2*d+h)+' '+w+','+(y+d+h)+'" fill="'+c[2]+'"'+dash+'/>'+
-   '<polygon class="hb-face" points="0,'+y+' '+w+','+(y+d)+' 0,'+(y+2*d)+' '+(-w)+','+(y+d)+'" fill="'+c[0]+'"'+dash+'/>'+
-   (m==='lock'?'':texture(y,h,m,w,d)+'<polyline points="'+(-w)+','+(y+d)+' 0,'+y+' '+w+','+(y+d)+'" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1"/>');
+ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+ const n1=v=>Math.round(v*10)/10;
+ /* a label on at most two lines, broken between words */
+ function wrap(s,n){if(s.length<=n)return [s];const i=s.lastIndexOf(' ',n);return i<3?[fit(s,n)]:[s.slice(0,i),fit(s.slice(i+1),n)]}
+ /* the same few random numbers for the same block, every time it is drawn */
+ function dice(key){let h=2166136261;for(let i=0;i<key.length;i++)h=Math.imul(h^key.charCodeAt(i),16777619);return ()=>{h=(Math.imul(h,1664525)+1013904223)>>>0;return h/4294967296}}
+ /* one block: its three faces, what its material looks like up close, then whatever stands on its faces (o.extra).
+    o: k width, key (what makes its marks its own), win lit windows, tint a blueprint's footing colour, flash, extra */
+ function prism(y,h,m,cls,attrs,o){
+  o=o||{};const k=o.k||1,w=HW*k,d=D*k,c=MAT[m],lf=(u,v)=>n1(-w+u*w)+','+n1(y+d+u*d+v),rf=(u,v)=>n1(w-u*w)+','+n1(y+d+u*d+v),mid=v=>'0,'+n1(y+2*d+v);
+  const L=lf(0,0)+' '+mid(0)+' '+mid(h)+' '+lf(0,h),R=rf(0,0)+' '+mid(0)+' '+mid(h)+' '+rf(0,h),T='0,'+n1(y)+' '+rf(0,0)+' '+mid(0)+' '+lf(0,0);
+  const hex=lf(0,0)+' 0,'+n1(y)+' '+rf(0,0)+' '+rf(0,h)+' '+mid(h)+' '+lf(0,h),face=(p,f)=>'<polygon class="hb-face" points="'+p+'" fill="'+f+'"/>';
+  const ring=/\bsel\b/.test(cls)?'<polygon class="hb-fx hb-ring" points="'+hex+'"/>':'';
+  let out='<g class="hb-blk '+cls+'" '+attrs+'>'+(m==='glass'?'<polygon points="'+hex+'" fill="#27406b"/>':m==='plan'?'<polygon points="'+lf(0,0)+' '+mid(0)+' '+rf(0,0)+' '+rf(0,h)+' '+mid(h)+' '+lf(0,h)+'" fill="rgba(22,36,88,.56)"/>':'')+face(L,c[1])+face(R,c[2])+face(T,c[0]);
+  if(m==='plan')return out+(o.tint?'<polyline class="hb-fx" points="'+lf(0,h)+' '+mid(h)+' '+rf(0,h)+'" fill="none" stroke="'+o.tint+'" stroke-width="2.5" stroke-linejoin="round" opacity=".85"/>':'')+(o.extra||'')+ring+'</g>';
+  const r=dice(o.key||m),ln=(p,s,sw)=>'<polyline class="hb-fx" points="'+p+'" fill="none" stroke="'+s+'" stroke-width="'+sw+'"/>';
+  if(m!=='glass'&&c!==GOLD)out+='<polygon class="hb-fx" points="'+L+'" fill="url(#hbLit)"/><polygon class="hb-fx" points="'+R+'" fill="url(#hbDim)"/>';
+  if(m==='clay'){ /* bricks: the joints of one course sit over the middle of the bricks below */
+   let p='';
+   for(let i=0,v=0;v<h-3;i++,v+=11){const e=n1(Math.min(h,v+11)-v);if(v)p+='M'+lf(0,v)+'L'+mid(v)+'L'+rf(0,v);for(let u=i%2?.125:.25;u<1;u+=.25)p+='M'+lf(u,v)+'v'+e+'M'+rf(u,v)+'v'+e}
+   out+='<path class="hb-fx hb-course" d="'+p+'"/>';
+  }
+  if(m==='stone'){ /* a few big irregular blocks, and light catching the top edge */
+   const a=h*(.35+r()*.3),b=h*(.35+r()*.3),up=r()<.5;
+   out+='<path class="hb-fx hb-course" d="M'+lf(0,a)+'L'+lf(1,a)+'M'+lf(.25+r()*.5,0)+'v'+n1(a)+'M'+lf(.25+r()*.5,a)+'v'+n1(h-a)+'M'+rf(0,b)+'L'+rf(1,b)+'M'+rf(.3+r()*.4,up?0:b)+'v'+n1(up?b:h-b)+'"/>'+ln(lf(0,1)+' '+mid(1)+' '+rf(0,1),'rgba(255,255,255,.55)',1);
+  }
+  if(m==='glass')out+='<polygon class="hb-fx" points="'+lf(.08,0)+' '+lf(.3,0)+' '+lf(.6,h)+' '+lf(.38,h)+'" fill="rgba(255,255,255,.2)"/><polygon class="hb-fx" points="'+lf(.37,0)+' '+lf(.43,0)+' '+lf(.73,h)+' '+lf(.67,h)+'" fill="rgba(255,255,255,.12)"/>'+
+   ln(lf(0,0)+' '+mid(0)+' '+rf(0,0),'rgba(230,246,255,.6)',1)+ln(mid(0)+' '+mid(h),'rgba(230,246,255,.45)',1);
+  if(o.win)for(let j=0;j<3;j++){ /* three windows a floor on each face, most of them lit */
+   const u=.1+j*.29,q=(f,col)=>'<polygon class="hb-fx" points="'+f(u,7)+' '+f(u+.2,7)+' '+f(u+.2,h-7)+' '+f(u,h-7)+'" fill="'+col+'"/>';
+   out+=q(lf,r()<.8?'#ffd27a':'#40192b')+q(rf,r()<.7?'#e9b45c':'#34131f');
+  }
+  out+=ln(lf(0,h-1)+' '+mid(h-1)+' '+rf(0,h-1),'rgba(0,0,0,.28)',2)+ln(lf(0,0)+' 0,'+n1(y)+' '+rf(0,0),'rgba(255,255,255,.34)',1);
+  if(m==='glass')out+='<polygon class="hb-fx" points="'+hex+'" fill="none" stroke="#e6f6ff" stroke-width="1.5" stroke-linejoin="round"/>';
+  const up=/\bup\b/.test(cls);
+  if(c===GOLD||up){ /* a strip of light that crosses the block: now and then on gold, once when a block changes material */
+   const strip=cl=>'<polygon class="'+cl+'" points="-10,'+n1(y-4)+' 20,'+n1(y-4)+' 0,'+n1(y+2*d+h+4)+' -30,'+n1(y+2*d+h+4)+'" fill="url(#hbSheen)"';
+   out+='<clipPath id="hbc'+o.key+'"><polygon points="'+hex+'"/></clipPath><g class="hb-fx" clip-path="url(#hbc'+o.key+')">'+(c===GOLD?strip('hb-spec')+' style="animation-delay:-'+n1(r()*5)+'s"/>':'')+(up?strip('hb-swp')+'/>':'')+'</g>';
+  }
+  return out+(o.extra||'')+(o.flash?'<polygon class="hb-fx hb-flash" points="'+T+'" fill="#fff"/>':'')+ring+'</g>';
  }
- /* what a material looks like up close: courses on clay and stone, a shine on glass and gold, and light falling from the top left */
- function texture(y,h,m,w,d){
-  const L=(-w)+','+(y+d)+' 0,'+(y+2*d)+' 0,'+(y+2*d+h)+' '+(-w)+','+(y+d+h),R=w+','+(y+d)+' 0,'+(y+2*d)+' 0,'+(y+2*d+h)+' '+w+','+(y+d+h);
-  let out='<polygon class="hb-fx" points="'+L+'" fill="url(#hbLit)"/><polygon class="hb-fx" points="'+R+'" fill="url(#hbDim)"/>';
-  const step=m==='clay'||m==='fade'?11:m==='stone'||m==='slab'?17:0;
-  if(step&&h>step+4)for(let k=step;k<h-3;k+=step)out+='<polyline class="hb-fx hb-course" points="'+(-w)+','+(y+d+k)+' 0,'+(y+2*d+k)+' '+w+','+(y+d+k)+'"/>';
-  if((m==='glass'||m==='gold'||m==='treat')&&h>20)out+='<polygon class="hb-fx" points="'+(-w*.86)+','+(y+d*1.14+4)+' '+(-w*.7)+','+(y+d*1.3+4)+' '+(-w*.7)+','+(y+d*1.3+h*.55)+' '+(-w*.86)+','+(y+d*1.14+h*.55)+'" fill="rgba(255,255,255,'+(m==='glass'?.22:.3)+')"/>';
-  return out;
+ const sign=(x0,y0,a,cx,y,t,cls,max)=>'<text class="hb-sign'+(cls?' '+cls:'')+'" text-anchor="middle" data-fit="'+max+'" transform="translate('+x0+','+n1(y0)+') skewY('+n1(a)+')" x="'+cx+'" y="'+n1(y)+'">'+esc(t)+'</text>';
+ /* a name on the left face (two lines when it is long) and a count on the right; narrow leaves the face's right-hand third free */
+ function labels(y,h,name,count,cls,narrow){
+  const t=wrap(name,14);
+  return t.map((x,i)=>sign(-HW,y+D,ANG,narrow?33:HW/2,h/2+3.5+(t.length>1?(i?6:-6):0),x,cls,narrow?52:66)).join('')+sign(0,y+2*D,-ANG,HW/2,h/2+3.5,count,cls,64);
  }
- const sign=(x0,y0,a,y,t,lt)=>'<text class="hb-sign'+(lt?' lt':'')+'" text-anchor="middle" transform="translate('+x0+','+y0+') skewY('+a+')" x="'+HW/2+'" y="'+y+'">'+esc(t)+'</text>';
- function cat(cx,by){let s='';const p=3.4;CAT.forEach((row,r)=>{for(let c=0;c<row.length;c++)if(row[c]!=='.')s+='<rect x="'+(cx-14+c*p)+'" y="'+(by-CAT.length*p+r*p)+'" width="'+(p+.2)+'" height="'+(p+.2)+'" fill="'+(row[c]==='o'?'#f6d679':'#05070d')+'"/>'});return '<g class="hb-cat">'+s+'</g>'}
- function tree(y){return '<g class="hb-tree"><rect x="-3" y="'+(y+D-26)+'" width="6" height="26" fill="#6b4a2f"/><circle cx="0" cy="'+(y+D-34)+'" r="17" fill="#3f9d6b"/><circle cx="-11" cy="'+(y+D-26)+'" r="11" fill="#348a5c"/><circle cx="11" cy="'+(y+D-27)+'" r="12" fill="#46ad77"/></g>'}
- /* one tower, drawn up from its foundation at (0,0); answers the markup and how tall it is */
- function tower(s,on,live){
-  let y=-14-2*D,out='',roof=null;
-  out+='<ellipse cx="0" cy="'+(-D)+'" rx="'+(HW*1.25)+'" ry="'+(D*1.25)+'" fill="url(#hbShade)"/>';
-  out+=prism(y,14,'slab',(on&&sel===s.id?'sel':''),'data-stack="'+s.id+'" role="button" aria-label="'+esc(s.cue)+', edit this foundation"')+sign(-HW,y+D,ANG,11,fit(s.cue.toUpperCase(),20))+'</g>';
-  for(const b of s.blocks){
-   if(b.cleared){out+='<g class="hb-blk" data-b="'+b.id+'">'+tree(y)+'</g>';continue}
-   const fade=b.kind==='fade',floors=fade?Math.min(b.left,MAXW):1,h=fade?26:HS[b.size],lt=b.mat==='glass'||fade;
+ /* a crack (or the gold seam left by coming back), down the right-hand third of the left face, its own shape for each block */
+ function crack(y,h,key,cls){
+  const r=dice(key+'c'),n=h>50?5:4,at=(u,v)=>n1(-HW+u*HW)+','+n1(y+D+u*D+v);let d='',br='';
+  for(let i=0;i<=n;i++){const u=.77+(i%2?.11:0)+r()*.06,v=h*i/n;d+=(i?'L':'M')+at(u,v);if(i===2)br='M'+at(u,v)+'L'+at(.97,v+3+r()*6)}
+  return '<path class="'+cls+'" d="'+d+br+'"/>';
+ }
+ function cat(cx,by){let s='';const p=3.4;CAT.forEach((row,r)=>{for(let c=0;c<row.length;c++)if(row[c]!=='.')s+='<rect x="'+n1(cx-14+c*p)+'" y="'+n1(by-CAT.length*p+r*p)+'" width="'+(p+.2)+'" height="'+(p+.2)+'" fill="'+(row[c]==='o'?'#f6d679':'#05070d')+'"/>'});return '<g class="hb-cat">'+s+'</g>'}
+ function tree(x,y,id,name){return '<g class="hb-tree" data-b="'+id+'" role="button" tabindex="0" aria-label="'+esc(name)+', gone"><rect x="'+(x-2.5)+'" y="'+(y-22)+'" width="5" height="22" fill="#6b4a2f"/><circle cx="'+x+'" cy="'+(y-30)+'" r="14" fill="#3f9d6b"/><circle cx="'+(x-9)+'" cy="'+(y-23)+'" r="9" fill="#348a5c"/><circle cx="'+(x+9)+'" cy="'+(y-24)+'" r="10" fill="#46ad77"/></g>'}
+ /* the ground a tower stands on: nine paving tiles with an edge, and the tower's shadow falling to the right */
+ function plot(f,p){
+  const w=HW*f,d=D*f,cy=-D;
+  let o='<g class="hb-fx"><polygon points="'+(-w)+','+cy+' 0,'+n1(cy+d)+' 0,'+n1(cy+d+5)+' '+(-w)+','+(cy+5)+'" fill="'+p.edge[0]+'"/><polygon points="'+w+','+cy+' 0,'+n1(cy+d)+' 0,'+n1(cy+d+5)+' '+w+','+(cy+5)+'" fill="'+p.edge[1]+'"/>';
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++){const x=(i-j)*w/3,y=cy+(i+j-2)*d/3;o+='<polygon points="'+n1(x)+','+n1(y-d/3)+' '+n1(x+w/3)+','+n1(y)+' '+n1(x)+','+n1(y+d/3)+' '+n1(x-w/3)+','+n1(y)+'" fill="'+p.tile[(i+j)%2]+'" stroke="'+p.line+'" stroke-width="1"/>'}
+  return o+'<ellipse cx="'+HW*.34+'" cy="'+(cy+7)+'" rx="'+HW*1.18+'" ry="'+D*1.05+'" fill="url(#hbShade)"/></g>';
+ }
+ /* dust thrown out along a block's base when it lands */
+ function dust(y,h){
+  let o='';
+  for(let i=0;i<10;i++){const left=i<5,u=(i%5+.5)/5;o+='<circle class="hb-dust" cx="'+n1((left?-1:1)*(HW-u*HW))+'" cy="'+n1(y+D+u*D+h)+'" r="'+(2.5+i%3)+'" style="--dx:'+(left?-22:22)+'px;animation-delay:'+(250+i%3*30)+'ms"/>'}
+  return o;
+ }
+ /* the floor that has just been knocked off a habit you are breaking, and its rubble */
+ function fallen(y,key){
+  const r=dice(key+'f');let o=prism(y,26,'fade','fall','',{key:key+'x',win:true});
+  for(let i=0;i<6;i++)o+='<rect class="hb-debris" x="'+n1((r()*2-1)*HW*.9)+'" y="'+n1(y+D+18+r()*22)+'" width="'+(4+i%3*2)+'" height="'+(3+i%2*2)+'" fill="'+(i%2?'#a85c7b':'#582a3e')+'" style="--dx:'+n1((r()-.5)*90)+'px;--rot:'+n1((r()-.5)*400)+'deg;animation-delay:'+i*25+'ms"/>';
+  return o;
+ }
+ /* one tower, drawn up from its foundation at (0,0); answers the markup, how tall it is, and where each block's middle is */
+ function tower(s,on,live,pal){
+  let y=-FH-2*D,out=plot(city?1.3:1.7,pal),fx='',roof=y;const marks={};
+  const cue=wrap(s.cue.toUpperCase(),12),order=s.blocks.filter(b=>!b.cleared),gone=s.blocks.filter(b=>b.cleared),li=order.findIndex(b=>b.id===laid);
+  const dip=i=>li>i?' style="animation-delay:'+(250+(li-i)*20)+'ms"':'';
+  out+=prism(y,FH,'slab',li>=0?'dip':'','data-stack="'+s.id+'" role="button" tabindex="0" aria-label="'+esc(s.cue)+', edit this foundation"'+dip(-1),
+   {extra:sign(-HW,y+D,ANG,HW/2,FH/2+3.2,cue[0],'cue',70)+(cue[1]?sign(0,y+2*D,-ANG,HW/2,FH/2+3.2,cue[1],'cue',70):'')});
+  order.forEach((b,i)=>{
+   const fade=b.kind==='fade',plan=live&&!b.done&&!fade,floors=fade?Math.min(b.left,MAXW):1,h=fade?26:HS[b.size],key=s.id+b.id,was=laid===b.id;
    for(let f=0;f<floors;f++){
     y-=h;const top=f===floors-1;
-    const cls=[on&&sel===b.id?'sel':'',on&&live&&s.next===b&&top?'next':'',laid===b.id?'drop':'',b.miss>=2?'wob':'',live&&!b.done&&!fade?'todo':''].join(' ');
-    out+=prism(y,h,b.mat,cls,'data-b="'+b.id+'"'+(top?' role="button" tabindex="0" aria-label="'+esc(b.name)+', '+(fade?b.reps+' days clean':b.reps+' reps')+'"':''));
-    if(top){
-     out+=sign(-HW,y+D,ANG,h/2+4,fit(b.name,15),lt)+sign(0,y+2*D,-ANG,h/2+4,fade?b.reps+(b.reps===1?' day clean':' days clean'):b.reps+(b.reps===1?' rep':' reps'),lt);
-     const seam=(-HW*.7)+','+(y+D+8)+' '+(-HW*.55)+','+(y+D+h*.45)+' '+(-HW*.66)+','+(y+D+h*.6)+' '+(-HW*.5)+','+(y+D+h+4);
-     if(b.miss>=1)out+='<polyline class="hb-crack" points="'+seam+'" stroke="'+MAT[b.mat][3]+'"/>';
-     else if(b.scar)out+='<polyline class="hb-seam" points="'+seam+'"/>';
-     if(laid===b.id&&!still())for(let i=0;i<8;i++)out+='<circle class="hb-dust" cx="'+((i-3.5)*HW/4)+'" cy="'+(y+2*D+h-2)+'" r="'+(1.4+i%2)+'" style="--dx:'+((i-3.5)*9)+'px"/>';
-    }
-    out+='</g>';if(b.done||!live||fade)roof=y;
+    const cls=[on&&sel===b.id?'sel':'',on&&live&&s.next===b&&top?'next':'',plan?'plan':'',was?'drop':'',was&&upg===b.id?'up':'',b.miss>=2?'wob':'',li>i?'dip':''].join(' ');
+    const extra=top?(b.miss>=1?crack(y,h,key,'hb-crack'):b.scar?crack(y,h,key,'hb-seam'):'')+
+     labels(y,h,b.name,fade?b.reps+(b.reps===1?' day clean':' days clean'):b.reps+(b.reps===1?' rep':' reps'),plan||fade||b.mat==='glass'?'lt':'',b.miss>=1||b.scar):'';
+    out+=prism(y,h,plan?'plan':b.mat,cls,'data-b="'+b.id+'"'+(top?' role="button" tabindex="0" aria-label="'+esc(b.name)+', '+(fade?b.reps+' days clean':b.reps+' reps')+'"':'')+dip(i),
+     {extra,key:key+'f'+f,win:fade&&!top,tint:plan?TINT[b.mat]:'',flash:was});
+    if(!plan)roof=y;
    }
-  }
-  if(roof===null)roof=y;
-  if(s.treat&&live&&s.blocks.length){
-   const open=!s.next&&!s.claimed;
-   out+=prism(y-26,22,open?'treat':'lock','hb-treat'+(open?' lit':''),'data-treat="'+s.id+'"',.55)+'<text class="hb-sign'+(open?'':' gold')+'" text-anchor="middle" x="0" y="'+(y-26+D*.55+4)+'">'+esc(s.claimed?'Enjoyed':fit(s.treat,14))+'</text></g>';
-   y-=30;
-  }
-  if(on&&live&&!city){out+='<g class="hb-blk hb-ghost" data-new="'+s.id+'" role="button" tabindex="0" aria-label="Stack a habit here"><polygon points="0,'+(y-30)+' '+(HW*.6)+','+(y-30+D*.6)+' 0,'+(y-30+D*1.2)+' '+(-HW*.6)+','+(y-30+D*.6)+'"/><text class="hb-sign" text-anchor="middle" x="0" y="'+(y-30+D*.6+4)+'">+ stack a habit</text></g>';y-=34}
-  if(on&&live&&typeof state!=='undefined'&&state.pet)out+=cat(HW*.45,roof+D*1.45);
-  return {svg:out,height:-y+10};
- }
- function sky(){
-  const n=new Date(),hr=n.getHours()+n.getMinutes()/60;
-  const night=hr<5.5||hr>=20.5,edge=!night&&(hr<7.5||hr>=18);
-  const c=night?['#070b1a','#0b1228','#111b3d']:edge?['#1d2350','#6b4b7c','#d98a6c']:['#2f66b8','#6fa5dd','#a9d0ee'];
-  let st='';
-  if(night||edge){let r=7;for(let i=0;i<46;i++){r=(r*73+19)%997;const x=r%400;r=(r*73+19)%997;st+='<circle cx="'+x+'" cy="'+(r%210)+'" r="'+(i%7?0.7:1.2)+'" fill="#d5ddff" opacity="'+((night?0.25:0.1)+(i%5)*0.1)+'"/>'}}
-  const t=night?((hr+3.5)%24)/9:(hr-5.5)/15,x=36+Math.max(0,Math.min(1,t))*250,y=104-Math.sin(Math.max(0,Math.min(1,t))*Math.PI)*46;
-  st+='<circle cx="'+x+'" cy="'+y+'" r="'+(night?9:13)+'" fill="'+(night?'#e9edff':edge?'#ffd9a8':'#fff3c4')+'" opacity=".9"/>';
-  return '<defs><linearGradient id="hbSky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="'+c[0]+'"/><stop offset=".62" stop-color="'+c[1]+'"/><stop offset="1" stop-color="'+c[2]+'"/></linearGradient>'+
-   '<radialGradient id="hbShade"><stop stop-color="rgba(0,0,0,.42)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></radialGradient>'+
-   '<linearGradient id="hbLit" x1="0" x2="0" y1="0" y2="1"><stop stop-color="rgba(255,255,255,.16)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient>'+
-   '<linearGradient id="hbDim" x1="0" x2="0" y1="0" y2="1"><stop stop-color="rgba(0,0,0,0)"/><stop offset="1" stop-color="rgba(0,0,0,.22)"/></linearGradient>'+
-   '<linearGradient id="hbGround" x1="0" x2="0" y1="0" y2="1"><stop stop-color="rgba(6,9,20,0)"/><stop offset="1" stop-color="rgba(6,9,20,.78)"/></linearGradient></defs>'+
-   '<rect width="400" height="400" fill="url(#hbSky)"/>'+st+'<rect y="250" width="400" height="150" fill="url(#hbGround)"/>';
- }
- function scene(m){
-  const n=m.stacks.length;let out=sky();
-  if(!n)out+='<g class="hb-blk hb-ghost" data-act="newstack" role="button" tabindex="0" aria-label="Lay your first foundation" transform="translate(200,330)"><polygon points="0,'+(-2*D)+' '+HW+','+(-D)+' 0,0 '+(-HW)+','+(-D)+'"/><text class="hb-sign" text-anchor="middle" x="0" y="'+(-D+4)+'">+ lay a foundation</text></g>';
-  m.stacks.forEach((s,i)=>{
-   const o=i-focus,on=!city&&o===0,t=tower(s,on,m.live);
-   let tf,op=1;
-   if(city){const k=Math.min(.7,340/(n*172),300/t.height),gap=n>1?(400-2*HW*k-28)/(n-1):0;tf='translate('+(n>1?14+HW*k+i*gap:200)+'px,374px) scale('+k+')'}
-   else if(on)tf='translate(200px,376px) scale('+Math.min(1.25,292/t.height)+')';
-   else{tf='translate('+(200+o*152)+'px,318px) scale(.56)';op=Math.abs(o)===1?.38:0}
-   out+='<g class="hb-tower" data-i="'+i+'" style="transform:'+tf+';opacity:'+op+(op?'':';pointer-events:none')+'">'+t.svg+'</g>';
+   marks[b.id]=y+D+h/2;
+   if(was)fx+=dust(y,h);
+   if(felled===b.id)fx+=fallen(y-26,key);
   });
-  return out;
+  /* a habit that is gone is a tree on the lot beside the tower, so nothing is ever built around it */
+  if(gone.some(b=>b.id===felled))fx+=fallen(y-26,s.id+felled);
+  gone.slice(0,4).forEach((b,i)=>{
+   const x=[-HW-16,HW+16,-HW-2,HW+2][i],ty=i<2?-D:-D+14;marks[b.id]=-D-24;
+   fx+=(on&&sel===b.id?'<ellipse class="hb-fx hb-ring" cx="'+x+'" cy="'+ty+'" rx="17" ry="6"/>':'')+tree(x,ty,b.id,b.name);
+  });
+  /* the rooftop reward sits flush on the roof: dull until the stack is done, gold when it can be claimed, flagged once it has been */
+  if(s.treat&&live&&s.blocks.length){
+   const open=!s.next&&!s.claimed,k=.7,yt=y+D*(1-k)-22,px=HW*k*.52,py=n1(yt+D*k);
+   out+=prism(yt,22,open||s.claimed?'treat':'lock','hb-treat'+(open?' lit':''),'data-treat="'+s.id+'" role="button" tabindex="0" aria-label="Rooftop reward: '+esc(s.treat)+'"',{k,key:s.id+'t',
+    extra:'<text class="hb-sign" data-fit="74" text-anchor="middle" x="'+(s.claimed?-8:0)+'" y="'+n1(yt+D*k+3.5)+'">'+esc(s.claimed?'Enjoyed':fit(s.treat,14))+'</text>'+
+     (s.claimed?'<path class="hb-fx" d="M'+px+','+py+'v-25" stroke="#fff7d6" stroke-width="1.6" fill="none"/><path class="hb-fx hb-flag" d="M'+px+','+n1(py-25)+'l13,4.5l-13,5z" fill="#ff6b6b"/>':'')});
+   y=yt-(s.claimed?6:0);
+  }
+  if(on&&live&&!city){
+   const gy=y-14;y=gy-34;
+   out+='<g class="hb-blk hb-ghost" data-new="'+s.id+'" role="button" tabindex="0" aria-label="Stack a habit here"><polygon points="0,'+y+' 50,'+(gy-17)+' 0,'+gy+' -50,'+(gy-17)+'"/><text class="hb-sign" text-anchor="middle" x="0" y="'+n1(gy-13.5)+'">+ stack a habit</text></g>';
+  }
+  if(on&&live&&typeof state!=='undefined'&&state.pet)fx+=cat(HW*(s.treat?.47:.36),roof+D*(s.treat?1.45:1.32));
+  return {svg:out+fx,height:8-y,top:y,marks};
+ }
+ /* night, the hour around sunrise and sunset, or day, and where the sun or moon stands */
+ function clock(){
+  const n=new Date(),hr=n.getHours()+n.getMinutes()/60,night=hr<5.5||hr>=20.5,t=clamp(night?((hr+3.5)%24)/9:(hr-5.5)/15,0,1);
+  return {ph:night?'night':hr<7.5||hr>=18?'dusk':'day',x:36+t*250,y:104-Math.sin(t*Math.PI)*46};
+ }
+ function skyline(seed,lo,hi){let r=seed,x=-130,d='M-130,600';while(x<530){r=(r*73+19)%997;const w=12+r%20;r=(r*73+19)%997;d+='V'+(HZ-lo-r%(hi-lo))+'H'+(x+=w)}return d+'V600Z'}
+ /* everything behind the towers. Drawn once for each time of day, not on every render */
+ function skyHtml(ph){
+  const p=PAL[ph],hz=n1(HZ/400);let st='',lit='';
+  if(ph!=='day'){let r=7;for(let i=0;i<46;i++){r=(r*73+19)%997;const x=r%400;r=(r*73+19)%997;st+='<circle'+(i%7?'':' class="hb-twk" style="animation-delay:-'+n1(i%5*.48)+'s"')+' cx="'+x+'" cy="'+(r%(ph==='night'?240:120))+'" r="'+(i%7?0.7:1.2)+'" fill="#d5ddff" opacity="'+n1((ph==='night'?0.25:0.1)+(i%5)*0.1)+'"/>'}
+   let q=11;for(let i=0;i<16;i++){q=(q*73+19)%997;const x=q%400;q=(q*73+19)%997;lit+='<rect x="'+x+'" y="'+(HZ-11+q%8)+'" width="1.6" height="1.6" fill="#ffd27a" opacity=".75"/>'}}
+  else st='<g class="hb-cloud"><g transform="translate(120,74)" fill="#fff" opacity=".85"><ellipse rx="34" ry="11"/><ellipse cx="-14" cy="-8" rx="16" ry="11"/><ellipse cx="10" cy="-11" rx="20" ry="14"/></g></g>'+
+   '<g class="hb-cloud" style="animation-delay:-31s"><g transform="translate(170,132) scale(.7)" fill="#fff" opacity=".7"><ellipse rx="34" ry="11"/><ellipse cx="-12" cy="-8" rx="18" ry="11"/><ellipse cx="14" cy="-10" rx="18" ry="12"/></g></g>';
+  return '<defs><linearGradient id="hbSky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="'+p.sky[0]+'"/><stop offset="'+n1(hz*.6)+'" stop-color="'+p.sky[1]+'"/><stop offset="'+hz+'" stop-color="'+p.sky[2]+'"/></linearGradient>'+
+   '<linearGradient id="hbGnd" x1="0" x2="0" y1="0" y2="1"><stop stop-color="'+p.gnd[0]+'"/><stop offset=".3" stop-color="'+p.gnd[1]+'"/></linearGradient>'+
+   '<linearGradient id="hbHaze" x1="0" x2="0" y1="0" y2="1"><stop stop-color="'+p.haze+'" stop-opacity="0"/><stop offset="1" stop-color="'+p.haze+'"/></linearGradient>'+
+   '<radialGradient id="hbHalo"><stop stop-color="'+p.halo+'"/><stop offset="1" stop-color="'+p.halo+'" stop-opacity="0"/></radialGradient></defs>'+
+   '<rect x="-200" y="-200" width="800" height="900" fill="url(#hbSky)"/>'+st+
+   '<g class="hb-orb">'+(ph==='night'?'<circle r="40" fill="url(#hbHalo)"/><path d="M-4,-9A9,9 0 1,1 -4,9A4.2,9 0 0,0 -4,-9Z" fill="#e9edff" transform="rotate(-28)"/>':'<circle r="'+(ph==='day'?34:46)+'" fill="url(#hbHalo)"/><circle r="12" fill="'+(ph==='dusk'?'#ffd9a8':'#fff3c4')+'"/>')+'</g>'+
+   '<g class="hb-par far"><path d="'+skyline(5,26,64)+'" fill="'+p.far+'"/></g><g class="hb-par near"><path d="'+skyline(23,12,36)+'" fill="'+p.near+'"/>'+lit+'</g>'+
+   '<g class="hb-par gnd"><rect x="-200" y="'+(HZ-30)+'" width="800" height="30" fill="url(#hbHaze)"/><rect x="-200" y="'+HZ+'" width="800" height="500" fill="url(#hbGnd)"/><rect x="-200" y="'+HZ+'" width="800" height="1" fill="'+p.line+'"/></g>';
+ }
+ /* a long label is squeezed to the face it is written on, once it is on the page and can be measured */
+ function fitText(g){
+  g.querySelectorAll('text[data-fit]').forEach(t=>{try{const max=+t.dataset.fit;if(t.getComputedTextLength()>max){t.setAttribute('textLength',max);t.setAttribute('lengthAdjust','spacingAndGlyphs')}}catch(e){}});
+ }
+ const put=(el,html)=>{if(el._h===html)return false;el._h=html;el.innerHTML=html;return true};
+ const cityFit=n=>{const k=Math.min(.7,340/(n*190));return {k,gap:n>1?(400-2*HW*k-28)/(n-1):0}};
+ /* where every tower stands. The nodes stay, so a change of stack, of view or of scroll is a move, not a redraw.
+    A tower too tall for the scene keeps a readable size and is scrolled: by itself to the next block, or by a vertical drag */
+ function place(stagger){
+  const m=view.m,live=view.live,n=m.stacks.length,s=live.stacks[focus],picked=!city&&!!s&&s.blocks.some(b=>b.id===sel),top=(picked?100:0)+46,c=cityFit(n);
+  const f=!city&&m.stacks[focus]&&nodes[m.stacks[focus].id];let pan=0;view.max=0;
+  if(f){
+   const t=f._t,aim=picked?t.marks[sel]:s.next?t.marks[s.next.id]:t.top;
+   view.k=clamp((BASE-top)/t.height,.9,1.25);view.max=Math.max(0,view.k*t.height-(BASE-top));
+   pan=clamp(view.pan===null?(picked?235:180)-BASE-view.k*aim:view.pan,0,view.max);
+  }
+  view.now=pan;
+  m.stacks.forEach((st,i)=>{
+   const g=nodes[st.id],t=g._t,o=i-focus;let x=200,y=BASE+pan,k=view.k,op=1;
+   if(city){k=Math.min(c.k,290/t.height);x=n>1?14+HW*c.k+i*c.gap:200;y=352}
+   else if(o){k=Math.min(.5,150/t.height);x=200+o*152;y=330+pan;op=Math.abs(o)===1&&!picked?.55:0}
+   g.style.transitionDelay=stagger?i*40+'ms':'';
+   g.style.transform='translate('+n1(x)+'px,'+n1(y)+'px) scale('+Math.round(k*1000)/1000+')';
+   g.style.opacity=op;g.style.pointerEvents=op?'':'none';g.dataset.i=i;
+  });
+  const px=city?0:Math.min(focus,5),par=(q,dx,dy)=>{const e=ui.bg.querySelector(q);if(e)e.style.transform='translate('+dx+'px,'+n1(dy)+'px)'};
+  par('.far',-px*8,pan*.5);par('.near',-px*18,pan*.75);par('.gnd',0,pan);
+  ui.sky.classList.toggle('tall',view.max>0);
+ }
+ function shell(){
+  root.innerHTML='<div class="hb-hud"></div><div class="hb-sky" data-noswipe="1"><svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax slice" role="img" aria-label="Your habit stacks"><defs>'+DEFS+'</defs><g class="hb-bg"></g><g class="hb-towers"></g></svg><div class="hb-over"></div></div><div class="hb-below"></div>';
+  const q=c=>root.querySelector(c);ui={hud:q('.hb-hud'),sky:q('.hb-sky'),bg:q('.hb-bg'),tw:q('.hb-towers'),over:q('.hb-over'),below:q('.hb-below'),ph:''};nodes={};
  }
  function strikeHtml(m){
   const s=m.stacks[focus];
@@ -189,7 +305,7 @@ const HabitsFeature=(function(){
   if(!s.blocks.length)return ['hb-strike','new','Empty foundation','Stack a habit on '+s.cue.toLowerCase(),'+'];
   const nx=s.next;
   if(nx&&nx.kind==='fade')return ['hb-strike clean','lay','Stayed clean today','Knock a floor off: '+nx.name,'↓'];
-  if(nx)return ['hb-strike','lay','Lay the next block'+(combo?' · combo ×'+(combo+1):''),nx.name,'▲'];
+  if(nx)return ['hb-strike','lay','Lay the next block'+(combo?' · combo ×'+(combo+1):''),nx.name,ICON];
   if(s.treat&&!s.claimed)return ['hb-strike claim','claim','Stack complete · rooftop unlocked','Claim: '+s.treat,'★'];
   const more=m.stacks.findIndex((x,i)=>i!==focus&&x.next);
   return more<0?['hb-strike rest','','Skyline complete','Every block is laid today','']:['hb-strike rest','goto','This stack is done','Go to '+m.stacks[more].cue.toLowerCase(),'→'];
@@ -199,33 +315,61 @@ const HabitsFeature=(function(){
   if(!b)return '<span class="hb-tag">'+(m.stacks.length?'Tap a block to tune it · tap a foundation to rename it':'A foundation is something you already do every day')+'</span>';
   const fade=b.kind==='fade';
   const say=b.cleared?'This one is gone. A tree stands where it was.':b.done?(b.scar?'You missed this once and came back. The gold seam stays.':''):b.miss>=2?'Missed twice. It is probably too big for a tired day. Turn Size down and keep the rep.':b.miss===1?'Missed yesterday. One crack is nothing. Lay the small version today.':'';
-  const kn=(k,l,g,v,r,weak)=>'<button class="hb-knob'+(weak?' weak':'')+'" data-act="knob" data-k="'+k+'"><span class="l">'+l+'</span><span class="dial" style="--r:'+r+'deg">'+g+'</span><span class="v">'+esc(v)+'</span></button>';
+  /* a dial: what it is called, a small picture of what it does, and what it is set to; only Size has a pointer, with three places */
+  const kn=(k,l,g,v,on,o)=>'<button class="hb-knob'+(o&&o.weak?' weak':'')+'" data-act="knob" data-k="'+k+'"><span class="l">'+l+'</span><span class="dial'+(on?' on':'')+(o&&o.ptr!==undefined?' ptr" style="--r:'+o.ptr+'deg':'')+'"><svg viewBox="0 0 24 24"'+(o&&o.solid?' class="f"':'')+' aria-hidden="true">'+g+'</svg></span><span class="v">'+esc(v)+'</span></button>';
+  const bars=fade?[0,1,2].map(i=>'<rect x="5" y="'+(5.5+i*5)+'" width="14" height="3" rx="1"/>').join(''):[0,1,2].map(i=>'<rect x="'+(5+i*5.25)+'" y="'+(14-i*4.5)+'" width="3.5" height="'+(6+i*4.5)+'" rx="1"'+(i<=b.set?'':' opacity=".25"')+'/>').join('');
   return '<div class="hb-top"><button class="hb-name" data-act="names">'+esc(b.name)+'</button><span class="hb-mat">'+MATNAME[b.mat]+'</span></div>'+(say?'<p class="hb-say">'+say+'</p>':'')+
-   '<div class="hb-knobs">'+kn('cue','Cue','1',s.cue,focus*60-90)+kn('pair',fade?'Instead':'Pair','2',b.pair||'Nothing yet',b.pair?40:-80)+
-   kn('size',fade?'Floors':'Size','3',fade?b.left+' left':['2 minutes','Normal','Stretch'][b.set],fade?0:b.set*90-90,!fade&&!b.done&&b.miss>=2&&b.set>0)+
-   kn('treat','Reward','4',s.treat||'None yet',s.treat?40:-80)+'</div>'+
+   '<div class="hb-knobs">'+kn('cue','Cue',GLYPH.cue,s.cue,true)+kn('pair',fade?'Instead':'Pair',GLYPH.pair,b.pair||'Nothing yet',!!b.pair)+
+   kn('size',fade?'Floors':'Size',bars,fade?b.left+' left':['2 minutes','Normal','Stretch'][b.set],true,fade?{solid:true}:{solid:true,ptr:(b.set-1)*52,weak:!b.done&&b.miss>=2&&b.set>0})+
+   kn('treat','Reward',GLYPH.treat,s.treat||'None yet',!!s.treat,{solid:!!s.treat})+'</div>'+
    (s.blocks.length>1?'<div class="hb-row"><button class="hb-link" data-act="earlier"'+(s.blocks[0]===b?' disabled':'')+'>↓ Do it earlier</button><button class="hb-link" data-act="later"'+(s.blocks[s.blocks.length-1]===b?' disabled':'')+'>Do it later ↑</button></div>':'')+
    '<div class="hb-row">'+(b.done?'<button class="hb-link" data-act="undo">Undo today’s block</button>':'<span></span>')+'<button class="hb-link end" data-act="retire">'+(fade?'Stop tracking this':'Retire this habit')+'</button></div>';
  }
  function render(){
   if(!root)return;
-  const day=city&&weeks?addDays(getToday(),-7*weeks):null,m=model(day),live=model();
-  if(focus>=m.stacks.length)focus=Math.max(0,m.stacks.length-1);
+  const day=city&&weeks?addDays(getToday(),-7*weeks):null,m=model(day),live=model(),n=m.stacks.length,off=still();
+  if(focus>=n)focus=Math.max(0,n-1);
+  if(!ui||!root.contains(ui.sky))shell();
+  if(off)laid=felled=upg=0;
+  root.classList.toggle('hb-still',off);
+  const s=live.stacks[focus],picked=!city&&!!s&&s.blocks.some(b=>b.id===sel);
   const who=live.who||(typeof CLASSES!=='undefined'&&state.classId&&(CLASSES.find(c=>c.id===state.classId)||{}).name)||'';
+  /* the header: who you are becoming, and how many of today's blocks are laid (habits you are building only) */
+  const roll=!off&&view.n>=0&&live.built>view.n;view.n=live.built;
+  put(ui.hud,'<button class="hb-who" data-act="who"><span class="hb-tag">Becoming</span><b>'+esc(who||'Tap to say who')+'</b></button>'+
+   (live.due?'<div class="hb-count"><strong'+(roll?' class="roll"':'')+'><b>'+live.built+'</b></strong> <span>/ '+live.due+' today'+(combo>1?' · <em>combo ×'+combo+'</em>':'')+'</span></div>':''));
+  /* the scene: the sky is drawn once for each time of day, each tower keeps its node and only its inside is redrawn when it changes */
+  const c=clock(),pal=PAL[c.ph],fitc=cityFit(n),keep={};
+  if(ui.ph!==c.ph){ui.ph=c.ph;ui.bg.innerHTML=skyHtml(c.ph)}
+  ui.bg.querySelector('.hb-orb').setAttribute('transform','translate('+n1(c.x)+','+n1(c.y)+')');
+  ui.sky.classList.toggle('sel',picked);ui.sky.classList.toggle('city',city);
+  (n?m.stacks:[{id:'+'}]).forEach((st,i)=>{
+   let g=nodes[st.id],html;keep[st.id]=1;
+   if(!g){g=nodes[st.id]=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','hb-tower');g.dataset.id=st.id;ui.tw.appendChild(g)}
+   if(n){
+    const t=g._t=tower(st,!city&&i===focus,m.live,pal),k=Math.min(fitc.k,290/t.height);
+    html=t.svg+(city?'<text class="hb-city" text-anchor="middle" data-fit="'+n1((n>1?fitc.gap-6:300)/k)+'" x="0" y="'+n1(D*.3+5+13/k)+'" style="font-size:'+n1(10.5/k)+'px" fill="'+pal.ink+'">'+esc(fit(st.cue,20))+'</text>':'');
+   }else{
+    html=plot(1.7,pal)+'<g class="hb-blk hb-ghost" data-act="newstack" role="button" tabindex="0" aria-label="Lay your first foundation"><polygon points="0,'+(-2*D)+' '+HW+','+(-D)+' 0,0 '+(-HW)+','+(-D)+'"/><text class="hb-sign" text-anchor="middle" x="0" y="'+(-D+4)+'">+ lay a foundation</text></g>';
+    g.style.transform='translate(200px,'+BASE+'px) scale(1.15)';
+   }
+   if(put(g,html))fitText(g);
+  });
+  for(const id in nodes)if(!keep[id]){nodes[id].remove();delete nodes[id]}
+  view.m=m;view.live=live;
+  if(n)place(view.city!==city);
+  view.city=city;
+  const arrow=(a,l,d)=>'<button class="hb-nav '+a+'" data-act="'+a+'" aria-label="'+l+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></svg></button>';
+  put(ui.over,(n>1&&!city?(focus>0?arrow('prev','Previous stack','M15 4l-8 8 8 8'):'')+(focus<n-1?arrow('next','Next stack','M9 4l8 8-8 8'):''):'')+
+   (n?'<button class="hb-view" data-act="view">'+(city?'Tower view':'City view')+'</button>':'')+
+   (city?'<button class="hb-view left" data-act="newstack">+ Foundation</button>':'<div class="hb-dots">'+m.stacks.map((x,i)=>'<i class="'+(i===focus?'on':'')+'"></i>').join('')+'</div>'));
   const st=strikeHtml(live);
-  root.innerHTML=
-   '<div class="hb-hud"><button class="hb-who" data-act="who"><span class="hb-tag">Becoming</span><b>'+esc(who||'Tap to say who')+'</b></button>'+
-   '<div class="hb-count"><strong>'+live.laid+'</strong><span>'+(combo>1?'blocks today · <em>combo ×'+combo+'</em>':live.laid===1?'block laid today':'blocks laid today')+'</span></div></div>'+
-   '<div class="hb-sky" data-noswipe="1"><svg viewBox="0 0 400 400" role="img" aria-label="Your habit stacks">'+scene(m)+'</svg>'+
-   (m.stacks.length>1&&!city?'<button class="hb-nav l" data-act="prev" aria-label="Previous stack">‹</button><button class="hb-nav r" data-act="next" aria-label="Next stack">›</button>':'')+
-   (m.stacks.length?'<button class="hb-view" data-act="view">'+(city?'Tower view':'City view')+'</button>':'')+
-   (city?'<button class="hb-view left" data-act="newstack">+ Foundation</button>':'')+
-   (city?'':'<div class="hb-dots">'+m.stacks.map((s,i)=>'<i class="'+(i===focus?'on':'')+'"></i>').join('')+'</div>')+'</div>'+
-   (city?'<div class="hb-lapse"><div class="r"><span>Time-lapse</span><b>'+(weeks?weeks+(weeks===1?' week ago':' weeks ago'):'Today')+'</b></div><input type="range" min="0" max="'+MAXW+'" value="'+(MAXW-weeks)+'" data-act="lapse" aria-label="Weeks ago"><div class="r"><span>'+MAXW+' weeks ago</span><span>today</span></div></div>':
-    '<button class="'+st[0]+'" data-act="'+st[1]+'"'+(st[1]?'':' disabled')+'><span><small>'+esc(st[2])+'</small><b>'+esc(st[3])+'</b></span><span class="k">'+st[4]+'</span></button>'+
-    (live.stacks.some(s=>s.blocks.some(b=>b.kind!=='fade'))?'<button class="hb-rough'+(live.rough?' on':'')+'" data-act="rough">'+(live.rough?'Rough day is on · blocks are 2 minutes today':'Rough day? Shrink today’s blocks to 2 minutes')+'</button>':'')+
-    '<div class="hb-tune">'+tuneHtml(live)+'</div>');
-  laid=0;
+  put(ui.below,city?'<div class="hb-lapse"><div class="r"><span>Time-lapse</span><b></b></div><input type="range" min="0" max="'+MAXW+'" data-act="lapse" aria-label="Weeks ago"><div class="r"><span>'+MAXW+' weeks ago</span><span>today</span></div></div>':
+   '<button class="'+st[0]+'" data-act="'+st[1]+'"'+(st[1]?'':' disabled')+'><span><small>'+esc(st[2])+'</small><b>'+esc(st[3])+'</b></span><span class="k">'+st[4]+'</span></button>'+
+   (!picked&&live.stacks.some(x=>x.blocks.some(b=>b.kind!=='fade'))?'<button class="hb-rough'+(live.rough?' on':'')+'" data-act="rough">'+(live.rough?'Rough day is on · blocks are 2 minutes today':'Rough day? Shrink today’s blocks to 2 minutes')+'</button>':'')+
+   '<div class="hb-tune">'+tuneHtml(live)+'</div>');
+  if(city){ui.below.querySelector('.hb-lapse b').textContent=weeks?weeks+(weeks===1?' week ago':' weeks ago'):'Today';ui.below.querySelector('[data-act=lapse]').value=MAXW-weeks}
+  laid=felled=upg=0;
   /* the sheet lives on the page's body, above the bottom bar and every card */
   host.innerHTML=sheet?sheetHtml():'';
   if(sheet){const f=host.querySelector('.hb-sheet input');if(f&&sheet.fresh){sheet.fresh=false;try{f.focus()}catch(e){}}}
@@ -262,10 +406,11 @@ const HabitsFeature=(function(){
  function shut(){sheet=null;render()}
 
  /* ---------- touch ---------- */
- function go(d){const n=read().stacks.length;if(city||!n)return;const to=Math.max(0,Math.min(n-1,focus+d));if(to!==focus){focus=to;sel=null;combo=0;buzz('tick')}render()}
+ function go(d){const n=read().stacks.length;if(city||!n)return;const to=Math.max(0,Math.min(n-1,focus+d));view.pan=null;if(to!==focus){focus=to;sel=null;combo=0;buzz('tick')}render()}
  const buzz=k=>{try{if(typeof lmaBuzz==='function')lmaBuzz(k)}catch(e){}};
  function act(a,el){
   const m=model(),s=m.stacks[focus],b=s&&s.blocks.find(x=>x.id===sel);
+  view.pan=null;
   if(a==='prev')return go(-1);
   if(a==='next')return go(1);
   if(a==='view'){city=!city;weeks=0;sel=null;return render()}
@@ -275,8 +420,8 @@ const HabitsFeature=(function(){
   if(a==='lay'&&s&&s.next){
    const nx=s.next;
    if(api.lay(nx.id)){
-    if(nx.kind!=='fade'){laid=nx.id;combo++;const now=matAt(nx.reps+1);if(now!==nx.mat)toast(nx.names[1]+' is now '+now+(now==='gold'?'. It runs itself.':''))}
-    else if(nx.left===1)toast(nx.names[1]+' is gone. A tree stands where it was.');
+    if(nx.kind!=='fade'){laid=nx.id;combo++;const now=matAt(nx.reps+1);if(now!==nx.mat){upg=nx.id;toast(nx.names[1]+' is now '+now+(now==='gold'?'. It runs itself.':''))}}
+    else{felled=nx.id;if(nx.left===1)toast(nx.names[1]+' is gone. A tree stands where it was.')}
     buzz('end');
    }
    return render();
@@ -302,10 +447,11 @@ const HabitsFeature=(function(){
   }
  }
  function onClick(e){
+  if(moved&&e.timeStamp-moved<350&&e.target.closest('.hb-sky'))return; /* the end of a drag is not a tap */
   const t=e.target.closest('[data-act]');
   if(t&&(root.contains(t)||host.contains(t))){if(t.dataset.act!=='lapse')act(t.dataset.act,t);return}
   const tw=e.target.closest('.hb-tower');if(!tw)return;
-  const i=+tw.dataset.i;
+  const i=+tw.dataset.i;view.pan=null;
   if(city){city=false;weeks=0;focus=i;sel=null;return render()}
   if(i!==focus){focus=i;sel=null;combo=0;return render()}
   const g=e.target.closest('[data-new],[data-b],[data-stack],[data-treat]');if(!g)return;
@@ -314,17 +460,29 @@ const HabitsFeature=(function(){
   if(g.dataset.stack)return stackSheet(g.dataset.stack);
   sel=sel===g.dataset.b?null:g.dataset.b;render();
  }
- let sx=null;
+ /* a sideways swipe on the scene changes stack; an up-and-down drag scrolls a tower too tall to fit (when it fits, the page scrolls) */
+ function onMove(e){
+  if(!drag||(e.pointerType==='mouse'&&!e.buttons)){drag=null;return}
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(!drag.way&&Math.max(Math.abs(dx),Math.abs(dy))>8){drag.way=Math.abs(dx)>Math.abs(dy)?'x':'y';if(drag.way==='y'&&view.max>0)ui.sky.classList.add('drag')}
+  if(drag.way==='y'&&view.max>0&&!city){view.pan=clamp(drag.pan+dy*400/drag.w,0,view.max);place(false)}
+ }
+ function onLift(e){
+  if(!drag)return;
+  const d=drag,dx=e.clientX-d.x;drag=null;ui.sky.classList.remove('drag');
+  moved=d.way?e.timeStamp:0;
+  if(e.type==='pointerup'&&d.way==='x'&&Math.abs(dx)>40)go(dx<0?1:-1);
+ }
  function mount(el){
   if(!root){
    root=el.querySelector('.hb')||el;
    host=document.createElement('div');host.className='hb hb-host';document.body.appendChild(host);
    root.addEventListener('click',onClick);host.addEventListener('click',onClick);
    host.addEventListener('submit',e=>{e.preventDefault();if(sheet&&sheet.save)sheet.save(vals())});
-   root.addEventListener('input',e=>{if(e.target.dataset.act==='lapse'){weeks=MAXW-(+e.target.value);render();const r=root.querySelector('[data-act=lapse]');if(r)r.focus()}});
-   root.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest&&e.target.closest('.hb-blk'))e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))});
-   root.addEventListener('touchstart',e=>{sx=e.target.closest('.hb-sky')?e.touches[0].clientX:null},{passive:true});
-   root.addEventListener('touchend',e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>40){e.stopPropagation();go(dx<0?1:-1)}},{passive:true});
+   root.addEventListener('input',e=>{if(e.target.dataset.act==='lapse'){weeks=MAXW-(+e.target.value);render()}});
+   root.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest&&e.target.closest('.hb-blk,.hb-tree'))e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))});
+   root.addEventListener('pointerdown',e=>{drag=ui&&e.target.closest('.hb-sky')&&!e.target.closest('button')?{x:e.clientX,y:e.clientY,pan:view.now,w:ui.sky.clientWidth||400,way:''}:null});
+   root.addEventListener('pointermove',onMove);root.addEventListener('pointerup',onLift);root.addEventListener('pointercancel',onLift);
    const m=model(),due=m.stacks.findIndex(s=>s.next);if(due>=0)focus=due;
   }
   combo=0;render();
