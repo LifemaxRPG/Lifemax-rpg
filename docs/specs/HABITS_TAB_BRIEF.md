@@ -123,3 +123,39 @@ at most six are shown and never one that is already there.
 
 Not built yet: drag to move a block, reminders, the first-run scorecard, Life Director supplying foundations, Habits in the
 owner's manual backup.
+
+## Pending work (handed over, nothing started in code)
+
+State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The
+owner's requests since then, in his order of priority; none of this is built:
+
+1. Three phone bugs (Galaxy S25 Ultra, build 517), fix first:
+   - a Habits sheet (seen on "New habit") hangs from near the top of the screen and is cut off mid-screen, with the scene
+     visible below it; it must be a bottom sheet above the bottom bar, growing upward, scrollable;
+   - with the keyboard open the sheet disappears (only the squeezed scene and the keyboard show). Suspect: the host view is
+     resized by the IME and the sheet also applies imePadding, or the sheet is laid out inside the scene's measured content
+     rect. Compare with Life Director's SheetHost, the Food add-food sheet and Recipes;
+   - the app's top bar (picture, name, Log activity, mic, settings) is missing on the Habits tab: the screen covers the whole
+     display. Other native tabs draw below that header. Suspect the cover rect taken from the empty placeholder view.
+   Check every Habits sheet for the same problems.
+2. Scene redesign, the owner's words: "instead of the cities thing, let's have it just be a building, and each habit adds a
+   new floor to it, and it's along a street, and you can scroll through the different habit stacks along the street, and keep
+   the stars and the cityscape background. The buildings should have little windows, and you should see the silhouettes of
+   people working inside." Agreed reading: one building per foundation on a continuous street (horizontal scroll with
+   momentum and a soft snap; the centred building is the active one; a zoom-out fits the street and holds the time-lapse; the
+   City toggle goes); ground floor is the foundation with its name on a sign; each habit is a floor, floor height is the
+   habit's size, its name on a flat plaque; a floor done today has warm lit windows with small animated silhouettes, an
+   undone floor is dark, the next one pulses; lit windows and people grow with total reps; facade finish follows the material
+   steps (10, 30, 66 reps); a missed day is a crack and a flickering light, two is sputtering lights, coming back is a gold
+   seam; a habit being broken is a run-down building taken down a floor per clean day, ending as a small park; the rooftop
+   reward is a rooftop sign or garden that lights when the building is done today. No cat. Rules, store and sheets unchanged.
+3. Living background, the owner's words: "animate the background cityscape as well, and maybe add birds, airplanes, make the
+   stars twinkle. Make it look like a real place." Agreed reading: every star twinkles, a rare shooting star; far-skyline
+   windows switching slowly at night, blinking warning lights, horizon glow; an occasional airplane (nav lights at night,
+   contrail by day), birds by day and dusk, drifting clouds; street lamps, a distant car light, swaying trees, a waving flag.
+   Ambient only, stops when the tab is hidden, a still frame under reduced motion, deterministic from time and a seed (pure
+   Kotlin, unit tested), frozen in screenshot tests.
+Also open: Habits is not in the owner's manual backup (a native export/import is the proposed fix); the "After yog" partial
+suggestion; the toast offset at large text. CI records Habits screenshots when the newest commit message carries
+`[refresh-habits-snapshots]`. Local compile of the Habits Kotlin, Compose included, worked with the embeddable Kotlin 2.0.21
+compiler and the Compose plugin from the Gradle cache (helper scripts were in /tmp/w/h and may not survive).
