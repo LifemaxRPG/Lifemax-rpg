@@ -17,6 +17,7 @@ const HabitsFeature=(function(){
   slab:['#6f7fa6','#4c5b82','#3d4a6d','#101728'],treat:['#f8dc85','#dcb146','#b98e2d','#4a3708'],
   lock:['rgba(248,220,133,.10)','rgba(248,220,133,.06)','rgba(248,220,133,.04)','#f8dc85']};
  const MATNAME={glass:'Glass · brand new',clay:'Clay · taking shape',stone:'Stone · nearly automatic',gold:'Gold · runs itself',fade:'Coming down'};
+ const STARTERS=['After waking up','After coffee','After lunch','After getting home','At lights out'];
  const CAT=['X...X...','XX.XX...','XXXXX...','XoXoX..X','XXXXX..X','.XXXXXX.','.XXXXXX.','.XXXXXX.'];
  let root=null,host=null,focus=0,sel=null,city=false,weeks=0,combo=0,laid=0,sheet=null;
 
@@ -80,6 +81,12 @@ const HabitsFeature=(function(){
    if(p.pair!==undefined)it.pair=clean(p.pair,28);
    if(p.stack!==undefined&&h.stacks.some(s=>s.id===p.stack)&&p.stack!==it.stack){it.stack=p.stack;h.items.splice(h.items.indexOf(it),1);h.items.push(it)}
   })},
+  /* earlier (-1) or later (1) in its stack: the order you do them in */
+  move(id,dir){return commit(h=>{
+   const it=h.items.find(x=>x.id===id);if(!it)return false;
+   const mine=h.items.filter(x=>x.stack===it.stack),i=mine.indexOf(it),other=mine[i+(dir<0?-1:1)];if(!other)return false;
+   const a=h.items.indexOf(it),b=h.items.indexOf(other);h.items[a]=other;h.items[b]=it;
+  })},
   retire(id){return commit(h=>{if(!h.items.some(x=>x.id===id))return false;h.items=h.items.filter(x=>x.id!==id);for(const d in h.log)delete h.log[d][id]})},
   /* lay today's block (a clean day, for a habit you are breaking); coming back after a missed day leaves a gold seam */
   lay(id){return commit(h=>{
@@ -102,7 +109,16 @@ const HabitsFeature=(function(){
    '<polygon class="hb-face" points="'+(-w)+','+(y+d)+' 0,'+(y+2*d)+' 0,'+(y+2*d+h)+' '+(-w)+','+(y+d+h)+'" fill="'+c[1]+'"'+dash+'/>'+
    '<polygon class="hb-face" points="'+w+','+(y+d)+' 0,'+(y+2*d)+' 0,'+(y+2*d+h)+' '+w+','+(y+d+h)+'" fill="'+c[2]+'"'+dash+'/>'+
    '<polygon class="hb-face" points="0,'+y+' '+w+','+(y+d)+' 0,'+(y+2*d)+' '+(-w)+','+(y+d)+'" fill="'+c[0]+'"'+dash+'/>'+
-   (m==='lock'?'':'<polyline points="'+(-w)+','+(y+d)+' 0,'+y+' '+w+','+(y+d)+'" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1"/>');
+   (m==='lock'?'':texture(y,h,m,w,d)+'<polyline points="'+(-w)+','+(y+d)+' 0,'+y+' '+w+','+(y+d)+'" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1"/>');
+ }
+ /* what a material looks like up close: courses on clay and stone, a shine on glass and gold, and light falling from the top left */
+ function texture(y,h,m,w,d){
+  const L=(-w)+','+(y+d)+' 0,'+(y+2*d)+' 0,'+(y+2*d+h)+' '+(-w)+','+(y+d+h),R=w+','+(y+d)+' 0,'+(y+2*d)+' 0,'+(y+2*d+h)+' '+w+','+(y+d+h);
+  let out='<polygon class="hb-fx" points="'+L+'" fill="url(#hbLit)"/><polygon class="hb-fx" points="'+R+'" fill="url(#hbDim)"/>';
+  const step=m==='clay'||m==='fade'?11:m==='stone'||m==='slab'?17:0;
+  if(step&&h>step+4)for(let k=step;k<h-3;k+=step)out+='<polyline class="hb-fx hb-course" points="'+(-w)+','+(y+d+k)+' 0,'+(y+2*d+k)+' '+w+','+(y+d+k)+'"/>';
+  if((m==='glass'||m==='gold'||m==='treat')&&h>20)out+='<polygon class="hb-fx" points="'+(-w*.86)+','+(y+d*1.14+4)+' '+(-w*.7)+','+(y+d*1.3+4)+' '+(-w*.7)+','+(y+d*1.3+h*.55)+' '+(-w*.86)+','+(y+d*1.14+h*.55)+'" fill="rgba(255,255,255,'+(m==='glass'?.22:.3)+')"/>';
+  return out;
  }
  const sign=(x0,y0,a,y,t,lt)=>'<text class="hb-sign'+(lt?' lt':'')+'" text-anchor="middle" transform="translate('+x0+','+y0+') skewY('+a+')" x="'+HW/2+'" y="'+y+'">'+esc(t)+'</text>';
  function cat(cx,by){let s='';const p=3.4;CAT.forEach((row,r)=>{for(let c=0;c<row.length;c++)if(row[c]!=='.')s+='<rect x="'+(cx-14+c*p)+'" y="'+(by-CAT.length*p+r*p)+'" width="'+(p+.2)+'" height="'+(p+.2)+'" fill="'+(row[c]==='o'?'#f6d679':'#05070d')+'"/>'});return '<g class="hb-cat">'+s+'</g>'}
@@ -149,6 +165,8 @@ const HabitsFeature=(function(){
   st+='<circle cx="'+x+'" cy="'+y+'" r="'+(night?9:13)+'" fill="'+(night?'#e9edff':edge?'#ffd9a8':'#fff3c4')+'" opacity=".9"/>';
   return '<defs><linearGradient id="hbSky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="'+c[0]+'"/><stop offset=".62" stop-color="'+c[1]+'"/><stop offset="1" stop-color="'+c[2]+'"/></linearGradient>'+
    '<radialGradient id="hbShade"><stop stop-color="rgba(0,0,0,.42)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></radialGradient>'+
+   '<linearGradient id="hbLit" x1="0" x2="0" y1="0" y2="1"><stop stop-color="rgba(255,255,255,.16)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient>'+
+   '<linearGradient id="hbDim" x1="0" x2="0" y1="0" y2="1"><stop stop-color="rgba(0,0,0,0)"/><stop offset="1" stop-color="rgba(0,0,0,.22)"/></linearGradient>'+
    '<linearGradient id="hbGround" x1="0" x2="0" y1="0" y2="1"><stop stop-color="rgba(6,9,20,0)"/><stop offset="1" stop-color="rgba(6,9,20,.78)"/></linearGradient></defs>'+
    '<rect width="400" height="400" fill="url(#hbSky)"/>'+st+'<rect y="250" width="400" height="150" fill="url(#hbGround)"/>';
  }
@@ -186,6 +204,7 @@ const HabitsFeature=(function(){
    '<div class="hb-knobs">'+kn('cue','Cue','1',s.cue,focus*60-90)+kn('pair',fade?'Instead':'Pair','2',b.pair||'Nothing yet',b.pair?40:-80)+
    kn('size',fade?'Floors':'Size','3',fade?b.left+' left':['2 minutes','Normal','Stretch'][b.set],fade?0:b.set*90-90,!fade&&!b.done&&b.miss>=2&&b.set>0)+
    kn('treat','Reward','4',s.treat||'None yet',s.treat?40:-80)+'</div>'+
+   (s.blocks.length>1?'<div class="hb-row"><button class="hb-link" data-act="earlier"'+(s.blocks[0]===b?' disabled':'')+'>↓ Do it earlier</button><button class="hb-link" data-act="later"'+(s.blocks[s.blocks.length-1]===b?' disabled':'')+'>Do it later ↑</button></div>':'')+
    '<div class="hb-row">'+(b.done?'<button class="hb-link" data-act="undo">Undo today’s block</button>':'<span></span>')+'<button class="hb-link end" data-act="retire">'+(fade?'Stop tracking this':'Retire this habit')+'</button></div>';
  }
  function render(){
@@ -227,6 +246,8 @@ const HabitsFeature=(function(){
   open({title:s?'Foundation':'New foundation',lead:'Something you already do every day. Habits stack on top of it.',go:s?'Save':'Lay it',
    fields:[{label:'When',value:s?s.cue:'',hint:'After coffee',max:28}].concat(s?[{label:'Rooftop reward (unlocks when the stack is done)',value:s.treat||'',hint:'One episode',max:24}]:[]),
    danger:s&&!read().items.some(it=>it.stack===id)?'Remove':'',
+   picks:s?null:STARTERS.filter(c=>!read().stacks.some(x=>x.cue.toLowerCase()===c.toLowerCase())).map(c=>({v:c,t:c})),
+   pick(v){if(api.addStack(v)){focus=read().stacks.length-1;city=false;shut()}},
    save(v){if(s){if(!api.editStack(id,{cue:v[0],treat:v[1]}))return}else{const nid=api.addStack(v[0]);if(!nid)return;focus=read().stacks.length-1;city=false}shut()},
    drop(){if(api.removeStack(id)){sel=null;shut()}}});
  }
@@ -251,7 +272,15 @@ const HabitsFeature=(function(){
   if(a==='newstack')return stackSheet(null);
   if(a==='new')return habitSheet(s.id,'build');
   if(a==='goto'){const more=m.stacks.findIndex((x,i)=>i!==focus&&x.next);if(more>=0){focus=more;sel=null;combo=0}return render()}
-  if(a==='lay'&&s&&s.next){if(api.lay(s.next.id)){if(s.next.kind!=='fade'){laid=s.next.id;combo++}buzz('end')}return render()}
+  if(a==='lay'&&s&&s.next){
+   const nx=s.next;
+   if(api.lay(nx.id)){
+    if(nx.kind!=='fade'){laid=nx.id;combo++;const now=matAt(nx.reps+1);if(now!==nx.mat)toast(nx.names[1]+' is now '+now+(now==='gold'?'. It runs itself.':''))}
+    else if(nx.left===1)toast(nx.names[1]+' is gone. A tree stands where it was.');
+    buzz('end');
+   }
+   return render();
+  }
   if(a==='claim'&&s){if(api.claim(s.id))buzz('end');return render()}
   if(a==='rough'){api.setRough(!m.rough);return render()}
   if(a==='who')return open({title:'Who are you becoming?',lead:'Every block you lay is a vote for this person.',fields:[{label:'I am becoming',value:read().who,hint:'a reader, an athlete',max:40}],save(v){if(api.setWho(v[0]))shut()}});
@@ -259,6 +288,7 @@ const HabitsFeature=(function(){
   if(a==='pick'&&sheet&&sheet.pick)return sheet.pick(el.dataset.v);
   if(a==='danger'&&sheet&&sheet.drop)return sheet.drop();
   if(!b)return;
+  if(a==='earlier'||a==='later'){api.move(b.id,a==='earlier'?-1:1);buzz('tick');return render()}
   if(a==='undo'){api.undo(b.id);combo=0;return render()}
   if(a==='retire')return open({title:b.kind==='fade'?'Stop tracking this?':'Retire this habit?',lead:'"'+b.names[1]+'" and its '+b.reps+(b.kind==='fade'?' clean days':' reps')+' will be removed.',danger:'Remove it',drop(){if(api.retire(b.id)){sel=null;shut()}}});
   if(a==='names')return open({title:'Name each size',lead:'The same habit at three sizes. On a hard day the two-minute one still counts.',

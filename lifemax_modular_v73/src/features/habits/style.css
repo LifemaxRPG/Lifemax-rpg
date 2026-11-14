@@ -24,6 +24,9 @@
 .hb-ghost .hb-sign{fill:#fff}
 .hb-sign{font:600 10px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;fill:#0a0f1f;pointer-events:none}
 .hb-sign.lt{fill:#eef2ff}.hb-sign.gold{fill:#f8dc85}
+.hb-fx{pointer-events:none}
+.hb-course{fill:none;stroke:rgba(0,0,0,.2);stroke-width:1}
+.hb .hb-link:disabled{opacity:.35}
 .hb-crack,.hb-seam{fill:none;stroke-width:1.6;pointer-events:none}
 .hb-seam{stroke:#ffe9a3;stroke-width:2.2;stroke-linecap:round}
 .hb-cat,.hb-tree{pointer-events:none}

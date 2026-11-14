@@ -46,6 +46,10 @@ const DAY = 24 * 3600 * 1000;
   ok('two missed days wobble and take no rep away', m.stacks[0].blocks[0].miss === 1 && m.stacks[0].blocks[0].reps === 1 && m.stacks[0].blocks[1].miss === 2, m.stacks[0].blocks);
   ok('coming back leaves a gold seam', await p.evaluate(id => Habits.lay(id) && Habits.model().stacks[0].blocks[1].scar === true && Habits.model().stacks[0].blocks[1].miss === 0, ids.j));
 
+  ok('a block moves earlier or later within its stack', await p.evaluate(({ r, j }) => {
+    const order = () => Habits.model().stacks[0].blocks.map(b => b.id).join();
+    return Habits.move(j, -1) === true && order() === j + ',' + r && Habits.move(j, -1) === null && Habits.move(j, 1) === true && order() === r + ',' + j;
+  }, ids));
   ok('size is the habit’s own; a rough day lays the two-minute one and leaves it alone', await p.evaluate(id => {
     Habits.editHabit(id, { size: 2, names: ['Read 1 page', 'Read 10 pages', 'Read 30 min'] }); const big = Habits.model().stacks[0].blocks[0].name;
     Habits.setRough(true); const small = Habits.model().stacks[0].blocks[0].name; Habits.lay(id);
