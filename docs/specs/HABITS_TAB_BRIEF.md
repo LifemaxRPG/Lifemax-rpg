@@ -140,8 +140,12 @@ that speak of towers, blocks and the city describe the scene this replaced.
   where it would stop (`StreetLayout.settle`), which is the one in front: the big button and the dots act on it. All
   buildings share the camera of the one in front (between two, the camera is between theirs), so a tall building zooms
   the whole street out a little; a building too tall even at 0.7 tilts the view up (the street is lowered) to its next
-  floor, and an up-and-down drag pans it. The City button is now Street: it (or a pinch) zooms out until the whole street
-  fits, with each building's name under it and the 12-week time-lapse, in which the buildings grow floor by floor.
+  floor and the floor above it, and an up-and-down drag pans it. The lowering is capped (`SceneWindow.panRoom`) so the
+  ground floor, sign and awning always stand `LOBBY_AIR` clear of the bottom band (rough-day switch, big button, dots);
+  a building too tall for that is drawn down to 0.6 (`CAMERA_TALL_MIN`) until its next floor is reachable. The City
+  button is now Street: it (or a pinch) zooms out until the whole street fits, with each building's name under it and
+  the 12-week time-lapse, in which the buildings grow floor by floor. The time-lapse is one slim card (the week, the
+  slider between its two ends) so the street keeps the height; "+ Foundation" is a small button beside Building.
 - A building: the ground floor is the foundation, a lobby with a shopfront, a striped awning (its colour the
   building's own) and a sign carrying its name, lit at night, with someone walking about inside. Each habit is a floor
   above it in order, as tall as its size, with six columns of windows that line up up the building (two rows on a

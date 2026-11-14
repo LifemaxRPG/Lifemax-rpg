@@ -332,27 +332,41 @@ private fun Hud(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (p.due > 0)
-            Row(
+        if (ui.city)
+            Text(
+                HabitsCopy.NEW_FOUNDATION,
                 Modifier.clip(PillShape)
                     .background(Glass)
-                    .padding(horizontal = 12.dp, vertical = 7.dp)
+                    .tapTarget(Role.Button, "Lay a new foundation", actions.newStack)
+                    .padding(horizontal = 14.dp),
+                color = sky.ink,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        else if (p.due > 0)
+            Box(
+                Modifier.clip(PillShape)
+                    .background(Glass)
+                    .heightIn(min = 48.dp)
+                    .padding(horizontal = 12.dp)
                     .semantics(mergeDescendants = true) {},
-                verticalAlignment = Alignment.Bottom,
+                contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    p.built.toString(),
-                    color = sky.ink,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 20.sp,
-                )
-                Text(
-                    " / ${p.due} ${HabitsCopy.TODAY}",
-                    color = sky.inkSoft,
-                    fontSize = 12.sp,
-                    lineHeight = 18.sp,
-                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        p.built.toString(),
+                        color = sky.ink,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 20.sp,
+                    )
+                    Text(
+                        " / ${p.due} ${HabitsCopy.TODAY}",
+                        color = sky.inkSoft,
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                    )
+                }
             }
         if (p.stacks.isNotEmpty())
             Text(
@@ -434,13 +448,15 @@ private fun RoughSwitch(on: Boolean, sky: SkyColors, toggle: () -> Unit) {
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
         )
-        Text(
-            if (on) HabitsCopy.ROUGH_ON_HINT else HabitsCopy.ROUGH_OFF_HINT,
-            color = sky.inkSoft,
-            fontSize = 12.5.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        // at a large text size the hint would be cut short: the switch keeps its words whole
+        if (LocalDensity.current.fontScale <= HINT_MAX_FONT_SCALE)
+            Text(
+                if (on) HabitsCopy.ROUGH_ON_HINT else HabitsCopy.ROUGH_OFF_HINT,
+                color = sky.inkSoft,
+                fontSize = 12.5.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
     }
 }
 
@@ -621,7 +637,11 @@ private fun Dots(stacks: List<HabitStack>, focus: String?, sky: SkyColors, actio
     }
 }
 
-/** The city's time-lapse: drag back through the weeks and watch the skyline rise. */
+/**
+ * The city's time-lapse: drag back through the weeks and watch the skyline rise. One slim card: the
+ * words for the week on top, the slider between its two ends under them (the street keeps the
+ * height).
+ */
 @Composable
 private fun LapseCard(p: HabitsProjection, ui: HabitsUi, actions: HabitsActions) {
     val colors = LocalPageColors.current
@@ -633,7 +653,7 @@ private fun LapseCard(p: HabitsProjection, ui: HabitsUi, actions: HabitsActions)
             .clip(RoundedCornerShape(20.dp))
             .background(colors.panel.copy(alpha = .92f))
             .border(1.dp, colors.line, RoundedCornerShape(20.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 2.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -650,42 +670,27 @@ private fun LapseCard(p: HabitsProjection, ui: HabitsUi, actions: HabitsActions)
                 fontWeight = FontWeight.Bold,
             )
         }
-        Slider(
-            value = lapseFraction(ui.weeks, max),
-            onValueChange = { actions.lapse(lapseWeeks(it, max)) },
-            steps = (max - 1).coerceAtLeast(0),
-            colors =
-                SliderDefaults.colors(
-                    thumbColor = colors.accent,
-                    activeTrackColor = colors.accent,
-                    inactiveTrackColor = colors.line,
-                    activeTickColor = colors.onAccent.copy(alpha = .5f),
-                    inactiveTickColor = colors.muted2,
-                ),
-            modifier =
-                Modifier.fillMaxWidth().semantics {
-                    stateDescription = HabitsCopy.weeksAgo(ui.weeks, max)
-                },
-        )
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "$max weeks ago",
-                color = colors.muted2,
-                fontSize = 11.5.sp,
-                modifier = Modifier.weight(1f),
+            Text("${max}w", color = colors.muted2, fontSize = 11.5.sp)
+            Slider(
+                value = lapseFraction(ui.weeks, max),
+                onValueChange = { actions.lapse(lapseWeeks(it, max)) },
+                steps = (max - 1).coerceAtLeast(0),
+                colors =
+                    SliderDefaults.colors(
+                        thumbColor = colors.accent,
+                        activeTrackColor = colors.accent,
+                        inactiveTrackColor = colors.line,
+                        activeTickColor = colors.onAccent.copy(alpha = .5f),
+                        inactiveTickColor = colors.muted2,
+                    ),
+                modifier =
+                    Modifier.weight(1f).semantics {
+                        stateDescription = HabitsCopy.weeksAgo(ui.weeks, max)
+                    },
             )
             Text(HabitsCopy.TODAY, color = colors.muted2, fontSize = 11.5.sp)
         }
-        Text(
-            HabitsCopy.NEW_FOUNDATION,
-            Modifier.padding(top = 4.dp)
-                .clip(PillShape)
-                .tapTarget(Role.Button, onClick = actions.newStack)
-                .padding(horizontal = 4.dp),
-            color = colors.accent,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-        )
     }
 }
 
@@ -724,6 +729,9 @@ private enum class Slot {
     CONTROLS,
     SCENE,
 }
+
+/** Above this text scale the rough-day switch shows only its question. */
+private const val HINT_MAX_FONT_SCALE = 1.15f
 
 /** Air between the heading and the top of the towers' window. */
 private const val HUD_GAP_DP = 6f

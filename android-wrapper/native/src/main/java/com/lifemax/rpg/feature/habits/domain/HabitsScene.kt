@@ -156,6 +156,21 @@ data class BuildingLayout(
         if (!from.isNaN()) return from to to
         return trees.firstOrNull { it.id == id }?.let { 0f to BuildingSpec.TREE_H }
     }
+
+    /**
+     * How much room the camera would like over habit [id]: the height of the habit stacked on it
+     * (so that floor shows whole too) and a little more, between [AIM_AIR] and [AIM_AIR_MAX]. A
+     * habit with nothing above it, or a tree, wants [AIM_AIR].
+     */
+    fun aimAir(id: String): Float {
+        val last = pieces.indexOfLast { it.id == id && it.kind != PieceKind.LOBBY }
+        if (last < 0) return AIM_AIR
+        val next = pieces.getOrNull(last + 1)
+        if (next == null || (next.kind != PieceKind.FLOOR && next.kind != PieceKind.RUIN))
+            return AIM_AIR
+        val above = span(next.id) ?: return AIM_AIR
+        return (above.second - above.first + AIM_ABOVE).coerceIn(AIM_AIR, AIM_AIR_MAX)
+    }
 }
 
 /**
@@ -408,9 +423,32 @@ data class SceneWindow(val height: Float, val top: Float, val bottom: Float) {
     /** Where a point [above] the pavement line (in dp) is drawn, from the top of the view. */
     fun y(above: Float): Float = ground - above
 
+    /**
+     * The top of the bottom band (the rough-day switch, the big button, the dots), from the top.
+     */
+    val bandTop: Float
+        get() = height - bottom
+
+    /**
+     * The lowest the pavement line may be drawn, from the top: [LOBBY_AIR] over the bottom band, so
+     * a building's ground floor, its sign and its awning always stand clear of the controls.
+     */
+    val lowest: Float
+        get() = bandTop - LOBBY_AIR
+
+    /** How far a camera may lower the street from [ground]: what is left of the margin. */
+    val panRoom: Float
+        get() = lowest - ground
+
     companion object {
         const val GROUND_MARGIN = 30f
         const val MIN_AVAIL = 120f
+
+        /** Air kept between the pavement line and the bottom band, however far the camera tilts. */
+        const val LOBBY_AIR = 10f
+
+        /** The same, with the usual margin: the default of a camera's room. */
+        const val PAN_ROOM = GROUND_MARGIN - LOBBY_AIR
     }
 }
 
@@ -427,8 +465,20 @@ data class Camera(val scale: Float, val pan: Float, val maxPan: Float) {
 const val CAMERA_MIN = .7f
 const val CAMERA_MAX = 1.2f
 
+/**
+ * The smallest a building too tall for [CAMERA_MIN] is drawn, so that the floor to build next can
+ * still be reached without the street dropping into the bottom band. Names stay readable above it.
+ */
+const val CAMERA_TALL_MIN = .6f
+
 /** Air the camera keeps above the floor it aims at, so what comes after it shows too. */
 const val AIM_AIR = 30f
+
+/** What the camera would like over the floor it aims at, at most: the floor above it, whole. */
+const val AIM_AIR_MAX = 70f
+
+/** Extra room over the floor above the aimed one. */
+const val AIM_ABOVE = 8f
 
 /**
  * How far under the top of the window a building too tall for it fades out, in dp, so it never runs
@@ -439,24 +489,46 @@ const val TOP_FADE = 20f
 /**
  * Frames a building [height] tall in a window [avail] tall. A short one is enlarged to fill it, up
  * to [CAMERA_MAX]; a tall one is made smaller until it fits, but never under [CAMERA_MIN], where
- * its names would stop being readable: then the street is lowered instead, as a head tilts back. It
- * is lowered by [pan] when the owner dragged it; else no further than it takes for [aim] (the floor
- * to build next, from its bottom to its top) to show whole with [AIM_AIR] over it, and never so far
- * that its foot drops out of the window; else, with nothing to aim at, to the top.
+ * its names would stop being readable: then the street is lowered instead, as a head tilts back.
+ * The lowering never passes [panRoom] (the window's [SceneWindow.PAN_ROOM]): the ground floor stays
+ * clear of the bottom band. It is [pan] when the owner dragged it; else no further than it takes
+ * for [aim] (the floor to build next, from its bottom to its top) to show whole with [air] over it
+ * (the floor above it too), and never so far that its foot drops out of the window; else, with
+ * nothing to aim at, as far as it may. A building too tall for that is drawn a little smaller, down
+ * to [CAMERA_TALL_MIN], until the aimed floor can be reached; under that [air] gives way to
+ * [AIM_AIR]. When the whole building fits by lowering the street it shows whole.
  */
 fun focusCamera(
     height: Float,
     avail: Float,
     aim: Pair<Float, Float>? = null,
     pan: Float? = null,
+    panRoom: Float = SceneWindow.PAN_ROOM,
+    air: Float = AIM_AIR,
 ): Camera {
     val full = height + BuildingSpec.HEADROOM
-    val scale = (avail / full).coerceIn(CAMERA_MIN, CAMERA_MAX)
-    val maxPan = max(0f, scale * full - avail)
+    val fit = avail / full
+    var scale = fit.coerceIn(CAMERA_MIN, CAMERA_MAX)
+    var over = AIM_AIR
+    if (fit < CAMERA_MIN && aim != null) {
+        val reach = avail + panRoom
+        val wish = max(air, AIM_AIR)
+        val wide = reach / (aim.second + wish)
+        if (wide >= CAMERA_TALL_MIN) over = wish
+        scale =
+            (if (over == wish) wide else reach / (aim.second + AIM_AIR)).coerceIn(
+                CAMERA_TALL_MIN,
+                CAMERA_MIN,
+            )
+    }
+    val top = scale * full - avail
+    val maxPan = min(max(0f, top), panRoom)
     val wanted =
         pan
-            ?: aim?.let { (bottom, top) -> min(scale * (top + AIM_AIR) - avail, scale * bottom) }
-            ?: maxPan
+            ?: if (top in 0f..panRoom) top
+            else
+                aim?.let { (bottom, to) -> min(scale * (to + over) - avail, scale * bottom) }
+                    ?: maxPan
     return Camera(scale, wanted.coerceIn(0f, maxPan), maxPan)
 }
 

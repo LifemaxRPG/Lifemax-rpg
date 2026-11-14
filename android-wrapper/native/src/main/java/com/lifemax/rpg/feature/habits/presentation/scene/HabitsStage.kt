@@ -48,6 +48,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
+import com.lifemax.rpg.feature.habits.domain.AIM_AIR
 import com.lifemax.rpg.feature.habits.domain.BuildingLayout
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec as B
 import com.lifemax.rpg.feature.habits.domain.Camera
@@ -304,10 +305,16 @@ private fun StageCanvas(
     val cameras =
         remember(layouts, stacks, avail, ui.selected) {
             layouts.mapIndexed { i, l ->
-                val aim =
-                    ui.selected?.let(l::span)
-                        ?: stacks[i].next.takeIf { it.isNotEmpty() }?.let(l::span)
-                focusCamera(l.height, avail, aim)
+                val id =
+                    ui.selected?.takeIf { l.span(it) != null }
+                        ?: stacks[i].next.takeIf { it.isNotEmpty() && l.span(it) != null }
+                focusCamera(
+                    l.height,
+                    avail,
+                    id?.let(l::span),
+                    panRoom = window.panRoom,
+                    air = id?.let(l::aimAir) ?: AIM_AIR,
+                )
             }
         }
     val view =
