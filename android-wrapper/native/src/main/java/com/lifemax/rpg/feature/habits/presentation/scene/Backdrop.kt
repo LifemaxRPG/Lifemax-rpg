@@ -2,8 +2,10 @@ package com.lifemax.rpg.feature.habits.presentation.scene
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -16,7 +18,6 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.Building
-import com.lifemax.rpg.feature.habits.domain.CloudKind
 import com.lifemax.rpg.feature.habits.domain.Pass
 import com.lifemax.rpg.feature.habits.domain.SkyPhase
 import com.lifemax.rpg.feature.habits.domain.Star
@@ -201,9 +202,9 @@ internal class Backdrop(private val seed: Int) {
     // ---- brushes made once per sky (units of their own: unit circles, dp for the airships)
 
     private var skyKey: Any? = null
-    private var cloudLobe: Brush? = null
-    private var cloudBase: Brush? = null
-    private var cloudHaze: Brush? = null
+    private val tintShade = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
+    private val tintMid = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
+    private val tintLit = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
     private var discSun: Brush? = null
     private var discMoon: Brush? = null
     private var envelope: Brush? = null
@@ -223,8 +224,9 @@ internal class Backdrop(private val seed: Int) {
 
     /**
      * [horizon] is the y of the horizon in pixels, [top] the y under the heading's band, [orb]
-     * where the sun or the moon stands, [shift] how far along the street the view stands (street
-     * units), [seconds] the running time (0: a still picture).
+     * where the sun or the moon stands, [ceiling] the y above which the clouds hang (the tallest
+     * roof in view), [shift] how far along the street the view stands (street units), [seconds] the
+     * running time (0: a still picture).
      */
     fun DrawScope.backdrop(
         hour: Float,
@@ -232,6 +234,7 @@ internal class Backdrop(private val seed: Int) {
         horizon: Float,
         top: Float,
         orb: Offset,
+        ceiling: Float,
         shift: Float,
         seconds: Float,
     ) {
@@ -274,7 +277,7 @@ internal class Backdrop(private val seed: Int) {
                 shootingStar(pass, w, top, band, starAlpha)
         }
         heavenlyBody(sky, orb, seconds)
-        clouds(sky, w, top, band, shift, seconds)
+        clouds(sky, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds)
         if (tone > 1.6f && Ambient.blimp(seconds, seed, pass))
             blimp(pass, sky, w, top, band, seconds)
         if (Ambient.plane(seconds, seed, pass)) plane(pass, sky, w, top, band, seconds, tone)
@@ -337,32 +340,17 @@ internal class Backdrop(private val seed: Int) {
 
     private fun unitBrushes(sky: SkyColors) {
         if (skyKey === sky) return
-        // a cloud lobe: lit at the upper left, shaded and ever fainter to the lower right
-        cloudLobe =
-            Brush.radialGradient(
-                0f to sky.cloudLit.copy(alpha = .97f),
-                .4f to sky.cloudBody.copy(alpha = .95f),
-                .78f to sky.cloudShade.copy(alpha = .78f),
-                1f to sky.cloudShade.copy(alpha = 0f),
-                center = Offset(-.18f, -.3f),
-                radius = 1.25f,
-            )
-        cloudBase =
-            Brush.radialGradient(
-                0f to sky.cloudShade.copy(alpha = .55f),
-                .6f to sky.cloudShade.copy(alpha = .3f),
-                1f to sky.cloudShade.copy(alpha = 0f),
-                center = Offset.Zero,
-                radius = 1f,
-            )
-        cloudHaze =
-            Brush.radialGradient(
-                0f to sky.cloudBody.copy(alpha = .3f),
-                .55f to sky.cloudBody.copy(alpha = .16f),
-                1f to sky.cloudBody.copy(alpha = 0f),
-                center = Offset.Zero,
-                radius = 1f,
-            )
+        // each cloud's three tints: the hour's, thinned into the horizon's haze the further it is
+        for (i in clouds.indices) {
+            val c = clouds[i]
+            val haze = c.haze * .55f
+            val horizon = sky.sky[2]
+            fun tint(col: Color, k: Float) =
+                ColorFilter.tint(lerp(col, horizon, (haze * k).coerceIn(0f, 1f)), BlendMode.SrcIn)
+            tintShade[i] = tint(sky.cloudShade, 1f)
+            tintMid[i] = tint(sky.cloudBody, .8f)
+            tintLit[i] = tint(sky.cloudLit, .55f)
+        }
         discSun =
             Brush.radialGradient(
                 0f to Color.White,
@@ -468,52 +456,50 @@ internal class Backdrop(private val seed: Int) {
     }
 
     /**
-     * Soft volumetric clouds: each a faint haze, a darker base and overlapping lobes, every lobe
-     * lit at its upper left and shaded and fainter below. The big and near drift faster (parallax),
-     * and the street's scrolling nudges them a little.
+     * Clouds: painted sprites ([CloudSprites]), each drawn as three tinted layers (its body in the
+     * shade of the hour, the part the light finds, and its brightest rim), so a cloud costs three
+     * image draws. They hang in lanes of the sky above [ceiling] (the roof of the tallest building
+     * in view, with the "add a floor" ghost on it), so none can sit behind the hint; the near and
+     * big ones drift faster (parallax) and the street's scrolling nudges them; each breathes a very
+     * little. The further a cloud (the lower its lane), the smaller, bluer and fainter. The light
+     * comes from the sun's side: [mirror] draws the sprites flipped for a sun on the right.
      */
     private fun DrawScope.clouds(
         sky: SkyColors,
         w: Float,
         top: Float,
-        band: Float,
+        horizon: Float,
+        ceiling: Float,
+        mirror: Boolean,
         shift: Float,
         seconds: Float,
     ) {
         val d = density
         val night = sky.dark > .8f
         val count = if (night) 3 else if (sky.dark > .3f) 4 else Ambient.CLOUDS
-        val strength = if (sky.phase == SkyPhase.DAY) .96f else if (night) .72f else .9f
+        val strength = if (sky.phase == SkyPhase.DAY) 1f else if (night) .8f else .94f
+        val room = CloudLayout.room(top, horizon, ceiling, d)
+        if (room <= 0f) return
+        val pool = SceneSprites.clouds
         for (i in 0 until count) {
             val c = clouds[i]
-            val s = d * c.scale
+            val images = pool[CloudSprites.of(c.kind)[c.variant]]
+            val sp = images.sprite
+            val s = d * c.scale / CloudSprites.PX_PER_DP
             val x = Ambient.cloudAt(c, seconds) * w - shift * .03f * c.depth * d
-            val y = top + band * c.y + c.rise * .5f * s
-            val a = strength * (.72f + .28f * c.depth)
-            // the haze round it, and the shaded base under it
-            translate(x, y) {
-                translate(0f, -c.rise * .5f * s) {
-                    scale(c.reach * 1.25f * s, (c.rise * .5f + 9f) * s, Offset.Zero) {
-                        drawCircle(cloudHaze!!, 1f, Offset.Zero, alpha = a)
-                    }
-                }
-                scale(
-                    c.reach * .95f * s,
-                    (if (c.kind == CloudKind.STRATUS) 4f else 8f) * s,
-                    Offset.Zero,
-                ) {
-                    translate(0f, -.1f) { drawCircle(cloudBase!!, 1f, Offset.Zero, alpha = a) }
-                }
-                var k = 0
-                val lobes = c.lobes
-                while (k < lobes.size) {
-                    translate(lobes[k] * s, lobes[k + 1] * s) {
-                        scale(lobes[k + 2] * s, lobes[k + 3] * s, Offset.Zero) {
-                            drawCircle(cloudLobe!!, 1f, Offset.Zero, alpha = a)
-                        }
-                    }
-                    k += 4
-                }
+            val base = CloudLayout.base(c.y, top, horizon, ceiling, d)
+            // breathing: the sky never quite stands still, a few percent over half a minute
+            val breathe = 1f + .04f * sin(seconds * .21f + i * 2.1f)
+            val a = (strength * breathe * room * (1f - .28f * c.haze)).coerceIn(0f, 1f)
+            val sx = if (mirror) -s else s
+            withTransform({
+                translate(x, base)
+                scale(sx, s, Offset.Zero)
+            }) {
+                val at = Offset(-sp.w / 2f, -sp.h * .86f)
+                drawImage(images.shade, at, a, colorFilter = tintShade[i])
+                drawImage(images.mid, at, a, colorFilter = tintMid[i])
+                drawImage(images.lit, at, a, colorFilter = tintLit[i])
             }
         }
     }

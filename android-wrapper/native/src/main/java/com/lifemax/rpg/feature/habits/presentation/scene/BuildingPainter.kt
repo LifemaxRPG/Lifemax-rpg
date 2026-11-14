@@ -6,6 +6,7 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PointMode
@@ -35,6 +36,7 @@ import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.tan
 
 /**
  * What changes from frame to frame on a building, kept in one place the stage refreshes (nothing is
@@ -192,19 +194,11 @@ internal class BuildingPainter {
         }
     private val armStroke = Stroke(2f, cap = StrokeCap.Round)
 
-    /** A soft contact shadow, a unit circle under a transform. */
-    private val contact =
-        Brush.radialGradient(
-            listOf(SceneInk.Shadow, SceneInk.Shadow.copy(alpha = .22f), Color.Transparent),
-            Offset.Zero,
-            1f,
-        )
-
     /** Which side the light falls from: -1 the left (the trees are lit on it), 1 the right. */
     var lightFrom = -1f
 
-    /** Each tree variant as paths, made once: trunk, shade, mid, light and glint tones. */
-    private val treeArts: Array<TreeArt> = Array(Trees.VARIANTS) { TreeArt(Trees.shapes[it]) }
+    /** The wind's lean on a tree, as a shear: one matrix, kept (nothing is made per frame). */
+    private val shear = Matrix()
 
     /** Asphalt and paving specks, a tile of [SPECK_TILE] street units, made once. */
     private val roadSpecks: List<Offset> =
@@ -353,49 +347,32 @@ internal class BuildingPainter {
     }
 
     /**
-     * A street tree at [x], leaning in the wind with motion on: a soft contact shadow, a tapering
-     * trunk with a lit side, foliage in four tones lit from the sun or moon side (and, at night,
-     * rimmed warm on the other by the street lamps). Which of the variants it is comes from [seed].
+     * A street tree at [x]: a painted sprite ([TreeSprites]: crown in several values, rim light,
+     * bark, soft foot shadow), the look of the hour crossfaded (day, dusk, night, the street lamps
+     * rimming it warm at night), mirrored for a light from the right. With motion on it leans in
+     * the wind by a vertical shear (the foot stays put), so nothing is redrawn. Which variant it is
+     * comes from [seed].
      */
     private fun DrawScope.tree(x: Float, seed: Int, seconds: Float, size: Float, sky: SkyColors) {
-        val art = treeArts[Trees.variant(seed)]
-        val shape = art.shape
+        val images = SceneSprites.trees[Trees.variant(seed)]
+        val sp = images.sprite
         val lean = if (seconds > 0f) Ambient.sway(seed, seconds) else 0f
+        // two looks, the one under and the other over it by how far the hour has gone on
         val dark = sky.dark
-        val warm = shape.warmth
-        // the leaves' tones: a green leaning olive, bluer and deeper as the night comes on, the
-        // light tone taking the sun's (or the moon's) colour
-        fun leaf(day: Color, night: Color) = lerp(lerp(day, SceneInk.LeafOlive, warm), night, dark)
-        val deep = leaf(SceneInk.LeafDeep, SceneInk.LeafDeepNight)
-        val shade = leaf(SceneInk.LeafShade, SceneInk.LeafShadeNight)
-        val mid = leaf(SceneInk.LeafMid, SceneInk.LeafMidNight)
-        val light = lerp(leaf(SceneInk.LeafLight, SceneInk.LeafLightNight), sky.orb, .28f)
-        val glint = lerp(leaf(SceneInk.LeafGlint, SceneInk.LeafGlintNight), sky.orb, .4f)
-        val bark = lerp(SceneInk.BarkDark, SceneInk.BarkDarkNight, dark)
-        val barkLit = lerp(SceneInk.BarkLit, SceneInk.BarkLitNight, dark)
+        val under = if (dark <= .55f) 0 else 1
+        val over = under + 1
+        val t = if (dark <= .55f) dark / .55f else (dark - .55f) / .45f
+        shear.reset()
+        shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
+        val u = size / sp.ppu
         withTransform({
             translate(x, 0f)
-            scale(size * -lightFrom, size, Offset.Zero)
+            scale(u * -lightFrom, u, Offset.Zero)
+            transform(shear)
         }) {
-            // the contact shadow, pushed a little away from the light
-            translate(3f, 1f) {
-                scale(shape.halfWidth * .72f, 3.6f, Offset.Zero) {
-                    drawCircle(contact, 1f, Offset.Zero, alpha = .9f - .3f * dark)
-                }
-            }
-            rotate(lean, Offset(0f, -26f)) {
-                drawPath(art.trunk, bark)
-                drawPath(art.trunkLit, barkLit)
-                if (dark > .2f)
-                    translate(1.9f, .5f) {
-                        drawPath(art.dark, SceneInk.LampLight, alpha = .45f * dark)
-                    }
-                drawPath(art.dark, deep)
-                drawPath(art.shade, shade)
-                drawPath(art.mid, mid)
-                drawPath(art.light, light)
-                art.glint?.let { drawPath(it, glint, alpha = .85f) }
-            }
+            val at = Offset(-sp.footX, -sp.footY)
+            drawImage(images.looks[under], at)
+            if (t > .01f) drawImage(images.looks[over], at, alpha = t)
         }
     }
 

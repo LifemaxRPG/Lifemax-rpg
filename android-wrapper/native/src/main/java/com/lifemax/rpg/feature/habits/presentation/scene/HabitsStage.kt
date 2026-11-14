@@ -79,8 +79,10 @@ import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** What the scene tells the screen. */
 internal class StageActions(
@@ -277,6 +279,8 @@ private fun StageCanvas(
     val sky = remember(p.hour) { skyColors(p.hour) }
     val layer = remember { Paint() }
     val scope = rememberCoroutineScope()
+    // the painted skies and trees are made once, off the main thread (a still frame waits for them)
+    LaunchedEffect(Unit) { withContext(Dispatchers.Default) { SceneSprites.warm() } }
     val still = p.reducedMotion
     val zoomedOut = ui.city
     val live = !zoomedOut || ui.weeks == 0
@@ -648,6 +652,16 @@ private fun StageCanvas(
             orbSpot(p.hour, this.size.width / d, window.windowTop, horizon / d, column, f.zoom)
         // the trees are lit from the side the sun or the moon stands on
         painter.lightFrom = if (orb.first * d < this.size.width / 2f) -1f else 1f
+        val from = f.streetX(0f) - B.GAP
+        val to = f.streetX(this.size.width) + B.GAP
+        // the tallest building in view: it decides how high the clouds hang (clear of its roof and
+        // the "add a floor" ghost on it) and whether the street must fade out under the heading
+        var reach = 0f
+        for (i in layouts.indices) {
+            val l = street.lefts[i]
+            if (l + layouts[i].lot < from || l > to) continue
+            reach = max(reach, layouts[i].height)
+        }
         with(backdrop) {
             backdrop(
                 p.hour,
@@ -655,18 +669,10 @@ private fun StageCanvas(
                 horizon,
                 f.skyTop,
                 Offset(orb.first * d, orb.second * d),
+                f.ground - reach * f.unit,
                 f.middle,
                 seconds,
             )
-        }
-        val from = f.streetX(0f) - B.GAP
-        val to = f.streetX(this.size.width) + B.GAP
-        // the tallest building in view decides whether the street must fade out under the heading
-        var reach = 0f
-        for (i in layouts.indices) {
-            val l = street.lefts[i]
-            if (l + layouts[i].lot < from || l > to) continue
-            reach = max(reach, layouts[i].height)
         }
         val fades = layouts.isNotEmpty() && f.ground - reach * f.unit < f.top + TOP_FADE * d
         if (fades)

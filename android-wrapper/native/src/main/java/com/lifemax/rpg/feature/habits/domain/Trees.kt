@@ -1,36 +1,31 @@
 package com.lifemax.rpg.feature.habits.domain
 
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.sin
 
 /*
- * The street's trees, with no drawing in it: a handful of shapes (round, tall, pine), chosen by a seed and the
- * same every time, as foliage lobes (or a pine's outline) in dp at full size, standing on the pavement line at
- * x 0 with up as a negative y. The painter turns each shape into paths once.
+ * The street's trees, with no drawing in it: a handful of shapes (broadleaf, tall, pine, shrub), chosen by a seed and
+ * the same every time, as the clumps their foliage is made of, in dp at full size, standing on the pavement line at
+ * x 0 with up as a negative y. The scene turns each shape into a painted sprite once.
  */
 
 enum class TreeKind {
     ROUND,
     TALL,
     PINE,
+    SHRUB,
 }
 
 /**
- * One tree. [lobes] are the foliage's circles, three numbers each (across, up as a negative,
- * radius); the edge bumps that make the leaves ragged follow the same layout in [bumps]. A pine has
- * an [outline] (across, up pairs, round the whole silhouette) instead. [halfWidth] and [height]
- * bound the whole of it, [crown] is where the trunk ends and the foliage begins, [warmth] (0 to
- * .35) how far its green leans to olive.
+ * One tree. [clumps] are four numbers each (across, up as a negative, half width, half height): the
+ * masses of leaves the canopy is built from (a pine's are its tiers, widest at their foot, the
+ * lowest first). [halfWidth] and [height] bound the whole of it, [crown] is where the trunk ends
+ * and the foliage begins (up as a negative), [warmth] (0 to .35) how far its green leans to olive.
  */
 class TreeShape(
     val kind: TreeKind,
-    val lobes: FloatArray,
-    val bumps: FloatArray,
-    val outline: FloatArray,
+    val clumps: FloatArray,
     val halfWidth: Float,
     val height: Float,
     val crown: Float,
@@ -40,7 +35,10 @@ class TreeShape(
 object Trees {
     const val VARIANTS = 8
 
-    /** The variant a tree with [seed] is, 0 until [VARIANTS]: four round, two tall, two pines. */
+    /**
+     * The variant a tree with [seed] is, 0 until [VARIANTS]: three round, two tall, two pines, a
+     * shrub.
+     */
     fun variant(seed: Int): Int =
         (Ambient.hash(seed, 0, 90) * VARIANTS).toInt().coerceIn(0, VARIANTS - 1)
 
@@ -50,146 +48,280 @@ object Trees {
 
     private fun kindOf(v: Int) =
         when (v) {
-            in 0..3 -> TreeKind.ROUND
-            4,
-            5 -> TreeKind.TALL
-            else -> TreeKind.PINE
+            0,
+            1,
+            2 -> TreeKind.ROUND
+            3,
+            4 -> TreeKind.TALL
+            5,
+            6 -> TreeKind.PINE
+            else -> TreeKind.SHRUB
         }
+
+    /**
+     * Each variant's clumps before they are jittered and fitted: across, up, half width, half
+     * height.
+     */
+    private val BASE: Array<FloatArray> =
+        arrayOf(
+            // an oak: a broad crown of seven masses
+            floatArrayOf(
+                0f,
+                -46f,
+                14f,
+                11.5f,
+                -11f,
+                -38f,
+                11f,
+                9f,
+                11f,
+                -38f,
+                11f,
+                9f,
+                -6f,
+                -54f,
+                9.5f,
+                8f,
+                7f,
+                -53f,
+                9.5f,
+                8f,
+                0f,
+                -36f,
+                12f,
+                8.5f,
+                -15f,
+                -31f,
+                6.5f,
+                5.5f,
+            ),
+            // a maple: lower and wider
+            floatArrayOf(
+                0f,
+                -40f,
+                15f,
+                10.5f,
+                -13f,
+                -33f,
+                9.5f,
+                7.5f,
+                13f,
+                -33f,
+                9.5f,
+                7.5f,
+                -7f,
+                -47f,
+                9f,
+                7.5f,
+                8f,
+                -46f,
+                9f,
+                7.5f,
+                0f,
+                -30f,
+                12f,
+                6.5f,
+            ),
+            // an ornamental: small and round
+            floatArrayOf(
+                0f,
+                -40f,
+                12f,
+                10f,
+                -8f,
+                -34f,
+                8.5f,
+                7.5f,
+                8f,
+                -34f,
+                8.5f,
+                7.5f,
+                -3f,
+                -47f,
+                7.5f,
+                6.5f,
+                5f,
+                -44f,
+                7f,
+                6f,
+            ),
+            // a tall oval
+            floatArrayOf(
+                0f,
+                -52f,
+                9.5f,
+                9f,
+                -4f,
+                -40f,
+                10f,
+                8.5f,
+                4f,
+                -39f,
+                10.5f,
+                8.5f,
+                0f,
+                -29f,
+                10.5f,
+                7f,
+                -2f,
+                -61f,
+                6.5f,
+                5.5f,
+                -5f,
+                -33f,
+                7f,
+                5.5f,
+            ),
+            // a poplar: a narrow column
+            floatArrayOf(
+                0f,
+                -55f,
+                6.5f,
+                8f,
+                -1f,
+                -46f,
+                8f,
+                8.5f,
+                1f,
+                -37f,
+                8.5f,
+                8f,
+                0f,
+                -29f,
+                8f,
+                7f,
+                0f,
+                -62f,
+                4.5f,
+                4.5f,
+                -1.5f,
+                -22f,
+                6.5f,
+                5f,
+            ),
+            // a pine: five tiers, lowest first (centre, base of tier, half width at the foot,
+            // height)
+            floatArrayOf(
+                0f,
+                -16f,
+                13f,
+                13f,
+                0f,
+                -26f,
+                11.2f,
+                12.5f,
+                0f,
+                -37f,
+                9.2f,
+                12f,
+                0f,
+                -48f,
+                7f,
+                11.5f,
+                0f,
+                -58f,
+                4.6f,
+                9f,
+            ),
+            // a slim pine: six tiers
+            floatArrayOf(
+                0f,
+                -15f,
+                9.8f,
+                11f,
+                0f,
+                -23f,
+                8.8f,
+                10.5f,
+                0f,
+                -31f,
+                7.8f,
+                10f,
+                0f,
+                -40f,
+                6.6f,
+                9.5f,
+                0f,
+                -49f,
+                5f,
+                9f,
+                0f,
+                -58f,
+                3.4f,
+                7.5f,
+            ),
+            // a shrub: a low mound of four masses
+            floatArrayOf(
+                0f,
+                -13f,
+                10f,
+                8.5f,
+                -9f,
+                -9f,
+                7.5f,
+                6f,
+                9f,
+                -9f,
+                7.5f,
+                6f,
+                -2f,
+                -19f,
+                6.5f,
+                5.5f,
+            ),
+        )
 
     private fun build(v: Int): TreeShape {
-        fun j(k: Int) = Ambient.hash(v, k, 91) - .5f
         val kind = kindOf(v)
-        val warmth = .35f * Ambient.hash(v, 7, 92)
-        if (kind == TreeKind.PINE) return pine(v, warmth)
-        val lobes =
-            if (kind == TreeKind.ROUND)
-                floatArrayOf(
-                    j(0) * 3f,
-                    -50f + j(1) * 2f,
-                    15f + j(2) * 2f,
-                    -11f + j(3) * 3f,
-                    -41f + j(4) * 2f,
-                    11f + j(5) * 2f,
-                    11f + j(6) * 3f,
-                    -42f + j(7) * 2f,
-                    12f + j(8) * 2f,
-                    -6f + j(9) * 3f,
-                    -58f + j(10) * 2f,
-                    10f + j(11) * 2f,
-                    7f + j(12) * 3f,
-                    -57f + j(13) * 2f,
-                    10.5f + j(14) * 2f,
-                )
-            else
-                floatArrayOf(
-                    j(0) * 2f,
-                    -57f + j(1) * 2f,
-                    10f,
-                    -5f + j(2) * 2f,
-                    -47f + j(3) * 2f,
-                    10.5f,
-                    5f + j(4) * 2f,
-                    -46f + j(5) * 2f,
-                    11f,
-                    j(6) * 2f,
-                    -36f + j(7) * 2f,
-                    12f,
-                    -3f + j(8) * 2f,
-                    -55f + j(9) * 2f,
-                    8f,
-                )
-        // ragged edges: three small bumps round each lobe, at angles of the tree's own
-        val n = lobes.size / 3
-        val bumps = FloatArray(n * 9)
-        for (k in 0 until n) {
-            for (b in 0 until 3) {
-                val a = Ambient.hash(v, k * 3 + b, 93) * 2f * PI.toFloat()
-                val r = lobes[k * 3 + 2]
-                val at = (k * 3 + b) * 3
-                bumps[at] = lobes[k * 3] + cos(a) * r * .92f
-                bumps[at + 1] = lobes[k * 3 + 1] + sin(a) * r * .92f
-                bumps[at + 2] = 3.2f + 2f * Ambient.hash(v, k * 3 + b, 94)
-            }
-        }
+        val clumps = BASE[v].copyOf()
+        // every tree is its own: the masses nudge a little, the same every time
         var half = 0f
         var top = 0f
-        for (set in arrayOf(lobes, bumps)) {
-            var m = 0
-            while (m < set.size) {
-                half = max(half, abs(set[m]) + set[m + 2])
-                top = min(top, set[m + 1] - set[m + 2])
-                m += 3
-            }
+        var i = 0
+        while (i < clumps.size) {
+            val amount = if (kind == TreeKind.PINE) .5f else 1.4f
+            clumps[i] += (Ambient.hash(v, i, 91) - .5f) * amount
+            if (kind != TreeKind.PINE) clumps[i + 1] += (Ambient.hash(v, i + 1, 91) - .5f) * amount
+            half = max(half, abs(clumps[i]) + clumps[i + 2])
+            top =
+                min(
+                    top,
+                    clumps[i + 1] - (if (kind == TreeKind.PINE) clumps[i + 3] else clumps[i + 3]),
+                )
+            i += 4
         }
         // fitted to the room a tree is given: at most 21.5 wide each way and 64 tall
-        val fit = min(1f, min(21.5f / half, 64f / -top))
-        if (fit < 1f) {
-            for (set in arrayOf(lobes, bumps)) for (m in set.indices) set[m] *= fit
-            half *= fit
-            top *= fit
+        val room = min(1f, min(21.5f / half, 64f / (-top)))
+        if (room < 1f) {
+            for (k in clumps.indices) clumps[k] *= room
+            half *= room
+            top *= room
         }
+        // a pine's tier is drawn from its base up; the others are centred on their mass
+        val height =
+            if (kind == TreeKind.PINE) {
+                var t = 0f
+                var k = 0
+                while (k < clumps.size) {
+                    t = min(t, clumps[k + 1] - clumps[k + 3])
+                    k += 4
+                }
+                -t
+            } else -top
+        val crown =
+            when (kind) {
+                TreeKind.ROUND -> -28f
+                TreeKind.TALL -> -25f
+                TreeKind.PINE -> -17f
+                TreeKind.SHRUB -> -6f
+            }
         return TreeShape(
             kind,
-            lobes,
-            bumps,
-            FloatArray(0),
+            clumps,
             half,
-            -top,
-            if (kind == TreeKind.ROUND) -32f else -28f,
-            warmth,
-        )
-    }
-
-    /** Four ragged tiers, each narrower and higher than the one under it. */
-    private fun pine(v: Int, warmth: Float): TreeShape {
-        fun j(k: Int) = (Ambient.hash(v, k, 95) - .5f) * 1.6f
-        val tiers = 4
-        val right = ArrayList<Float>()
-        val left = ArrayList<Float>()
-        var widest = 0f
-        for (t in 0 until tiers) {
-            val apex = -64f + t * 9f
-            val base = apex + 20f
-            val w = 7f + t * 4.4f
-            widest = w
-            right += w * .5f + j(t)
-            right += apex + 10f
-            right += w
-            right += base
-            right += w * .42f
-            right += base - 1.5f
-            left += -w * .42f
-            left += base - 1.5f
-            left += -w
-            left += base
-            left += -w * .5f + j(t + 4)
-            left += apex + 10f
-        }
-        val outline = ArrayList<Float>()
-        outline += 0f
-        outline += -64f
-        outline.addAll(right)
-        // across the foot of the lowest tier, then back up the left side, tier by tier
-        var i = left.size
-        val groups = tiers
-        for (g in groups - 1 downTo 0) {
-            i = g * 6
-            outline += left[i]
-            outline += left[i + 1]
-            outline += left[i + 2]
-            outline += left[i + 3]
-            outline += left[i + 4]
-            outline += left[i + 5]
-        }
-        return TreeShape(
-            TreeKind.PINE,
-            FloatArray(0),
-            FloatArray(0),
-            outline.toFloatArray(),
-            widest + 1f,
-            65f,
-            -24f,
-            warmth * .5f,
+            height,
+            crown,
+            if (kind == TreeKind.PINE) 0f else .35f * Ambient.hash(v, 7, 92),
         )
     }
 }

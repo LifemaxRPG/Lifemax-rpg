@@ -46,6 +46,7 @@ enum class CloudKind {
     CUMULUS,
     STRATUS,
     PUFF,
+    CIRRUS,
 }
 
 /**
@@ -53,8 +54,9 @@ enum class CloudKind {
  * [lane] of the sky it drifts in ([y], a share of the sky's band; every cloud has a lane of its
  * own, so none sits on another and all stay clear of the far towers), its [scale], how far it is
  * ([depth], 0 far to 1 near: the near and the big drift faster), its drift ([speed], shares of the
- * width a second) and its [lobes]: four numbers each (across, up as a negative, half width, half
- * height) in dp at scale 1, with [reach] its half width and [rise] its height in dp at scale 1.
+ * width a second), which [variant] of its kind's sprites it is painted from, and its [haze] (0 near
+ * to 1 far: the far ones are smaller, bluer and fainter, the way the air thickens towards the
+ * horizon). Its picture is a pre-made sprite; nothing about its shape lives here.
  */
 class Cloud(
     val kind: CloudKind,
@@ -64,9 +66,8 @@ class Cloud(
     val scale: Float,
     val depth: Float,
     val speed: Float,
-    val lobes: FloatArray,
-    val reach: Float,
-    val rise: Float,
+    val variant: Int,
+    val haze: Float,
 )
 
 /** One building of a far skyline: from [x], [w] wide and [h] tall, in dp. */
@@ -267,16 +268,18 @@ object Ambient {
      * The share of the sky's band each cloud lane drifts at, high to low: the lowest stays well
      * above the far towers.
      */
-    val CLOUD_LANES = floatArrayOf(.06f, .19f, .32f, .45f, .58f)
+    val CLOUD_LANES = floatArrayOf(.04f, .17f, .3f, .43f, .55f, .66f)
 
     /**
-     * The order the lanes are filled in when there are fewer clouds (night): spread, never bunched.
+     * The lane each cloud takes, in the order they are filled in (a night sky has the first three,
+     * dusk four): the big near cumulus and the high cirrus first, the small far ones last.
      */
-    private val LANE_ORDER = intArrayOf(1, 3, 0, 4, 2)
+    private val LANE_ORDER = intArrayOf(1, 0, 3, 2, 4, 5)
 
     private val CLOUD_KINDS =
         arrayOf(
             CloudKind.CUMULUS,
+            CloudKind.CIRRUS,
             CloudKind.STRATUS,
             CloudKind.CUMULUS,
             CloudKind.PUFF,
@@ -284,25 +287,28 @@ object Ambient {
         )
 
     /** The most clouds a sky holds. */
-    const val CLOUDS = 5
+    const val CLOUDS = 6
+
+    /** How many sprites each kind of cloud has to choose from. */
+    const val CLOUD_VARIANTS = 2
 
     /**
-     * The sky's [CLOUDS] clouds, the same for the same [seed]: cumulus and stratus first, the small
-     * puffs last, so a sky with fewer (night) keeps the first ones. Each has a lane of its own.
+     * The sky's [CLOUDS] clouds, the same for the same [seed]. Each has a lane of its own; the
+     * lower the lane, the further the cloud: smaller, slower and hazier.
      */
     fun clouds(seed: Int): List<Cloud> =
         List(CLOUDS) { i ->
             val kind = CLOUD_KINDS[i]
             val lane = LANE_ORDER[i]
+            val far = lane / (CLOUD_LANES.size - 1f)
             val size =
                 when (kind) {
-                    CloudKind.CUMULUS -> .8f + .45f * hash(seed, i, 72)
-                    CloudKind.STRATUS -> .9f + .4f * hash(seed, i, 72)
-                    CloudKind.PUFF -> .6f + .3f * hash(seed, i, 72)
-                }
-            val big = ((size - .6f) / .7f).coerceIn(0f, 1f)
-            val high = 1f - CLOUD_LANES[lane]
-            val depth = (.6f * big + .4f * high).coerceIn(0f, 1f)
+                    CloudKind.CUMULUS -> (if (i == 0) 1f else .7f) + .2f * hash(seed, i, 72)
+                    CloudKind.STRATUS -> .95f + .25f * hash(seed, i, 72)
+                    CloudKind.CIRRUS -> 1f + .3f * hash(seed, i, 72)
+                    CloudKind.PUFF -> .85f + .25f * hash(seed, i, 72)
+                } * (1f - .3f * far)
+            val depth = (1f - far).coerceIn(0f, 1f)
             Cloud(
                 kind,
                 lane,
@@ -310,68 +316,11 @@ object Ambient {
                 CLOUD_LANES[lane],
                 size,
                 depth,
-                .0025f + .0065f * depth,
-                cloudLobes(kind, seed, i),
-                when (kind) {
-                    CloudKind.CUMULUS -> 50f
-                    CloudKind.STRATUS -> 82f
-                    CloudKind.PUFF -> 30f
-                },
-                when (kind) {
-                    CloudKind.CUMULUS -> 46f
-                    CloudKind.STRATUS -> 14f
-                    CloudKind.PUFF -> 24f
-                },
+                .0022f + .0058f * depth,
+                (hash(seed, i, 75) * CLOUD_VARIANTS).toInt().coerceIn(0, CLOUD_VARIANTS - 1),
+                far,
             )
         }
-
-    private fun cloudLobes(kind: CloudKind, seed: Int, i: Int): FloatArray {
-        fun j(k: Int) = hash(seed, i * 31 + k, 74) - .5f
-        val out = ArrayList<Float>()
-        fun lobe(x: Float, y: Float, r: Float, flat: Float) {
-            out += x
-            out += y
-            out += r
-            out += r * flat
-        }
-        when (kind) {
-            CloudKind.CUMULUS -> {
-                // a flat-bottomed row of lobes, a heap of them on it, one crown
-                for (k in 0 until 4) lobe(
-                    -30f + k * 20f + j(k) * 4f,
-                    -7f + j(k + 4) * 2f,
-                    13f + j(k + 8) * 4f,
-                    .8f,
-                )
-                for (k in 0 until 3) lobe(
-                    -18f + k * 17f + j(k + 12) * 4f,
-                    -17f + j(k + 16) * 5f,
-                    14f + j(k + 20) * 4f,
-                    .9f,
-                )
-                lobe(-3f + j(24) * 10f, -27f + j(25) * 3f, 14f + j(26) * 3f, .92f)
-            }
-            CloudKind.STRATUS -> {
-                for (k in 0 until 6) lobe(
-                    -52f + k * 20f + j(k) * 5f,
-                    -4f + j(k + 6) * 3f,
-                    20f + j(k + 12) * 6f,
-                    .22f,
-                )
-                lobe(-12f + j(20) * 20f, -8f, 24f, .2f)
-            }
-            CloudKind.PUFF -> {
-                for (k in 0 until 3) lobe(
-                    -14f + k * 14f + j(k) * 3f,
-                    -6f + j(k + 3) * 3f,
-                    8f + j(k + 6) * 3f,
-                    .85f,
-                )
-                lobe(-2f + j(9) * 6f, -13f, 9f + j(10) * 2f, .9f)
-            }
-        }
-        return out.toFloatArray()
-    }
 
     /**
      * Where [cloud] is across the view at [seconds] (a share of the width, a little off either
