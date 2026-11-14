@@ -14,6 +14,14 @@ Tell the owner, in one line, before starting any of these, that switching to Opu
 
 Then carry on with whatever model the owner chooses.
 
+## New features are native
+
+Do not build new web tabs or new web screens. A new feature gets a native (Kotlin/Compose) screen from the start, following
+`docs/architecture/NATIVE_TAB_GUIDE.md`. Until the logic cutover the page is still the only writer of saved data, so the page
+side of a new feature is limited to what a native screen needs: the saved state, the model it projects and the commands it
+accepts. Design mock-ups for the owner to react to are fine; shipping a web tab is not. If a native screen truly cannot be
+built for something, ask the owner before building it on the page.
+
 ## User-facing update history
 
 Follow `docs/UPDATE_HISTORY.md` for every user-visible release change. Update
