@@ -62,6 +62,8 @@ import com.lifemax.rpg.core.designsystem.gesture.noTabSwipe
 import com.lifemax.rpg.feature.habits.domain.HabitBlock
 import com.lifemax.rpg.feature.habits.domain.HabitStack
 import com.lifemax.rpg.feature.habits.domain.HabitsProjection
+import com.lifemax.rpg.feature.habits.domain.HabitsSuggest
+import com.lifemax.rpg.feature.habits.domain.Suggestion
 import com.lifemax.rpg.feature.habits.domain.TowerSpec
 
 /**
@@ -137,6 +139,19 @@ private fun Form(
 ) {
     val colors = LocalPageColors.current
     val limits = HabitsCopy.limits(sheet, p)
+    // worked out as it is typed: a few hundred short comparisons, nothing to wait for
+    val offers =
+        remember(
+            sheet.kind,
+            sheet.target,
+            sheet.fade,
+            sheet.filled,
+            sheet.fields.firstOrNull(),
+            p.stacks,
+            HabitsSuggest.dayPart(p.hour),
+        ) {
+            sheetSuggestions(sheet, p)
+        }
     Title(words.title)
     if (words.lead.isNotEmpty())
         Text(words.lead, color = colors.muted, fontSize = 13.5.sp, lineHeight = 19.sp)
@@ -158,26 +173,10 @@ private fun Form(
             maxLength = limits.getOrNull(i),
             number = sheet.kind == SheetKind.NEW_HABIT && sheet.fade && i == 1,
         )
+        // right under what is being typed, so it shows above the keyboard
+        if (i == 0 && offers.isNotEmpty())
+            Suggestions(offers, sheet.kind == SheetKind.NEW_STACK, actions.suggest)
     }
-    if (sheet.kind == SheetKind.NEW_STACK && p.starters.isNotEmpty())
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            p.starters.forEach { cue ->
-                Text(
-                    cue,
-                    Modifier.clip(Pill)
-                        .background(colors.panel2)
-                        .border(1.dp, colors.line, Pill)
-                        .tapTarget(Role.Button, "Lay the foundation $cue") { actions.starter(cue) }
-                        .padding(horizontal = 14.dp),
-                    color = colors.text,
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        }
     if (sheet.kind == SheetKind.RESTACK) {
         val here = p.stackOf(sheet.target)?.id
         Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -200,6 +199,42 @@ private fun Form(
         if (words.danger.isNotEmpty())
             SheetButton(words.danger, ButtonKind.DANGER, true, actions.danger)
         if (sheet.fields.isNotEmpty()) SheetButton(words.go, ButtonKind.MAIN, true, actions.submit)
+    }
+}
+
+/**
+ * What the catalog offers for what is typed, as chips that wrap. A tap on a foundation lays it; a
+ * tap on a habit fills the sheet's fields.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun Suggestions(offers: List<Suggestion>, lays: Boolean, pick: (Suggestion) -> Unit) {
+    val colors = LocalPageColors.current
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        offers.forEach { offer ->
+            Text(
+                offer.title,
+                Modifier.clip(Pill)
+                    .background(colors.panel2)
+                    .border(1.dp, colors.line, Pill)
+                    .tapTarget(
+                        Role.Button,
+                        if (lays) "Lay the foundation ${offer.title}"
+                        else "Fill in ${offer.fields.drop(1).joinToString(", ")}",
+                    ) {
+                        pick(offer)
+                    }
+                    .padding(horizontal = 14.dp),
+                color = colors.text,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

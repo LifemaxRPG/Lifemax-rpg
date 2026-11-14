@@ -3,9 +3,11 @@ package com.lifemax.rpg.feature.habits
 import com.lifemax.rpg.feature.habits.domain.HabitMaterial
 import com.lifemax.rpg.feature.habits.domain.HabitsEngine
 import com.lifemax.rpg.feature.habits.domain.HabitsRules
+import com.lifemax.rpg.feature.habits.domain.Suggestion
 import com.lifemax.rpg.feature.habits.presentation.HabitsSheet
 import com.lifemax.rpg.feature.habits.presentation.HabitsViewModel
 import com.lifemax.rpg.feature.habits.presentation.SheetKind
+import com.lifemax.rpg.feature.habits.presentation.sheetSuggestions
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -244,27 +246,97 @@ class HabitsViewModelTest {
         val lunch = p.stacks[2].id
         vm.focus(lunch)
         vm.primary() // an empty foundation: the button stacks the first habit
-        assertEquals(HabitsSheet(SheetKind.NEW_HABIT, lunch, listOf("", "")), ui.sheet)
+        assertEquals(HabitsSheet(SheetKind.NEW_HABIT, lunch, listOf("", "", "")), ui.sheet)
         vm.submit()
         assertEquals("Give the habit a name.", ui.sheet?.error)
         vm.type(0, "Floss")
         vm.type(1, "One tooth")
         // one to break keeps the name and counts clean days, starting from the usual number
         vm.kind(true)
-        assertEquals(listOf("Floss", "14"), ui.sheet?.fields)
+        assertEquals(listOf("Floss", "14", ""), ui.sheet?.fields)
         assertTrue(ui.sheet!!.fade)
         vm.type(1, " 21 ")
+        vm.type(2, "Chew gum")
         vm.submit()
         assertNull(ui.sheet)
         val added = p.stacks[2].blocks.single()
         assertTrue(added.fade && added.floors == 21 && added.title == "Floss")
+        assertEquals("Chew gum", added.pair)
         vm.newHabit(lunch)
         vm.type(0, "Walk")
         vm.type(1, "Shoes on")
+        vm.type(2, "Walk an hour")
         vm.submit()
         assertEquals("Shoes on", p.stacks[2].blocks[1].name)
+        assertEquals(listOf("Shoes on", "Walk", "Walk an hour"), p.stacks[2].blocks[1].names)
+        // the sizes left empty fall back to the habit's name
+        vm.newHabit(lunch)
+        vm.type(0, "Tea")
+        vm.submit()
+        assertEquals(listOf("Tea", "Tea", "Tea"), p.stacks[2].blocks[2].names)
         vm.newHabit("nope")
         assertNull(ui.sheet)
+    }
+
+    @Test
+    fun aSuggestionFillsEveryFieldOfANewHabit() {
+        val lunch = p.stacks[2].id
+        vm.newHabit(lunch)
+        // nothing typed: what suits the foundation (a meal) first
+        val first = sheetSuggestions(ui.sheet!!, p)
+        assertEquals(6, first.size)
+        assertEquals("Walk 20 minutes", first[0].title)
+        vm.type(0, "pu")
+        val offers = sheetSuggestions(ui.sheet!!, p)
+        assertEquals("Do 10 push-ups", offers[0].title)
+        vm.suggest(offers[0])
+        // every field is filled, the sheet stays for a look, and nothing more is offered
+        assertEquals(
+            listOf("Do 10 push-ups", "Do 2 push-ups", "Do 3 sets of push-ups"),
+            ui.sheet?.fields,
+        )
+        assertTrue(ui.sheet!!.filled)
+        assertTrue(sheetSuggestions(ui.sheet!!, p).isEmpty())
+        // a size can still be changed without the suggestions coming back
+        vm.type(2, "Do 50 push-ups")
+        assertTrue(ui.sheet!!.filled)
+        // typing in the name again brings them back
+        vm.type(0, "Do 10 push")
+        assertFalse(ui.sheet!!.filled)
+        assertEquals("Do 10 push-ups", sheetSuggestions(ui.sheet!!, p)[0].title)
+        vm.suggest(sheetSuggestions(ui.sheet!!, p)[0])
+        vm.submit()
+        assertNull(ui.sheet)
+        val added = p.stacks[2].blocks.single()
+        assertEquals(
+            listOf("Do 2 push-ups", "Do 10 push-ups", "Do 3 sets of push-ups"),
+            added.names,
+        )
+        // what stands on the foundation is not offered again
+        vm.newHabit(lunch)
+        vm.type(0, "push")
+        assertTrue(sheetSuggestions(ui.sheet!!, p).none { it.title == "Do 10 push-ups" })
+        // one to break: its clean days and what to do instead
+        vm.kind(true)
+        assertFalse(ui.sheet!!.filled)
+        vm.type(0, "ph")
+        val breaks = sheetSuggestions(ui.sheet!!, p)
+        assertEquals("Phone in bed", breaks[0].title)
+        vm.suggest(breaks[0])
+        assertEquals(listOf("Phone in bed", "14", "A book on the pillow"), ui.sheet?.fields)
+        // switching back to building clears what was for breaking
+        vm.kind(false)
+        assertEquals(listOf("Phone in bed", "", ""), ui.sheet?.fields)
+        vm.kind(true)
+        vm.suggest(breaks[0])
+        vm.submit()
+        val gone = p.stacks[2].blocks[1]
+        assertTrue(gone.fade && gone.floors == 14 && gone.pair == "A book on the pillow")
+        // a suggestion means nothing on another sheet
+        vm.who()
+        vm.suggest(Suggestion("x", listOf("x")))
+        assertEquals(listOf(""), ui.sheet?.fields)
+        assertTrue(sheetSuggestions(ui.sheet!!, p).isEmpty())
     }
 
     @Test
@@ -297,11 +369,22 @@ class HabitsViewModelTest {
         vm.danger()
         assertNull(ui.sheet)
         assertNull(p.stack(lunch))
-        // a starter is laid at once and comes in front
+        // a suggested foundation is laid at once and comes in front; at two in the afternoon
+        // the day's anchors come first, and those in use are left out
         vm.newStack()
-        vm.starter("After waking up")
+        val starters = sheetSuggestions(ui.sheet!!, p)
+        assertEquals(6, starters.size)
+        assertEquals("When I sit down at my desk", starters[0].title)
+        assertTrue(starters.none { it.title == "After coffee" || it.title == "At lights out" })
+        vm.type(0, "show")
+        val showers = sheetSuggestions(ui.sheet!!, p).map { it.title }
+        assertTrue(showers.containsAll(listOf("After my shower", "Before my shower")))
+        vm.suggest(sheetSuggestions(ui.sheet!!, p)[0])
         assertNull(ui.sheet)
-        assertEquals("After waking up", p.stack(ui.focus)!!.cue)
+        assertEquals("After my shower", p.stack(ui.focus)!!.cue)
+        vm.newStack()
+        vm.type(0, "shower")
+        assertTrue(sheetSuggestions(ui.sheet!!, p).none { it.title == "After my shower" })
     }
 
     @Test

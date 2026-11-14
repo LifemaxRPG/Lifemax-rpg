@@ -184,9 +184,6 @@ internal object SceneInk {
     val TreeB = Color(0xFF348A5C)
     val TreeC = Color(0xFF46AD77)
 
-    val Cat = Color(0xFF05070D)
-    val CatEye = Color(0xFFF6D679)
-
     val Shadow = Color(0x73000000)
     val Occlusion = Color(0x47000000)
     val Highlight = Color(0x59FFFFFF)

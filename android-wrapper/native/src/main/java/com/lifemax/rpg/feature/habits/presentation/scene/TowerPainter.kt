@@ -102,6 +102,9 @@ internal class TowerPainter(private val text: SceneText) {
     private val path2 = Path()
     private val dash = PathEffect.dashPathEffect(floatArrayOf(7f, 5f))
 
+    /** The y under which the tower being drawn is hidden behind its slab (none: [FAR]). */
+    private var hidden = FAR
+
     /** The paved lot a tower stands on and its shadow, falling to the right. */
     fun DrawScope.lot(sky: SkyColors, width: Float) {
         val w = width / 2f + 34f
@@ -145,7 +148,12 @@ internal class TowerPainter(private val text: SceneText) {
         )
     }
 
-    /** One tower: its trees, every piece from the slab up, the cat, and what is playing on it. */
+    /**
+     * One tower: its trees, every piece from the slab up, and what is playing on it. The slab
+     * stands still; everything above it is slid down by [sink] (the camera's, for a tower too tall
+     * for its window) and hidden where it has gone under the slab's top. [cue] is how strongly the
+     * foundation's name shows on its slab (the city names its towers under them instead).
+     */
     fun DrawScope.tower(
         layout: TowerLayout,
         stack: HabitStack,
@@ -153,33 +161,57 @@ internal class TowerPainter(private val text: SceneText) {
         selected: String?,
         accent: Color,
         live: Boolean,
-        cat: Boolean,
         detailed: Boolean,
+        sink: Float = 0f,
+        cue: Float = 1f,
     ) {
         for (tree in layout.trees) tree(tree.x, selected == tree.id, accent)
         val landingIndex =
             layout.pieces.indexOfFirst { it.id == motion.landing && it.kind == PieceKind.BLOCK }
-        layout.pieces.forEachIndexed { i, p ->
-            val landing = i == landingIndex
-            // the blocks under a landing one give a little, the nearest most
-            val give = if (landingIndex > i) motion.dip * 4.5f / (landingIndex - i) else 0f
-            val drop = if (landing) (1f - motion.fall) * DROP else 0f
-            val alpha = if (landing) min(1f, motion.fall * 4f) else 1f
-            translate(0f, give - drop) {
-                val squash = if (landing) motion.squash else 0f
-                scale(1f + .05f * squash, 1f - .13f * squash, Offset(0f, -p.bottom)) {
-                    val sway = wobble(p, motion.seconds)
-                    rotate(sway, Offset(0f, -p.bottom)) {
-                        piece(p, stack, motion, selected, accent, live, alpha, detailed, landing)
+        fun pieces(slab: Boolean) =
+            layout.pieces.forEachIndexed { i, p ->
+                if ((p.kind == PieceKind.SLAB) != slab) return@forEachIndexed
+                val landing = i == landingIndex
+                // the blocks under a landing one give a little, the nearest most
+                val give = if (landingIndex > i) motion.dip * 4.5f / (landingIndex - i) else 0f
+                val drop = if (landing) (1f - motion.fall) * DROP else 0f
+                val alpha = if (landing) min(1f, motion.fall * 4f) else 1f
+                translate(0f, give - drop) {
+                    val squash = if (landing) motion.squash else 0f
+                    scale(1f + .05f * squash, 1f - .13f * squash, Offset(0f, -p.bottom)) {
+                        val sway = wobble(p, motion.seconds)
+                        rotate(sway, Offset(0f, -p.bottom)) {
+                            piece(
+                                p,
+                                stack,
+                                motion,
+                                selected,
+                                accent,
+                                live,
+                                alpha,
+                                detailed,
+                                landing,
+                                cue,
+                            )
+                        }
                     }
                 }
             }
+        fun above() {
+            pieces(slab = false)
+            if (landingIndex >= 0 && motion.burst < 1f)
+                dust(layout.pieces[landingIndex], motion.burst)
+            val gone = motion.felled
+            if (gone != null && motion.fell < 1f)
+                fallen(layout.labelled(gone)?.top ?: layout.roof, gone, motion.fell)
         }
-        if (cat && live) cat(layout.roofWidth * .26f, layout.roof + T.DY * .55f, motion.seconds)
-        if (landingIndex >= 0 && motion.burst < 1f) dust(layout.pieces[landingIndex], motion.burst)
-        val gone = motion.felled
-        if (gone != null && motion.fell < 1f)
-            fallen(layout.labelled(gone)?.top ?: layout.roof, gone, motion.fell)
+        pieces(slab = true)
+        if (sink <= 0f) above()
+        else {
+            hidden = -T.SLAB_H - sink
+            clipRect(-FAR, -FAR, FAR, -T.SLAB_H) { translate(0f, sink) { above() } }
+            hidden = FAR
+        }
     }
 
     /** Two missed days: the block sits askew and, with motion on, sways. */
@@ -199,6 +231,7 @@ internal class TowerPainter(private val text: SceneText) {
         alpha: Float,
         detailed: Boolean,
         landing: Boolean,
+        cue: Float,
     ) {
         val half = p.width / 2f
         val top = -p.top
@@ -216,8 +249,8 @@ internal class TowerPainter(private val text: SceneText) {
                     1f,
                 )
                 edges(half, top, bottom, 1f)
-                if (detailed) {
-                    val cue =
+                if (detailed && cue > .02f) {
+                    val name =
                         text.layout(
                             stack.cue.uppercase(),
                             10.5f,
@@ -226,9 +259,10 @@ internal class TowerPainter(private val text: SceneText) {
                             spacing = 1.1f,
                         )
                     drawText(
-                        cue,
+                        name,
                         SceneInk.SlabText,
-                        Offset(-cue.size.width / 2f, (top + bottom) / 2f - cue.size.height / 2f),
+                        Offset(-name.size.width / 2f, (top + bottom) / 2f - name.size.height / 2f),
+                        alpha = cue,
                     )
                 }
             }
@@ -560,7 +594,10 @@ internal class TowerPainter(private val text: SceneText) {
         }
     }
 
-    /** A crack for a missed day, or the gold seam left by coming back, each block's its own. */
+    /**
+     * A crack for a missed day, or the gold seam left by coming back: each block's its own, and
+     * kept to that block's front face.
+     */
     private fun DrawScope.crack(p: Piece, b: HabitBlock, stackId: String, half: Float, top: Float) {
         val points = crackLine(stackId + b.id, p.height > 60f)
         path.rewind()
@@ -569,33 +606,38 @@ internal class TowerPainter(private val text: SceneText) {
             val y = top + v * p.height
             if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
-        // a short branch from the middle of it
-        val (u, v) = points[points.size / 2]
+        // a short branch off its middle turn, away from the way the crack goes on
+        val turn = points.size / 2
+        val (u, v) = points[turn]
+        val away = if (points[turn + 1].first > u) -1f else 1f
         path.moveTo(-half + u * p.width, top + v * p.height)
-        path.lineTo(-half + (u + .1f) * p.width, top + v * p.height + 7f)
-        if (b.miss >= 1)
-            drawPath(
-                path,
-                if (p.plan) SceneInk.CrackOnPlan else SceneInk.Crack,
-                style = Stroke(1.7f, cap = StrokeCap.Round, join = StrokeJoin.Round),
-            )
-        else {
-            drawPath(
-                path,
-                SceneInk.SeamGlow,
-                style = Stroke(5f, cap = StrokeCap.Round, join = StrokeJoin.Round),
-            )
-            drawPath(
-                path,
-                SceneInk.Seam,
-                style = Stroke(2f, cap = StrokeCap.Round, join = StrokeJoin.Round),
-            )
+        path.lineTo(-half + u * p.width + away * 9f, top + v * p.height + 6f)
+        clipRect(-half, top, half, top + p.height) {
+            if (b.miss >= 1)
+                drawPath(
+                    path,
+                    if (p.plan) SceneInk.CrackOnPlan else SceneInk.Crack,
+                    style = Stroke(1.7f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+                )
+            else {
+                drawPath(
+                    path,
+                    SceneInk.SeamGlow,
+                    style = Stroke(5f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+                )
+                drawPath(
+                    path,
+                    SceneInk.Seam,
+                    style = Stroke(2f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+                )
+            }
         }
     }
 
     /**
      * The habit's name on the front face, on two lines where the block is tall enough, and its
-     * count under it.
+     * count under it: in the middle of what shows of the face, and only what fits there whole (a
+     * block half behind the slab keeps its name, or says nothing).
      */
     private fun DrawScope.label(
         p: Piece,
@@ -610,7 +652,8 @@ internal class TowerPainter(private val text: SceneText) {
         val soft = if (p.plan) SceneInk.PlanText.copy(alpha = .7f) else f.inkSoft
         val width = p.width - 2 * PAD
         val count = text.layout(HabitsCopy.count(b), 9.5f, FontWeight.Medium, width)
-        val roomy = p.height >= 60f
+        val low = min(bottom, hidden)
+        val roomy = low - top >= 60f
         val name =
             text.layout(
                 b.name,
@@ -621,6 +664,7 @@ internal class TowerPainter(private val text: SceneText) {
             )
         if (p.kind == PieceKind.FLOOR) {
             // a floor is low: the name alone, on a dark plate over the windows
+            if (low < bottom) return
             val y = (top + bottom) / 2f - name.size.height / 2f
             drawRoundRect(
                 PLATE,
@@ -633,9 +677,17 @@ internal class TowerPainter(private val text: SceneText) {
             return
         }
         val total = name.size.height + 2f + count.size.height
-        val y = (top + bottom) / 2f - total / 2f
-        drawText(name, ink, Offset(-half + PAD, y), alpha = alpha)
-        drawText(count, soft, Offset(-half + PAD, y + name.size.height + 2f), alpha = alpha)
+        if (low - top >= total + 6f) {
+            val y = (top + low) / 2f - total / 2f
+            drawText(name, ink, Offset(-half + PAD, y), alpha = alpha)
+            drawText(count, soft, Offset(-half + PAD, y + name.size.height + 2f), alpha = alpha)
+        } else if (low - top >= name.size.height + 6f)
+            drawText(
+                name,
+                ink,
+                Offset(-half + PAD, (top + low) / 2f - name.size.height / 2f),
+                alpha = alpha,
+            )
     }
 
     /**
@@ -700,22 +752,6 @@ internal class TowerPainter(private val text: SceneText) {
         drawCircle(SceneInk.TreeA, 15f, Offset(x, -36f))
     }
 
-    /** The cat, sitting on the roof; it blinks now and then. */
-    private fun DrawScope.cat(x: Float, roof: Float, seconds: Float) {
-        val unit = 3.3f
-        val blink = seconds > 0f && (seconds % 4.2f) < .16f
-        CAT.forEachIndexed { r, row ->
-            row.forEachIndexed { c, cell ->
-                if (cell != '.')
-                    drawRect(
-                        if (cell == 'o' && !blink) SceneInk.CatEye else SceneInk.Cat,
-                        Offset(x + c * unit, -roof - (CAT.size - r) * unit),
-                        Size(unit + .3f, unit + .3f),
-                    )
-            }
-        }
-    }
-
     /** Dust thrown out along a block's base as it lands. */
     private fun DrawScope.dust(p: Piece, burst: Float) {
         val half = p.width / 2f
@@ -770,20 +806,12 @@ internal class TowerPainter(private val text: SceneText) {
 
     private companion object {
         const val DROP = 230f
+
+        /** Further than anything of a tower is drawn, for a clip open on three sides. */
+        const val FAR = 100000f
         const val PAD = 12f
         val MORTAR = Color(0x3D3A1A0B)
         val JOINT = Color(0x4018233D)
         val PLATE = Color(0x9E2A0F1C)
-        val CAT =
-            listOf(
-                "X...X...",
-                "XX.XX...",
-                "XXXXX...",
-                "XoXoX..X",
-                "XXXXX..X",
-                ".XXXXXX.",
-                ".XXXXXX.",
-                ".XXXXXX.",
-            )
     }
 }

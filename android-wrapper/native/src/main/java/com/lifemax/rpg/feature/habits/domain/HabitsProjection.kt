@@ -126,8 +126,6 @@ data class HabitsProjection(
     /** Today's blocks laid, of the [due] habits being built. */
     val built: Int,
     val due: Int,
-    /** The owner has a cat, which sits on the tower. */
-    val pet: Boolean,
     /**
      * The app's reduce-motion setting, and the owner's haptic strength (null with haptics off): the
      * page's.
@@ -141,8 +139,6 @@ data class HabitsProjection(
     val problem: String,
     val limits: HabitLimits,
     val rules: HabitRules,
-    /** Cues offered for a new foundation, without those in use. */
-    val starters: List<String>,
     val stacks: List<HabitStack>,
     /** The past, a week apart, most recent first: [HabitRules.weeks] frames. */
     val lapse: List<LapseFrame>,

@@ -90,13 +90,14 @@ foundation is something you already do; habits are blocks stacked on it; one but
 total reps (glass, clay at 10, stone at 30, gold at 66) and a missed day never removes a rep; block height is the size (two
 minutes, normal, stretch); one missed day is a crack, two a wobble, coming back leaves a gold seam; "rough day" lays the
 two-minute size for today only; a habit being broken loses a floor per clean day and ends as a tree; a foundation can carry a
-rooftop reward that unlocks when its stack is done; city view shows every tower with a 12-week time-lapse; the cat sits on
-the tower. Owner defaults taken: no XP, Sparks or streak; Quests separate; no reminders.
+rooftop reward that unlocks when its stack is done; city view shows every tower with a 12-week time-lapse. There is no
+cat on the tower (removed at the owner's request: the cat lives in the Cat tab only). Owner defaults taken: no XP, Sparks or streak; Quests separate; no reminders.
 
 Where it lives (android-wrapper/native/src/main/java/com/lifemax/rpg/feature/habits): `domain/HabitsRules.kt` and
 `HabitsEngine.kt` (the rules and commands, pure Kotlin), `data/HabitsFile.kt` (the habits file, `files/habits/habits.json`,
-schema v 1, atomic write, safety copy), `domain/HabitsScene.kt` (geometry), `presentation/` (the screen, the scene on a
-Canvas, the sheets). Details, the backup status and what remains on the page: docs/architecture/MIGRATION.md, "Habits".
+schema v 1, atomic write, safety copy), `domain/HabitsScene.kt` (geometry), `domain/AnchorCatalog.kt` and `HabitCatalog.kt` (the suggestions' plain
+data: add a line to add an entry), `domain/HabitsSuggest.kt` (how what is typed finds an entry), `presentation/` (the screen,
+the scene on a Canvas, the sheets). Details, the backup status and what remains on the page: docs/architecture/MIGRATION.md, "Habits".
 
 Native design: the scene fills the screen and the controls float on it. A block is drawn face on with its top and side
 showing, so its name is flat and readable. One tower stands in front, its neighbours peek in at the edges, smaller and
@@ -104,6 +105,21 @@ fainter; a sideways drag moves them with the finger and a release settles on a s
 Blocks not laid yet today are blueprints and the next one glows. A tap on a block opens its dials in a sheet that leaves the
 scene bright (size as three blocks of growing height, pairing, foundation, order, undo, retire); a tap on the foundation
 edits it; the outline above the roof stacks a new habit; a dot per foundation and a plus sit under the big button.
+
+Layout: the heading and the controls are measured first and the scene is told what they take, at any text size. The towers
+keep to the window between them (`SceneWindow`): a tower is made smaller until it fits, down to 0.7; one still too tall keeps
+its foundation on the ground line, with its name in view, and what stands on it slides down behind the slab (the pan), fading
+out under the heading. The sun, the moon and the clouds keep under the heading and beside the tower in front. A crack or a
+gold seam is its block's own: it starts on the top edge, stops inside the face and is clipped to it. While a block's dials are
+open the heading is put away, so the block can rise over the sheet.
+
+Suggestions: the new-foundation and new-habit sheets offer chips under the first field as it is typed. Foundations come from
+about 110 everyday anchors (those of the current part of the day before anything is typed; an activity the catalog does not
+know is offered as "After ..." and "Before ..."); a tap lays the foundation. Habits come from about 150 habits with their
+two-minute, normal and stretch names, and about 40 habits to break with their clean days and a replacement; a tap fills every
+field of the sheet, which now also asks for the stretch name or the replacement. Matching ignores case, hyphens and spaces,
+looks at the start of every word, then at an entry's other words, then allows one slip of the finger from four letters on;
+at most six are shown and never one that is already there.
 
 Not built yet: drag to move a block, reminders, the first-run scorecard, Life Director supplying foundations, Habits in the
 owner's manual backup.

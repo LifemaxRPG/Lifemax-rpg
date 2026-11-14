@@ -3901,7 +3901,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-habits.js",
-   "bytes": 3364,
+   "bytes": 3261,
    "statement_count": 1,
    "tags": [
     "native",

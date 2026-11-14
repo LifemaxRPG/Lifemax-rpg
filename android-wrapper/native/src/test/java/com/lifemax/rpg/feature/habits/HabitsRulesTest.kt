@@ -433,8 +433,6 @@ class HabitsRulesTest {
         assertEquals("", p.problem)
         assertEquals(HabitsRules.LIMITS, p.limits)
         assertEquals(HabitsRules.RULES, p.rules)
-        // the starters leave out a cue in use, whatever its case
-        assertEquals(listOf("After waking up", "After getting home"), p.starters)
         assertEquals((1..12).toList(), p.lapse.map { it.weeks })
         assertEquals("2026-02-23", p.lapse[0].day)
         assertEquals(p.stacks, p.towersAt(0))

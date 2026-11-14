@@ -253,9 +253,9 @@ class HabitsFileTest {
 
     @Test
     fun theSurroundingsAreThePagesAndStrict() {
-        val s = HabitsScenarios.surroundings(pet = true).toHabitsSurroundings()
+        val s = HabitsScenarios.surroundings().toHabitsSurroundings()
         assertEquals("habits-test", s.session)
-        assertTrue(s.pet && !s.light && !s.reducedMotion)
+        assertTrue(!s.light && !s.reducedMotion)
         assertEquals("Scholar", s.className)
         assertNull(s.haptics)
         assertEquals(17, s.tokens.size)
@@ -274,7 +274,7 @@ class HabitsFileTest {
         rejects { put("webSessionId", " ") }
         rejects { put("sequence", 0) }
         rejects { remove("reducedMotion") }
-        rejects { put("pet", "yes") }
+        rejects { put("light", "yes") }
         rejects { remove("className") }
         rejects { remove("haptics") }
         rejects { put("haptics", JSONObject("""{"dm":1,"add":0,"amp":999,"min":4,"max":260}""")) }

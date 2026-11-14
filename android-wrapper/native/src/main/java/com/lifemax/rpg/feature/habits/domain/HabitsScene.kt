@@ -39,8 +39,11 @@ object TowerSpec {
     const val GHOST_H = 42f
     const val GHOST_GAP = 12f
 
-    /** Air kept above a tower when the camera frames it. */
-    const val HEADROOM = 46f
+    /**
+     * Air kept above a tower when the camera frames it: enough, at the camera's smallest scale, to
+     * keep a tower that fits clear of [TOP_FADE].
+     */
+    const val HEADROOM = 30f
 
     /** A cleared habit's tree: how far from the tower's edge the first stands, and its size. */
     const val TREE_OUT = 34f
@@ -84,7 +87,7 @@ data class TreeSpot(val id: String, val name: String, val x: Float)
 /**
  * A tower from its foundation up. [height] reaches the top of its highest piece's top face; [roof]
  * is the top of the highest piece that really stands (not a blueprint, the reward or the ghost),
- * where the cat sits.
+ * which the camera and the city measure a tower by.
  */
 data class TowerLayout(
     val stackId: String,
@@ -98,13 +101,20 @@ data class TowerLayout(
     fun labelled(id: String): Piece? =
         pieces.firstOrNull { it.id == id && it.labelled && it.kind != PieceKind.SLAB }
 
-    /** How high the middle of block [id] is, for the camera; a tree's is near the ground. */
-    fun aim(id: String): Float? =
+    /** How high the middle of block [id] is; a tree's is near the ground. */
+    fun aim(id: String): Float? = span(id)?.let { (it.first + it.second) / 2f }
+
+    /**
+     * From where to where block [id] stands above the ground (all its floors, for a habit being
+     * broken), for the camera; a tree's is from the ground up.
+     */
+    fun span(id: String): Pair<Float, Float>? =
         pieces
             .filter { it.id == id && (it.kind == PieceKind.BLOCK || it.kind == PieceKind.FLOOR) }
             .let { mine ->
-                if (mine.isEmpty()) trees.firstOrNull { it.id == id }?.let { TowerSpec.TREE_H / 2f }
-                else (mine.first().bottom + mine.last().top) / 2f
+                if (mine.isEmpty())
+                    trees.firstOrNull { it.id == id }?.let { 0f to TowerSpec.TREE_H }
+                else mine.first().bottom to mine.last().top
             }
 }
 
@@ -185,11 +195,16 @@ enum class HitKind {
 data class Hit(val kind: HitKind, val id: String)
 
 /**
- * What stands at ([x], [y]) of this tower: the piece whose front, top or side face holds the point,
- * the highest one first (a piece hides the top face of the one under it), else a tree.
+ * What stands at ([x], [at]) of this tower: the piece whose front, top or side face holds the
+ * point, the highest one first (a piece hides the top face of the one under it), else a tree.
+ * [sink] is how far the camera has slid everything above the slab down behind it ([Camera.sink]):
+ * what has gone under the slab's top is not there to be tapped.
  */
-fun TowerLayout.hit(x: Float, y: Float): Hit? {
+fun TowerLayout.hit(x: Float, at: Float, sink: Float = 0f): Hit? {
     for (p in pieces.asReversed()) {
+        val slab = p.kind == PieceKind.SLAB
+        if (!slab && sink > 0f && at < TowerSpec.SLAB_H) continue
+        val y = if (slab) at else at + sink
         val half = p.width / 2f
         val front = abs(x) <= half && y >= p.bottom && y <= p.top
         // the top face leans right as it goes up; the side face rises as it goes right
@@ -216,32 +231,94 @@ fun TowerLayout.hit(x: Float, y: Float): Hit? {
             )
     }
     return trees
-        .firstOrNull { abs(x - it.x) <= 24f && y >= -6f && y <= TowerSpec.TREE_H }
+        .firstOrNull { abs(x - it.x) <= 24f && at >= -6f && at <= TowerSpec.TREE_H }
         ?.let { Hit(HitKind.TREE, it.id) }
 }
 
 /**
- * Where the camera stands on the tower in front: [scale] of the tower and [pan], how far it is slid
- * down so its upper part shows, between 0 (the ground at the bottom of the view) and [maxPan] (the
- * top of the tower at the top of the view). A point [y] above the ground is drawn `scale * y - pan`
- * above the bottom of the view.
+ * The part of the view the towers may use, in dp from the top of a view [height] tall: under the
+ * [top] band (the heading and its buttons) and above the [bottom] band (the rough-day switch, the
+ * big button and the dots, or the time-lapse). The ground line is [GROUND_MARGIN] above the bottom
+ * band, so the lot's front edge clears it; the towers' window runs from [windowTop] to [ground].
  */
-data class Camera(val scale: Float, val pan: Float, val maxPan: Float)
+data class SceneWindow(val height: Float, val top: Float, val bottom: Float) {
+    val ground: Float
+        get() = height - bottom - GROUND_MARGIN
 
-const val CAMERA_MIN = .9f
-const val CAMERA_MAX = 1.25f
+    /** The room for a tower, never under [MIN_AVAIL] (a view too small to hold both bands). */
+    val avail: Float
+        get() = max(MIN_AVAIL, ground - top)
+
+    val windowTop: Float
+        get() = ground - avail
+
+    /** Where a point [above] the ground line (in dp) is drawn, from the top of the view. */
+    fun y(above: Float): Float = ground - above
+
+    companion object {
+        const val GROUND_MARGIN = 30f
+        const val MIN_AVAIL = 120f
+    }
+}
 
 /**
- * Frames a tower [height] tall in a view [avail] tall. A short tower is enlarged to fill it, up to
- * [CAMERA_MAX]; a tall one keeps a readable size, never under [CAMERA_MIN], and is panned instead:
- * to [pan] when the owner dragged it, else so that [aim] (the block to lay next) sits in the middle
- * of the view, else to its top.
+ * Where the camera stands on the tower in front. The foundation never moves: its slab stays on the
+ * ground line with its name in view. [scale] is the tower's; [pan] how far everything above the
+ * slab is slid down behind it so the upper part shows, in dp, between 0 (the first block on the
+ * slab) and [maxPan] (the top of the tower at the top of the window).
  */
-fun focusCamera(height: Float, avail: Float, aim: Float? = null, pan: Float? = null): Camera {
+data class Camera(val scale: Float, val pan: Float, val maxPan: Float) {
+    /** How far above the ground line the top of the slab is drawn, in dp. */
+    val slabTop: Float
+        get() = scale * TowerSpec.SLAB_H
+
+    /** [pan] in the tower's own units. */
+    val sink: Float
+        get() = pan / scale
+
+    /**
+     * How far above the ground line a point [y] of the tower above its slab is drawn, in dp. Under
+     * [slabTop] it is hidden behind the slab.
+     */
+    fun above(y: Float): Float = scale * y - pan
+}
+
+const val CAMERA_MIN = .7f
+const val CAMERA_MAX = 1.25f
+
+/** Air the camera keeps above the block it aims at, so what comes after it shows too. */
+const val AIM_AIR = 30f
+
+/**
+ * How far under the top of the window a tower too tall for it fades out, in dp, so it never runs
+ * under the heading.
+ */
+const val TOP_FADE = 20f
+
+/**
+ * Frames a tower [height] tall in a window [avail] tall. A short tower is enlarged to fill it, up
+ * to [CAMERA_MAX]; a tall one is made smaller until it fits, but never under [CAMERA_MIN], where
+ * its names would stop being readable: then it is slid down behind its slab instead. It is slid to
+ * [pan] when the owner dragged it; else no further than it takes for [aim] (the block to lay next,
+ * from its bottom to its top) to show whole with [AIM_AIR] over it, so the tower stays on its
+ * foundation as long as it can; else, with nothing to aim at, to its top.
+ */
+fun focusCamera(
+    height: Float,
+    avail: Float,
+    aim: Pair<Float, Float>? = null,
+    pan: Float? = null,
+): Camera {
     val full = height + TowerSpec.HEADROOM
     val scale = (avail / full).coerceIn(CAMERA_MIN, CAMERA_MAX)
     val maxPan = max(0f, scale * full - avail)
-    val wanted = pan ?: aim?.let { scale * it - avail / 2f } ?: maxPan
+    val wanted =
+        pan
+            ?: aim?.let { (bottom, top) ->
+                // its top in the window, unless that hides its foot behind the slab
+                min(scale * (top + AIM_AIR) - avail, scale * (bottom - TowerSpec.SLAB_H))
+            }
+            ?: maxPan
     return Camera(scale, wanted.coerceIn(0f, maxPan), maxPan)
 }
 
@@ -306,7 +383,7 @@ data class CityLayout(val scale: Float, val xs: List<Float>, val slot: Float)
 const val CITY_MAX_SCALE = .7f
 const val CITY_MIN_SCALE = .16f
 
-/** Room kept under the city's towers for their names. */
+/** Room kept clear over the city's towers: the sun or the moon stands there. */
 const val CITY_LABEL = 34f
 
 /**
@@ -363,6 +440,38 @@ fun orbAt(hour: Float): Pair<Float, Float> {
     return t to sin(t * Math.PI).toFloat()
 }
 
+/**
+ * Where the sun or the moon is drawn, in dp from the left and the top of a view [width] wide: in
+ * the lane beside the tower in front (left before the middle of its arc, right after), never behind
+ * the tower's column ([column] is half its width) and never in the heading: between [top] (the top
+ * of the towers' window) and [horizon]. In the [city] (0 to 1) it stands in the strip kept clear
+ * over the towers.
+ */
+fun orbSpot(
+    hour: Float,
+    width: Float,
+    top: Float,
+    horizon: Float,
+    column: Float,
+    city: Float = 0f,
+): Pair<Float, Float> {
+    val (across, up) = orbAt(hour)
+    val lane = max(0f, width / 2f - column)
+    val fromEdge = max(ORB_EDGE, lane / 2f)
+    val x = if (across < .5f) fromEdge else width - fromEdge
+    val high = top + ORB_TOP
+    val low = max(high, horizon - ORB_LOW)
+    return x to lerp(lerp(low, high, up), high, city.coerceIn(0f, 1f))
+}
+
+/**
+ * The orb's middle is kept this far from the view's edge, under the window's top and over the
+ * horizon.
+ */
+const val ORB_EDGE = 34f
+const val ORB_TOP = 18f
+const val ORB_LOW = 44f
+
 /** The same few random numbers for the same key, every time: what makes a block's marks its own. */
 class Dice(key: String) {
     private var h: Int = FNV
@@ -383,17 +492,32 @@ class Dice(key: String) {
 }
 
 /**
- * A crack (or the seam left by coming back) down a block's front face, its own shape for each
- * [key]: points as (how far across the face, 0 to 1; how far down it, 0 to 1), from the top edge to
- * the bottom, a zigzag through the right-hand third.
+ * A crack (or the seam left by coming back) on a block's front face, its own shape for each [key]:
+ * points as (how far across the face, 0 to 1; how far down it, 0 to 1). It starts on the top edge
+ * somewhere in the right-hand half (the name is on the left), zigzags down and stops inside the
+ * face, so it never meets the crack of the block under it; a [tall] block's has more turns.
  */
 fun crackLine(key: String, tall: Boolean): List<Pair<Float, Float>> {
     val dice = Dice(key + "c")
-    val n = if (tall) 6 else 4
+    val n = (if (tall) 4 else 3) + if (dice.next() < .5f) 0 else 1
+    val start = CRACK_LEFT + .09f + dice.next() * (CRACK_RIGHT - CRACK_LEFT - .18f)
+    val depth = .5f + dice.next() * (CRACK_DEPTH - .5f)
+    var side = if (dice.next() < .5f) -1f else 1f
     return List(n + 1) { i ->
-        (.74f + (if (i % 2 == 1) .09f else 0f) + dice.next() * .05f) to i / n.toFloat()
+        if (i == 0) start to 0f
+        else {
+            val u = start + side * (.03f + dice.next() * .06f)
+            side = -side
+            // the turns are not evenly spaced either
+            u to depth * (i - .4f + dice.next() * .4f) / n
+        }
     }
 }
+
+/** A crack keeps between these across its face, and never goes deeper than [CRACK_DEPTH] of it. */
+const val CRACK_LEFT = .52f
+const val CRACK_RIGHT = .94f
+const val CRACK_DEPTH = .84f
 
 /** One building of a skyline: from [x], [w] wide and [h] tall, in the units given to [skyline]. */
 data class Building(val x: Float, val w: Float, val h: Float)

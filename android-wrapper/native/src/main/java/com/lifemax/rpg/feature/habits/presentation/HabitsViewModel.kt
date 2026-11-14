@@ -3,9 +3,12 @@ package com.lifemax.rpg.feature.habits.presentation
 import androidx.lifecycle.ViewModel
 import com.lifemax.rpg.feature.habits.domain.HabitFx
 import com.lifemax.rpg.feature.habits.domain.HabitsCommands
+import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.HabitsReply
 import com.lifemax.rpg.feature.habits.domain.HabitsRepository
+import com.lifemax.rpg.feature.habits.domain.HabitsSuggest
 import com.lifemax.rpg.feature.habits.domain.PrimaryAction
+import com.lifemax.rpg.feature.habits.domain.Suggestion
 import com.lifemax.rpg.feature.habits.domain.primaryAction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +37,8 @@ enum class SheetKind {
 /**
  * The sheet on show. [target] is the stack or block it is about ("" for none), [fields] what has
  * been typed, in the sheet's order, [fade] a new habit that is one to break. [error] says why the
- * last try was refused or could not be saved.
+ * last try was refused or could not be saved. [filled] is a new habit whose fields a suggestion has
+ * just filled: nothing more is suggested until its name is typed in again.
  */
 data class HabitsSheet(
     val kind: SheetKind,
@@ -42,7 +46,45 @@ data class HabitsSheet(
     val fields: List<String> = emptyList(),
     val fade: Boolean = false,
     val error: String = "",
+    val filled: Boolean = false,
 )
+
+/**
+ * What [sheet] offers under its first field as it is typed: foundations for a new one (those of
+ * this part of the day before anything is typed), habits with their sizes or habits to break with
+ * their replacement for a new habit (those that suit its foundation first), never one that is there
+ * already.
+ */
+fun sheetSuggestions(sheet: HabitsSheet, p: HabitsProjection): List<Suggestion> {
+    val typed = sheet.fields.firstOrNull().orEmpty()
+    return when (sheet.kind) {
+        SheetKind.NEW_STACK ->
+            HabitsSuggest.anchors(typed, p.hour, p.stacks.map { it.cue }, p.limits.cue)
+        SheetKind.NEW_HABIT -> {
+            val stack = p.stack(sheet.target)
+            val taken = stack?.blocks.orEmpty().flatMap { it.names + it.title }
+            when {
+                stack == null || sheet.filled -> emptyList()
+                sheet.fade ->
+                    HabitsSuggest.breaks(typed, stack.cue, taken).map { s ->
+                        val days = s.fields[1].toIntOrNull() ?: p.limits.floors
+                        s.copy(
+                            fields =
+                                listOf(
+                                    s.fields[0],
+                                    days
+                                        .coerceIn(p.limits.floorsMin, p.limits.floorsMax)
+                                        .toString(),
+                                    s.fields[2],
+                                )
+                        )
+                    }
+                else -> HabitsSuggest.habits(typed, stack.cue, taken)
+            }
+        }
+        else -> emptyList()
+    }
+}
 
 /** A message to show once (a write that failed, a block that turned to stone). */
 data class HabitsToast(val id: Long, val text: String)
@@ -221,7 +263,7 @@ class HabitsViewModel(repository: HabitsRepository, private val commands: Habits
 
     fun newHabit(stackId: String) {
         if (projection.value?.stack(stackId) != null)
-            show(HabitsSheet(SheetKind.NEW_HABIT, stackId, listOf("", "")))
+            show(HabitsSheet(SheetKind.NEW_HABIT, stackId, listOf("", "", "")))
     }
 
     /** From a block's dials: its names at each size. */
@@ -255,12 +297,14 @@ class HabitsViewModel(repository: HabitsRepository, private val commands: Habits
                         s.copy(
                             fields = s.fields.toMutableList().also { it[index] = text },
                             error = "",
+                            filled = s.filled && index != 0,
                         )
                 )
         }
 
     /**
-     * A new habit: one to build, or one to break (which counts clean days instead of a small size).
+     * A new habit: one to build (its name, its two-minute and its stretch version), or one to break
+     * (its name, the clean days that bring it down, what to do instead).
      */
     fun kind(fade: Boolean) =
         mutable.update { ui ->
@@ -272,19 +316,40 @@ class HabitsViewModel(repository: HabitsRepository, private val commands: Habits
                     sheet =
                         s.copy(
                             fade = fade,
-                            fields = listOf(s.fields[0], if (fade) floors else ""),
+                            fields = listOf(s.fields[0], if (fade) floors else "", ""),
                             error = "",
+                            filled = false,
                         )
                 )
             }
         }
 
-    /** One of the starter cues for a new foundation: laid at once. */
-    fun starter(cue: String) {
+    /**
+     * A suggestion picked. A foundation is laid at once; a habit's fields are all filled (its three
+     * sizes, or its clean days and what to do instead), to be looked over, changed and stacked with
+     * one more tap.
+     */
+    fun suggest(pick: Suggestion) {
         val s = mutable.value.sheet ?: return
-        if (s.kind != SheetKind.NEW_STACK) return
-        mutable.update { it.copy(sheet = s.copy(fields = listOf(cue))) }
-        submit()
+        when (s.kind) {
+            SheetKind.NEW_STACK -> {
+                mutable.update { it.copy(sheet = s.copy(fields = pick.fields.take(1), error = "")) }
+                submit()
+            }
+            SheetKind.NEW_HABIT ->
+                mutable.update {
+                    it.copy(
+                        sheet =
+                            s.copy(
+                                fields =
+                                    List(s.fields.size) { i -> pick.fields.getOrElse(i) { "" } },
+                                error = "",
+                                filled = true,
+                            )
+                    )
+                }
+            else -> Unit
+        }
     }
 
     /** The sheet's main button. */
@@ -315,6 +380,8 @@ class HabitsViewModel(repository: HabitsRepository, private val commands: Habits
                         f[0],
                         if (s.fade) "" else f[1],
                         if (s.fade) f[1].trim().toIntOrNull() ?: 0 else 0,
+                        big = if (s.fade) "" else f[2],
+                        pair = if (s.fade) f[2] else "",
                     )
                 ) {
                     it.copy(sheet = null, selected = null)

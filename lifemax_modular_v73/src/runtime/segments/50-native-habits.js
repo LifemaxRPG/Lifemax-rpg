@@ -3,8 +3,8 @@
    and no drawing of it. What is here is only what the shell still needs from the page for any tab: the bar's button (the native
    bar is the page's bar drawn natively), the view the bar switches to (an empty one, which the screen covers), and NativeTabKit's
    open/close/hand-over. What the kit sends is the screen's surroundings, none of it Habits': the palette and theme (the kit's own),
-   whether motion is reduced and the owner's haptic strength (app settings the page holds), the character's class name (shown
-   until the owner says who they are becoming) and whether there is a cat (it sits on the tower).
+   whether motion is reduced and the owner's haptic strength (app settings the page holds), and the character's class name (shown
+   until the owner says who they are becoming).
    Where the app cannot draw the screen (a browser, an APK from before it) the button is taken off the bar, so the tab is never an
    empty page. */
 (function () {
@@ -15,10 +15,10 @@
     const L = HAP_LEVELS[hapLevelKey()];
     return { dm: L.dm, add: L.add, amp: L.amp, min: L.min, max: HAP_MAX };
   }
-  /** what the screen cannot know by itself: app settings and two facts of the character (its class, whether it has a cat) */
+  /** what the screen cannot know by itself: app settings and the character's class */
   function surroundings() {
     const cls = typeof CLASSES !== "undefined" && state.classId ? CLASSES.find((c) => c.id === state.classId) : null;
-    return { v: 1, reducedMotion: !!(fxReduced() || document.documentElement.classList.contains("reduce-motion")), haptics: haptics(), className: cls ? cls.name : "", pet: !!state.pet };
+    return { v: 1, reducedMotion: !!(fxReduced() || document.documentElement.classList.contains("reduce-motion")), haptics: haptics(), className: cls ? cls.name : "" };
   }
 
   function available() {

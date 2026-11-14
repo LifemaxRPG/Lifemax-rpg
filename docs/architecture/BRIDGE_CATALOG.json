@@ -770,7 +770,7 @@
     "backup": "Android device backup and phone-to-phone transfer copy files/habits/ with the rest of the app's files while the owner allows device backup (backup_rules.xml, data_extraction_rules.xml: nothing under files/ but live/ is excluded). NOT in the page's manual export, the automatic backup folder or any restore of the web save: those hold the page's save only"
    },
    "readContract": {
-    "snapshotDto": "feature/habits/data/LocalHabitsRepository.kt HabitsSurroundings: {protocol, webSessionId, sequence, v: 1, reducedMotion, haptics, className, pet, tokens, light}: app settings and two facts of the character, nothing of Habits",
+    "snapshotDto": "feature/habits/data/LocalHabitsRepository.kt HabitsSurroundings: {protocol, webSessionId, sequence, v: 1, reducedMotion, haptics, className, tokens, light}: app settings and the character's class name, nothing of Habits",
     "decoder": "JSONObject.toHabitsSurroundings (strict; a rejected one keeps the last good)",
     "fixtures": "none from the page: the screen's states are built by the rules themselves (test HabitsScenarios.kt)",
     "ordering": "webSessionId and increasing sequence",

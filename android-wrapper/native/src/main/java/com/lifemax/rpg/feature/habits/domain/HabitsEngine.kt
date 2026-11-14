@@ -171,10 +171,12 @@ class HabitsEngine(private val storage: HabitsStorage, private val today: () -> 
         name: String,
         small: String,
         floors: Int,
+        big: String = "",
+        pair: String = "",
     ): HabitsReply {
         if (save.stacks.none { it.id == stackId }) return no(GONE)
         val added =
-            HabitsRules.addHabit(save, today(), stackId, name, small, fade = fade, floors = floors)
+            HabitsRules.addHabit(save, today(), stackId, name, small, big, fade, floors, pair)
         return commit(added?.first, no("Give the habit a name.")) {
             HabitsReply(true, true, id = added!!.second)
         }
@@ -187,7 +189,6 @@ class HabitsEngine(private val storage: HabitsStorage, private val today: () -> 
     fun project(
         hour: Float,
         whoHint: String,
-        pet: Boolean,
         reducedMotion: Boolean,
         haptics: HapticScale?,
         tokens: Map<String, Long>,
@@ -226,16 +227,11 @@ class HabitsEngine(private val storage: HabitsStorage, private val today: () -> 
             rough = d.rough,
             built = d.built,
             due = d.due,
-            pet = pet,
             reducedMotion = reducedMotion,
             haptics = haptics,
             problem = problem,
             limits = HabitsRules.LIMITS,
             rules = HabitsRules.RULES,
-            starters =
-                HabitsRules.STARTERS.filter { c ->
-                    d.stacks.none { it.cue.equals(c, ignoreCase = true) }
-                },
             stacks = d.stacks,
             lapse = lapse,
             tokens = tokens,

@@ -24,6 +24,9 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -49,12 +52,15 @@ import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
 import com.lifemax.rpg.feature.habits.domain.PAGE_SHARE
+import com.lifemax.rpg.feature.habits.domain.SceneWindow
+import com.lifemax.rpg.feature.habits.domain.TOP_FADE
 import com.lifemax.rpg.feature.habits.domain.TowerLayout
 import com.lifemax.rpg.feature.habits.domain.TowerSpec
 import com.lifemax.rpg.feature.habits.domain.cityLayout
 import com.lifemax.rpg.feature.habits.domain.focusCamera
 import com.lifemax.rpg.feature.habits.domain.hit
 import com.lifemax.rpg.feature.habits.domain.lerp
+import com.lifemax.rpg.feature.habits.domain.orbSpot
 import com.lifemax.rpg.feature.habits.domain.pagerPose
 import com.lifemax.rpg.feature.habits.domain.rubberBand
 import com.lifemax.rpg.feature.habits.domain.settlePage
@@ -141,19 +147,27 @@ private class PlayMotion {
 
 /**
  * Where a tower is drawn: its foot's pixel, the pixels a tower unit takes, how far it is from the
- * front.
+ * front, and how far what stands on its slab is slid down behind it (in tower units).
  */
-private class Place(val x: Float, val y: Float, val unit: Float, val away: Float, val front: Float)
+private class Place(
+    val x: Float,
+    val y: Float,
+    val unit: Float,
+    val away: Float,
+    val front: Float,
+    val sink: Float,
+)
 
 /**
  * The scene's arithmetic for one frame, shared by the drawing and the taps so that a tap lands on
- * what is drawn there. [position] is the pager's, [city] 0 (one tower in front) to 1 (the city),
- * [pan] the front tower's, [lift] how far the whole ground is raised to clear a sheet.
+ * what is drawn there. [window] is the part of the view the towers may use, [position] the pager's,
+ * [city] 0 (one tower in front) to 1 (the city), [pan] the front tower's, [lift] how far the whole
+ * ground is raised to clear a sheet, [inset] the top bar's pixels.
  */
 private class Frame(
     val size: IntSize,
     val density: Float,
-    val bottom: Float,
+    val window: SceneWindow,
     val layouts: List<TowerLayout>,
     val cameras: List<Camera>,
     val cityLayout: CityLayout,
@@ -162,32 +176,32 @@ private class Frame(
     val city: Float,
     val pan: Float,
     val lift: Float,
+    val inset: Float,
 ) {
-    /**
-     * The camera's slide of the tower in front, shared by every tower: they stand on one ground.
-     */
-    val drop: Float =
-        layouts.indices
-            .sumOf { i ->
-                ((if (i == focus) pan else cameras[i].pan) * max(0f, 1f - abs(i - position)))
-                    .toDouble()
-            }
-            .toFloat() * (1f - city) * density
+    /** The ground line: it never moves with the camera, so the foundations stay where they are. */
+    val ground: Float = window.ground * density - lift
 
-    val ground: Float = size.height - bottom - GROUND_DP * density - lift
+    /** Under the heading's band, where the sky's own things stay. */
+    val skyTop: Float = window.windowTop * density
+
+    /**
+     * Nothing of a tower is drawn above this: the heading's band, or, as the ground rises to clear
+     * a block's dials (the heading is put away then), as far up as the top bar.
+     */
+    val top: Float = max(min(inset, skyTop), skyTop - lift)
 
     fun place(i: Int): Place {
         val pose = pagerPose(i, position, size.width / density)
         val away = min(1f, abs(i - position))
         val scale = lerp(cameras[i].scale * pose.scale, cityLayout.scale, city)
         val x = size.width / 2f + lerp(pose.x, cityLayout.xs[i], city) * density
-        return Place(x, ground + drop, scale * density, away, lerp(pose.alpha, 1f, city))
+        val sink = (if (i == focus) pan else cameras[i].pan) * (1f - city) / cameras[i].scale
+        return Place(x, ground, scale * density, away, lerp(pose.alpha, 1f, city), sink)
     }
 
-    companion object {
-        /** Ground kept under the towers' feet, above the controls. */
-        const val GROUND_DP = 30f
-    }
+    /** Whether tower [i], drawn at [at], reaches into the fade under the heading's band. */
+    fun fades(i: Int, at: Place): Boolean =
+        at.y - (layouts[i].height - at.sink) * at.unit < top + TOP_FADE * density
 }
 
 /**
@@ -195,9 +209,11 @@ private class Frame(
  * peeking in at the edges; a sideways drag moves them with the finger and a release settles on a
  * neighbour with the finger's speed; an up-and-down drag slides a tower too tall for the view; a
  * tap picks what is under it. In the city view every tower stands side by side, as it stood
- * [HabitsUi.weeks] weeks ago. [top] and [bottom] are the pixels the screen's own controls take;
- * [cover] the height of a sheet over the bottom, which the selected block is kept clear of. Nothing
- * runs while the screen is not [visible] (A24) or motion is reduced.
+ * [HabitsUi.weeks] weeks ago. [top] and [bottom] are the pixels the screen's own controls take, as
+ * they were measured: the towers, the sun, the moon and the clouds keep between them
+ * ([SceneWindow]). [cover] is the height of a sheet over the bottom, which the selected block is
+ * kept clear of; [inset] the top bar's pixels, as far up as a tower may then reach. Nothing runs
+ * while the screen is not [visible] (A24) or motion is reduced.
  */
 @Composable
 internal fun HabitsStage(
@@ -207,6 +223,7 @@ internal fun HabitsStage(
     top: Float,
     bottom: Float,
     cover: Float,
+    inset: Float,
     accent: Color,
     actions: StageActions,
     modifier: Modifier = Modifier,
@@ -221,6 +238,7 @@ internal fun HabitsStage(
             top,
             bottom,
             cover,
+            inset,
             accent,
             actions,
         )
@@ -236,6 +254,7 @@ private fun StageCanvas(
     top: Float,
     bottom: Float,
     cover: Float,
+    inset: Float,
     accent: Color,
     actions: StageActions,
 ) {
@@ -255,15 +274,21 @@ private fun StageCanvas(
         remember(stacks, focus, ui.city, live) {
             stacks.mapIndexed { i, s -> towerLayout(s, live, ghost = !ui.city && i == focus) }
         }
-    val avail =
-        ((size.height - bottom - Frame.GROUND_DP * density.density - top) / density.density)
-            .coerceAtLeast(120f)
+    val window =
+        remember(size, top, bottom, density.density) {
+            SceneWindow(
+                size.height / density.density,
+                top / density.density,
+                bottom / density.density,
+            )
+        }
+    val avail = window.avail
     val cameras =
         remember(layouts, stacks, avail, ui.selected) {
             layouts.mapIndexed { i, l ->
                 val aim =
-                    ui.selected?.let(l::aim)
-                        ?: stacks[i].next.takeIf { it.isNotEmpty() }?.let(l::aim)
+                    ui.selected?.let(l::span)
+                        ?: stacks[i].next.takeIf { it.isNotEmpty() }?.let(l::span)
                 focusCamera(l.height, avail, aim)
             }
         }
@@ -308,9 +333,7 @@ private fun StageCanvas(
         val piece = ui.selected?.let { id -> layouts.getOrNull(focus)?.labelled(id) }
         if (cover <= 0f || piece == null || front == null) 0f
         else {
-            val foot =
-                size.height - bottom - Frame.GROUND_DP * density.density +
-                    (front.pan - front.scale * piece.bottom) * density.density
+            val foot = (window.ground - front.above(piece.bottom)) * density.density
             max(0f, foot + 18f * density.density - (size.height - cover))
         }
     }
@@ -320,7 +343,7 @@ private fun StageCanvas(
         else lift.animateTo(liftTo, spring(dampingRatio = .9f, stiffness = 300f))
     }
 
-    // time, for what lives by itself: the glow of the next block, a wobble, stars, the cat's blink
+    // time, for what lives by itself: the glow of the next block, a wobble, stars
     var seconds by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(visible, still) {
         if (visible && !still) {
@@ -385,7 +408,7 @@ private fun StageCanvas(
         Frame(
             size,
             density.density,
-            bottom,
+            window,
             layouts,
             cameras,
             cityPlan,
@@ -394,6 +417,7 @@ private fun StageCanvas(
             cityT.value,
             pan.value,
             if (still) liftTo else lift.value,
+            inset,
         )
 
     val describe =
@@ -527,14 +551,27 @@ private fun StageCanvas(
         val f = frame()
         val phase = skyPhase(p.hour)
         val sky = skyColors(phase)
+        val horizon = f.ground - HORIZON_DP * density.density
+        // the sun or the moon stands beside the tower in front, never behind it
+        val column =
+            (TowerSpec.W / 2f + TowerSpec.SLAB_OVER + TowerSpec.DX) * (front?.scale ?: 1.15f) + 14f
+        val orb =
+            orbSpot(
+                p.hour,
+                this.size.width / density.density,
+                window.windowTop,
+                horizon / density.density,
+                column,
+                f.city,
+            )
         with(backdrop) {
             backdrop(
                 phase,
                 sky,
-                p.hour,
-                f.ground - HORIZON_DP * density.density,
+                horizon,
+                f.skyTop,
+                Offset(orb.first * density.density, orb.second * density.density),
                 f.position * (1f - f.city),
-                f.drop,
                 seconds,
             )
         }
@@ -553,13 +590,15 @@ private fun StageCanvas(
         for (i in layouts.indices.sortedByDescending { abs(it - f.position) }) {
             val at = f.place(i)
             if (at.front <= .01f) continue
-            val left = at.x - (layouts[i].pieces.first().width / 2f + 60f) * at.unit
-            val right = at.x + (layouts[i].pieces.first().width / 2f + 80f) * at.unit
+            val left = at.x - (layouts[i].pieces.first().width / 2f + 120f) * at.unit
+            val right = at.x + (layouts[i].pieces.first().width / 2f + 140f) * at.unit
             if (right < 0f || left > this.size.width) continue
-            // distance: a tower that is not in front is drawn fainter, as one picture
+            // distance: a tower that is not in front is drawn fainter, as one picture; so is one
+            // too tall for its window, which fades out under the heading instead of running into it
             val faint = at.front < .99f
-            if (faint) {
-                layer.alpha = at.front
+            val fades = f.fades(i, at)
+            if (faint || fades) {
+                layer.alpha = if (faint) at.front else 1f
                 drawIntoCanvas { it.saveLayer(Rect(left, 0f, right, this.size.height), layer) }
             }
             withTransform({
@@ -575,12 +614,29 @@ private fun StageCanvas(
                         ui.selected.takeIf { i == focus && f.city == 0f },
                         accent,
                         live,
-                        cat = p.pet && i == focus && f.city < .5f,
                         detailed = at.unit / density.density > .45f,
+                        sink = at.sink,
+                        cue = 1f - f.city,
                     )
                 }
             }
-            if (faint) drawIntoCanvas { it.restore() }
+            if (fades) {
+                // rub the layer out above the window, and ever less over the fade under it
+                val end = f.top + TOP_FADE * density.density
+                drawRect(
+                    Brush.verticalGradient(
+                        0f to Color.Black,
+                        f.top / end to Color.Black,
+                        1f to Color.Transparent,
+                        startY = 0f,
+                        endY = end,
+                    ),
+                    Offset(left, 0f),
+                    Size(right - left, end),
+                    blendMode = BlendMode.DstOut,
+                )
+            }
+            if (faint || fades) drawIntoCanvas { it.restore() }
             if (f.city > .02f) cityName(text, stacks[i].cue, at.x, at.y, f, sky.ink)
         }
     }
@@ -624,12 +680,17 @@ private fun tap(
         }
         return
     }
+    // nothing of a tower shows in the heading's band
+    if (at.y < f.top) return
     // the tower in front first: it is drawn over its neighbours
     for (i in stacks.indices.sortedBy { abs(it - f.position) }) {
         val place = f.place(i)
         val hit =
-            f.layouts[i].hit((at.x - place.x) / place.unit, (place.y - at.y) / place.unit)
-                ?: continue
+            f.layouts[i].hit(
+                (at.x - place.x) / place.unit,
+                (place.y - at.y) / place.unit,
+                place.sink,
+            ) ?: continue
         if (i == f.focus) actions.tapped(stacks[i].id, hit) else actions.chosen(stacks[i].id)
         return
     }

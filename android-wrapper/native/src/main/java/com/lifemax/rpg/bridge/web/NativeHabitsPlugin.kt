@@ -17,9 +17,9 @@ import org.json.JSONObject
  * Habits: native from its data up. The habits live in a file of the app's own ([HabitsContainer]),
  * every rule runs here and the screen draws everything, sheets and text fields included; no command
  * goes to the page. What the page sends is only the screen's surroundings (palette, theme, motion,
- * haptics, the class name, whether there is a cat), and the shell's open and close, which every tab
- * gets from [ComposeTabPlugin]. The towers are swiped sideways, so a tab swipe never starts on this
- * screen (it can still be swiped to).
+ * haptics, the class name), and the shell's open and close, which every tab gets from
+ * [ComposeTabPlugin]. The towers are swiped sideways, so a tab swipe never starts on this screen
+ * (it can still be swiped to).
  */
 @CapacitorPlugin(name = "NativeHabits")
 class NativeHabitsPlugin : ComposeTabPlugin() {

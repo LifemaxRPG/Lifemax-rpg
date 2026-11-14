@@ -16,7 +16,7 @@ import org.json.JSONObject
 /**
  * What the page sends a Habits screen (50-native-habits.js): nothing of Habits, only its
  * surroundings. The palette and theme, the app's reduce-motion setting and haptic strength, the
- * character's class name and whether there is a cat.
+ * character's class name.
  */
 data class HabitsSurroundings(
     val session: String,
@@ -24,7 +24,6 @@ data class HabitsSurroundings(
     val reducedMotion: Boolean,
     val haptics: HapticScale?,
     val className: String,
-    val pet: Boolean,
     val tokens: Map<String, Long>,
     val light: Boolean,
 )
@@ -68,7 +67,6 @@ fun JSONObject.toHabitsSurroundings(): HabitsSurroundings {
         bool("reducedMotion"),
         haptics,
         get("className") as? String ?: throw IllegalArgumentException("className is not words"),
-        bool("pet"),
         getJSONObject("tokens").pageTokens(),
         bool("light"),
     )
@@ -116,7 +114,6 @@ class LocalHabitsRepository(
             engine.project(
                 time.hour + time.minute / 60f,
                 a.className,
-                a.pet,
                 a.reducedMotion,
                 a.haptics,
                 a.tokens,
@@ -161,5 +158,7 @@ class LocalHabitsRepository(
         name: String,
         small: String,
         floors: Int,
-    ) = run(engine.addHabit(stackId, fade, name, small, floors))
+        big: String,
+        pair: String,
+    ) = run(engine.addHabit(stackId, fade, name, small, floors, big, pair))
 }

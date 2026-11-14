@@ -3,7 +3,9 @@ package com.lifemax.rpg.feature.habits.presentation
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -45,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -72,6 +75,7 @@ import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
 import com.lifemax.rpg.feature.habits.domain.PrimaryAction
+import com.lifemax.rpg.feature.habits.domain.Suggestion
 import com.lifemax.rpg.feature.habits.domain.lapseFraction
 import com.lifemax.rpg.feature.habits.domain.lapseWeeks
 import com.lifemax.rpg.feature.habits.domain.primaryAction
@@ -109,7 +113,7 @@ class HabitsActions(
     val newStack: () -> Unit = {},
     val type: (index: Int, text: String) -> Unit = { _, _ -> },
     val kind: (fade: Boolean) -> Unit = {},
-    val starter: (cue: String) -> Unit = {},
+    val suggest: (Suggestion) -> Unit = {},
     val submit: () -> Unit = {},
     val danger: () -> Unit = {},
     val restackTo: (stackId: String) -> Unit = {},
@@ -141,7 +145,7 @@ class HabitsActions(
         vm::newStack,
         vm::type,
         vm::kind,
-        vm::starter,
+        vm::suggest,
         vm::submit,
         vm::danger,
         vm::restackTo,
@@ -163,7 +167,10 @@ class HabitsActions(
  * Habits: the scene fills the screen (the sky of the hour, the towers) and the few controls float
  * on it. Above: who the owner is becoming and today's count. Below: the rough-day switch, the one
  * big button that lays the next block, and a dot for every foundation. A tap on a block opens its
- * dials in a sheet; the city view swaps the button for the time-lapse.
+ * dials in a sheet; the city view swaps the button for the time-lapse. The heading and the controls
+ * are measured first and the scene is told what they take (at any text size), so a tower stands
+ * between them and never under them. While a block's dials are open the heading is put away: the
+ * ground rises to keep that block over the sheet, and the tower may reach as far up as the top bar.
  */
 @Composable
 fun HabitsScreen(
@@ -180,6 +187,13 @@ fun HabitsScreen(
         val sky = remember(p.hour) { skyColors(skyPhase(p.hour)) }
         val buzz = LocalPageBuzz.current
         var sheetHeight by remember { mutableIntStateOf(0) }
+        val tuning = ui.sheet?.kind == SheetKind.TUNE
+        val heading by
+            animateFloatAsState(
+                if (tuning) 0f else 1f,
+                if (p.reducedMotion) snap() else tween(160),
+                label = "heading",
+            )
         val stage =
             remember(actions, buzz, p.haptics) {
                 StageActions(
@@ -199,28 +213,51 @@ fun HabitsScreen(
             }
         // the sky's own darkest colour behind everything: the screen covers the page completely
         Box(Modifier.fillMaxSize().background(sky.sky[0])) {
-            HabitsStage(
-                p,
-                ui,
-                visible,
-                top = (topInsetDp + HUD_DP) * density,
-                bottom = (bottomInsetDp + if (ui.city) LAPSE_DP else CONTROLS_DP) * density,
-                cover =
-                    if (ui.sheet?.kind == SheetKind.TUNE) sheetHeight + bottomInsetDp * density
-                    else 0f,
-                accent = colors.accent,
-                actions = stage,
-            )
-            Column(Modifier.padding(top = topInsetDp.dp)) {
-                Hud(p, ui, sky, actions)
-                if (p.problem.isNotEmpty()) Problem(p.problem)
-            }
-            Box(
-                Modifier.align(Alignment.BottomCenter)
-                    .padding(bottom = bottomInsetDp.dp)
-                    .widthIn(max = 560.dp)
-            ) {
-                if (ui.city) LapseCard(p, ui, actions) else Controls(p, ui, sky, actions)
+            SubcomposeLayout(Modifier.fillMaxSize()) { constraints ->
+                val loose = constraints.copy(minWidth = 0, minHeight = 0)
+                val head =
+                    subcompose(Slot.HEADING) {
+                            Column(Modifier.padding(top = topInsetDp.dp, bottom = HUD_GAP_DP.dp)) {
+                                Hud(p, ui, sky, actions)
+                                if (p.problem.isNotEmpty()) Problem(p.problem)
+                            }
+                        }
+                        .first()
+                        .measure(loose)
+                val controls =
+                    subcompose(Slot.CONTROLS) {
+                            Box(Modifier.padding(bottom = bottomInsetDp.dp).widthIn(max = 560.dp)) {
+                                if (ui.city) LapseCard(p, ui, actions)
+                                else Controls(p, ui, sky, actions)
+                            }
+                        }
+                        .first()
+                        .measure(loose)
+                val scene =
+                    subcompose(Slot.SCENE) {
+                            HabitsStage(
+                                p,
+                                ui,
+                                visible,
+                                top = head.height.toFloat(),
+                                bottom = controls.height.toFloat(),
+                                cover = if (tuning) sheetHeight + bottomInsetDp * density else 0f,
+                                inset = topInsetDp * density,
+                                accent = colors.accent,
+                                actions = stage,
+                            )
+                        }
+                        .first()
+                        .measure(constraints)
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    scene.place(0, 0)
+                    // put away, it is not there to be tapped either
+                    if (heading > .01f) head.placeWithLayer(0, 0) { alpha = heading }
+                    controls.place(
+                        (constraints.maxWidth - controls.width) / 2,
+                        constraints.maxHeight - controls.height,
+                    )
+                }
             }
             Toast(p, ui.toast, bottomInsetDp, actions.toastShown)
             ui.sheet?.let {
@@ -666,13 +703,18 @@ private fun BoxScope.Toast(
         )
 }
 
-/**
- * What the heading takes under the top bar, and the controls and the time-lapse above the bottom
- * bar.
- */
-private const val HUD_DP = 64f
+/** The screen's parts, measured in this order: the scene last, with what the others take. */
+private enum class Slot {
+    HEADING,
+    CONTROLS,
+    SCENE,
+}
+
+/** Air between the heading and the top of the towers' window. */
+private const val HUD_GAP_DP = 6f
+
+/** What the controls take above the bottom bar at the usual text size: a toast rises over them. */
 private const val CONTROLS_DP = 172f
-private const val LAPSE_DP = 176f
 
 /** Dark glass over the sky, under words that must read at any hour. */
 private val Glass = Color(0x47000A1E)

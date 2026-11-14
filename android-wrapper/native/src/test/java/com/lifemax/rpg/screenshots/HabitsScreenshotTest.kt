@@ -44,7 +44,6 @@ class HabitsScreenshotTest {
             HabitsScenarios.surroundings(
                 light = light,
                 tokens = ScreenshotPalette.tokens(light),
-                pet = true,
                 reducedMotion = true,
             )
         val repository =
@@ -136,6 +135,31 @@ class HabitsScreenshotTest {
         snap("city") {
             block(0, 3)
             retire()
+        }
+
+    /** A foundation being typed: both sides of the moment it names are offered. */
+    @Test
+    fun sheetSuggestFoundation() =
+        snap("city") {
+            newStack()
+            type(0, "show")
+        }
+
+    /** A habit being typed: the catalog's habits, each with its three sizes behind its chip. */
+    @Test
+    fun sheetSuggestHabit() =
+        snap("city") {
+            newHabit(projection.value!!.stacks[2].id)
+            type(0, "pu")
+        }
+
+    /** A habit to break being typed. */
+    @Test
+    fun sheetSuggestBreak() =
+        snap("city") {
+            newHabit(projection.value!!.stacks[2].id)
+            kind(true)
+            type(0, "ph")
         }
 
     /** The city: every tower side by side, today. */

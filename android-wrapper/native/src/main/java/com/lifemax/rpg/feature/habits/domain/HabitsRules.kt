@@ -77,14 +77,6 @@ object HabitsRules {
             floors = 14,
         )
     val RULES = HabitRules(clay = 10, stone = 30, gold = 66, weeks = 12)
-    val STARTERS =
-        listOf(
-            "After waking up",
-            "After coffee",
-            "After lunch",
-            "After getting home",
-            "At lights out",
-        )
     private val SPACES = Regex("\\s+")
 
     /**
@@ -243,8 +235,9 @@ object HabitsRules {
 
     /**
      * A new habit on [stack], born [today]: one to build starts at its two-minute size ([small],
-     * else its name); one to break gets [floors] clean days to come down (the default when 0, held
-     * to the limits).
+     * else its name) and may name its stretch size ([big]); one to break gets [floors] clean days
+     * to come down (the default when 0, held to the limits). [pair] is what it is paired with, or
+     * done instead.
      */
     fun addHabit(
         s: HabitsSave,
@@ -255,6 +248,7 @@ object HabitsRules {
         big: String = "",
         fade: Boolean = false,
         floors: Int = 0,
+        pair: String = "",
     ): Pair<HabitsSave, String>? {
         val tidy =
             clean(name, LIMITS.name).ifEmpty {
@@ -275,6 +269,7 @@ object HabitsRules {
                     ),
                 size = if (fade) 1 else 0,
                 born = today,
+                pair = clean(pair, LIMITS.pair),
                 floors =
                     if (fade)
                         (if (floors == 0) LIMITS.floors else floors).coerceIn(

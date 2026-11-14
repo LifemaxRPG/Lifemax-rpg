@@ -65,7 +65,6 @@ object HabitsScenarios {
         sequence: Long = 1,
         light: Boolean = false,
         tokens: JSONObject? = null,
-        pet: Boolean = false,
         reducedMotion: Boolean = false,
     ): JSONObject =
         JSONObject()
@@ -76,7 +75,6 @@ object HabitsScenarios {
             .put("reducedMotion", reducedMotion)
             .put("haptics", JSONObject.NULL)
             .put("className", "Scholar")
-            .put("pet", pet)
             .put(
                 "tokens",
                 tokens ?: JSONObject().also { t -> PAGE_TOKENS.forEach { t.put(it, 0xFF000000L) } },

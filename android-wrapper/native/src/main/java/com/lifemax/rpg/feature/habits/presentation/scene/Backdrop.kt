@@ -8,15 +8,14 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.lifemax.rpg.feature.habits.domain.Building
 import com.lifemax.rpg.feature.habits.domain.SkyPhase
 import com.lifemax.rpg.feature.habits.domain.Star
-import com.lifemax.rpg.feature.habits.domain.orbAt
 import com.lifemax.rpg.feature.habits.domain.skyline
 import com.lifemax.rpg.feature.habits.domain.stars
 import kotlin.math.sin
 
 /**
  * Everything behind the towers: the sky of the hour with its stars, its sun or moon and its clouds,
- * two skylines that slide at different speeds as the towers and the camera move (depth), the haze
- * at the horizon and the ground.
+ * two skylines that slide at different speeds as the towers move (depth), the haze at the horizon
+ * and the ground. The sun, the moon and the clouds keep out of the heading's band.
  */
 internal class Backdrop {
     private val starField: List<Star> = stars(54)
@@ -24,16 +23,17 @@ internal class Backdrop {
     private val near: List<Building> = skyline(23, 12, 36, -160f, 760f)
 
     /**
-     * [horizon] is the y of the horizon in pixels, [shift] how far the towers have travelled
-     * sideways (in towers), [seconds] the running time (0 when nothing moves).
+     * [horizon] is the y of the horizon in pixels, [top] the y under the heading's band, [orb]
+     * where the sun or the moon stands, [shift] how far the towers have travelled sideways (in
+     * towers), [seconds] the running time (0 when nothing moves).
      */
     fun DrawScope.backdrop(
         phase: SkyPhase,
         sky: SkyColors,
-        hour: Float,
         horizon: Float,
+        top: Float,
+        orb: Offset,
         shift: Float,
-        drop: Float,
         seconds: Float,
     ) {
         val d = density
@@ -59,8 +59,6 @@ internal class Backdrop {
                 )
             }
         }
-        val (across, up) = orbAt(hour)
-        val orb = Offset(size.width * (.1f + .8f * across), horizon - 26f * d - up * horizon * .5f)
         val halo = (if (phase == SkyPhase.DAY) 40f else 50f) * d
         drawCircle(Brush.radialGradient(listOf(sky.halo, Color.Transparent), orb, halo), halo, orb)
         if (phase == SkyPhase.NIGHT) {
@@ -69,18 +67,27 @@ internal class Backdrop {
             drawCircle(sky.sky[1], 9f * d, orb + Offset(5f * d, -3f * d))
         } else drawCircle(sky.orb, 13f * d, orb)
         if (phase == SkyPhase.DAY) {
-            cloud(120f, horizon * .26f, 1f, .85f, seconds, 3.2f)
-            cloud(310f, horizon * .46f, .7f, .7f, seconds, 2.1f)
+            // at rest one stands in the lane left of the tower in front, the other right of it
+            val sky0 = top + 34f * d
+            cloud(118f, sky0, 1f, .85f, seconds, 3.2f)
+            cloud(
+                size.width / d + 46f,
+                sky0 + (horizon - sky0).coerceAtLeast(0f) * .4f,
+                .7f,
+                .7f,
+                seconds,
+                2.1f,
+            )
         }
-        row(far, sky.far, horizon + drop * .5f, -shift * 9f, null)
+        row(far, sky.far, horizon, -shift * 9f, null)
         row(
             near,
             sky.near,
-            horizon + drop * .75f,
+            horizon,
             -shift * 20f,
             if (phase == SkyPhase.DAY) null else SceneInk.CityLight,
         )
-        val ground = horizon + drop
+        val ground = horizon
         drawRect(
             Brush.verticalGradient(listOf(Color.Transparent, sky.haze), ground - 36f * d, ground),
             Offset(0f, ground - 36f * d),

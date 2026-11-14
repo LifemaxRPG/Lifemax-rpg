@@ -39,12 +39,18 @@ interface HabitsCommands {
 
     fun removeStack(id: String): HabitsReply
 
+    /**
+     * A new habit: [small] and [big] are its two-minute and stretch names (one to build), [floors]
+     * its clean days (one to break), [pair] what it is paired with or done instead.
+     */
     fun addHabit(
         stackId: String,
         fade: Boolean,
         name: String,
         small: String,
         floors: Int,
+        big: String = "",
+        pair: String = "",
     ): HabitsReply
 }
 

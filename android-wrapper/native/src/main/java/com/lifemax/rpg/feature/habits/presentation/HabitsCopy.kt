@@ -142,16 +142,20 @@ internal object HabitsCopy {
                     SheetWords(
                         "A habit to tear down",
                         "${stack?.cue.orEmpty()}, I will not…",
-                        listOf("The habit you are breaking", "Clean days to bring it down"),
-                        listOf("Phone in bed", p.limits.floors.toString()),
+                        listOf(
+                            "The habit you are breaking",
+                            "Clean days to bring it down",
+                            "What you will do instead",
+                        ),
+                        listOf("Phone in bed", p.limits.floors.toString(), "A book on the pillow"),
                         "Stack it",
                     )
                 else
                     SheetWords(
                         "New habit",
                         "${stack?.cue.orEmpty()}, I will…",
-                        listOf("The habit", "Its two-minute version"),
-                        listOf("Read 10 pages", "Read 1 page"),
+                        listOf("The habit", "Its two-minute version", "Its stretch version"),
+                        listOf("Read 10 pages", "Read 1 page", "Read 30 minutes"),
                         "Stack it",
                     )
             SheetKind.NAMES ->
@@ -198,7 +202,9 @@ internal object HabitsCopy {
             SheetKind.WHO -> listOf(p.limits.who)
             SheetKind.NEW_STACK -> listOf(p.limits.cue)
             SheetKind.EDIT_STACK -> listOf(p.limits.cue, p.limits.treat)
-            SheetKind.NEW_HABIT -> listOf(p.limits.name, if (sheet.fade) 2 else p.limits.name)
+            SheetKind.NEW_HABIT ->
+                if (sheet.fade) listOf(p.limits.name, 2, p.limits.pair)
+                else listOf(p.limits.name, p.limits.name, p.limits.name)
             SheetKind.NAMES -> listOf(p.limits.name, p.limits.name, p.limits.name)
             SheetKind.PAIR -> listOf(p.limits.pair)
             else -> emptyList()
