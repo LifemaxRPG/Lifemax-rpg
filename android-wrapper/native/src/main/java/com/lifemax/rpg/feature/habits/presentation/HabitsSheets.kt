@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -67,11 +66,13 @@ import com.lifemax.rpg.feature.habits.domain.Suggestion
 import com.lifemax.rpg.feature.habits.domain.TowerSpec
 
 /**
- * The sheet on show, rising from the bottom above the shared bottom bar ([bottomInset]) and never
- * over the top bar ([topInset]). A block's dials leave the scene bright and tappable behind them,
- * so another block can be picked straight away; every other sheet dims it, and a tap on the dimmed
- * scene closes the sheet unless the page is answering. [onHeight] reports the panel's height, so
- * the scene can keep the selected block clear of it.
+ * The sheet on show, rising from the bottom above the shared bottom bar ([bottomInset], none while
+ * the keyboard is up) and never over the top bar ([topInset]). It does not apply the keyboard's
+ * inset: the activity has already made the screen as tall as what is above the keyboard, so a
+ * second shift would push the sheet out of it. A block's dials leave the scene bright and tappable
+ * behind them, so another block can be picked straight away; every other sheet dims it, and a tap
+ * on the dimmed scene closes the sheet unless the page is answering. [onHeight] reports the panel's
+ * height, so the scene can keep the selected block clear of it.
  */
 @Composable
 internal fun BoxScope.HabitsSheets(
@@ -96,7 +97,6 @@ internal fun BoxScope.HabitsSheets(
     Box(
         Modifier.align(Alignment.BottomCenter)
             .padding(top = topInset + 8.dp, bottom = bottomInset)
-            .imePadding()
             .widthIn(max = 560.dp)
             .fillMaxWidth()
             .onSizeChanged { onHeight(it.height) }

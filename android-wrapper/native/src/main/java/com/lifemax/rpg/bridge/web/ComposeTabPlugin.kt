@@ -50,6 +50,12 @@ abstract class ComposeTabPlugin : Plugin() {
     protected open val swipeSource = true
 
     /**
+     * Whether scrolling in the screen carries the shared header up (a page-like screen). A screen
+     * whose scrolling is only inside a sheet keeps the header still.
+     */
+    protected open val headerFollowsScroll = true
+
+    /**
      * Decode and keep a projection from the page. [explicitOpen] binds a new page session. Throws
      * on malformed data.
      */
@@ -281,7 +287,7 @@ abstract class ComposeTabPlugin : Plugin() {
     }
 
     private fun createView(): TabScreenView =
-        TabScreenView(activity, tabId)
+        TabScreenView(activity, tabId, headerFollowsScroll)
             .apply {
                 id = View.generateViewId()
                 tag = "native-$tabId-screen"

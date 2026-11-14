@@ -35,7 +35,15 @@ import com.lifemax.rpg.app.shell.ChromeHost
  * - a touch that nothing on the open screen takes stops here ([onTouchEvent]), so it never reaches
  *   the WebView underneath, where the web swipe would start.
  */
-internal class TabScreenView(context: Context, val pane: String) : AbstractComposeView(context) {
+internal class TabScreenView(
+    context: Context,
+    val pane: String,
+    /**
+     * Whether scrolling inside the screen carries the shared header up with it. A screen that is no
+     * page (Habits' sheets scroll inside a panel) keeps the header where it is.
+     */
+    private val headerFollowsScroll: Boolean = true,
+) : AbstractComposeView(context) {
     private val content = mutableStateOf<(@Composable () -> Unit)?>(null)
 
     override var shouldCreateCompositionOnAttachedToWindow = false
@@ -61,7 +69,7 @@ internal class TabScreenView(context: Context, val pane: String) : AbstractCompo
                 scrolledPx =
                     if (available.y > 0f && consumed.y >= 0f) 0f
                     else (scrolledPx - consumed.y).coerceAtLeast(0f)
-                ChromeHost.scrolled(pane, scrolledPx)
+                if (headerFollowsScroll) ChromeHost.scrolled(pane, scrolledPx)
                 return Offset.Zero
             }
         }

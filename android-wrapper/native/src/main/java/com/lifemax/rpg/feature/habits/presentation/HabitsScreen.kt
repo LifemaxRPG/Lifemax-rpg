@@ -60,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.app.shell.rememberImeUp
 import com.lifemax.rpg.core.designsystem.LocalPageColors
 import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.PageTheme
@@ -88,6 +89,7 @@ import com.lifemax.rpg.feature.habits.presentation.scene.skyColors
 
 @Composable
 fun HabitsRoute(vm: HabitsViewModel, visible: Boolean, topInsetDp: Float, bottomInsetDp: Float) {
+    val imeUp = rememberImeUp()
     val projection by vm.projection.collectAsState()
     val ui by vm.ui.collectAsState()
     val p = projection ?: return
@@ -95,7 +97,7 @@ fun HabitsRoute(vm: HabitsViewModel, visible: Boolean, topInsetDp: Float, bottom
     // Back: out of a sheet (to the dials it came from, or away), then out of the city
     BackHandler(enabled = visible && ui.sheet != null) { vm.back() }
     BackHandler(enabled = visible && ui.sheet == null && ui.city) { vm.city(false) }
-    HabitsScreen(p, ui, actions, topInsetDp, bottomInsetDp, visible)
+    HabitsScreen(p, ui, actions, topInsetDp, bottomInsetDp, visible, imeUp)
 }
 
 /** Everything the screen can ask for, so the screen itself holds no state. */
@@ -178,9 +180,14 @@ fun HabitsScreen(
     ui: HabitsUi,
     actions: HabitsActions = HabitsActions(),
     topInsetDp: Float = 64f,
-    bottomInsetDp: Float = 72f,
+    barDp: Float = 72f,
     visible: Boolean = true,
+    imeUp: Boolean = false,
 ) {
+    // The activity already resizes this screen to what is above the keyboard and the shared bottom
+    // bar hides while it is up (NAV-5), so the bar's room is dropped; nothing here reads the IME
+    // inset again (the host is already shorter by it)
+    val bottomInsetDp = barRoomDp(barDp, imeUp)
     PageTheme(remember(p.tokens, p.light) { PageColors(p.tokens, p.light) }) {
         val colors = LocalPageColors.current
         val density = LocalDensity.current.density
@@ -268,6 +275,10 @@ fun HabitsScreen(
         }
     }
 }
+
+/** The room kept for the shared bottom bar: none while the keyboard is up and the bar is away. */
+internal fun barRoomDp(bottomInsetDp: Float, imeUp: Boolean): Float =
+    if (imeUp) 0f else bottomInsetDp
 
 private fun tapped(actions: HabitsActions, stackId: String, hit: Hit) =
     when (hit.kind) {

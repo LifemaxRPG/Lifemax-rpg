@@ -30,6 +30,7 @@ class NativeHabitsPlugin : ComposeTabPlugin() {
     override val tabId = "habits"
     override val capabilities = listOf("habits.v1")
     override val swipeSource = false
+    override val headerFollowsScroll = false
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)
