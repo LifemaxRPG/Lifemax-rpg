@@ -124,10 +124,68 @@ at most six are shown and never one that is already there.
 Not built yet: drag to move a block, reminders, the first-run scorecard, Life Director supplying foundations, Habits in the
 owner's manual backup.
 
-## Pending work (handed over, nothing started in code)
+## As built: buildings on a street, and a living city (NativeApi 170)
+
+The owner's words: "instead of the cities thing, let's have it just be a building, and each habit adds a new floor to it,
+and it's along a street, and you can scroll through the different habit stacks along the street, and keep the stars and
+the cityscape background. The buildings should have little windows, and you should see the silhouettes of people working
+inside", and "animate the background cityscape as well, and maybe add birds, airplanes, make the stars twinkle. Make it
+look like a real place." The towers became buildings on one street, around them a living city (what were pending items 2
+and 3). Rules, store and sheets are unchanged; the scene's geometry and the screen changed. The older paragraphs above
+that speak of towers, blocks and the city describe the scene this replaced.
+
+- The street: one building per foundation, side by side along one continuous street with a gap between lots holding a
+  lamp, a tree or a bench by turns (a lamp and a tree finish either end). A sideways drag moves the street with the
+  finger and ticks as each building passes the middle; let go, it coasts on and settles softly on the building nearest
+  where it would stop (`StreetLayout.settle`), which is the one in front: the big button and the dots act on it. All
+  buildings share the camera of the one in front (between two, the camera is between theirs), so a tall building zooms
+  the whole street out a little; a building too tall even at 0.7 tilts the view up (the street is lowered) to its next
+  floor, and an up-and-down drag pans it. The City button is now Street: it (or a pinch) zooms out until the whole street
+  fits, with each building's name under it and the 12-week time-lapse, in which the buildings grow floor by floor.
+- A building: the ground floor is the foundation, a lobby with a shopfront, a striped awning (its colour the
+  building's own) and a sign carrying its name, lit at night, with someone walking about inside. Each habit is a floor
+  above it in order, as tall as its size, with six columns of windows that line up up the building (two rows on a
+  stretch floor) and, in the band under them, a small plaque with its name and reps. A floor done today has warm lit
+  windows with small silhouettes inside, picked by the habit's name (typing, stretching, reading, lifting, someone
+  walking past; generic office life otherwise), moving in steps twelve times a second; an undone floor is dark glass;
+  the next floor's outline breathes. Lights and people grow with total reps: one window and one person under 10, two
+  from 10, most windows from 30, every window, more people and a gold cornice from 66. The facade follows the material:
+  a steel frame and glass with scaffolding, then brick, then cut stone, then stone with gold trim. One missed day is a
+  crack and a flickering light, two are sputtering lights and a small warning sign, coming back leaves a gold seam; a
+  rough day shows today's floors at their two-minute height. A habit being broken is run-down storeys (boarded and
+  dimming windows, scaffolding, a crane on top when they are the top), one taken down per clean day; once gone it is a
+  tree in a small park beside the building. The rooftop reward is a sign on the roof: dark when locked, lit with
+  chasing bulbs when the building is done today, with a flag beside it once claimed; otherwise a water tank stands
+  there. Finishing a floor switches its lights on window by window, the people arrive with a hop, the floor settles on a
+  spring with a buzz and a glow; a new material gets a sweep of light; a newly stacked habit drops into place with a
+  puff of scaffolding dust.
+- The living city (`domain/Ambient.kt`, pure Kotlin, every moving thing a function of the seconds and a seed, the day):
+  every star twinkles at its own pace and stars fade in at dusk and out at dawn; a shooting star now and then (about one
+  a minute, a second long); three rows of far city slide at their own speeds as the street scrolls, with windows
+  switching on and off slowly at night and red warning lights blinking on the tallest; a glow over the horizon at
+  night, haze by day; an airplane crossing every couple of minutes (red, green and strobe lights at night, a contrail by
+  day); a V of birds by day and at dusk; clouds drifting (thin streaks passing the moon at night); a blimp now and then
+  on a bright day; lamps with pools of light at night; a car's lights on the far road; trees swaying, the rooftop flag
+  waving. The sky's colours blend over an hour at dawn and dusk. All of it stops when the tab is hidden and is a still
+  picture (nothing passing) under reduced motion.
+- Cost: one Canvas. Each building is worked out once when the habits change (`BuildingArt`: measured words, wall
+  brushes and the paths of its brick, stone or steel, sills and reflections, its window order and who is in them); the
+  silhouettes are point lists turned into paths once; the passes through the sky are written into kept objects; brushes
+  are cached. The street's clock ticks about 30 times a second; only the buildings and furniture in view are drawn.
+- Where: `domain/HabitsScene.kt` (building, street, camera, taps, windows, occupancy), `domain/Ambient.kt`,
+  `domain/Silhouettes.kt`; `presentation/scene/BuildingArt.kt`, `BuildingPainter.kt`, `Backdrop.kt`, `HabitsStage.kt`.
+  Tests: `HabitsSceneTest`, `AmbientTest`, `SilhouettesTest`, and `HabitsScreenshotTest` (the street at night, dusk and
+  by day and in the light theme, a busy building, a brand-new one, the run-down building and the park, the rooftop
+  locked, claimable and claimed, a rough day, a tall building, the zoomed-out street and its time-lapse, the dials and
+  sheets, large text, and the night and day skies held at a moment with a plane and a shooting star, and birds and a
+  contrail).
+
+## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The
-owner's requests since then, in his order of priority; none of this is built:
+owner's requests since then, in his order of priority. Item 1 was fixed in NativeApi 169 (sheets at the bottom, no
+double keyboard shift, the header stays); items 2 (buildings on a street) and 3 (the living background) are built in
+NativeApi 170 and described in "As built: buildings on a street" above. Item 1 as reported:
 
 1. Three phone bugs (Galaxy S25 Ultra, build 517), fix first:
    - a Habits sheet (seen on "New habit") hangs from near the top of the screen and is cut off mid-screen, with the scene
@@ -138,23 +196,6 @@ owner's requests since then, in his order of priority; none of this is built:
    - the app's top bar (picture, name, Log activity, mic, settings) is missing on the Habits tab: the screen covers the whole
      display. Other native tabs draw below that header. Suspect the cover rect taken from the empty placeholder view.
    Check every Habits sheet for the same problems.
-2. Scene redesign, the owner's words: "instead of the cities thing, let's have it just be a building, and each habit adds a
-   new floor to it, and it's along a street, and you can scroll through the different habit stacks along the street, and keep
-   the stars and the cityscape background. The buildings should have little windows, and you should see the silhouettes of
-   people working inside." Agreed reading: one building per foundation on a continuous street (horizontal scroll with
-   momentum and a soft snap; the centred building is the active one; a zoom-out fits the street and holds the time-lapse; the
-   City toggle goes); ground floor is the foundation with its name on a sign; each habit is a floor, floor height is the
-   habit's size, its name on a flat plaque; a floor done today has warm lit windows with small animated silhouettes, an
-   undone floor is dark, the next one pulses; lit windows and people grow with total reps; facade finish follows the material
-   steps (10, 30, 66 reps); a missed day is a crack and a flickering light, two is sputtering lights, coming back is a gold
-   seam; a habit being broken is a run-down building taken down a floor per clean day, ending as a small park; the rooftop
-   reward is a rooftop sign or garden that lights when the building is done today. No cat. Rules, store and sheets unchanged.
-3. Living background, the owner's words: "animate the background cityscape as well, and maybe add birds, airplanes, make the
-   stars twinkle. Make it look like a real place." Agreed reading: every star twinkles, a rare shooting star; far-skyline
-   windows switching slowly at night, blinking warning lights, horizon glow; an occasional airplane (nav lights at night,
-   contrail by day), birds by day and dusk, drifting clouds; street lamps, a distant car light, swaying trees, a waving flag.
-   Ambient only, stops when the tab is hidden, a still frame under reduced motion, deterministic from time and a seed (pure
-   Kotlin, unit tested), frozen in screenshot tests.
 Also open: Habits is not in the owner's manual backup (a native export/import is the proposed fix); the "After yog" partial
 suggestion; the toast offset at large text. CI records Habits screenshots when the newest commit message carries
 `[refresh-habits-snapshots]`. Local compile of the Habits Kotlin, Compose included, worked with the embeddable Kotlin 2.0.21

@@ -22,9 +22,13 @@ import org.junit.Test
 /**
  * Habits, drawn from the rules' own states (HabitsScenarios) on a 411 dp wide phone like the
  * owner's, at a fixed day and hour, so the sky, the reps and the cracks are the same every time.
- * The screen's state comes from its own view model (a block tapped, a sheet opened, the city and
- * its time-lapse); motion is reduced, so every picture is the scene at rest. Nothing is written to
- * a view model or a state after the frame is taken (the lesson of CatLightingScreenshotTest).
+ * The screen's state comes from its own view model (a floor tapped, a sheet opened, the zoomed-out
+ * street and its time-lapse); motion is reduced, so every picture is the street at rest, and the
+ * street's own life (stars, people, planes) is held at one moment: a still picture with nothing
+ * passing, or, for the sky pictures, the moment [HabitsScenarios.NIGHT_SKY_AT] or
+ * [HabitsScenarios.DAY_SKY_AT]. No Compose state is written by a test: the view model is set up
+ * before the frame is taken, and nothing is written after it (the lesson of
+ * CatLightingScreenshotTest).
  */
 private const val PHONE_DP = 616
 
@@ -38,13 +42,14 @@ class HabitsScreenshotTest {
             fontScale = fontScale,
         )
 
-    /** Scenario [name] at [hour], after [use]. */
+    /** Scenario [name] at [hour], after [use], with the street's life held at [ambientAt]. */
     private fun snap(
         name: String,
         hour: Int = 14,
         light: Boolean = false,
         opened: HabitsLoad? = null,
         keyboardDp: Int = 0,
+        ambientAt: Float? = null,
         use: HabitsViewModel.() -> Unit = {},
     ) {
         val clock = TestClock(ZonedDateTime.of(2026, 3, 2, hour, 0, 0, 0, ZoneOffset.UTC))
@@ -66,10 +71,10 @@ class HabitsScreenshotTest {
         paparazzi.snapshot {
             // the keyboard up: the activity makes the screen as tall as what is above it, so the
             // picture is the screen that much shorter (no inset is simulated)
-            if (keyboardDp == 0) HabitsScreen(p, ui)
+            if (keyboardDp == 0) HabitsScreen(p, ui, ambientAt = ambientAt)
             else
                 Box(Modifier.fillMaxWidth().height((PHONE_DP - keyboardDp).dp)) {
-                    HabitsScreen(p, ui, imeUp = true)
+                    HabitsScreen(p, ui, imeUp = true, ambientAt = ambientAt)
                 }
         }
     }
@@ -77,53 +82,62 @@ class HabitsScreenshotTest {
     private fun HabitsViewModel.block(stack: Int, block: Int) =
         select(projection.value!!.stacks[stack].blocks[block].id)
 
-    /** Nothing built yet: the empty lot and the first step. */
+    /** Nothing built yet: the fenced-off lot and the first step. */
     @Test fun emptyDay() = snap("empty")
 
     /**
-     * Two blocks laid (gold, stone with its seam), a cracked blueprint glowing as the next, a
-     * wobbling one, the locked reward.
+     * The street by day with the coffee building in front: two floors lit today (gold with all its
+     * windows and people, stone with its gold seam), a cracked floor with a flickering light as the
+     * next, one missed twice with its warning sign, the rooftop sign dark (locked); the lights-out
+     * building and the empty lot beside it.
      */
-    @Test fun cityDay() = snap("city")
+    @Test fun streetDay() = snap("city")
 
-    @Test fun cityLight() = snap("city", light = true)
+    @Test fun streetLight() = snap("city", light = true)
 
-    @Test fun cityDusk() = snap("city", hour = 19)
+    @Test fun streetDusk() = snap("city", hour = 19)
 
-    @Test fun cityNight() = snap("city", hour = 23)
+    /** At night: lamps and their pools, lit windows, the failing lights of the missed floors. */
+    @Test fun streetNight() = snap("city", hour = 23)
+
+    /** A busy, established building at night: gold and stone floors, every window lit, people. */
+    @Test fun busyBuildingNight() = snap("tall", hour = 22)
+
+    /** A brand-new building at dusk: steel and glass with scaffolding, one window, one person. */
+    @Test fun brandNewBuilding() = snap("fresh", hour = 19)
 
     /**
-     * The tear-down tower in front: nine floors with their windows, a tree for the habit that is
-     * gone.
+     * The run-down building in front: nine boarded and dimming storeys coming down, the floor being
+     * built over them, a tree in the park for the habit that is gone.
      */
     @Test fun tearDownNight() = snap("city", hour = 22) { focus(projection.value!!.stacks[1].id) }
 
-    /** An empty foundation: the button offers the first habit. */
+    /** A habit broken for good: the lobby and its park. */
+    @Test fun parkDay() = snap("park")
+
+    /** An empty foundation: a lobby, and the button offers the first floor. */
     @Test fun emptyFoundation() = snap("city") { focus(projection.value!!.stacks[2].id) }
 
-    /** The stack finished: the reward glows and the button claims it. */
-    @Test fun rewardClaimable() = snap("done") { focus(projection.value!!.stacks[0].id) }
+    /** The building done today: the rooftop sign lit with its bulbs, the button claims it. */
+    @Test fun rewardClaimable() = snap("done", hour = 21) { focus(projection.value!!.stacks[0].id) }
 
-    /** Claimed: the flag is up and the button goes on to the next stack. */
+    /** Claimed: the flag is up beside the sign and the button goes on to the next building. */
     @Test fun rewardClaimed() = snap("claimed") { focus(projection.value!!.stacks[0].id) }
 
-    /** A rough day: the blueprints at their two-minute size, the switch on. */
+    /** A rough day: the floors at their two-minute height, the switch on. */
     @Test fun roughDay() = snap("rough")
 
-    /**
-     * Nine habits of every material: the tower keeps a readable size and the camera stands on the
-     * next block.
-     */
-    @Test fun tallTower() = snap("tall")
+    /** Nine habits of every material: the camera stands on the next floor. */
+    @Test fun tallBuilding() = snap("tall")
 
-    @Test fun tallTowerLight() = snap("tall", light = true)
+    @Test fun tallBuildingLight() = snap("tall", light = true)
 
-    /** A block's dials, the scene still bright behind them. */
+    /** A floor's dials, the street still bright behind them. */
     @Test fun dials() = snap("city") { block(0, 0) }
 
     @Test fun dialsLight() = snap("city", light = true) { block(0, 2) }
 
-    /** The dials of a habit being broken: its floors instead of a size. */
+    /** The dials of a habit being broken: its storeys instead of a size. */
     @Test fun dialsTearDown() = snap("city", hour = 22) { block(1, 0) }
 
     @Test fun sheetNewFoundation() = snap("city") { newStack() }
@@ -189,16 +203,24 @@ class HabitsScreenshotTest {
             type(0, "ph")
         }
 
-    /** The city: every tower side by side, today. */
-    @Test fun cityView() = snap("city") { city(true) }
+    /** Zoomed out: the whole street, today, each building named under it. */
+    @Test fun streetView() = snap("city") { city(true) }
 
-    /** The time-lapse six weeks back: shorter towers of younger materials. */
+    /** The time-lapse six weeks back: shorter buildings of younger materials. */
     @Test
-    fun cityViewSixWeeksAgo() =
+    fun streetViewSixWeeksAgo() =
         snap("city", light = true) {
             city(true)
             lapse(6)
         }
+
+    /** The night sky's life held at one moment: an airplane's lights and a shooting star. */
+    @Test
+    fun nightSkyPlaneAndShootingStar() =
+        snap("city", hour = 23, ambientAt = HabitsScenarios.NIGHT_SKY_AT)
+
+    /** The day sky's: an airplane with its contrail, a flock of birds, people at work. */
+    @Test fun daySkyBirdsAndContrail() = snap("city", ambientAt = HabitsScenarios.DAY_SKY_AT)
 
     /** A habits file from a newer app: the plain message, and nothing to change. */
     @Test
