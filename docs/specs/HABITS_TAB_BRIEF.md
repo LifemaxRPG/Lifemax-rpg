@@ -82,20 +82,28 @@ No feature or state key is named "habits" yet.
 3. Social features (accountability partner, culture) are out of scope until the app has any sharing; confirm.
 4. Reminders: habit notifications on by default or opt in.
 
-## As built (version 1.0.0, web tab)
+## As built (native, Native API 167)
 
-`lifemax_modular_v73/src/features/habits/` (a feature folder like Life Director: `feature.json`, `view.html`, `style.css`,
-`logic.js`; `forge_features.py` adds its tab). Design: habit stacking drawn literally. A foundation is something you already
-do; habits are blocks stacked on it; one button lays the next block; material follows total reps (glass, clay at 10, stone at
-30, gold at 66) and a missed day never removes a rep; block height is the size (two minutes, normal, stretch); one missed day
-is a crack, two a wobble, coming back leaves a gold seam; "rough day" lays the two-minute size for today only; a habit being
-broken loses a floor per clean day and ends as a tree; a foundation can carry a rooftop reward that unlocks when its stack is
-done; city view shows every tower with a 12-week time-lapse. Saved under the optional key `state.habits` (v 1, shape in the
-header of `logic.js`), written by `writeSave()` with take-back on a failed save. Owner defaults taken for this version: no
-XP, Sparks or streak; Quests separate; no reminders. `window.Habits` exposes the model and the commands (`tests/habits.test.js`).
-Design polish (1.1.0, same data and API): blocks not laid yet today are blueprints and only the next one glows; each tower
-stands on a paved lot with a horizon and two skylines behind; the scene's nodes stay on the page (one `<g>` per stack, by id)
-so changes of stack and view animate; a tall tower keeps a readable size and scrolls (vertical drag); selecting a block
-shortens the scene so the four dials fit above the bottom bar; a cleared habit is a tree on the lot beside the tower; the
-header counts habits being built only ("N / M today", `model().built` and `.due`).
-Not built yet: drag to move a block, reminders, the first-run scorecard, Life Director supplying foundations, a native screen.
+The web tab built first (versions 1.0.0 and 1.1.0 of `src/features/habits`, saved under `state.habits`) was removed before it
+shipped: the owner decided Habits is native from its data up. The concept is unchanged: habit stacking drawn literally. A
+foundation is something you already do; habits are blocks stacked on it; one button lays the next block; material follows
+total reps (glass, clay at 10, stone at 30, gold at 66) and a missed day never removes a rep; block height is the size (two
+minutes, normal, stretch); one missed day is a crack, two a wobble, coming back leaves a gold seam; "rough day" lays the
+two-minute size for today only; a habit being broken loses a floor per clean day and ends as a tree; a foundation can carry a
+rooftop reward that unlocks when its stack is done; city view shows every tower with a 12-week time-lapse; the cat sits on
+the tower. Owner defaults taken: no XP, Sparks or streak; Quests separate; no reminders.
+
+Where it lives (android-wrapper/native/src/main/java/com/lifemax/rpg/feature/habits): `domain/HabitsRules.kt` and
+`HabitsEngine.kt` (the rules and commands, pure Kotlin), `data/HabitsFile.kt` (the habits file, `files/habits/habits.json`,
+schema v 1, atomic write, safety copy), `domain/HabitsScene.kt` (geometry), `presentation/` (the screen, the scene on a
+Canvas, the sheets). Details, the backup status and what remains on the page: docs/architecture/MIGRATION.md, "Habits".
+
+Native design: the scene fills the screen and the controls float on it. A block is drawn face on with its top and side
+showing, so its name is flat and readable. One tower stands in front, its neighbours peek in at the edges, smaller and
+fainter; a sideways drag moves them with the finger and a release settles on a spring; an up-and-down drag pans a tall tower.
+Blocks not laid yet today are blueprints and the next one glows. A tap on a block opens its dials in a sheet that leaves the
+scene bright (size as three blocks of growing height, pairing, foundation, order, undo, retire); a tap on the foundation
+edits it; the outline above the roof stacks a new habit; a dot per foundation and a plus sit under the big button.
+
+Not built yet: drag to move a block, reminders, the first-run scorecard, Life Director supplying foundations, Habits in the
+owner's manual backup.

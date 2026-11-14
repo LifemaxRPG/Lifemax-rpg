@@ -7897,6 +7897,9 @@
  "window.NativeFoodSheet": [
   "src/runtime/segments/50-native-nutrition.js"
  ],
+ "window.NativeHabitsShell": [
+  "src/runtime/segments/50-native-habits.js"
+ ],
  "window.NativeJournalProjection": [
   "src/runtime/segments/50-native-journal.js"
  ],

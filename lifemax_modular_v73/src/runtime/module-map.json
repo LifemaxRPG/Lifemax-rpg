@@ -3787,7 +3787,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-swipe.js",
-   "bytes": 19199,
+   "bytes": 19209,
    "statement_count": 2,
    "tags": [
     "native",
@@ -3898,6 +3898,18 @@
     "recipes"
    ],
    "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-native-habits.js",
+   "bytes": 3364,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "habits"
+   ],
+   "symbols": [
+    "window.NativeHabitsShell"
+   ]
   },
   {
    "file": "src/runtime/segments/50-native-library.js",

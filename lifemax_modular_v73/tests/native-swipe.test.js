@@ -91,11 +91,11 @@ const fakes = ({ swipe = true, native = true } = {}) => `
   const ch = await p.evaluate(() => window.__calls.filter(c => c.p === 'NativeCharacter' && c.m === 'open').pop());
   ok('Character\'s navScene carries the swipe state', ch && ch.swipe && ch.swipe.v === 1 && ch.swipe.view === 'character' && ch.swipe.active === 'character' && ch.swipe.on === true, ch);
   let s = await state();
-  ok('the tabs are the bar in order', same(s.tabs.map(t => t.key), ['dashboard', 'character', 'food', 'pet', 'log', 'plan', 'library', 'money', 'habits', 'life-director', 'quests']), s.tabs.map(t => t.key));
-  ok('each with the view it opens (Food on Meals, Library on Media)', same(s.tabs.map(t => t.view), ['dashboard', 'character', 'meals', 'pet', 'log', 'plan', 'media', 'money', 'habits', 'life-director', 'quests']), s.tabs.map(t => t.view));
-  ok('and its label and icon', same(s.tabs.map(t => t.label), ['Overview', 'Character', 'Food', 'Cat', 'Log activity', 'Workout plan', 'Library', 'Money', 'Habits', 'Life Director', 'Quests']) && same(s.tabs.map(t => t.icon), ['grid', 'person', 'heart', 'paw', 'plus', 'list', 'book', 'coin', 'stack', 'dial', 'flag']), s.tabs.map(t => [t.label, t.icon]));
+  ok('the tabs are the bar in order', same(s.tabs.map(t => t.key), ['dashboard', 'character', 'food', 'pet', 'log', 'plan', 'library', 'money', 'life-director', 'quests']), s.tabs.map(t => t.key));
+  ok('each with the view it opens (Food on Meals, Library on Media)', same(s.tabs.map(t => t.view), ['dashboard', 'character', 'meals', 'pet', 'log', 'plan', 'media', 'money', 'life-director', 'quests']), s.tabs.map(t => t.view));
+  ok('and its label and icon', same(s.tabs.map(t => t.label), ['Overview', 'Character', 'Food', 'Cat', 'Log activity', 'Workout plan', 'Library', 'Money', 'Life Director', 'Quests']) && same(s.tabs.map(t => t.icon), ['grid', 'person', 'heart', 'paw', 'plus', 'list', 'book', 'coin', 'dial', 'flag']), s.tabs.map(t => [t.label, t.icon]));
   // Life Director's page is put on the page at its first visit, and until then its screen has nothing to cover: a web page to a swipe
-  ok('kinds come from the registry: native screens, web pages, the Overview\'s web body, Money a stop', same(Object.fromEntries(s.tabs.map(t => [t.key, t.kind])), { dashboard: 'web', character: 'native', food: 'native', pet: 'web', log: 'native', plan: 'native', library: 'native', money: 'stop', habits: 'web', 'life-director': 'web', quests: 'web' }), s.tabs.map(t => t.key + ':' + t.kind));
+  ok('kinds come from the registry: native screens, web pages, the Overview\'s web body, Money a stop', same(Object.fromEntries(s.tabs.map(t => [t.key, t.kind])), { dashboard: 'web', character: 'native', food: 'native', pet: 'web', log: 'native', plan: 'native', library: 'native', money: 'stop', 'life-director': 'web', quests: 'web' }), s.tabs.map(t => t.key + ':' + t.kind));
   ok('Life Director, and only it, is never a source', same(s.tabs.filter(t => 'source' in t).map(t => [t.key, t.source]), [['life-director', false]]), s.tabs);
   ok('the Overview is covered by its native bars, yet a web page to a swipe', await p.evaluate(() => NativeTabs.covered('dashboard') && NativeTabs.webBody('dashboard') && NativeSwipe.kind('dashboard') === 'web'));
   ok('the theme colours as ARGB, opaque', await p.evaluate(() => { const c = NativeSwipe.state().colors, css = getComputedStyle(document.documentElement), at = k => NativeTabKit.color(css.getPropertyValue('--' + k).trim()); return c.bg === at('bg') && c.text === at('text') && c.muted === at('muted') && [c.bg, c.text, c.muted].every(x => x >>> 24 === 255) && c.bg !== c.text }));
@@ -109,7 +109,7 @@ const fakes = ({ swipe = true, native = true } = {}) => `
     lmaTabsReset(); return { moved, hidden, reset: keys() };
   });
   ok('a reordered bar is followed (Cat moved after Log)', same(order.moved.slice(0, 5), ['dashboard', 'character', 'food', 'log', 'pet']), order.moved);
-  ok('a hidden tab is left out (Quests hidden)', !order.hidden.includes('quests') && order.hidden.length === 10, order.hidden);
+  ok('a hidden tab is left out (Quests hidden)', !order.hidden.includes('quests') && order.hidden.length === 9, order.hidden);
   ok('and the bar put back is followed too', same(order.reset, s.tabs.map(t => t.key)), order.reset);
   const panes = await p.evaluate(() => {
     const tab = k => NativeSwipe.state().tabs.find(t => t.key === k), was = [state.foodPane, state.libPane];

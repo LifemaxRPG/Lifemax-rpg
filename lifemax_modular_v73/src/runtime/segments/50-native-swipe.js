@@ -35,7 +35,7 @@ const LMA_TABSWIPE = Object.freeze({
 
 (function () {
   /* views with sideways gestures of their own (Life Director's section swipe and dial handles): a swipe never starts there */
-  const OWN_GESTURES = ["life-director"];
+  const OWN_GESTURES = ["life-director", "habits"];
   /* a lock cover over the page you are on (the Journal's) */
   const LOCKED = ".view.active.jlocked";
 
