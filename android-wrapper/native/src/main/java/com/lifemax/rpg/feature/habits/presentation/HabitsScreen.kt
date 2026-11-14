@@ -85,6 +85,7 @@ import com.lifemax.rpg.feature.habits.presentation.scene.HabitsStage
 import com.lifemax.rpg.feature.habits.presentation.scene.SkyColors
 import com.lifemax.rpg.feature.habits.presentation.scene.StageActions
 import com.lifemax.rpg.feature.habits.presentation.scene.skyColors
+import kotlin.math.roundToInt
 
 @Composable
 fun HabitsRoute(vm: HabitsViewModel, visible: Boolean, topInsetDp: Float, bottomInsetDp: Float) {
@@ -221,10 +222,13 @@ fun HabitsScreen(
                     },
                 )
             }
-        // the sky's own darkest colour behind everything: the screen covers the page completely
-        Box(Modifier.fillMaxSize().background(sky.sky[0])) {
+        // the page's own surface behind everything: the page's header (the status bar, the picture,
+        // the name and the buttons) is drawn over this screen with no background of its own, so
+        // its band shows the app's colour and the sky starts under it
+        Box(Modifier.fillMaxSize().background(colors.bg)) {
             SubcomposeLayout(Modifier.fillMaxSize()) { constraints ->
                 val loose = constraints.copy(minWidth = 0, minHeight = 0)
+                val headerPx = headerBand(topInsetDp, density, constraints.maxHeight)
                 val head =
                     subcompose(Slot.HEADING) {
                             Column(Modifier.padding(top = topInsetDp.dp, bottom = HUD_GAP_DP.dp)) {
@@ -249,19 +253,24 @@ fun HabitsScreen(
                                 p,
                                 ui,
                                 visible,
-                                top = head.height.toFloat(),
+                                top = (head.height - headerPx).coerceAtLeast(0).toFloat(),
                                 bottom = controls.height.toFloat(),
                                 cover = if (tuning) sheetHeight + bottomInsetDp * density else 0f,
-                                inset = topInsetDp * density,
+                                inset = 0f,
                                 accent = colors.accent,
                                 actions = stage,
                                 ambientAt = ambientAt,
                             )
                         }
                         .first()
-                        .measure(constraints)
+                        .measure(
+                            constraints.copy(
+                                minHeight = 0,
+                                maxHeight = constraints.maxHeight - headerPx,
+                            )
+                        )
                 layout(constraints.maxWidth, constraints.maxHeight) {
-                    scene.place(0, 0)
+                    scene.place(0, headerPx)
                     // put away, it is not there to be tapped either
                     if (heading > .01f) head.placeWithLayer(0, 0) { alpha = heading }
                     controls.place(
@@ -279,6 +288,13 @@ fun HabitsScreen(
         }
     }
 }
+
+/**
+ * The pixels of the page's header band (status bar included) at the top, which the scene leaves to
+ * the app's own surface: [topInsetDp] in pixels, never more than [maxHeight].
+ */
+internal fun headerBand(topInsetDp: Float, density: Float, maxHeight: Int): Int =
+    (topInsetDp * density).roundToInt().coerceIn(0, maxHeight)
 
 /** The room kept for the shared bottom bar: none while the keyboard is up and the bar is away. */
 internal fun barRoomDp(bottomInsetDp: Float, imeUp: Boolean): Float =

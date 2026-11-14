@@ -30,6 +30,13 @@ internal class SkyColors(
     val halo: Color,
     val orb: Color,
     val cloud: Color,
+    /**
+     * A cloud's lit top, its body and its shaded underside: warm and rosy at dusk, silver-blue at
+     * night.
+     */
+    val cloudLit: Color,
+    val cloudBody: Color,
+    val cloudShade: Color,
     /** Words drawn straight on the sky or the ground. */
     val ink: Color,
     val inkSoft: Color,
@@ -50,6 +57,9 @@ private class Tone(
     val halo: Color,
     val orb: Color,
     val cloud: Color,
+    val cloudLit: Color,
+    val cloudBody: Color,
+    val cloudShade: Color,
     val ink: Color,
     val inkSoft: Color,
     val dark: Float,
@@ -68,6 +78,9 @@ private val NIGHT =
         halo = Color(0x2EE9EDFF),
         orb = Color(0xFFE9EDFF),
         cloud = Color(0xFF3A4672),
+        cloudLit = Color(0xFFAFC0F0),
+        cloudBody = Color(0xFF55659C),
+        cloudShade = Color(0xFF1C2650),
         ink = Color(0xFFE6ECFF),
         inkSoft = Color(0xFF9AA8D8),
         dark = 1f,
@@ -86,6 +99,9 @@ private val DUSK =
         halo = Color(0x66FFC896),
         orb = Color(0xFFFFD9A8),
         cloud = Color(0xFFF2B9A0),
+        cloudLit = Color(0xFFFFE6CC),
+        cloudBody = Color(0xFFF2A98F),
+        cloudShade = Color(0xFFC25E7E),
         ink = Color(0xFFFFF1E6),
         inkSoft = Color(0xFFE3C4BC),
         dark = .55f,
@@ -104,6 +120,9 @@ private val DAY =
         halo = Color(0x66FFF3C4),
         orb = Color(0xFFFFF3C4),
         cloud = Color(0xFFFFFFFF),
+        cloudLit = Color(0xFFFFFFFF),
+        cloudBody = Color(0xFFF1F6FC),
+        cloudShade = Color(0xFF9DB3D4),
         ink = Color(0xFFFFFFFF),
         inkSoft = Color(0xFFE3EEFA),
         dark = 0f,
@@ -124,6 +143,9 @@ private fun mix(a: Tone, b: Tone, t: Float, phase: SkyPhase): SkyColors {
         c(a.halo, b.halo),
         c(a.orb, b.orb),
         c(a.cloud, b.cloud),
+        c(a.cloudLit, b.cloudLit),
+        c(a.cloudBody, b.cloudBody),
+        c(a.cloudShade, b.cloudShade),
         if (t < .5f) a.ink else b.ink,
         if (t < .5f) a.inkSoft else b.inkSoft,
         a.dark + (b.dark - a.dark) * t,
@@ -290,6 +312,23 @@ internal object SceneInk {
     val TreeB = Color(0xFF348A5C)
     val TreeC = Color(0xFF46AD77)
     val Grass = Color(0xFF4F8F5E)
+
+    /** A tree's leaves in four tones (with an olive and a night version), and its bark. */
+    val LeafDeep = Color(0xFF1F5C3E)
+    val LeafShade = Color(0xFF2A7A4E)
+    val LeafMid = Color(0xFF3C9A66)
+    val LeafLight = Color(0xFF74C484)
+    val LeafGlint = Color(0xFFB4E59A)
+    val LeafOlive = Color(0xFF6C9A3E)
+    val LeafDeepNight = Color(0xFF08161F)
+    val LeafShadeNight = Color(0xFF0F2A30)
+    val LeafMidNight = Color(0xFF18413F)
+    val LeafLightNight = Color(0xFF3A6E78)
+    val LeafGlintNight = Color(0xFF6C9CB0)
+    val BarkDark = Color(0xFF4A3322)
+    val BarkLit = Color(0xFF7A5A3C)
+    val BarkDarkNight = Color(0xFF1E1822)
+    val BarkLitNight = Color(0xFF3A3446)
     val Lamp = Color(0xFF2A2F3D)
     val LampLight = Color(0xFFFFE3A3)
     val Bench = Color(0xFF6B4A2F)
@@ -299,6 +338,10 @@ internal object SceneInk {
     val Highlight = Color(0x59FFFFFF)
     val Star = Color(0xFFD5DDFF)
     val FarLight = Color(0xFFFFD27A)
+    val FarLightPale = Color(0xFFFFF1CF)
+    val FarLightCool = Color(0xFFBFDDFF)
+    val Crater = Color(0xFF7F8BB5)
+    val Rays = Color(0xFFFFF0B8)
     val Warning = Color(0xFFFF3B30)
     val NavGreen = Color(0xFF4CFF8A)
     val Strobe = Color(0xFFFFFFFF)
@@ -307,6 +350,8 @@ internal object SceneInk {
     val Contrail = Color(0xFFFFFFFF)
     val Bird = Color(0xFF242838)
     val Blimp = Color(0xFFDCE2EC)
+    val BlimpShade = Color(0xFF8D98B0)
+    val BlimpBand = Color(0xFFD9493F)
     val Headlight = Color(0xFFFFF4D6)
     val Taillight = Color(0xFFFF4D4D)
     val Dust = Color(0xFFE8EDFF)

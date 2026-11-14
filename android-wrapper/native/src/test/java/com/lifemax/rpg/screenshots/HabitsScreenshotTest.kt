@@ -11,7 +11,9 @@ import com.android.resources.Density
 import com.lifemax.rpg.feature.habits.HabitsScenarios
 import com.lifemax.rpg.feature.habits.MemoryHabitsStorage
 import com.lifemax.rpg.feature.habits.TestClock
+import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.HabitsLoad
+import com.lifemax.rpg.feature.habits.domain.Pass
 import com.lifemax.rpg.feature.habits.presentation.HabitsScreen
 import com.lifemax.rpg.feature.habits.presentation.HabitsViewModel
 import java.time.ZoneOffset
@@ -50,6 +52,7 @@ class HabitsScreenshotTest {
         opened: HabitsLoad? = null,
         keyboardDp: Int = 0,
         ambientAt: Float? = null,
+        topInsetDp: Float = 64f,
         use: HabitsViewModel.() -> Unit = {},
     ) {
         val clock = TestClock(ZonedDateTime.of(2026, 3, 2, hour, 0, 0, 0, ZoneOffset.UTC))
@@ -71,10 +74,16 @@ class HabitsScreenshotTest {
         paparazzi.snapshot {
             // the keyboard up: the activity makes the screen as tall as what is above it, so the
             // picture is the screen that much shorter (no inset is simulated)
-            if (keyboardDp == 0) HabitsScreen(p, ui, ambientAt = ambientAt)
+            if (keyboardDp == 0) HabitsScreen(p, ui, topInsetDp = topInsetDp, ambientAt = ambientAt)
             else
                 Box(Modifier.fillMaxWidth().height((PHONE_DP - keyboardDp).dp)) {
-                    HabitsScreen(p, ui, imeUp = true, ambientAt = ambientAt)
+                    HabitsScreen(
+                        p,
+                        ui,
+                        topInsetDp = topInsetDp,
+                        imeUp = true,
+                        ambientAt = ambientAt,
+                    )
                 }
         }
     }
@@ -221,6 +230,46 @@ class HabitsScreenshotTest {
 
     /** The day sky's: an airplane with its contrail, a flock of birds, people at work. */
     @Test fun daySkyBirdsAndContrail() = snap("city", ambientAt = HabitsScenarios.DAY_SKY_AT)
+
+    /** The first moment a blimp is crossing, about half way over (a bright day). */
+    private fun blimpMoment(): Float {
+        val seed = HabitsScenarios.TODAY.hashCode()
+        val pass = Pass()
+        var t = 1f
+        while (t < 20000f) {
+            if (Ambient.blimp(t, seed, pass) && pass.t in .45f..0.55f) return t
+            t += .5f
+        }
+        return 0f
+    }
+
+    /**
+     * The blimp at its best, by day: gradient envelope with its highlight and seams, fins, the
+     * gondola and its window, soft volumetric clouds (a heap, a streak, puffs) round it.
+     */
+    @Test fun blimpAndCloudsDay() = snap("city", ambientAt = blimpMoment())
+
+    /** Dusk: clouds with warm rosy undersides, the sun's corona, trees lit warm. */
+    @Test fun cloudsAndTreesDusk() = snap("park", hour = 19)
+
+    /** Night: silver-blue clouds with moonlit rims, the cratered crescent moon, lamp-lit trees. */
+    @Test fun cloudsAndTreesNight() = snap("park", hour = 23)
+
+    /**
+     * The page's header band (the status bar, the picture, the name, the buttons are the page's,
+     * drawn over this screen) is filled with the app's own surface and the sky starts under it:
+     * dark, light, and with the keyboard sheet open.
+     */
+    @Test fun headerBandDark() = snap("city", topInsetDp = 110f)
+
+    @Test fun headerBandLight() = snap("city", light = true, topInsetDp = 110f)
+
+    @Test
+    fun headerBandKeyboard() =
+        snap("city", keyboardDp = 300, topInsetDp = 110f) {
+            newHabit(projection.value!!.stacks[2].id)
+            type(0, "pu")
+        }
 
     /** A habits file from a newer app: the plain message, and nothing to change. */
     @Test

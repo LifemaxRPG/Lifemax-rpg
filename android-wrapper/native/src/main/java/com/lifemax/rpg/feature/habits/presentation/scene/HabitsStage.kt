@@ -646,6 +646,8 @@ private fun StageCanvas(
         val column = (B.W / 2f + B.DX) * f.camera.scale + 14f
         val orb =
             orbSpot(p.hour, this.size.width / d, window.windowTop, horizon / d, column, f.zoom)
+        // the trees are lit from the side the sun or the moon stands on
+        painter.lightFrom = if (orb.first * d < this.size.width / 2f) -1f else 1f
         with(backdrop) {
             backdrop(
                 p.hour,
@@ -698,7 +700,7 @@ private fun StageCanvas(
                     for (k in street.furniture.indices) {
                         val item = street.furniture[k]
                         if (item.x < from - 30f || item.x > to + 30f) continue
-                        furniture(item, sky.dark, seconds)
+                        furniture(item, sky, seconds)
                     }
                     if (layouts.isEmpty()) emptyLot(sky)
                 }

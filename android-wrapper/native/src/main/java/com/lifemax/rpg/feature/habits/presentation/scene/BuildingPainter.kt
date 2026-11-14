@@ -2,11 +2,13 @@ package com.lifemax.rpg.feature.habits.presentation.scene
 
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -15,6 +17,7 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.drawText
 import com.lifemax.rpg.feature.habits.domain.Activity
@@ -27,6 +30,7 @@ import com.lifemax.rpg.feature.habits.domain.HabitMaterial
 import com.lifemax.rpg.feature.habits.domain.PieceKind
 import com.lifemax.rpg.feature.habits.domain.RuinWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
+import com.lifemax.rpg.feature.habits.domain.Trees
 import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.min
@@ -131,6 +135,100 @@ internal class BuildingPainter {
             1f,
         )
 
+    /** The cone of light under a lamp's lens (lamp units: lens at y -91.5, pavement at 0). */
+    private val cone =
+        Path().apply {
+            moveTo(6f, -91.5f)
+            lineTo(16f, -91.5f)
+            lineTo(39f, 0f)
+            lineTo(-17f, 0f)
+            close()
+        }
+    private val coneBrush =
+        Brush.verticalGradient(
+            listOf(SceneInk.LampLight.copy(alpha = .24f), SceneInk.LampLight.copy(alpha = .02f)),
+            startY = -91.5f,
+            endY = 0f,
+        )
+
+    /** A lamp post: a base, a tapering pole with a highlight, a curved arm, a hood. */
+    private val lampBase =
+        Path().apply {
+            moveTo(-5f, 0f)
+            lineTo(5f, 0f)
+            lineTo(3.4f, -5f)
+            lineTo(-3.4f, -5f)
+            close()
+            addRoundRect(RoundRect(-3.2f, -8.4f, 3.2f, -5f, 1f, 1f))
+        }
+    private val lampPole =
+        Path().apply {
+            moveTo(-2.2f, -8f)
+            lineTo(2.2f, -8f)
+            lineTo(1.25f, -88f)
+            lineTo(-1.25f, -88f)
+            close()
+        }
+    private val lampPoleLit =
+        Path().apply {
+            moveTo(-2.2f, -8f)
+            lineTo(-.8f, -8f)
+            lineTo(-.45f, -88f)
+            lineTo(-1.25f, -88f)
+            close()
+        }
+    private val lampArm =
+        Path().apply {
+            moveTo(0f, -86f)
+            quadraticBezierTo(0f, -95.5f, 9f, -95.2f)
+        }
+    private val lampHood =
+        Path().apply {
+            moveTo(3.5f, -94.6f)
+            quadraticBezierTo(11.5f, -101f, 20f, -94.6f)
+            lineTo(18.6f, -91.8f)
+            lineTo(5f, -91.8f)
+            close()
+        }
+    private val armStroke = Stroke(2f, cap = StrokeCap.Round)
+
+    /** A soft contact shadow, a unit circle under a transform. */
+    private val contact =
+        Brush.radialGradient(
+            listOf(SceneInk.Shadow, SceneInk.Shadow.copy(alpha = .22f), Color.Transparent),
+            Offset.Zero,
+            1f,
+        )
+
+    /** Which side the light falls from: -1 the left (the trees are lit on it), 1 the right. */
+    var lightFrom = -1f
+
+    /** Each tree variant as paths, made once: trunk, shade, mid, light and glint tones. */
+    private val treeArts: Array<TreeArt> = Array(Trees.VARIANTS) { TreeArt(Trees.shapes[it]) }
+
+    /** Asphalt and paving specks, a tile of [SPECK_TILE] street units, made once. */
+    private val roadSpecks: List<Offset> =
+        List(46) {
+            Offset(
+                SPECK_TILE * Ambient.hash(11, it, 1),
+                PAVEMENT + 4f + 46f * Ambient.hash(11, it, 2),
+            )
+        }
+    private val roadGlints: List<Offset> =
+        List(18) {
+            Offset(
+                SPECK_TILE * Ambient.hash(12, it, 1),
+                PAVEMENT + 4f + 46f * Ambient.hash(12, it, 2),
+            )
+        }
+    private val paveSpecks: List<Offset> =
+        List(26) {
+            Offset(
+                SPECK_TILE * Ambient.hash(13, it, 1),
+                1.5f + (PAVEMENT - 3f) * Ambient.hash(13, it, 2),
+            )
+        }
+
     // ------------------------------------------------------------------ the street itself
 
     /**
@@ -138,9 +236,13 @@ internal class BuildingPainter {
      * the road down to [depth].
      */
     fun DrawScope.pavement(sky: SkyColors, from: Float, to: Float, depth: Float) {
-        drawRect(sky.pavement, Offset(from, 0f), Size(to - from, PAVEMENT))
-        drawRect(sky.kerb, Offset(from, PAVEMENT), Size(to - from, 2.5f))
-        drawRect(sky.road, Offset(from, PAVEMENT + 2.5f), Size(to - from, depth))
+        val width = to - from
+        drawRect(sky.pavement, Offset(from, 0f), Size(width, PAVEMENT))
+        drawRect(sky.kerb, Offset(from, PAVEMENT), Size(width, 2.5f))
+        drawRect(sky.road, Offset(from, PAVEMENT + 2.5f), Size(width, depth))
+        // the kerb catches the light on its top edge and throws a shadow on the road under it
+        drawRect(SceneInk.Highlight, Offset(from, PAVEMENT), Size(width, .9f), alpha = .8f)
+        drawRect(SceneInk.Occlusion, Offset(from, PAVEMENT + 2.5f), Size(width, 2.2f), alpha = .6f)
         // paving joints, and the lane's dashes
         var x = (kotlin.math.floor(from / 24f)) * 24f
         while (x < to) {
@@ -149,10 +251,44 @@ internal class BuildingPainter {
         }
         x = kotlin.math.floor(from / 46f) * 46f
         while (x < to) {
-            drawRect(sky.kerb, Offset(x, PAVEMENT + 30f), Size(22f, 2f), alpha = .5f)
+            drawRect(sky.kerb, Offset(x, PAVEMENT + 30f), Size(22f, 2f), alpha = .6f)
             x += 46f
         }
-        drawRect(SceneInk.Occlusion, Offset(from, 0f), Size(to - from, 1.2f))
+        // the texture of the asphalt and the slabs, a few deterministic specks (not when the street
+        // is drawn small: it would be a haze of dots)
+        if (width < 1500f) {
+            var tile = kotlin.math.floor(from / SPECK_TILE) * SPECK_TILE
+            while (tile < to) {
+                translate(tile, 0f) {
+                    drawPoints(
+                        roadSpecks,
+                        PointMode.Points,
+                        SceneInk.Occlusion,
+                        1.2f,
+                        StrokeCap.Round,
+                        alpha = .55f,
+                    )
+                    drawPoints(
+                        roadGlints,
+                        PointMode.Points,
+                        SceneInk.Highlight,
+                        1f,
+                        StrokeCap.Round,
+                        alpha = .35f,
+                    )
+                    drawPoints(
+                        paveSpecks,
+                        PointMode.Points,
+                        SceneInk.Occlusion,
+                        1f,
+                        StrokeCap.Round,
+                        alpha = .22f,
+                    )
+                }
+                tile += SPECK_TILE
+            }
+        }
+        drawRect(SceneInk.Occlusion, Offset(from, 0f), Size(width, 1.2f))
     }
 
     /** The pools of light the lamps throw on the pavement at night. */
@@ -168,52 +304,98 @@ internal class BuildingPainter {
     }
 
     /** A lamp, a tree or a bench on the pavement. */
-    fun DrawScope.furniture(f: Furniture, dark: Float, seconds: Float) {
+    fun DrawScope.furniture(f: Furniture, sky: SkyColors, seconds: Float) {
+        val dark = sky.dark
         translate(f.x, 0f) {
             when (f.kind) {
                 FurnitureKind.LAMP -> {
-                    drawRect(SceneInk.Lamp, Offset(-1.6f, -92f), Size(3.2f, 96f))
-                    drawRect(SceneInk.Lamp, Offset(-4f, 0f), Size(8f, 4f))
-                    drawLine(SceneInk.Lamp, Offset(0f, -90f), Offset(10f, -94f), 2.2f)
-                    drawRect(SceneInk.Lamp, Offset(5f, -94f), Size(12f, 4f))
                     val on = if (dark > .2f) dark else 0f
-                    drawRect(
+                    if (on > 0f) drawPath(cone, coneBrush, alpha = on)
+                    drawPath(lampBase, SceneInk.Lamp)
+                    drawPath(lampPole, SceneInk.Lamp)
+                    drawPath(lampPoleLit, SceneInk.Highlight, alpha = .5f)
+                    drawPath(lampArm, SceneInk.Lamp, style = armStroke)
+                    drawPath(lampHood, SceneInk.Lamp)
+                    // the glass lens: dull by day with a glint, lit at night
+                    drawRoundRect(
                         lerp(Color(0xFF8A90A0), SceneInk.LampLight, on),
-                        Offset(6f, -90.5f),
-                        Size(10f, 2.5f),
+                        Offset(6f, -91.8f),
+                        Size(11f, 2.6f),
+                        CornerRadius(1.2f, 1.2f),
                     )
-                    if (on > 0f)
-                        translate(11f, -89f) {
+                    if (on == 0f)
+                        drawRect(Color.White, Offset(7.2f, -91.4f), Size(4f, .7f), alpha = .6f)
+                    else
+                        translate(11.5f, -89.5f) {
                             scale(26f, 26f, Offset.Zero) {
                                 drawCircle(halo, 1f, Offset.Zero, alpha = on)
                             }
                         }
                 }
-                FurnitureKind.TREE -> tree(0f, f.seed, seconds, 1f)
+                FurnitureKind.TREE -> tree(0f, f.seed, seconds, 1f, sky)
                 FurnitureKind.BENCH -> {
-                    drawRect(SceneInk.Bench, Offset(-14f, -9f), Size(28f, 2.5f))
-                    drawRect(SceneInk.Bench, Offset(-14f, -16f), Size(28f, 2.2f))
-                    drawRect(SceneInk.Lamp, Offset(-12f, -9f), Size(2f, 9f))
-                    drawRect(SceneInk.Lamp, Offset(10f, -9f), Size(2f, 9f))
-                    drawRect(SceneInk.Lamp, Offset(-12f, -16f), Size(1.6f, 7f))
-                    drawRect(SceneInk.Lamp, Offset(10.4f, -16f), Size(1.6f, 7f))
+                    // a soft shadow, cast-iron ends, wooden slats lit along their top edges
+                    drawOval(SceneInk.Shadow, Offset(-15f, -1.4f), Size(30f, 4f), alpha = .5f)
+                    drawRect(SceneInk.Lamp, Offset(-12.6f, -9f), Size(1.9f, 9f))
+                    drawRect(SceneInk.Lamp, Offset(10.7f, -9f), Size(1.9f, 9f))
+                    drawRect(SceneInk.Lamp, Offset(-12.8f, -19f), Size(1.6f, 10.5f))
+                    drawRect(SceneInk.Lamp, Offset(11.2f, -19f), Size(1.6f, 10.5f))
+                    drawRect(SceneInk.Lamp, Offset(-14.2f, -12.2f), Size(3.2f, 1.2f))
+                    drawRect(SceneInk.Lamp, Offset(11f, -12.2f), Size(3.2f, 1.2f))
+                    for (y in BENCH_SLATS) {
+                        drawRect(SceneInk.Bench, Offset(-14f, y), Size(28f, 1.9f))
+                        drawRect(SceneInk.Highlight, Offset(-14f, y), Size(28f, .6f), alpha = .45f)
+                        drawRect(SceneInk.Occlusion, Offset(-14f, y + 1.5f), Size(28f, .4f))
+                    }
                 }
             }
         }
     }
 
-    /** A street tree at [x], leaning in the wind with motion on. */
-    private fun DrawScope.tree(x: Float, seed: Int, seconds: Float, size: Float) {
+    /**
+     * A street tree at [x], leaning in the wind with motion on: a soft contact shadow, a tapering
+     * trunk with a lit side, foliage in four tones lit from the sun or moon side (and, at night,
+     * rimmed warm on the other by the street lamps). Which of the variants it is comes from [seed].
+     */
+    private fun DrawScope.tree(x: Float, seed: Int, seconds: Float, size: Float, sky: SkyColors) {
+        val art = treeArts[Trees.variant(seed)]
+        val shape = art.shape
         val lean = if (seconds > 0f) Ambient.sway(seed, seconds) else 0f
-        drawRect(
-            SceneInk.TreeTrunk,
-            Offset(x - 2.5f * size, -30f * size),
-            Size(5f * size, 30f * size),
-        )
-        rotate(lean, Offset(x, -26f * size)) {
-            drawCircle(SceneInk.TreeB, 12f * size, Offset(x - 10f * size, -36f * size))
-            drawCircle(SceneInk.TreeC, 13f * size, Offset(x + 10f * size, -38f * size))
-            drawCircle(SceneInk.TreeA, 17f * size, Offset(x, -48f * size))
+        val dark = sky.dark
+        val warm = shape.warmth
+        // the leaves' tones: a green leaning olive, bluer and deeper as the night comes on, the
+        // light tone taking the sun's (or the moon's) colour
+        fun leaf(day: Color, night: Color) = lerp(lerp(day, SceneInk.LeafOlive, warm), night, dark)
+        val deep = leaf(SceneInk.LeafDeep, SceneInk.LeafDeepNight)
+        val shade = leaf(SceneInk.LeafShade, SceneInk.LeafShadeNight)
+        val mid = leaf(SceneInk.LeafMid, SceneInk.LeafMidNight)
+        val light = lerp(leaf(SceneInk.LeafLight, SceneInk.LeafLightNight), sky.orb, .28f)
+        val glint = lerp(leaf(SceneInk.LeafGlint, SceneInk.LeafGlintNight), sky.orb, .4f)
+        val bark = lerp(SceneInk.BarkDark, SceneInk.BarkDarkNight, dark)
+        val barkLit = lerp(SceneInk.BarkLit, SceneInk.BarkLitNight, dark)
+        withTransform({
+            translate(x, 0f)
+            scale(size * -lightFrom, size, Offset.Zero)
+        }) {
+            // the contact shadow, pushed a little away from the light
+            translate(3f, 1f) {
+                scale(shape.halfWidth * .72f, 3.6f, Offset.Zero) {
+                    drawCircle(contact, 1f, Offset.Zero, alpha = .9f - .3f * dark)
+                }
+            }
+            rotate(lean, Offset(0f, -26f)) {
+                drawPath(art.trunk, bark)
+                drawPath(art.trunkLit, barkLit)
+                if (dark > .2f)
+                    translate(1.9f, .5f) {
+                        drawPath(art.dark, SceneInk.LampLight, alpha = .45f * dark)
+                    }
+                drawPath(art.dark, deep)
+                drawPath(art.shade, shade)
+                drawPath(art.mid, mid)
+                drawPath(art.light, light)
+                art.glint?.let { drawPath(it, glint, alpha = .85f) }
+            }
         }
     }
 
@@ -235,7 +417,7 @@ internal class BuildingPainter {
     ) {
         val seconds = motion.seconds
         val half = B.W / 2f
-        park(art, selected, accent, seconds)
+        park(art, selected, accent, seconds, sky)
         // the building's shadow on the pavement
         drawRect(SceneInk.Shadow, Offset(-half + 4f, 0f), Size(B.W + B.DX, 5f), alpha = .5f)
         lobby(art, sky, detailed, seconds)
@@ -266,7 +448,13 @@ internal class BuildingPainter {
         }
     }
 
-    private fun DrawScope.park(art: BuildingArt, selected: String?, accent: Color, seconds: Float) {
+    private fun DrawScope.park(
+        art: BuildingArt,
+        selected: String?,
+        accent: Color,
+        seconds: Float,
+        sky: SkyColors,
+    ) {
         val trees = art.layout.trees
         if (trees.isEmpty()) return
         val from = B.W / 2f + B.DX + 4f
@@ -275,7 +463,7 @@ internal class BuildingPainter {
             val t = trees[i]
             if (selected == t.id)
                 drawOval(accent, Offset(t.x - 17f, -5f), Size(34f, 10f), style = ring)
-            tree(t.x, t.id.hashCode(), seconds, .8f)
+            tree(t.x, t.id.hashCode(), seconds, .8f, sky)
         }
         // a low fence along its front
         var x = from
@@ -949,6 +1137,12 @@ internal class BuildingPainter {
 
         /** How far the pavement runs in front of the buildings before the kerb. */
         const val PAVEMENT = 16f
+
+        /** The tile the asphalt's specks repeat in, in street units. */
+        const val SPECK_TILE = 120f
+
+        /** The seat and back slats of a bench, from the pavement line up. */
+        val BENCH_SLATS = floatArrayOf(-9.6f, -7.2f, -18.6f, -16.1f, -13.6f)
 
         /** The lines over a wall, by material (the last for a run-down storey). */
         private val TEXTURE =
