@@ -80,7 +80,6 @@ import com.lifemax.rpg.feature.habits.domain.Suggestion
 import com.lifemax.rpg.feature.habits.domain.lapseFraction
 import com.lifemax.rpg.feature.habits.domain.lapseWeeks
 import com.lifemax.rpg.feature.habits.domain.primaryAction
-import com.lifemax.rpg.feature.habits.domain.skyPhase
 import com.lifemax.rpg.feature.habits.presentation.scene.Feel
 import com.lifemax.rpg.feature.habits.presentation.scene.HabitsStage
 import com.lifemax.rpg.feature.habits.presentation.scene.SkyColors
@@ -166,13 +165,15 @@ class HabitsActions(
 }
 
 /**
- * Habits: the scene fills the screen (the sky of the hour, the towers) and the few controls float
- * on it. Above: who the owner is becoming and today's count. Below: the rough-day switch, the one
- * big button that lays the next block, and a dot for every foundation. A tap on a block opens its
- * dials in a sheet; the city view swaps the button for the time-lapse. The heading and the controls
- * are measured first and the scene is told what they take (at any text size), so a tower stands
- * between them and never under them. While a block's dials are open the heading is put away: the
- * ground rises to keep that block over the sheet, and the tower may reach as far up as the top bar.
+ * Habits: the scene fills the screen (the living sky of the hour, one street with a building per
+ * foundation, a floor per habit) and the few controls float on it. Above: who the owner is
+ * becoming, today's count and the Street button. Below: the rough-day switch, the one big button
+ * that lights the next floor of the building in front, and a dot for every building. A tap on a
+ * floor opens its dials in a sheet; the zoomed-out street swaps the button for the time-lapse. The
+ * heading and the controls are measured first and the scene is told what they take (at any text
+ * size), so a building stands between them and never under them. While a floor's dials are open the
+ * heading is put away: the street rises to keep that floor over the sheet, and the building may
+ * reach as far up as the top bar. [ambientAt] holds the street's life at that moment (tests).
  */
 @Composable
 fun HabitsScreen(
@@ -183,6 +184,7 @@ fun HabitsScreen(
     barDp: Float = 72f,
     visible: Boolean = true,
     imeUp: Boolean = false,
+    ambientAt: Float? = null,
 ) {
     // The activity already resizes this screen to what is above the keyboard and the shared bottom
     // bar hides while it is up (NAV-5), so the bar's room is dropped; nothing here reads the IME
@@ -191,7 +193,7 @@ fun HabitsScreen(
     PageTheme(remember(p.tokens, p.light) { PageColors(p.tokens, p.light) }) {
         val colors = LocalPageColors.current
         val density = LocalDensity.current.density
-        val sky = remember(p.hour) { skyColors(skyPhase(p.hour)) }
+        val sky = remember(p.hour) { skyColors(p.hour) }
         val buzz = LocalPageBuzz.current
         var sheetHeight by remember { mutableIntStateOf(0) }
         val tuning = ui.sheet?.kind == SheetKind.TUNE
@@ -207,6 +209,7 @@ fun HabitsScreen(
                     swiped = { actions.focus(it, true) },
                     chosen = { actions.focus(it, false) },
                     tapped = { stack, hit -> tapped(actions, stack, hit) },
+                    zoomed = actions.city,
                     played = actions.played,
                     feel = { feel ->
                         when (feel) {
@@ -252,6 +255,7 @@ fun HabitsScreen(
                                 inset = topInsetDp * density,
                                 accent = colors.accent,
                                 actions = stage,
+                                ambientAt = ambientAt,
                             )
                         }
                         .first()
@@ -282,14 +286,14 @@ internal fun barRoomDp(bottomInsetDp: Float, imeUp: Boolean): Float =
 
 private fun tapped(actions: HabitsActions, stackId: String, hit: Hit) =
     when (hit.kind) {
-        HitKind.BLOCK,
+        HitKind.FLOOR,
         HitKind.TREE -> actions.select(hit.id)
-        HitKind.SLAB -> actions.editStack(stackId)
+        HitKind.LOBBY -> actions.editStack(stackId)
         HitKind.GHOST -> actions.newHabit(stackId)
-        HitKind.REWARD -> actions.reward(stackId)
+        HitKind.SIGN -> actions.reward(stackId)
     }
 
-/** Who the owner is becoming, today's count, and the way to the city. */
+/** Who the owner is becoming, today's count, and the way out to the whole street. */
 @Composable
 private fun Hud(
     p: HabitsProjection,
@@ -352,12 +356,12 @@ private fun Hud(
             }
         if (p.stacks.isNotEmpty())
             Text(
-                if (ui.city) HabitsCopy.TOWER else HabitsCopy.CITY,
+                if (ui.city) HabitsCopy.BUILDING else HabitsCopy.STREET,
                 Modifier.clip(PillShape)
                     .background(Glass)
                     .tapTarget(
                         Role.Button,
-                        if (ui.city) HabitsCopy.TOWER_LABEL else HabitsCopy.CITY_LABEL,
+                        if (ui.city) HabitsCopy.BUILDING_LABEL else HabitsCopy.STREET_LABEL,
                     ) {
                         actions.city(!ui.city)
                     }

@@ -58,12 +58,12 @@ import com.lifemax.rpg.core.designsystem.form.FormKitLook
 import com.lifemax.rpg.core.designsystem.form.FormTextField
 import com.lifemax.rpg.core.designsystem.form.LocalFormKitLook
 import com.lifemax.rpg.core.designsystem.gesture.noTabSwipe
+import com.lifemax.rpg.feature.habits.domain.BuildingSpec
 import com.lifemax.rpg.feature.habits.domain.HabitBlock
 import com.lifemax.rpg.feature.habits.domain.HabitStack
 import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.HabitsSuggest
 import com.lifemax.rpg.feature.habits.domain.Suggestion
-import com.lifemax.rpg.feature.habits.domain.TowerSpec
 
 /**
  * The sheet on show, rising from the bottom above the shared bottom bar ([bottomInset], none while
@@ -436,7 +436,7 @@ private fun Dials(
             )
         }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (b.done) SheetButton("Undo today's block", ButtonKind.QUIET, true, actions.undo)
+        if (b.done) SheetButton("Undo today's floor", ButtonKind.QUIET, true, actions.undo)
         Spacer(Modifier.weight(1f))
         SheetButton(
             if (b.fade) "Stop tracking this" else "Retire this habit",
@@ -477,7 +477,7 @@ private fun RowScope.SizeTile(
     ) {
         val fill = if (on) colors.accent else colors.muted2
         Canvas(Modifier.size(width = 44.dp, height = 40.dp).clearAndSetSemantics {}) {
-            val h = size.height * TowerSpec.HEIGHTS[index] / TowerSpec.HEIGHTS[2]
+            val h = size.height * BuildingSpec.HEIGHTS[index] / BuildingSpec.HEIGHTS[2]
             drawRoundRect(
                 fill,
                 Offset(0f, size.height - h),

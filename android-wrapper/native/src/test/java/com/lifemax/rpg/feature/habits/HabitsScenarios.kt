@@ -56,6 +56,8 @@ class TestClock(
  *   (cleared: a tree), Lay out clothes (clay). After lunch: empty.
  * - `done`: the first stack finished (its reward can be claimed); `claimed`: and claimed.
  * - `rough`: the city on a rough day. `tall`: one foundation with nine habits of every material.
+ * - `fresh`: a brand-new building, two habits stacked today. `park`: a habit broken for good, its
+ *   building only a lobby with a park beside it.
  */
 object HabitsScenarios {
     const val TODAY = "2026-03-02"
@@ -178,6 +180,30 @@ object HabitsScenarios {
         return HabitsRules.editStack(s, wake, treat = "Good coffee")!!
     }
 
+    /** A brand-new building: two habits stacked today, the first one already done. */
+    fun fresh(): HabitsSave {
+        var (s, gym) = HabitsSave(who = "someone who trains").stack("After work")
+        val push = s.habit(gym, "Ten push-ups", "Two push-ups").also { s = it.first }.second
+        s = s.habit(gym, "Read 10 pages", "Read 1 page").first
+        return HabitsRules.lay(s, TODAY, push)!!
+    }
+
+    /** A habit broken for good: the building has its lobby and a park with a tree beside it. */
+    fun park(): HabitsSave {
+        var (s, night) = HabitsSave().stack("At lights out")
+        val snacks =
+            s.habit(night, "Late snacks", fade = true, floors = 3).also { s = it.first }.second
+        return s.past(snacks, 3, 0, 9)
+    }
+
+    /**
+     * Moments of the street's own life (seconds since the tab showed, on [TODAY]) that the sky
+     * screenshots hold: at night an airplane and a shooting star together, by day an airplane with
+     * its contrail and a flock of birds. AmbientTest checks they still show what they say.
+     */
+    const val NIGHT_SKY_AT = 793.8797f
+    const val DAY_SKY_AT = 4985.75f
+
     fun save(name: String): HabitsSave =
         when (name) {
             "empty" -> HabitsSave()
@@ -186,6 +212,8 @@ object HabitsScenarios {
             "claimed" -> claimed()
             "rough" -> rough()
             "tall" -> tall()
+            "fresh" -> fresh()
+            "park" -> park()
             else -> error("No scenario $name")
         }
 

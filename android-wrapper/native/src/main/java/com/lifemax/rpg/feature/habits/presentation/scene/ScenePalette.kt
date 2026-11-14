@@ -1,195 +1,314 @@
 package com.lifemax.rpg.feature.habits.presentation.scene
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import com.lifemax.rpg.feature.habits.domain.HabitMaterial
 import com.lifemax.rpg.feature.habits.domain.SkyPhase
+import com.lifemax.rpg.feature.habits.domain.skyPhase
+import com.lifemax.rpg.feature.habits.domain.skyTone
 
 /*
- * The scene is a picture, not a page: its sky, ground and materials have colours of their own, the same in the
- * light and the dark theme (glass is glass at any hour), as the cat's room has. Everything around the picture
- * (the button, the sheets, the toast) takes the page's palette tokens.
+ * The street is a picture, not a page: its sky, its buildings and its lights have colours of their own, the same
+ * in the light and the dark theme (brick is brick at any hour), as the cat's room has. Everything around the
+ * picture (the button, the sheets, the toast) takes the page's palette tokens. The sky's colours blend from one
+ * time of day to the next ([skyTone]), so dusk comes on slowly.
  */
 
-/** The world at one time of day. */
+/** The world at one moment of the day. */
 internal class SkyColors(
     val sky: List<Color>,
     val ground: List<Color>,
-    val lot: Color,
-    val lotEdge: Color,
+    /** The pavement in front of the buildings, its kerb, the road beyond it. */
+    val pavement: Color,
+    val kerb: Color,
+    val road: Color,
     val line: Color,
-    val far: Color,
-    val near: Color,
-    val haze: Color,
+    /** The far city's three rows, furthest first. */
+    val far: List<Color>,
+    /** The glow over the horizon: the city's light at night, haze by day. */
+    val glow: Color,
     val halo: Color,
     val orb: Color,
+    val cloud: Color,
     /** Words drawn straight on the sky or the ground. */
     val ink: Color,
     val inkSoft: Color,
+    /** How dark it is: 1 at night, about half at dusk, 0 by day (lamps, lit windows, the sign). */
+    val dark: Float,
+    val phase: SkyPhase,
 )
 
-internal fun skyColors(phase: SkyPhase): SkyColors =
-    when (phase) {
-        SkyPhase.NIGHT ->
-            SkyColors(
-                sky = listOf(Color(0xFF060A18), Color(0xFF0B1330), Color(0xFF1D2C63)),
-                ground = listOf(Color(0xFF141E45), Color(0xFF090D1F)),
-                lot = Color(0xFF1C274D),
-                lotEdge = Color(0xFF10173A),
-                line = Color(0x338FA5FF),
-                far = Color(0xFF0E1530),
-                near = Color(0xFF131C3D),
-                haze = Color(0x336E8CFF),
-                halo = Color(0x2EE9EDFF),
-                orb = Color(0xFFE9EDFF),
-                ink = Color(0xFFE6ECFF),
-                inkSoft = Color(0xFF9AA8D8),
-            )
-        SkyPhase.DUSK ->
-            SkyColors(
-                sky = listOf(Color(0xFF1D2350), Color(0xFF6B4B7C), Color(0xFFE39A74)),
-                ground = listOf(Color(0xFF45345E), Color(0xFF221A36)),
-                lot = Color(0xFF55436F),
-                lotEdge = Color(0xFF33264A),
-                line = Color(0x3DFFD6BE),
-                far = Color(0xFF57406F),
-                near = Color(0xFF412F5C),
-                haze = Color(0x4DFFC496),
-                halo = Color(0x66FFC896),
-                orb = Color(0xFFFFD9A8),
-                ink = Color(0xFFFFF1E6),
-                inkSoft = Color(0xFFE3C4BC),
-            )
-        SkyPhase.DAY ->
-            SkyColors(
-                sky = listOf(Color(0xFF2F66B8), Color(0xFF6FA5DD), Color(0xFFC4E2F5)),
-                ground = listOf(Color(0xFF8DBB99), Color(0xFF5F9276)),
-                lot = Color(0xFFDBE3EE),
-                lotEdge = Color(0xFFA3B2C8),
-                line = Color(0x33283C6E),
-                far = Color(0xFFA4C5E8),
-                near = Color(0xFF86ADD9),
-                haze = Color(0x66FFFFFF),
-                halo = Color(0x66FFF3C4),
-                orb = Color(0xFFFFF3C4),
-                ink = Color(0xFFFFFFFF),
-                inkSoft = Color(0xFFE3EEFA),
-            )
-    }
-
-/**
- * A block's faces: the front from [frontTop] down to [frontBottom], its lit [top], its shaded
- * [side].
- */
-internal class Faces(
-    val frontTop: Color,
-    val frontBottom: Color,
-    val top: Color,
-    val side: Color,
-    /** Words on the front face. */
+private class Tone(
+    val sky: List<Color>,
+    val ground: List<Color>,
+    val pavement: Color,
+    val kerb: Color,
+    val road: Color,
+    val line: Color,
+    val far: List<Color>,
+    val glow: Color,
+    val halo: Color,
+    val orb: Color,
+    val cloud: Color,
     val ink: Color,
     val inkSoft: Color,
-    /** The material's own colour, for a blueprint's footing and the glow of the next block. */
+    val dark: Float,
+)
+
+private val NIGHT =
+    Tone(
+        sky = listOf(Color(0xFF050915), Color(0xFF0B1330), Color(0xFF1F2C5E)),
+        ground = listOf(Color(0xFF151B33), Color(0xFF080B17)),
+        pavement = Color(0xFF2A3150),
+        kerb = Color(0xFF3B4466),
+        road = Color(0xFF12162A),
+        line = Color(0x338FA5FF),
+        far = listOf(Color(0xFF0F1734), Color(0xFF111A3A), Color(0xFF141E42)),
+        glow = Color(0x66FF9E5E),
+        halo = Color(0x2EE9EDFF),
+        orb = Color(0xFFE9EDFF),
+        cloud = Color(0xFF3A4672),
+        ink = Color(0xFFE6ECFF),
+        inkSoft = Color(0xFF9AA8D8),
+        dark = 1f,
+    )
+
+private val DUSK =
+    Tone(
+        sky = listOf(Color(0xFF1D2350), Color(0xFF6B4B7C), Color(0xFFE39A74)),
+        ground = listOf(Color(0xFF45345E), Color(0xFF221A36)),
+        pavement = Color(0xFF6A5578),
+        kerb = Color(0xFF85709A),
+        road = Color(0xFF2C2240),
+        line = Color(0x3DFFD6BE),
+        far = listOf(Color(0xFF6E5381), Color(0xFF5B4473), Color(0xFF4A3763)),
+        glow = Color(0x80FFB27A),
+        halo = Color(0x66FFC896),
+        orb = Color(0xFFFFD9A8),
+        cloud = Color(0xFFF2B9A0),
+        ink = Color(0xFFFFF1E6),
+        inkSoft = Color(0xFFE3C4BC),
+        dark = .55f,
+    )
+
+private val DAY =
+    Tone(
+        sky = listOf(Color(0xFF2F66B8), Color(0xFF6FA5DD), Color(0xFFC4E2F5)),
+        ground = listOf(Color(0xFF9AA7B8), Color(0xFF6E7C90)),
+        pavement = Color(0xFFC9CFD8),
+        kerb = Color(0xFFE4E8EE),
+        road = Color(0xFF59616F),
+        line = Color(0x33283C6E),
+        far = listOf(Color(0xFFB4CDEA), Color(0xFF9DBDE2), Color(0xFF86ADD9)),
+        glow = Color(0x80FFFFFF),
+        halo = Color(0x66FFF3C4),
+        orb = Color(0xFFFFF3C4),
+        cloud = Color(0xFFFFFFFF),
+        ink = Color(0xFFFFFFFF),
+        inkSoft = Color(0xFFE3EEFA),
+        dark = 0f,
+    )
+
+private fun mix(a: Tone, b: Tone, t: Float, phase: SkyPhase): SkyColors {
+    fun c(x: Color, y: Color) = lerp(x, y, t)
+    fun l(x: List<Color>, y: List<Color>) = x.indices.map { lerp(x[it], y[it], t) }
+    return SkyColors(
+        l(a.sky, b.sky),
+        l(a.ground, b.ground),
+        c(a.pavement, b.pavement),
+        c(a.kerb, b.kerb),
+        c(a.road, b.road),
+        c(a.line, b.line),
+        l(a.far, b.far),
+        c(a.glow, b.glow),
+        c(a.halo, b.halo),
+        c(a.orb, b.orb),
+        c(a.cloud, b.cloud),
+        if (t < .5f) a.ink else b.ink,
+        if (t < .5f) a.inkSoft else b.inkSoft,
+        a.dark + (b.dark - a.dark) * t,
+        phase,
+    )
+}
+
+/** The sky at [hour], blended between night, dusk and day. */
+internal fun skyColors(hour: Float): SkyColors {
+    val tone = skyTone(hour)
+    val phase = skyPhase(hour)
+    return if (tone <= 1f) mix(NIGHT, DUSK, tone, phase) else mix(DUSK, DAY, tone - 1f, phase)
+}
+
+/**
+ * A floor's front by its material: the wall from [wallTop] down to [wallBottom], its shaded [side],
+ * its [roof], the [trim] round its windows and along its cornice, the [plaque] its name is on and
+ * the plaque's [ink].
+ */
+internal class Facade(
+    val wallTop: Color,
+    val wallBottom: Color,
+    val side: Color,
+    val roof: Color,
+    val trim: Color,
+    val plaque: Color,
+    val ink: Color,
+    val inkSoft: Color,
+    /** The material's own colour: the glow of the next floor. */
     val tint: Color,
 )
 
-internal fun faces(material: HabitMaterial): Faces =
+internal fun facade(material: HabitMaterial): Facade =
     when (material) {
+        // a bare steel frame filled in with glass, scaffolding still up
         HabitMaterial.GLASS ->
-            Faces(
-                Color(0x8CA6DCFF),
-                Color(0x66709ED6),
-                Color(0xA6CDEBFF),
-                Color(0x59608CC4),
-                Color(0xFFF2F8FF),
-                Color(0xCCDCEBFF),
+            Facade(
+                Color(0xFF5A6E8C),
+                Color(0xFF465772),
+                Color(0xFF34425A),
+                Color(0xFF8395B2),
+                Color(0xFF9FB3CF),
+                Color(0xF2EAF3FF),
+                Color(0xFF1D2B44),
+                Color(0xCC1D2B44),
                 Color(0xFF9FD8FF),
             )
+        // brick
         HabitMaterial.CLAY ->
-            Faces(
-                Color(0xFFDE9C72),
-                Color(0xFFB46D48),
-                Color(0xFFEDB592),
-                Color(0xFF935438),
-                Color(0xFF3A1A0B),
-                Color(0xB33A1A0B),
-                Color(0xFFDD9A72),
+            Facade(
+                Color(0xFFBE6844),
+                Color(0xFF9C4E31),
+                Color(0xFF6E3524),
+                Color(0xFFD08A68),
+                Color(0xFFEEDCC8),
+                Color(0xF23A1A0B),
+                Color(0xFFFFEBD9),
+                Color(0xCCFFDCC4),
+                Color(0xFFFFA57A),
             )
+        // cut stone
         HabitMaterial.STONE ->
-            Faces(
-                Color(0xFFB4C3E0),
-                Color(0xFF8799BF),
-                Color(0xFFD0DAF0),
-                Color(0xFF6C7FA6),
-                Color(0xFF18233D),
-                Color(0xB318233D),
-                Color(0xFFA9BBDC),
+            Facade(
+                Color(0xFFDCD3C0),
+                Color(0xFFBDB29C),
+                Color(0xFF8F846F),
+                Color(0xFFECE6D8),
+                Color(0xFFF5F1E8),
+                Color(0xF22B3045),
+                Color(0xFFF2F4FA),
+                Color(0xCCDDE2F0),
+                Color(0xFFC9D6F0),
             )
+        // stone, trimmed in gold
         HabitMaterial.GOLD ->
-            Faces(
-                Color(0xFFFFF1B0),
-                Color(0xFFB98A22),
-                Color(0xFFFFF8D2),
-                Color(0xFF9A6E18),
-                Color(0xFF452E00),
-                Color(0xB3452E00),
+            Facade(
+                Color(0xFFEDE3CC),
+                Color(0xFFCDBD9C),
+                Color(0xFF9A8865),
+                Color(0xFFF6EED8),
+                Color(0xFFE8B84A),
+                Color(0xF2402A00),
+                Color(0xFFFFE9A8),
+                Color(0xCCFFE3A0),
                 Color(0xFFF3CF63),
             )
+        // run down
         HabitMaterial.FADE ->
-            Faces(
-                Color(0xFF7D3D59),
-                Color(0xFF622D45),
-                Color(0xFFA85C7B),
-                Color(0xFF4E2437),
+            Facade(
+                Color(0xFF6E5C60),
+                Color(0xFF524549),
+                Color(0xFF3B3134),
+                Color(0xFF85747A),
+                Color(0xFF8A7A7E),
+                Color(0xF2251A1E),
                 Color(0xFFFFE9F1),
                 Color(0xCCFFDCE8),
                 Color(0xFFE08AAE),
             )
     }
 
-internal object SceneInk {
-    val SlabFrontTop = Color(0xFF56658E)
-    val SlabFrontBottom = Color(0xFF414E75)
-    val SlabTop = Color(0xFF7483AB)
-    val SlabSide = Color(0xFF364263)
-    val SlabText = Color(0xFFE8EDFF)
+/** The awnings a lobby may have: one per building, by its foundation. */
+internal val AWNINGS =
+    arrayOf(
+        Color(0xFFC8473F),
+        Color(0xFF2F8A5F),
+        Color(0xFF2E4A7D),
+        Color(0xFF2A8C8C),
+        Color(0xFFD49A2A),
+        Color(0xFF7B3F7A),
+    )
 
-    /** A blueprint: a faint wash, a dashed outline. */
+internal object SceneInk {
+    val LobbyWall = Color(0xFF3A3F52)
+    val LobbyWallLow = Color(0xFF2C3040)
+    val LobbySide = Color(0xFF232634)
+    val SignBoard = Color(0xFF1B1F2C)
+    val SignText = Color(0xFFFFF1D6)
+    val Shop = Color(0xFF2A3348)
+    val ShopLit = Color(0xFFFFD48A)
+    val Door = Color(0xFF151925)
+
+    /** Windows: lit (warm), and dark glass at night and by day. */
+    val WindowLit = Color(0xFFFFD27A)
+    val WindowLitLow = Color(0xFFFFB45A)
+    val WindowLitDay = Color(0xFFFFE7B0)
+    val GlassNight = Color(0xFF151C30)
+    val GlassDay = Color(0xFF58728F)
+    val Reflection = Color(0x33FFFFFF)
+    val Person = Color(0xE6331F17)
+    val Boards = Color(0xFF8E6E4A)
+    val BoardLine = Color(0xFF5E4630)
+    val Dim = Color(0xFF6B4A32)
+
+    val Scaffold = Color(0xFFB9C3D3)
+    val Crane = Color(0xFFF2B33D)
+
+    /** The next floor's glow, and the light that floods a floor as it is finished. */
+    val Glow = Color(0xFFFFE2A0)
+
+    val Crack = Color(0xCC1A0D0D)
+    val Seam = Color(0xFFF6D679)
+    val SeamGlow = Color(0x66FFE9A6)
+    val Attention = Color(0xFFFFB648)
+    val AttentionInk = Color(0xFF3A2400)
+
+    /** The rooftop sign: dark until the building is done, then lit. */
+    val SignOff = Color(0xFF2B2F3D)
+    val SignOffText = Color(0xFF8D93A8)
+    val SignLit = Color(0xFF3A2400)
+    val SignLitText = Color(0xFFFFE08A)
+    val Bulb = Color(0xFFFFF0B8)
+    val Flag = Color(0xFFFF6B6B)
+    val FlagPole = Color(0xFFFFF7D6)
+    val Tank = Color(0xFF5A4A3E)
+
+    /** A ghost floor: where the next habit would go. */
     val PlanFill = Color(0x1F8CA8FF)
     val PlanLine = Color(0x99B4C6FF)
     val PlanText = Color(0xFFDCE6FF)
-
-    val GlassBacking = Color(0x8027406B)
-    val GlassEdge = Color(0xFFE6F6FF)
-
-    val Crack = Color(0xCC1A0D0D)
-
-    /** A crack on a blueprint, which is see-through: pale, so it reads on any sky. */
-    val CrackOnPlan = Color(0xF2FFB9A8)
-    val Seam = Color(0xFFF6D679)
-    val SeamGlow = Color(0x66FFE9A6)
-
-    val WindowLit = Color(0xFFFFD27A)
-    val WindowDim = Color(0xFFE9B45C)
-    val WindowDark = Color(0xFF3A1626)
-
-    val RewardLockTop = Color(0xFF9C8757)
-    val RewardLockFront = Color(0xFF77643A)
-    val RewardLockSide = Color(0xFF5E4F2C)
-    val RewardLockText = Color(0xFFE9DFC2)
-    val Flag = Color(0xFFFF6B6B)
-    val FlagPole = Color(0xFFFFF7D6)
 
     val TreeTrunk = Color(0xFF6B4A2F)
     val TreeA = Color(0xFF3F9D6B)
     val TreeB = Color(0xFF348A5C)
     val TreeC = Color(0xFF46AD77)
+    val Grass = Color(0xFF4F8F5E)
+    val Lamp = Color(0xFF2A2F3D)
+    val LampLight = Color(0xFFFFE3A3)
+    val Bench = Color(0xFF6B4A2F)
 
-    val Shadow = Color(0x73000000)
+    val Shadow = Color(0x59000000)
     val Occlusion = Color(0x47000000)
     val Highlight = Color(0x59FFFFFF)
     val Star = Color(0xFFD5DDFF)
-    val CityLight = Color(0xFFFFD27A)
-    val Cloud = Color(0xFFFFFFFF)
+    val FarLight = Color(0xFFFFD27A)
+    val Warning = Color(0xFFFF3B30)
+    val NavGreen = Color(0xFF4CFF8A)
+    val Strobe = Color(0xFFFFFFFF)
+    val Plane = Color(0xFF2B3040)
+    val PlaneDay = Color(0xFFE9EEF6)
+    val Contrail = Color(0xFFFFFFFF)
+    val Bird = Color(0xFF242838)
+    val Blimp = Color(0xFFDCE2EC)
+    val Headlight = Color(0xFFFFF4D6)
+    val Taillight = Color(0xFFFF4D4D)
     val Dust = Color(0xFFE8EDFF)
     val Sheen = Color(0xD9FFFFFF)
 }

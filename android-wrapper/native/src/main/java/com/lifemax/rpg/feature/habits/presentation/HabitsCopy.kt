@@ -11,23 +11,23 @@ import com.lifemax.rpg.feature.habits.domain.PrimaryAction
  * says (a refusal, a save that failed, a block that turned to stone) is shown as the page words it.
  */
 internal object HabitsCopy {
-    const val STACK_HERE = "+ Stack a habit"
+    const val STACK_HERE = "+ Add a floor"
     const val ENJOYED = "Enjoyed"
     const val BECOMING = "BECOMING"
     const val WHO_UNSAID = "Tap to say who"
     const val TODAY = "today"
-    const val CITY = "City"
-    const val TOWER = "Tower"
-    const val CITY_LABEL = "City view: every tower"
-    const val TOWER_LABEL = "Back to one tower"
+    const val STREET = "Street"
+    const val BUILDING = "Building"
+    const val STREET_LABEL = "Zoom out to the whole street"
+    const val BUILDING_LABEL = "Back to one building"
     const val NEW_FOUNDATION = "+ Foundation"
     const val ROUGH_OFF = "Rough day?"
-    const val ROUGH_OFF_HINT = "Shrink today's blocks to two minutes"
+    const val ROUGH_OFF_HINT = "Shrink today's floors to two minutes"
     const val ROUGH_ON = "Rough day is on"
-    const val ROUGH_ON_HINT = "Blocks are two minutes today"
+    const val ROUGH_ON_HINT = "Floors are two minutes today"
     const val LAPSE = "Time-lapse"
     const val LAPSE_TODAY = "Today"
-    const val SCENE = "Your habit stacks"
+    const val SCENE = "Your habit street"
     const val CANCEL = "Cancel"
     const val BACK = "Back"
     const val CLOSE = "Close"
@@ -75,28 +75,29 @@ internal object HabitsCopy {
         when (action) {
             PrimaryAction.FirstFoundation -> "Start here" to "Lay your first foundation"
             is PrimaryAction.FirstHabit ->
-                "Empty foundation" to "Stack a habit on ${action.stack.cue.lowercase()}"
+                "Empty foundation" to "Add a floor to ${action.stack.cue.lowercase()}"
             is PrimaryAction.Lay ->
-                ("Lay the next block" + if (combo > 0) " · combo ×${combo + 1}" else "") to
+                ("Light up the next floor" + if (combo > 0) " · combo ×${combo + 1}" else "") to
                     action.block.name
             is PrimaryAction.Knock ->
-                "Stayed clean today" to "Knock a floor off: ${action.block.name}"
+                "Stayed clean today" to "Take a floor down: ${action.block.name}"
             is PrimaryAction.Claim ->
-                "Stack complete · rooftop unlocked" to "Claim: ${action.stack.treat}"
-            is PrimaryAction.GoTo -> "This stack is done" to "Go to ${action.stack.cue.lowercase()}"
-            PrimaryAction.Complete -> "Skyline complete" to "Every block is laid today"
+                "Building done · rooftop unlocked" to "Claim: ${action.stack.treat}"
+            is PrimaryAction.GoTo ->
+                "This building is done" to "Go to ${action.stack.cue.lowercase()}"
+            PrimaryAction.Complete -> "Street complete" to "Every floor is lit today"
         }
 
-    /** What TalkBack says of the scene: the stack in front, and where it stands today. */
+    /** What TalkBack says of the scene: the building in front, and where it stands today. */
     fun describe(p: HabitsProjection, stack: HabitStack?, city: Boolean, weeks: Int): String {
         if (p.stacks.isEmpty()) return "$SCENE. Nothing built yet."
         if (city)
-            return "$SCENE, city view, ${weeksAgo(weeks, p.rules.weeks).lowercase()}: " +
+            return "$SCENE, whole street, ${weeksAgo(weeks, p.rules.weeks).lowercase()}: " +
                 p.stacks.joinToString(", ") { it.cue }
         val s = stack ?: return SCENE
         val laid = s.blocks.count { it.done }
         val next = s.nextBlock?.let { ". Next: ${it.name}" } ?: ". Done for today"
-        return "${s.cue}: $laid of ${s.blocks.count { !it.cleared }} laid today$next. Foundation ${p.stacks.indexOf(s) + 1} of ${p.stacks.size}."
+        return "${s.cue}: $laid of ${s.blocks.count { !it.cleared }} floors lit today$next. Building ${p.stacks.indexOf(s) + 1} of ${p.stacks.size}."
     }
 
     /** A sheet's words: title, lead, the labels and hints of its fields, its buttons. */
@@ -117,7 +118,7 @@ internal object HabitsCopy {
             SheetKind.WHO ->
                 SheetWords(
                     "Who are you becoming?",
-                    "Every block you lay is a vote for this person.",
+                    "Every floor you light is a vote for this person.",
                     listOf("I am becoming"),
                     listOf("a reader, an athlete"),
                 )
@@ -180,8 +181,7 @@ internal object HabitsCopy {
                         listOf("Paired with"),
                         listOf("My favourite playlist"),
                     )
-            SheetKind.RESTACK ->
-                SheetWords("Move this block", "Choose the foundation it stands on.")
+            SheetKind.RESTACK -> SheetWords("Move this floor", "Choose the building it goes on.")
             SheetKind.RETIRE ->
                 SheetWords(
                     if (fade) "Stop tracking this?" else "Retire this habit?",

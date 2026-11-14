@@ -1,7 +1,7 @@
 package com.lifemax.rpg.feature.habits.presentation.scene
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
@@ -30,7 +30,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
@@ -41,49 +43,54 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
+import com.lifemax.rpg.feature.habits.domain.BuildingLayout
+import com.lifemax.rpg.feature.habits.domain.BuildingSpec as B
 import com.lifemax.rpg.feature.habits.domain.Camera
-import com.lifemax.rpg.feature.habits.domain.CityLayout
 import com.lifemax.rpg.feature.habits.domain.HabitStack
 import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
-import com.lifemax.rpg.feature.habits.domain.PAGE_SHARE
 import com.lifemax.rpg.feature.habits.domain.SceneWindow
+import com.lifemax.rpg.feature.habits.domain.StreetLayout
+import com.lifemax.rpg.feature.habits.domain.StreetView
 import com.lifemax.rpg.feature.habits.domain.TOP_FADE
-import com.lifemax.rpg.feature.habits.domain.TowerLayout
-import com.lifemax.rpg.feature.habits.domain.TowerSpec
-import com.lifemax.rpg.feature.habits.domain.cityLayout
+import com.lifemax.rpg.feature.habits.domain.buildingAt
+import com.lifemax.rpg.feature.habits.domain.buildingLayout
+import com.lifemax.rpg.feature.habits.domain.centred
 import com.lifemax.rpg.feature.habits.domain.focusCamera
 import com.lifemax.rpg.feature.habits.domain.hit
 import com.lifemax.rpg.feature.habits.domain.lerp
 import com.lifemax.rpg.feature.habits.domain.orbSpot
-import com.lifemax.rpg.feature.habits.domain.pagerPose
+import com.lifemax.rpg.feature.habits.domain.position
 import com.lifemax.rpg.feature.habits.domain.rubberBand
-import com.lifemax.rpg.feature.habits.domain.settlePage
-import com.lifemax.rpg.feature.habits.domain.skyPhase
-import com.lifemax.rpg.feature.habits.domain.towerAt
-import com.lifemax.rpg.feature.habits.domain.towerLayout
+import com.lifemax.rpg.feature.habits.domain.settle
+import com.lifemax.rpg.feature.habits.domain.streetLayout
+import com.lifemax.rpg.feature.habits.domain.streetView
+import com.lifemax.rpg.feature.habits.domain.towards
 import com.lifemax.rpg.feature.habits.presentation.HabitsCopy
 import com.lifemax.rpg.feature.habits.presentation.HabitsUi
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /** What the scene tells the screen. */
 internal class StageActions(
-    /** The owner's swipe brought this stack in front. */
+    /** The owner's scroll settled on this building. */
     val swiped: (stackId: String) -> Unit = {},
-    /** A tap on a tower beside the one in front, or on one of the city. */
+    /** A tap on a building beside the one in front, or on one of the zoomed-out street. */
     val chosen: (stackId: String) -> Unit = {},
-    /** A tap on something of the tower in front. */
+    /** A tap on something of the building in front. */
     val tapped: (stackId: String, hit: Hit) -> Unit = { _, _ -> },
+    /** A pinch: out to the whole street (true), or back in (false). */
+    val zoomed: (out: Boolean) -> Unit = {},
     /** Play [id] is over. */
     val played: (id: Long) -> Unit = {},
     /** A moment to feel: [Feel]. */
@@ -92,28 +99,32 @@ internal class StageActions(
 
 /** The moments the phone buzzes at. */
 internal enum class Feel {
-    /** The towers moved to another one. */
+    /** The street moved to another building. */
     TICK,
 
-    /** A block landed. */
+    /** A floor's lights came on. */
     LAND,
 
-    /** A block changed material, or a reward was claimed. */
+    /** A floor changed material, or a reward was claimed. */
     GLOW,
 
-    /** A floor came down. */
+    /** A storey came down. */
     FELL,
 }
 
-/** The running parts of a play: a block landing, or a floor coming down. */
+/**
+ * The running parts of a play: a floor being finished, a storey coming down, a floor dropping in.
+ */
 private class PlayMotion {
-    val fall = Animatable(1f)
+    val lights = Animatable(1f)
     val squash = Animatable(0f)
     val burst = Animatable(1f)
     val sweep = Animatable(1f)
     val fell = Animatable(1f)
+    val drop = Animatable(1f)
     var landing by mutableStateOf<String?>(null)
     var felled by mutableStateOf<String?>(null)
+    var adding by mutableStateOf<String?>(null)
     var swept by mutableStateOf(false)
 
     /** The play these parts are running, so one that ends late does not stop the next. */
@@ -127,93 +138,88 @@ private class PlayMotion {
         swept = false
     }
 
-    /** This frame's motion of the tower in front, at [seconds]. */
-    fun now(seconds: Float): TowerMotion =
-        if (landing == null && felled == null) TowerMotion(seconds)
-        else
-            TowerMotion(
-                seconds,
-                landing,
-                fall.value,
-                squash.value,
-                squash.value,
-                burst.value,
-                sweep.value,
-                swept,
-                felled,
-                fell.value,
-            )
+    /** This frame's motion of the building in front, written into [into]. */
+    fun now(seconds: Float, into: BuildingMotion): BuildingMotion {
+        into.seconds = seconds
+        into.landing = landing
+        into.felled = felled
+        into.adding = adding
+        into.lights = lights.value
+        into.squash = squash.value
+        into.burst = burst.value
+        into.sweep = sweep.value
+        into.swept = swept
+        into.fell = fell.value
+        into.drop = drop.value
+        return into
+    }
 }
 
 /**
- * Where a tower is drawn: its foot's pixel, the pixels a tower unit takes, how far it is from the
- * front, and how far what stands on its slab is slid down behind it (in tower units).
- */
-private class Place(
-    val x: Float,
-    val y: Float,
-    val unit: Float,
-    val away: Float,
-    val front: Float,
-    val sink: Float,
-)
-
-/**
  * The scene's arithmetic for one frame, shared by the drawing and the taps so that a tap lands on
- * what is drawn there. [window] is the part of the view the towers may use, [position] the pager's,
- * [city] 0 (one tower in front) to 1 (the city), [pan] the front tower's, [lift] how far the whole
- * ground is raised to clear a sheet, [inset] the top bar's pixels.
+ * what is drawn there. [scroll] is where along the street the view stands (street units), [zoom] 0
+ * (the building in front) to 1 (the whole street), [pan] the front building's, [lift] how far the
+ * whole street is raised to clear a sheet, [inset] the top bar's pixels.
  */
 private class Frame(
     val size: IntSize,
     val density: Float,
     val window: SceneWindow,
-    val layouts: List<TowerLayout>,
+    val street: StreetLayout,
     val cameras: List<Camera>,
-    val cityLayout: CityLayout,
+    val view: StreetView,
     val focus: Int,
-    val position: Float,
-    val city: Float,
-    val pan: Float,
+    val scroll: Float,
+    val zoom: Float,
+    pan: Float,
     val lift: Float,
     val inset: Float,
 ) {
-    /** The ground line: it never moves with the camera, so the foundations stay where they are. */
-    val ground: Float = window.ground * density - lift
+    /** The camera between the two buildings the view stands between. */
+    val camera: Camera =
+        if (cameras.isEmpty()) Camera(1.15f, 0f, 0f)
+        else {
+            val at = street.position(scroll)
+            val i = floor(at).toInt().coerceIn(0, cameras.size - 1)
+            val j = min(i + 1, cameras.size - 1)
+            fun cam(k: Int) = if (k == focus) cameras[k].copy(pan = pan) else cameras[k]
+            cam(i).towards(cam(j), (at - i).coerceIn(0f, 1f))
+        }
+
+    val scale: Float = lerp(camera.scale, view.scale, zoom)
+    val unit: Float = scale * density
+
+    /** The street's x in the middle of the view. */
+    val middle: Float = lerp(scroll, view.middle, zoom)
+
+    /** The pavement line, lowered by the camera's pan and raised to clear a sheet. */
+    val ground: Float = window.ground * density - lift + camera.pan * (1f - zoom) * density
 
     /** Under the heading's band, where the sky's own things stay. */
     val skyTop: Float = window.windowTop * density
 
     /**
-     * Nothing of a tower is drawn above this: the heading's band, or, as the ground rises to clear
-     * a block's dials (the heading is put away then), as far up as the top bar.
+     * Nothing of a building is drawn above this: the heading's band, or, as the street rises to
+     * clear a floor's dials (the heading is put away then), as far up as the top bar.
      */
     val top: Float = max(min(inset, skyTop), skyTop - lift)
 
-    fun place(i: Int): Place {
-        val pose = pagerPose(i, position, size.width / density)
-        val away = min(1f, abs(i - position))
-        val scale = lerp(cameras[i].scale * pose.scale, cityLayout.scale, city)
-        val x = size.width / 2f + lerp(pose.x, cityLayout.xs[i], city) * density
-        val sink = (if (i == focus) pan else cameras[i].pan) * (1f - city) / cameras[i].scale
-        return Place(x, ground, scale * density, away, lerp(pose.alpha, 1f, city), sink)
-    }
+    fun screenX(x: Float): Float = size.width / 2f + (x - middle) * unit
 
-    /** Whether tower [i], drawn at [at], reaches into the fade under the heading's band. */
-    fun fades(i: Int, at: Place): Boolean =
-        at.y - (layouts[i].height - at.sink) * at.unit < top + TOP_FADE * density
+    fun streetX(px: Float): Float = middle + (px - size.width / 2f) / unit
 }
 
 /**
- * The scene: the sky of the hour and the towers. One tower stands in front with its neighbours
- * peeking in at the edges; a sideways drag moves them with the finger and a release settles on a
- * neighbour with the finger's speed; an up-and-down drag slides a tower too tall for the view; a
- * tap picks what is under it. In the city view every tower stands side by side, as it stood
- * [HabitsUi.weeks] weeks ago. [top] and [bottom] are the pixels the screen's own controls take, as
- * they were measured: the towers, the sun, the moon and the clouds keep between them
- * ([SceneWindow]). [cover] is the height of a sheet over the bottom, which the selected block is
- * kept clear of; [inset] the top bar's pixels, as far up as a tower may then reach. Nothing runs
- * while the screen is not [visible] (A24) or motion is reduced.
+ * The scene: the living sky of the hour and one street with a building per foundation. The street
+ * follows a sideways drag and, let go, coasts and settles softly on the building nearest where it
+ * would stop, which is then the one in front; an up-and-down drag tilts the view up a building too
+ * tall for it; a pinch (or the Street button) zooms out to the whole street, which shows
+ * [HabitsUi.weeks] weeks ago. A tap picks what is under it. [top] and [bottom] are the pixels the
+ * screen's own controls take, as they were measured: the buildings, the sun, the moon and the
+ * clouds keep between them ([SceneWindow]). [cover] is the height of a sheet over the bottom, which
+ * the selected floor is kept clear of; [inset] the top bar's pixels, as far up as a building may
+ * then reach. Nothing moves while the screen is not [visible] (A24) or motion is reduced: the
+ * street is a still picture then. [ambientAt] holds the street's life at that many seconds (tests).
  */
 @Composable
 internal fun HabitsStage(
@@ -227,6 +233,7 @@ internal fun HabitsStage(
     accent: Color,
     actions: StageActions,
     modifier: Modifier = Modifier,
+    ambientAt: Float? = null,
 ) {
     // the view's size is known while composing, so the first frame already stands where it should
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -241,6 +248,7 @@ internal fun HabitsStage(
             inset,
             accent,
             actions,
+            ambientAt,
         )
     }
 }
@@ -257,23 +265,33 @@ private fun StageCanvas(
     inset: Float,
     accent: Color,
     actions: StageActions,
+    ambientAt: Float?,
 ) {
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer(cacheSize = 96)
     val text = remember(measurer, density.fontScale) { SceneText(measurer, density.fontScale) }
-    val painter = remember(text) { TowerPainter(text) }
-    val backdrop = remember { Backdrop() }
+    val painter = remember { BuildingPainter() }
+    val seed = remember(p.day) { p.day.hashCode() }
+    val backdrop = remember(seed) { Backdrop(seed) }
+    val sky = remember(p.hour) { skyColors(p.hour) }
     val layer = remember { Paint() }
     val scope = rememberCoroutineScope()
     val still = p.reducedMotion
-    val live = !ui.city || ui.weeks == 0
+    val zoomedOut = ui.city
+    val live = !zoomedOut || ui.weeks == 0
 
-    val stacks = remember(p, ui.city, ui.weeks) { if (ui.city) p.towersAt(ui.weeks) else p.stacks }
+    val stacks =
+        remember(p, zoomedOut, ui.weeks) { if (zoomedOut) p.towersAt(ui.weeks) else p.stacks }
     val focus = stacks.indexOfFirst { it.id == ui.focus }.coerceAtLeast(0)
     val layouts =
-        remember(stacks, focus, ui.city, live) {
-            stacks.mapIndexed { i, s -> towerLayout(s, live, ghost = !ui.city && i == focus) }
+        remember(stacks, focus, zoomedOut, live) {
+            stacks.mapIndexed { i, s -> buildingLayout(s, live, ghost = !zoomedOut && i == focus) }
         }
+    val arts =
+        remember(layouts, text) { layouts.mapIndexed { i, l -> buildingArt(l, stacks[i], text) } }
+    val names =
+        remember(stacks, text) { stacks.map { text.layout(it.cue, 11f, FontWeight.SemiBold, B.W) } }
+    val street = remember(layouts) { streetLayout(layouts) }
     val window =
         remember(size, top, bottom, density.density) {
             SceneWindow(
@@ -292,43 +310,46 @@ private fun StageCanvas(
                 focusCamera(l.height, avail, aim)
             }
         }
-    val cityPlan =
-        remember(layouts, size, avail) {
-            cityLayout(layouts.map { it.height }, size.width / density.density, avail)
+    val view =
+        remember(street, layouts, size, avail) {
+            streetView(street, layouts.map { it.height }, size.width / density.density, avail)
         }
 
-    // the pager: where the towers are, in towers
-    val pager = remember { Animatable(focus.toFloat()) }
-    LaunchedEffect(ui.jump, focus, stacks.size) {
-        // the focus moved by something other than the finger (a tap, the button, a new foundation)
-        if (pager.targetValue != focus.toFloat()) {
-            if (still) pager.snapTo(focus.toFloat())
-            else pager.animateTo(focus.toFloat(), spring(dampingRatio = .86f, stiffness = 320f))
+    // the street: where along it the view stands, in street units
+    val home = street.centers.getOrElse(focus) { 0f }
+    val scroll = remember { Animatable(home) }
+    var dragging by remember { mutableStateOf(false) }
+    LaunchedEffect(ui.jump, focus, home, dragging) {
+        // the focus moved by something other than the finger (a tap, the button, a new foundation),
+        // or the street changed under it: it settles on the building in front
+        if (!dragging && scroll.targetValue != home) {
+            if (still) scroll.snapTo(home)
+            else scroll.animateTo(home, spring(dampingRatio = .86f, stiffness = 260f))
         }
     }
-    val cityT = remember { Animatable(if (ui.city) 1f else 0f) }
-    LaunchedEffect(ui.city) {
-        val to = if (ui.city) 1f else 0f
-        if (still) cityT.snapTo(to)
-        else cityT.animateTo(to, spring(dampingRatio = .88f, stiffness = 260f))
+    val zoom = remember { Animatable(if (zoomedOut) 1f else 0f) }
+    LaunchedEffect(zoomedOut) {
+        val to = if (zoomedOut) 1f else 0f
+        if (still) zoom.snapTo(to)
+        else zoom.animateTo(to, spring(dampingRatio = .9f, stiffness = 220f))
     }
 
-    // the front tower's pan: the camera's own aim, until the owner drags it
+    // the front building's pan: the camera's own aim, until the owner drags it
     val front = cameras.getOrNull(focus)
     val pan = remember(ui.focus, size) { Animatable(front?.pan ?: 0f) }
-    var dragged by remember { mutableStateOf(false) }
-    // another tower, another block picked, a block laid: the camera aims again
-    LaunchedEffect(ui.focus, ui.selected, stacks.getOrNull(focus)?.next) { dragged = false }
+    var panned by remember { mutableStateOf(false) }
+    // another building, another floor picked, a floor finished: the camera aims again
+    LaunchedEffect(ui.focus, ui.selected, stacks.getOrNull(focus)?.next) { panned = false }
     SideEffect { pan.updateBounds(0f, front?.maxPan ?: 0f) }
-    LaunchedEffect(pan, front?.pan, front?.maxPan, dragged) {
+    LaunchedEffect(pan, front?.pan, front?.maxPan, panned) {
         val aim = front?.pan ?: 0f
-        if (!dragged && pan.targetValue != aim) {
+        if (!panned && pan.targetValue != aim) {
             if (still) pan.snapTo(aim)
             else pan.animateTo(aim, spring(dampingRatio = .9f, stiffness = 180f))
         }
     }
 
-    // a sheet over the bottom: the ground rises until the selected block stands clear of it
+    // a sheet over the bottom: the street rises until the selected floor stands clear of it
     val liftTo = run {
         val piece = ui.selected?.let { id -> layouts.getOrNull(focus)?.labelled(id) }
         if (cover <= 0f || piece == null || front == null) 0f
@@ -343,16 +364,24 @@ private fun StageCanvas(
         else lift.animateTo(liftTo, spring(dampingRatio = .9f, stiffness = 300f))
     }
 
-    // time, for what lives by itself: the glow of the next block, a wobble, stars
-    var seconds by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(visible, still) {
-        if (visible && !still) {
+    // the street's own time: stars, people, planes. It ticks about 30 times a second while the tab
+    // shows (the finger and the plays redraw on their own), and stands still otherwise
+    var seconds by remember { mutableFloatStateOf(ambientAt ?: 0f) }
+    LaunchedEffect(visible, still, ambientAt) {
+        if (ambientAt != null) seconds = ambientAt
+        else if (visible && !still) {
             val start = withFrameNanos { it }
-            while (true) withFrameNanos { seconds = (it - start) / 1e9f + .001f }
+            var last = 0L
+            while (true) withFrameNanos {
+                if (it - last >= TICK_NANOS) {
+                    last = it
+                    seconds = (it - start) / 1e9f + .001f
+                }
+            }
         } else seconds = 0f
     }
 
-    // a block landing, a floor coming down
+    // a floor finished, a storey coming down
     val motion = remember { PlayMotion() }
     val play = ui.play
     LaunchedEffect(play?.id, visible) {
@@ -361,31 +390,33 @@ private fun StageCanvas(
             if (visible && !still) {
                 motion.playing = play.id
                 if (play.fx.laid) {
-                    motion.fall.snapTo(0f)
+                    motion.lights.snapTo(0f)
                     motion.squash.snapTo(0f)
                     motion.burst.snapTo(0f)
                     motion.sweep.snapTo(0f)
                     motion.felled = null
                     motion.swept = play.fx.upgrade != null
                     motion.landing = play.fx.id
-                    // it falls faster and faster, hits, and the tower takes the blow on a spring
-                    motion.fall.animateTo(1f, tween(260, easing = FastOutLinearInEasing))
                     actions.feel(Feel.LAND)
                     coroutineScope {
+                        // the lights come on window by window and the people arrive
+                        launch {
+                            motion.lights.animateTo(1f, tween(620, easing = FastOutSlowInEasing))
+                        }
                         launch {
                             motion.squash.snapTo(1f)
                             motion.squash.animateTo(
                                 0f,
-                                spring(dampingRatio = .36f, stiffness = 520f),
+                                spring(dampingRatio = .4f, stiffness = 420f),
                             )
                         }
-                        launch { motion.burst.animateTo(1f, tween(520, easing = LinearEasing)) }
+                        launch { motion.burst.animateTo(1f, tween(760, easing = LinearEasing)) }
                         if (motion.swept)
                             launch {
                                 actions.feel(Feel.GLOW)
                                 motion.sweep.animateTo(
                                     1f,
-                                    tween(760, delayMillis = 140, easing = LinearEasing),
+                                    tween(760, delayMillis = 260, easing = LinearEasing),
                                 )
                             }
                     }
@@ -398,9 +429,31 @@ private fun StageCanvas(
                 }
             } else if (visible) actions.feel(if (play.fx.laid) Feel.LAND else Feel.FELL)
         } finally {
-            // also when cut short (the screen hid, another block landed): nothing is left half way
+            // also when cut short (the screen hid, another floor finished): nothing is left half
+            // way
             motion.rest(play.id)
             actions.played(play.id)
+        }
+    }
+
+    // a habit just stacked (or moved here) drops into its place with a puff of scaffolding dust
+    val known = remember { HashMap<String, Set<String>>() }
+    LaunchedEffect(p.stacks) {
+        var fresh: String? = null
+        for (s in p.stacks) {
+            val ids = s.blocks.map { it.id }.toSet()
+            val before = known[s.id]
+            if (before != null && s.id == ui.focus) fresh = (ids - before).firstOrNull() ?: fresh
+            known[s.id] = ids
+        }
+        if (fresh != null && visible && !still) {
+            motion.adding = fresh
+            try {
+                motion.drop.snapTo(0f)
+                motion.drop.animateTo(1f, tween(520, easing = FastOutSlowInEasing))
+            } finally {
+                motion.adding = null
+            }
         }
     }
 
@@ -409,37 +462,37 @@ private fun StageCanvas(
             size,
             density.density,
             window,
-            layouts,
+            street,
             cameras,
-            cityPlan,
+            view,
             focus,
-            pager.value,
-            cityT.value,
+            scroll.value,
+            zoom.value,
             pan.value,
             if (still) liftTo else lift.value,
             inset,
         )
 
     val describe =
-        remember(p, ui.focus, ui.city, ui.weeks) {
-            HabitsCopy.describe(p, p.stack(ui.focus), ui.city, ui.weeks)
+        remember(p, ui.focus, zoomedOut, ui.weeks) {
+            HabitsCopy.describe(p, p.stack(ui.focus), zoomedOut, ui.weeks)
         }
     val talkBack =
-        remember(stacks, focus, ui.city) {
-            if (ui.city || stacks.isEmpty()) emptyList()
+        remember(stacks, focus, zoomedOut) {
+            if (zoomedOut || stacks.isEmpty()) emptyList()
             else
                 buildList {
                     val here = stacks[focus]
                     stacks.getOrNull(focus + 1)?.let { s ->
                         add(
-                            CustomAccessibilityAction("Next foundation: ${s.cue}") {
+                            CustomAccessibilityAction("Next building: ${s.cue}") {
                                 actions.chosen(s.id).let { true }
                             }
                         )
                     }
                     stacks.getOrNull(focus - 1)?.let { s ->
                         add(
-                            CustomAccessibilityAction("Previous foundation: ${s.cue}") {
+                            CustomAccessibilityAction("Previous building: ${s.cue}") {
                                 actions.chosen(s.id).let { true }
                             }
                         )
@@ -447,22 +500,26 @@ private fun StageCanvas(
                     here.blocks.forEach { b ->
                         add(
                             CustomAccessibilityAction("Tune ${b.title}") {
-                                actions.tapped(here.id, Hit(HitKind.BLOCK, b.id)).let { true }
+                                actions.tapped(here.id, Hit(HitKind.FLOOR, b.id)).let { true }
                             }
                         )
                     }
                     add(
                         CustomAccessibilityAction("Edit foundation ${here.cue}") {
-                            actions.tapped(here.id, Hit(HitKind.SLAB, here.id)).let { true }
+                            actions.tapped(here.id, Hit(HitKind.LOBBY, here.id)).let { true }
                         }
                     )
                     add(
-                        CustomAccessibilityAction("Stack a habit on ${here.cue}") {
+                        CustomAccessibilityAction("Add a floor to ${here.cue}") {
                             actions.tapped(here.id, Hit(HitKind.GHOST, here.id)).let { true }
                         }
                     )
                 }
         }
+
+    val rest = remember { BuildingMotion() }
+    val lively = remember { BuildingMotion() }
+    val fade = remember { FadeBrush() }
 
     Canvas(
         Modifier.fillMaxSize()
@@ -470,72 +527,92 @@ private fun StageCanvas(
                 contentDescription = describe
                 customActions = talkBack
             }
-            .pointerInput(stacks, focus, ui.city, still, front?.maxPan, pan) {
-                val pageWidth = this.size.width * PAGE_SHARE
+            .pointerInput(stacks, focus, zoomedOut, still, front?.maxPan, pan, street) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val tracker = VelocityTracker()
                     tracker.addPosition(down.uptimeMillis, down.position)
-                    val startPage =
-                        pager.targetValue.roundToInt().coerceIn(0, max(0, stacks.size - 1))
-                    val startAt = pager.value
+                    val startAt = scroll.value
+                    val unit = frame().unit
                     var total = Offset.Zero
-                    var axis = 0 // 1 sideways (the towers), 2 up and down (the camera)
+                    var axis = 0 // 1 sideways (the street), 2 up and down (the camera), 3 a pinch
                     var lifted = false
+                    var spread0 = 0f
+                    var spread = 0f
+                    var centred = street.centred(startAt)
                     while (true) {
-                        val change =
-                            awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                        if (change.changedToUp()) {
+                        val event = awaitPointerEvent()
+                        val pressed = event.changes.filter { it.pressed }
+                        if (pressed.size >= 2) {
+                            // a second finger: a pinch zooms the street in or out
+                            val d = (pressed[0].position - pressed[1].position).getDistance()
+                            if (axis != 3) {
+                                axis = 3
+                                spread0 = d
+                            }
+                            spread = d
+                            event.changes.forEach { it.consume() }
+                            continue
+                        }
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (change.changedToUp() || !change.pressed) {
                             lifted = true
                             break
                         }
+                        if (axis == 3) continue
                         total += change.positionChange()
                         tracker.addPosition(change.uptimeMillis, change.position)
                         if (
                             axis == 0 &&
                                 total.getDistance() > viewConfiguration.touchSlop &&
-                                !ui.city &&
+                                !zoomedOut &&
                                 stacks.isNotEmpty()
                         )
                             axis = if (abs(total.x) > abs(total.y)) 1 else 2
                         if (axis == 1) {
                             change.consume()
-                            val at = rubberBand(startAt - total.x / pageWidth, stacks.size)
-                            scope.launch { pager.snapTo(at) }
+                            dragging = true
+                            val at = street.rubberBand(startAt - total.x / unit)
+                            scope.launch { scroll.snapTo(at) }
+                            // a light tick as each building passes the middle
+                            val now = street.centred(at)
+                            if (now != centred) {
+                                centred = now
+                                actions.feel(Feel.TICK)
+                            }
                         } else if (axis == 2 && (front?.maxPan ?: 0f) > 0f) {
                             change.consume()
-                            dragged = true
+                            panned = true
                             val to = pan.value + change.positionChange().y / density.density
                             scope.launch { pan.snapTo(to) }
                         }
                     }
                     val velocity = tracker.calculateVelocity()
                     when (axis) {
-                        0 -> if (lifted) tap(frame(), stacks, ui.city, down.position, actions)
+                        0 ->
+                            if (lifted)
+                                tap(frame(), arts, stacks, zoomedOut, down.position, actions)
                         1 -> {
-                            val speed = -velocity.x / pageWidth
-                            val target =
-                                settlePage(
-                                    pager.value,
-                                    if (lifted) speed else 0f,
-                                    startPage,
-                                    stacks.size,
-                                )
-                            if (target != focus) {
-                                actions.feel(Feel.TICK)
-                                actions.swiped(stacks[target].id)
-                            }
+                            val speed = if (lifted) -velocity.x / unit else 0f
+                            val target = street.settle(scroll.value, speed)
+                            val id = stacks.getOrNull(target)?.id
+                            if (id != null && target != focus) actions.swiped(id)
+                            val to = street.centers.getOrElse(target) { scroll.value }
                             scope.launch {
-                                if (still) pager.snapTo(target.toFloat())
-                                else
-                                    pager.animateTo(
-                                        target.toFloat(),
-                                        spring(dampingRatio = .82f, stiffness = 380f),
-                                        initialVelocity = speed,
-                                    )
+                                try {
+                                    if (still) scroll.snapTo(to)
+                                    else
+                                        scroll.animateTo(
+                                            to,
+                                            spring(dampingRatio = .8f, stiffness = 140f),
+                                            initialVelocity = speed,
+                                        )
+                                } finally {
+                                    dragging = false
+                                }
                             }
                         }
-                        else ->
+                        2 ->
                             if (lifted && !still && (front?.maxPan ?: 0f) > 0f)
                                 scope.launch {
                                     pan.animateDecay(
@@ -543,158 +620,189 @@ private fun StageCanvas(
                                         exponentialDecay(frictionMultiplier = 2.2f),
                                     )
                                 }
+                        3 ->
+                            if (spread0 > 0f) {
+                                val ratio = spread / spread0
+                                if (ratio < PINCH_OUT && !zoomedOut && stacks.isNotEmpty())
+                                    actions.zoomed(true)
+                                else if (ratio > PINCH_IN && zoomedOut) actions.zoomed(false)
+                            }
                     }
                 }
             }
     ) {
         if (this.size.width <= 0f) return@Canvas
         val f = frame()
-        val phase = skyPhase(p.hour)
-        val sky = skyColors(phase)
-        val horizon = f.ground - HORIZON_DP * density.density
-        // the sun or the moon stands beside the tower in front, never behind it
-        val column =
-            (TowerSpec.W / 2f + TowerSpec.SLAB_OVER + TowerSpec.DX) * (front?.scale ?: 1.15f) + 14f
+        val d = density.density
+        val horizon = f.ground - HORIZON_DP * d * f.scale.coerceAtMost(1f)
+        // the sun or the moon stands beside the building in front
+        val column = (B.W / 2f + B.DX) * f.camera.scale + 14f
         val orb =
-            orbSpot(
-                p.hour,
-                this.size.width / density.density,
-                window.windowTop,
-                horizon / density.density,
-                column,
-                f.city,
-            )
+            orbSpot(p.hour, this.size.width / d, window.windowTop, horizon / d, column, f.zoom)
         with(backdrop) {
             backdrop(
-                phase,
+                p.hour,
                 sky,
                 horizon,
                 f.skyTop,
-                Offset(orb.first * density.density, orb.second * density.density),
-                f.position * (1f - f.city),
+                Offset(orb.first * d, orb.second * d),
+                f.middle,
                 seconds,
             )
         }
-        if (layouts.isEmpty()) {
-            // nothing built yet: the empty lot where the first foundation will go
-            withTransform({
-                translate(this@Canvas.size.width / 2f, f.ground)
-                scale(1.15f * density.density, 1.15f * density.density, Offset.Zero)
-            }) {
-                with(painter) { lot(sky, TowerSpec.W + 2 * TowerSpec.SLAB_OVER) }
-            }
-            return@Canvas
+        val from = f.streetX(0f) - B.GAP
+        val to = f.streetX(this.size.width) + B.GAP
+        // the tallest building in view decides whether the street must fade out under the heading
+        var reach = 0f
+        for (i in layouts.indices) {
+            val l = street.lefts[i]
+            if (l + layouts[i].lot < from || l > to) continue
+            reach = max(reach, layouts[i].height)
         }
-        val tower = motion.now(seconds)
-        // the furthest first, so the tower in front is drawn over its neighbours
-        for (i in layouts.indices.sortedByDescending { abs(it - f.position) }) {
-            val at = f.place(i)
-            if (at.front <= .01f) continue
-            val left = at.x - (layouts[i].pieces.first().width / 2f + 120f) * at.unit
-            val right = at.x + (layouts[i].pieces.first().width / 2f + 140f) * at.unit
-            if (right < 0f || left > this.size.width) continue
-            // distance: a tower that is not in front is drawn fainter, as one picture; so is one
-            // too tall for its window, which fades out under the heading instead of running into it
-            val faint = at.front < .99f
-            val fades = f.fades(i, at)
-            if (faint || fades) {
-                layer.alpha = if (faint) at.front else 1f
-                drawIntoCanvas { it.saveLayer(Rect(left, 0f, right, this.size.height), layer) }
-            }
+        val fades = layouts.isNotEmpty() && f.ground - reach * f.unit < f.top + TOP_FADE * d
+        if (fades)
+            drawIntoCanvas { it.saveLayer(Rect(0f, 0f, this.size.width, this.size.height), layer) }
+        clipRect(0f, f.top, this.size.width, this.size.height) {
             withTransform({
-                translate(at.x, at.y)
-                scale(at.unit, at.unit, Offset.Zero)
+                translate(this@Canvas.size.width / 2f - f.middle * f.unit, f.ground)
+                scale(f.unit, f.unit, Offset.Zero)
             }) {
                 with(painter) {
-                    lot(sky, layouts[i].pieces.first().width)
-                    tower(
-                        layouts[i],
-                        stacks[i],
-                        if (i == focus || f.city > 0f) tower else TowerMotion(seconds),
-                        ui.selected.takeIf { i == focus && f.city == 0f },
-                        accent,
-                        live,
-                        detailed = at.unit / density.density > .45f,
-                        sink = at.sink,
-                        cue = 1f - f.city,
-                    )
+                    pavement(sky, from, to, (this@Canvas.size.height - f.ground) / f.unit + 4f)
+                    pools(street.furniture, from, to, sky.dark)
+                    val detailed = f.scale > .55f
+                    for (i in layouts.indices) {
+                        val l = street.lefts[i]
+                        if (l + layouts[i].lot + B.DX < from || l - 20f > to) continue
+                        val motion =
+                            if (i == focus) motion.now(seconds, lively) else rest.still(seconds)
+                        translate(street.centers[i], 0f) {
+                            building(
+                                arts[i],
+                                motion,
+                                ui.selected.takeIf { i == focus && f.zoom == 0f },
+                                accent,
+                                live,
+                                detailed,
+                                sky,
+                            )
+                        }
+                    }
+                    for (k in street.furniture.indices) {
+                        val item = street.furniture[k]
+                        if (item.x < from - 30f || item.x > to + 30f) continue
+                        furniture(item, sky.dark, seconds)
+                    }
+                    if (layouts.isEmpty()) emptyLot(sky)
                 }
             }
-            if (fades) {
-                // rub the layer out above the window, and ever less over the fade under it
-                val end = f.top + TOP_FADE * density.density
-                drawRect(
-                    Brush.verticalGradient(
-                        0f to Color.Black,
-                        f.top / end to Color.Black,
-                        1f to Color.Transparent,
-                        startY = 0f,
-                        endY = end,
-                    ),
-                    Offset(left, 0f),
-                    Size(right - left, end),
-                    blendMode = BlendMode.DstOut,
-                )
-            }
-            if (faint || fades) drawIntoCanvas { it.restore() }
-            if (f.city > .02f) cityName(text, stacks[i].cue, at.x, at.y, f, sky.ink)
         }
+        if (fades) {
+            // rub the layer out above the window, and ever less over the fade under it
+            val end = f.top + TOP_FADE * d
+            drawRect(
+                fade.brush(f.top, end),
+                Offset.Zero,
+                Size(this.size.width, end),
+                blendMode = BlendMode.DstOut,
+            )
+            drawIntoCanvas { it.restore() }
+        }
+        if (f.zoom > .02f)
+            for (i in layouts.indices) streetName(
+                names[i],
+                f.screenX(street.centers[i]),
+                f,
+                sky.ink,
+            )
     }
 }
 
-/** A tower's name under it in the city view, fading in with the city. */
-private fun DrawScope.cityName(
-    text: SceneText,
-    cue: String,
-    x: Float,
-    y: Float,
-    f: Frame,
-    ink: Color,
-) {
+/** The fade under the heading: its brush, kept until the window moves. */
+private class FadeBrush {
+    private var key0 = -1f
+    private var key1 = -1f
+    private var brush: Brush? = null
+
+    fun brush(top: Float, end: Float): Brush {
+        val b = brush
+        if (b != null && key0 == top && key1 == end) return b
+        key0 = top
+        key1 = end
+        return Brush.verticalGradient(
+                0f to Color.Black,
+                (top / end).coerceIn(0f, 1f) to Color.Black,
+                1f to Color.Transparent,
+                startY = 0f,
+                endY = end,
+            )
+            .also { brush = it }
+    }
+}
+
+/** Nothing built yet: the empty lot where the first foundation will go, fenced off. */
+private fun DrawScope.emptyLot(sky: SkyColors) {
+    val half = B.W / 2f
+    drawRect(sky.ground[1], Offset(-half, -4f), Size(B.W, 4f))
+    var x = -half
+    while (x <= half) {
+        drawRect(SceneInk.Scaffold, Offset(x, -22f), Size(1.6f, 22f), alpha = .8f)
+        x += 12f
+    }
+    drawRect(SceneInk.Scaffold, Offset(-half, -18f), Size(B.W, 1.4f), alpha = .8f)
+    drawRect(SceneInk.Scaffold, Offset(-half, -9f), Size(B.W, 1.4f), alpha = .8f)
+}
+
+/** A building's name under it on the zoomed-out street, fading in as the street zooms out. */
+private fun DrawScope.streetName(words: TextLayoutResult, x: Float, f: Frame, ink: Color) {
     val d = f.density
-    val words =
-        text.layout(cue, 11f, FontWeight.SemiBold, (f.cityLayout.slot - 6f).coerceAtLeast(30f))
+    val scale = (f.unit / d * 1.4f).coerceIn(.62f, 1f) * d
     withTransform({
-        translate(x, y + 14f * d)
-        scale(d, d, Offset.Zero)
+        translate(x, f.ground + (BuildingPainter.PAVEMENT + 6f) * f.unit)
+        scale(scale, scale, Offset.Zero)
     }) {
-        drawText(words, ink, Offset(-words.size.width / 2f, 0f), alpha = f.city)
+        drawText(words, ink, Offset(-words.size.width / 2f, 0f), alpha = f.zoom)
     }
 }
 
 /**
- * A tap at [at]: a tower of the city, a tower beside the one in front, or a piece of the one in
- * front.
+ * A tap at [at]: a building of the zoomed-out street, a building beside the one in front, or a part
+ * of the one in front.
  */
 private fun tap(
     f: Frame,
+    arts: List<BuildingArt>,
     stacks: List<HabitStack>,
-    city: Boolean,
+    zoomedOut: Boolean,
     at: Offset,
     actions: StageActions,
 ) {
     if (stacks.isEmpty()) return
-    if (city) {
-        f.cityLayout.towerAt((at.x - f.size.width / 2f) / f.density)?.let {
-            actions.chosen(stacks[it].id)
-        }
+    val x = f.streetX(at.x)
+    if (zoomedOut) {
+        f.street.buildingAt(x, arts.map { it.layout })?.let { actions.chosen(stacks[it].id) }
         return
     }
-    // nothing of a tower shows in the heading's band
+    // nothing of a building shows in the heading's band
     if (at.y < f.top) return
-    // the tower in front first: it is drawn over its neighbours
-    for (i in stacks.indices.sortedBy { abs(it - f.position) }) {
-        val place = f.place(i)
-        val hit =
-            f.layouts[i].hit(
-                (at.x - place.x) / place.unit,
-                (place.y - at.y) / place.unit,
-                place.sink,
-            ) ?: continue
+    val y = (f.ground - at.y) / f.unit
+    // the building in front first
+    for (i in stacks.indices.sortedBy { abs(it - f.focus) }) {
+        val l: BuildingLayout = arts[i].layout
+        val hit = l.hit(x - f.street.centers[i], y) ?: continue
         if (i == f.focus) actions.tapped(stacks[i].id, hit) else actions.chosen(stacks[i].id)
         return
     }
 }
 
-/** How far above the ground line the horizon is drawn. */
+/** How far above the pavement line the horizon is drawn, at full size. */
 private const val HORIZON_DP = 30f
+
+/** The street's own clock ticks no faster than this (about 30 a second). */
+private const val TICK_NANOS = 33_000_000L
+
+/**
+ * A pinch closing to this share of its start zooms out to the street; opening past the other, back.
+ */
+private const val PINCH_OUT = .82f
+private const val PINCH_IN = 1.2f
