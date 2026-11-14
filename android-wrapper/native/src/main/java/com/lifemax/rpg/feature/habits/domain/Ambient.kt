@@ -303,10 +303,10 @@ object Ambient {
             val far = lane / (CLOUD_LANES.size - 1f)
             val size =
                 when (kind) {
-                    CloudKind.CUMULUS -> (if (i == 0) 1f else .7f) + .2f * hash(seed, i, 72)
-                    CloudKind.STRATUS -> .95f + .25f * hash(seed, i, 72)
-                    CloudKind.CIRRUS -> 1f + .3f * hash(seed, i, 72)
-                    CloudKind.PUFF -> .85f + .25f * hash(seed, i, 72)
+                    CloudKind.CUMULUS -> (if (i == 0) 1.35f else .95f) + .25f * hash(seed, i, 72)
+                    CloudKind.STRATUS -> 1.2f + .3f * hash(seed, i, 72)
+                    CloudKind.CIRRUS -> 1.3f + .4f * hash(seed, i, 72)
+                    CloudKind.PUFF -> 1.05f + .3f * hash(seed, i, 72)
                 } * (1f - .3f * far)
             val depth = (1f - far).coerceIn(0f, 1f)
             Cloud(
