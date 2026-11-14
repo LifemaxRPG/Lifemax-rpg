@@ -1,0 +1,83 @@
+# Habits tab: brief for the designer
+
+Status: brief only. No design, no code. Written so the next model (or a fresh session) can start from the owner's
+request, the source material and a survey of what the app already has.
+
+## The owner's ask
+
+"A habits tab, using these (Atomic Habits) as reference. Design a system that makes it as easy as possible to alter
+your habits." Then: "super intuitive, unique design, and useful. The same philosophy that went into designing the Life
+Director tile" (the dial: one glance shows the whole day; every inch earns its place). The owner wants to see what a
+model designs from scratch, so the design is open; the constraints below are not.
+
+## Source material (owner-supplied PDFs, Atomic Habits bonus pages)
+
+The Habits Cheat Sheet:
+
+| Law | Create a good habit | Break a bad habit (inversion) |
+| --- | --- | --- |
+| 1 Obvious / Invisible | 1.1 scorecard of current habits; 1.2 implementation intention "I will [behavior] at [time] in [location]"; 1.3 habit stacking "After [current habit], I will [new habit]"; 1.4 design the environment so cues are visible | 1.5 reduce exposure: remove the cues of bad habits |
+| 2 Attractive / Unattractive | 2.1 temptation bundling (pair a want with a need); 2.2 join a culture where the behaviour is normal; 2.3 a motivation ritual before a hard habit | 2.4 reframe: highlight the benefits of avoiding it |
+| 3 Easy / Difficult | 3.1 reduce friction (fewer steps); 3.2 prime the environment; 3.3 master the decisive moment; 3.4 the two-minute rule (downscale until it takes two minutes or less); 3.5 automate (technology, one-time purchases) | 3.6 increase friction; 3.7 commitment device (restrict future choices) |
+| 4 Satisfying / Unsatisfying | 4.1 immediate reward; 4.2 make "doing nothing" enjoyable (see the benefits of avoiding); 4.3 habit tracker, "don't break the chain"; 4.4 never miss twice | 4.5 accountability partner; 4.6 habit contract (costs public and painful) |
+
+The Media pages (figures worth building into the design, not just quoting):
+1% better a day (1.01^365 = 37.78; 0.99^365 = 0.03); the plateau of latent potential (results lag effort, a "valley of
+disappointment"); three layers of change (outcomes, processes, identity) and identity-based habits (start from who you
+want to be); the four stages cue, craving, response, reward as a loop; habit stacking as a chain where each habit is the
+cue for the next; environment design (before/after of making water more available); the dopamine spike (reward
+prediction: a missed expected reward drops, a late one spikes); social norms; the habit line (automaticity rises with
+repetitions, a habit forms past a threshold, about 60 to 80 days in the walking example); friction and decisive moments;
+the Goldilocks rule (motivation peaks at manageable difficulty between boredom and failure); mastery as stacked habit
+lines.
+
+## What the app already has (survey, file references are under lifemax_modular_v73/src/)
+
+No feature or state key is named "habits" yet.
+
+- Adding a web tab takes four edits: a nav button in `index.template.html:44-52`, a `views/<x>.html` section included
+  at `:56-68`, JS in a new `runtime/segments/NN-<x>.js` (not ES modules, one shared global scope, listed in the script
+  chain at `:132`), CSS in `styles/`. Then run `python3 tools/gen_module_map.py` (CI fails on a stale module map).
+  Edit `src/` only, never `dist/`. Tab order, hiding and extras live in `50-tabs-edit.js` (`lmaTabsMigrate` must not
+  hide a new tab from an existing saved order). Native tab recipe: `docs/architecture/NATIVE_TAB_GUIDE.md` (web
+  projection plus a `Native<Tab>Plugin extends ComposeTabPlugin`, a `BRIDGE_CATALOG.json` entry, a settings toggle);
+  design web-first, then project to native.
+- Closest existing models: Quests (`state.quests`, `cadence` daily/weekly, `state.questDone`, `toggleQuest` at
+  `04-runtime.js:288`, Daily Hand in `50-quests-hand.js`, spec `docs/specs/QUESTS_SPEC.md`) and the Journal coach store
+  (`47-journal-coach.js`: lazy `jcStore()` writer, never-creating `jcRead()` reader).
+- Logging and economy: `recordActivity(d)` (`04-runtime.js:286`, optional `opId` for idempotency) pushes to
+  `state.activities` and awards XP per `43-economy.js` and `docs/specs/ECONOMY_SPEC.md`; `streak()` (`05-runtime.js:13`)
+  counts non-passive activity days plus rest days; Sparks and perks are in `44-rewards.js`. Decide early whether a habit
+  completion goes through `recordActivity` (counts for XP, streaks and Sparks and obeys the caps) or stays separate.
+- Life Director (`features/life-director/`): goals, scheduled instances, weekly recurring rules painted as maintenance
+  blocks, "morning routine" as a time block, not a habit list; state in localStorage `lifemax_director_state_v1`, not in
+  the core save. A habit's "time and place" (implementation intention) and "after X" (stack) map naturally onto these
+  blocks and onto Quests.
+- Reminders: Capacitor LocalNotifications is wired (`33-android.js`: `lmaWantedReminders`, `lmaSync`, quiet hours,
+  per-feature prefs in `lmaLoad().notif`). Habit reminders add entries keyed like `'h|'+habitId+'|'+date`, then
+  `lmaSoon()`.
+- Identity: `CLASSES` (athlete, scholar, entrepreneur; `05-runtime.js:200`), `state.classId`, and the attribute set that
+  XP maps to; `dhWeakestAttr` already picks the weakest attribute. Identity-based habits ("I am someone who...") can
+  reuse class and attribute.
+- The cat: no habit hook; cheapest hooks are a `catcare`-style activity or extending the Daily Hand's `dhVerifyMet`.
+
+## Rules a new feature must respect
+
+- Core save: localStorage `lifemax_rpg_prototype_v1`, `SAVE_SCHEMA=1`; only `writeSave()` writes it, `save()` runs the
+  economy hooks first. Add state as a new optional top-level key (for example `state.habits`) created lazily, read
+  through a reader that never creates it, additive only, no schema bump; the whole `state` is already covered by the
+  backups (ADR 0004/0008, `04-runtime.js:372-382`). A key that affects XP must be added to the economy shadow's
+  `TRACKED` list (`05-shadow-boot.js:10`).
+- Per-device preferences go in `lmaLoad()` / `lmaSave()`, not the core save.
+- Local-date semantics only (`getToday()`, `parseD`, `addDays`; ECONOMY_SPEC TIME-1..8). Offline, embedded, never change
+  the storage key.
+- CLAUDE.md: user-facing release changes go in `src/data/update-history.json`
+  (`docs/UPDATE_HISTORY.md`); programmer terms are defined briefly on first use when talking to the owner.
+
+## Open decisions for the owner (ask once the design is on the table)
+
+1. Do habit completions earn XP and Sparks (and count toward the streak), or is this a separate, quieter system?
+2. Habits you want to break: how far does the tab go (friction and invisibility tools, contracts, accountability), or
+   only good habits first?
+3. Social features (accountability partner, culture) are out of scope until the app has any sharing; confirm.
+4. Reminders: habit notifications on by default or opt in.
