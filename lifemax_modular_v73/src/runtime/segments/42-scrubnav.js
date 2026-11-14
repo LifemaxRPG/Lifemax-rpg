@@ -96,6 +96,7 @@ const LMA_TAB_ICONS={
  apps:'<rect x="7" y="2.500" width="10" height="19" rx="2.500"/><path d="M10.500 18.500h3"/>',
  food:'<path d="M3.500 11h17a8.500 8.500 0 0 1-17 0z"/><path d="M8 4.500c0 2 2 2 2 4M13 3.500c0 2 2 2 2 5"/>',
  library:'<path d="M12 6C10 4.500 7 4 4 4v14c3 0 6 .5 8 2 2-1.500 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/>',
+ habits:'<rect x="8" y="3.500" width="8" height="4.500" rx="1"/><rect x="6" y="10" width="12" height="4.500" rx="1"/><rect x="3.500" y="16.500" width="17" height="4.500" rx="1"/>',
  'life-director':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.500"/><path d="M12 12V7.500M12 12l3.500 2"/><path d="M12 3v1.500M21 12h-1.500M12 21v-1.500M3 12h1.500"/>'
 };
 function lmaTabIcon(v){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(LMA_TAB_ICONS[v]||'<circle cx="12" cy="12" r="8"/>').replace(/<(\w+)/g,'<$1 vector-effect="non-scaling-stroke"')+'</svg>'}

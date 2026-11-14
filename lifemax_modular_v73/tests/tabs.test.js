@@ -46,9 +46,9 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('an order the owner changed keeps every other tab in place and moves only Quests to the end', (await carried(mine)).join() === without(mine, 'quests').concat('quests').join() && (await carried(mine)).indexOf('quests') === mine.length - 1);
   ok('an order that already has Quests last stays, a partial one gets it last, and one without it is untouched', (await carried(NEW)).join() === NEW.join() && (await carried(['quests', 'dashboard'])).join() === 'dashboard,quests' && (await carried(['dashboard', 'food'])).join() === 'dashboard,food');
   await p.evaluate(x => { lmaLoad().tabs = { order: x.concat('settings'), hidden: ['money'], extra: ['settings'] }; lmaSave() }, OLD.concat(LD)); await p.reload(); await p.waitForTimeout(800);
-  const o5 = await order(); ok('a stored old-default order is migrated on load, keeping hidden tabs and extras', o5.join() === NEW.concat('settings').join() && !(await shown()).includes('money') && await p.evaluate(() => lmaLoad().tabs.qEnd === 1 && lmaLoad().tabs.qLast === 1), o5);
+  const o5 = await order(); ok('a stored old-default order is migrated on load, keeping hidden tabs and extras (a tab newer than the stored order, Habits, goes after the saved ones)', o5.join() === NEW.concat('settings', 'habits').join() && !(await shown()).includes('money') && await p.evaluate(() => lmaLoad().tabs.qEnd === 1 && lmaLoad().tabs.qLast === 1), o5);
   await p.evaluate(x => { lmaLoad().tabs = { order: x, hidden: [], extra: [], qEnd: 1, qLast: 1 }; lmaSave() }, OLD.concat(LD)); await p.reload(); await p.waitForTimeout(800);
-  ok('an order stored after the change is not migrated again', (await order()).join() === OLD.concat(LD).join());
+  ok('an order stored after the change is not migrated again', (await order()).join() === OLD.concat(LD, 'habits').join());
   ok('no page errors', errs.length === 0, errs);
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); site.close(); process.exit(fail ? 1 : 0);
 })();

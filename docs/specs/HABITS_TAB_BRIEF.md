@@ -81,3 +81,16 @@ No feature or state key is named "habits" yet.
    only good habits first?
 3. Social features (accountability partner, culture) are out of scope until the app has any sharing; confirm.
 4. Reminders: habit notifications on by default or opt in.
+
+## As built (version 1.0.0, web tab)
+
+`lifemax_modular_v73/src/features/habits/` (a feature folder like Life Director: `feature.json`, `view.html`, `style.css`,
+`logic.js`; `forge_features.py` adds its tab). Design: habit stacking drawn literally. A foundation is something you already
+do; habits are blocks stacked on it; one button lays the next block; material follows total reps (glass, clay at 10, stone at
+30, gold at 66) and a missed day never removes a rep; block height is the size (two minutes, normal, stretch); one missed day
+is a crack, two a wobble, coming back leaves a gold seam; "rough day" lays the two-minute size for today only; a habit being
+broken loses a floor per clean day and ends as a tree; a foundation can carry a rooftop reward that unlocks when its stack is
+done; city view shows every tower with a 12-week time-lapse. Saved under the optional key `state.habits` (v 1, shape in the
+header of `logic.js`), written by `writeSave()` with take-back on a failed save. Owner defaults taken for this version: no
+XP, Sparks or streak; Quests separate; no reminders. `window.Habits` exposes the model and the commands (`tests/habits.test.js`).
+Not built yet: drag to move a block, reminders, the first-run scorecard, Life Director supplying foundations, a native screen.

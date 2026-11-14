@@ -1,0 +1,17 @@
+{
+  "protocol": 1,
+  "id": "habits",
+  "px": "stack",
+  "name": "Habits",
+  "version": "1.0.0",
+  "type": "tab",
+  "dependencies": [],
+  "scripts": [
+    "logic.js"
+  ],
+  "files": [
+    "view.html",
+    "style.css",
+    "logic.js"
+  ]
+}
