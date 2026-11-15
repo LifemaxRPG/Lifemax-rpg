@@ -144,6 +144,8 @@ data class HabitsProjection(
     val lapse: List<LapseFrame>,
     val tokens: Map<String, Long>,
     val light: Boolean,
+    /** The page's developer mode: the screen shows its developer clock ([HabitsDev]). */
+    val dev: Boolean = false,
 ) {
     fun stack(id: String?): HabitStack? = stacks.firstOrNull { it.id == id }
 

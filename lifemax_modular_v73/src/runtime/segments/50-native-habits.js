@@ -18,7 +18,8 @@
   /** what the screen cannot know by itself: app settings and the character's class */
   function surroundings() {
     const cls = typeof CLASSES !== "undefined" && state.classId ? CLASSES.find((c) => c.id === state.classId) : null;
-    return { v: 1, reducedMotion: !!(fxReduced() || document.documentElement.classList.contains("reduce-motion")), haptics: haptics(), className: cls ? cls.name : "" };
+    // dev: the page's developer mode (Settings > Enable developer mode); the screen shows its developer clock only then
+    return { v: 1, reducedMotion: !!(fxReduced() || document.documentElement.classList.contains("reduce-motion")), haptics: haptics(), className: cls ? cls.name : "", dev: !!(typeof state !== "undefined" && state && state.devMode) };
   }
 
   function available() {

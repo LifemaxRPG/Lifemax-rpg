@@ -276,6 +276,10 @@ class HabitsFileTest {
         rejects { remove("reducedMotion") }
         rejects { put("light", "yes") }
         rejects { remove("className") }
+        // the developer flag is optional (an older page sends none) and strict when it is there
+        assertFalse(HabitsScenarios.surroundings().toHabitsSurroundings().dev)
+        assertTrue(HabitsScenarios.surroundings().put("dev", true).toHabitsSurroundings().dev)
+        rejects { put("dev", "yes") }
         rejects { remove("haptics") }
         rejects { put("haptics", JSONObject("""{"dm":1,"add":0,"amp":999,"min":4,"max":260}""")) }
         rejects { getJSONObject("tokens").remove("accent") }

@@ -342,6 +342,15 @@ take `shiftAt(cx)`; `sideLight` flips its lit side for a left face; `BuildingLay
 keeps its lot position. Screenshot tests `perspectiveStreetLeft/Right/City`; every Habits reference changes (the front
 building near the middle now shows a thin side).
 
+## As built: the developer's clock (NativeApi 191)
+
+The one page change of this round, the smallest possible: `50-native-habits.js` adds `dev: !!state.devMode` to the screen's
+surroundings (the page's developer mode, Settings > Enable developer mode); `tests/native-habits.test.js` lists the key.
+Natively `HabitsSurroundings.dev` (optional, strict when present, `HabitsFileTest`) rides into `HabitsProjection.dev`;
+`presentation/HabitsDev.kt` holds `previewHour` in memory (never saved); `HabitsRoute` draws the street at that hour when
+developer mode is on; `Controls` shows the chips Real / Day 13:00 / Dusk 18:36 / Night 23:00 under the dots. Toggling
+developer mode in Settings reaches the open screen at the kit's next refresh (or on re-opening the tab).
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The

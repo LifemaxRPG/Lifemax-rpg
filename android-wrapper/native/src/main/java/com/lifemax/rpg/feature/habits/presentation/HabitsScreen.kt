@@ -93,7 +93,10 @@ fun HabitsRoute(vm: HabitsViewModel, visible: Boolean, topInsetDp: Float, bottom
     val imeUp = rememberImeUp()
     val projection by vm.projection.collectAsState()
     val ui by vm.ui.collectAsState()
-    val p = projection ?: return
+    val real = projection ?: return
+    // the developer's clock: the street at another hour (developer mode only)
+    val preview = HabitsDev.previewHour
+    val p = if (real.dev && preview != null) real.copy(hour = preview) else real
     val actions = remember(vm) { HabitsActions(vm) }
     // Back: out of a sheet (to the dials it came from, or away), then out of the city
     BackHandler(enabled = visible && ui.sheet != null) { vm.back() }
@@ -446,6 +449,33 @@ private fun Controls(p: HabitsProjection, ui: HabitsUi, sky: SkyColors, actions:
             RoughSwitch(p.rough, sky, actions.rough)
         PrimaryButton(primaryAction(p.stacks, ui.focus), ui, sky, actions.primary)
         if (p.stacks.isNotEmpty()) Dots(p.stacks, ui.focus, sky, actions)
+        if (p.dev) DevClock(sky)
+    }
+}
+
+/** DEVELOPER MODE: the street at the real time, or by day, at dusk or at night ([HabitsDev]). */
+@Composable
+private fun DevClock(sky: SkyColors) {
+    val colors = LocalPageColors.current
+    val chosen = HabitsDev.previewHour
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        for ((name, hour) in HabitsDev.CHOICES) {
+            val on = chosen == hour
+            Text(
+                name,
+                color = sky.ink,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier =
+                    Modifier.clip(PillShape)
+                        .background(
+                            if (on) SolidColor(colors.accent.copy(alpha = .28f)) else GlassBrush
+                        )
+                        .border(1.dp, if (on) SolidColor(colors.accent) else GlassEdge, PillShape)
+                        .clickable { HabitsDev.previewHour = hour }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+            )
+        }
     }
 }
 

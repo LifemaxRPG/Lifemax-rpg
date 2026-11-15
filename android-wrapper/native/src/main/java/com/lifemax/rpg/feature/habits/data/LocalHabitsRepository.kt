@@ -26,6 +26,8 @@ data class HabitsSurroundings(
     val className: String,
     val tokens: Map<String, Long>,
     val light: Boolean,
+    /** The page's developer mode (an older page sends nothing: off). */
+    val dev: Boolean = false,
 )
 
 /**
@@ -69,6 +71,7 @@ fun JSONObject.toHabitsSurroundings(): HabitsSurroundings {
         get("className") as? String ?: throw IllegalArgumentException("className is not words"),
         getJSONObject("tokens").pageTokens(),
         bool("light"),
+        if (has("dev")) bool("dev") else false,
     )
 }
 
@@ -111,14 +114,16 @@ class LocalHabitsRepository(
         val a = around ?: return
         val time = clock()
         mutable.value =
-            engine.project(
-                time.hour + time.minute / 60f,
-                a.className,
-                a.reducedMotion,
-                a.haptics,
-                a.tokens,
-                a.light,
-            )
+            engine
+                .project(
+                    time.hour + time.minute / 60f,
+                    a.className,
+                    a.reducedMotion,
+                    a.haptics,
+                    a.tokens,
+                    a.light,
+                )
+                .copy(dev = a.dev)
     }
 
     private fun run(reply: HabitsReply): HabitsReply = reply.also { publish() }
