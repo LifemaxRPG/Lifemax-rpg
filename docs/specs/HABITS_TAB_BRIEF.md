@@ -367,6 +367,20 @@ by day) → person → screen → front → cooking steam (the dusk puffs) → c
 sign behind the desk. Screenshot tests `roomsDay`, `roomsNight`. The combined people+rooms budget assertion went from 6 to
 8 MB (actual ≈ 7.0).
 
+## As built: the buildings as real facades (NativeApi 193)
+
+`FacadeSprites.kt` (`FacadeTest`): a seamless, exposure-neutral wall tile per `HabitMaterial` at 3 px/unit (CLAY brick
+courses, STONE ashlar, GOLD polished panels, GLASS steel spandrels, FADE flaking render), 449 KB, mean colours within .11 of
+the old `Facade` walls so the progression still reads; plus the awning cloth tile. `BuildingDetail.kt`: the architecture as
+baked `Shapes` per ink (window frames with reveals, sills with lit top and shadow line, lintels by material, a string course
+per floor, a drainpipe on a per-building side, a sparse AC unit or balcony in the last-to-light window, spray tags on boarded
+ruin windows, cornice coping and dentils, lobby plinth, roof clutter picks). `FloorArt` carries `material` and ink paths built
+once; `BuildingPainter.wall()` draws the tile as a repeated `ImageShader` brush under a 1/PPU transform; `inks()` with LOD;
+the lobby's framed sign with a tube lit by `Dusk.lightsOn(SIGN)`, mullions and transom, panelled door; `roof()`'s cornice
+drop shadow and `clutter()`; the reward sign's steel frame and lamps. Untouched: the window loop's light/room code, the
+lighting passes, `Perspective`, `crackLine`, snow caps (same sill/cornice geometry). Screenshot tests `facadesDay`,
+`lobbyNight`; every Habits reference changes.
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The
