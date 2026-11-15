@@ -64,12 +64,13 @@ class HabitsScreenshotTest {
         topInsetDp: Float = 64f,
         weather: WeatherState? = null,
         season: SeasonState = Season.SUMMER,
+        minute: Int = 0,
         use: HabitsViewModel.() -> Unit = {},
     ) {
         WeatherOverride.forced = weather
         Season.override = season
         try {
-            snapIn(name, hour, light, opened, keyboardDp, ambientAt, topInsetDp, use)
+            snapIn(name, hour, minute, light, opened, keyboardDp, ambientAt, topInsetDp, use)
         } finally {
             WeatherOverride.forced = null
             Season.override = null
@@ -79,6 +80,7 @@ class HabitsScreenshotTest {
     private fun snapIn(
         name: String,
         hour: Int,
+        minute: Int,
         light: Boolean,
         opened: HabitsLoad?,
         keyboardDp: Int,
@@ -86,7 +88,7 @@ class HabitsScreenshotTest {
         topInsetDp: Float,
         use: HabitsViewModel.() -> Unit,
     ) {
-        val clock = TestClock(ZonedDateTime.of(2026, 3, 2, hour, 0, 0, 0, ZoneOffset.UTC))
+        val clock = TestClock(ZonedDateTime.of(2026, 3, 2, hour, minute, 0, 0, ZoneOffset.UTC))
         val surroundings =
             HabitsScenarios.surroundings(
                 light = light,
@@ -351,6 +353,18 @@ class HabitsScreenshotTest {
     @Test fun dayFlare() = snap("city", hour = 10, ambientAt = 45f)
 
     @Test fun lobbySpillNight() = snap("tall", hour = 23, ambientAt = 9.6f)
+
+    /**
+     * Dusk done properly: at 18:40 the lamps and the shops are on and the homes are coming on one
+     * by one (some windows still by the sky's light); at 19:40 the blue hour's cool cast lies over
+     * the walls and the pavement against the windows' warmth; at 23:00 a few windows watch
+     * television, one dim and one on a bright cut at [HabitsScenarios.TV_AT] (DuskTest checks).
+     */
+    @Test fun duskLightsComingOn() = snap("city", hour = 18, minute = 40, ambientAt = 45f)
+
+    @Test fun blueHour() = snap("city", hour = 19, minute = 40, ambientAt = 45f)
+
+    @Test fun tvLateNight() = snap("tall", hour = 23, ambientAt = HabitsScenarios.TV_AT)
 
     /**
      * The page's header band (the status bar, the picture, the name, the buttons are the page's,

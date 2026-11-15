@@ -215,6 +215,12 @@ object HabitsScenarios {
      */
     const val NEAR_CAR_AT = 283.9f
 
+    /**
+     * A moment at 23:00 in the tall scenario when one window's television is dim and another's is
+     * on a bright cut (DuskTest checks).
+     */
+    const val TV_AT = 37.2f
+
     fun save(name: String): HabitsSave =
         when (name) {
             "empty" -> HabitsSave()

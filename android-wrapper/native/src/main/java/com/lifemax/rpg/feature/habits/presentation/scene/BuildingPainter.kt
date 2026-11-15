@@ -32,6 +32,7 @@ import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.BuildingLayout
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec as B
 import com.lifemax.rpg.feature.habits.domain.Dice
+import com.lifemax.rpg.feature.habits.domain.Dusk
 import com.lifemax.rpg.feature.habits.domain.Furniture
 import com.lifemax.rpg.feature.habits.domain.FurnitureKind
 import com.lifemax.rpg.feature.habits.domain.Gait
@@ -58,6 +59,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.tan
@@ -345,6 +347,74 @@ internal class BuildingPainter {
     var streetLife: StreetLifePainter? = null
 
     /**
+     * The hour the street is drawn at, with its fraction ([Dusk]): every light has its own moment
+     * in it, and the golden and the blue hour tint the walls by it. Set by the stage each frame
+     * with the scene's seconds ([clock]).
+     */
+    var hour = 12f
+        private set
+
+    /** The golden hour's and the blue hour's strength at [hour], 0 to 1. */
+    private var gold = 0f
+    private var blue = 0f
+
+    /** The hour the frame before was drawn at, and when the lamps' run along the street began. */
+    private var lastHour = Float.NaN
+    private var lampRunStart = -1f
+
+    /**
+     * When each building's pigeons were last sent up (seconds; long ago at first), by seed slot.
+     */
+    private val scare = FloatArray(PIGEON_SLOTS) { -1e9f }
+
+    /** Sets the hour (and the seconds) the next frame is drawn at. */
+    fun clock(hour: Float, seconds: Float) {
+        if (!lastHour.isNaN() && lastHour < Dusk.LAMP_AT && hour >= Dusk.LAMP_AT && seconds > 0f)
+            lampRunStart = seconds
+        if (hour < Dusk.LAMP_AT || hour >= 20f) lampRunStart = -1f
+        lastHour = hour
+        this.hour = hour
+        gold = Dusk.gold(hour)
+        blue = Dusk.blue(hour)
+    }
+
+    /** The golden hour's wash from a wall's lit edge, over the white one (a unit brush). */
+    private val goldWash =
+        Brush.horizontalGradient(
+            0f to GoldLight.copy(alpha = .3f),
+            .55f to GoldLight.copy(alpha = .1f),
+            1f to Color.Transparent,
+            startX = 0f,
+            endX = 1f,
+        )
+
+    /** A rain stain running down from a window's sill (a unit square, drawn under a transform). */
+    private val stainBrush =
+        Brush.verticalGradient(
+            0f to Color.Black.copy(alpha = .2f),
+            .35f to Color.Black.copy(alpha = .1f),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = 1f,
+        )
+
+    /** The bloom of a television's light, cool where a lamp's is warm. */
+    private val tvBloom =
+        Brush.radialGradient(
+            0f to TvLight.copy(alpha = .5f),
+            .25f to TvLight.copy(alpha = .22f),
+            .55f to TvLight.copy(alpha = .07f),
+            1f to Color.Transparent,
+            center = Offset.Zero,
+            radius = 1f,
+        )
+
+    /** The steam's tint for the sky, and the pigeons' at night (kept per sky). */
+    private var duskSky: SkyColors? = null
+    private var steamFilter: ColorFilter? = null
+    private val pigeonNight = ColorFilter.tint(Color(0xFF6A7490), BlendMode.Modulate)
+
+    /**
      * The side of the building being drawn that the light finds, -1 left to 1 right, times the
      * light's strength (0 face on or in the dark): set per building, read by its parts.
      */
@@ -499,27 +569,49 @@ internal class BuildingPainter {
         }
         drawRect(SceneInk.Occlusion, Offset(from, 0f), Size(width, 1.2f))
         if (season.snow > .01f) snowGround(sky, from, to)
+        if (blue > .01f) blueHour(from, 0f, width, depth, .36f)
     }
 
     /** The pools of light the lamps throw on the pavement at night. */
     fun DrawScope.pools(items: List<Furniture>, from: Float, to: Float, dark: Float) {
-        if (dark < .2f) return
+        if (dark < .05f) return
         for (i in items.indices) {
             val f = items[i]
             if (f.kind != FurnitureKind.LAMP || f.x < from - 60f || f.x > to + 60f) continue
+            val on = lampOn(f, dark)
+            if (on <= 0f) continue
             translate(f.x + 6f, PAVEMENT * .55f) {
-                scale(46f, 12f, Offset.Zero) { drawCircle(pool, 1f, Offset.Zero, alpha = dark) }
+                scale(46f, 12f, Offset.Zero) { drawCircle(pool, 1f, Offset.Zero, alpha = on) }
             }
         }
     }
 
+    /**
+     * How far on the lamp [f] is in the dark of [dark]: nothing by day, then its own moment across
+     * the dusk hour (the lamps come on first, in a run along the street, [Dusk.lampRun]), at least
+     * a third once lit, and the night's full strength.
+     */
+    private fun lampOn(f: Furniture, dark: Float): Float {
+        if (dark <= .05f) return 0f
+        var k = 0
+        for (i in lamps.indices) {
+            val o = lamps[i]
+            if (o.kind == FurnitureKind.LAMP && o.x < f.x) k++
+        }
+        return max(dark, .3f) * Dusk.lampRun(k, f.seed, hour, lampSeconds, lampRunStart)
+    }
+
+    /** The seconds the furniture is drawn at (set as each lamp is drawn, read by [lampOn]). */
+    private var lampSeconds = 0f
+
     /** A lamp, a tree or a bench on the pavement. */
     fun DrawScope.furniture(f: Furniture, sky: SkyColors, seconds: Float) {
         val dark = sky.dark
+        lampSeconds = seconds
         translate(f.x, 0f) {
             when (f.kind) {
                 FurnitureKind.LAMP -> {
-                    val on = if (dark > .2f) dark else 0f
+                    val on = lampOn(f, dark)
                     if (on > 0f) drawPath(cone, coneBrush, alpha = on)
                     drawPath(lampBase, SceneInk.Lamp)
                     drawPath(lampPole, SceneInk.Lamp)
@@ -1727,13 +1819,162 @@ internal class BuildingPainter {
             translate(lit, top)
             scale(sign * B.W * .7f, h, Offset.Zero)
         }) {
-            drawRect(litWash, Offset.Zero, Size(1f, 1f), alpha = a)
+            drawRect(litWash, Offset.Zero, Size(1f, 1f), alpha = a * (1f - .4f * gold))
+            if (gold > .01f) drawRect(goldWash, Offset.Zero, Size(1f, 1f), alpha = a * gold)
         }
         withTransform({
             translate(-lit, top)
             scale(-sign * B.W * .6f, h, Offset.Zero)
         }) {
             drawRect(shadeWash, Offset.Zero, Size(1f, 1f), alpha = a * .9f)
+        }
+    }
+
+    /**
+     * The blue hour's cool cast over a wall or the ground from ([x], [y]), [w] by [h]: a blue
+     * multiplied over it, [depth] deep at the hour's full, so the lit windows' warmth stands out
+     * against it. Subtle: brick still reads as brick.
+     */
+    private fun DrawScope.blueHour(x: Float, y: Float, w: Float, h: Float, depth: Float) {
+        if (blue <= .01f) return
+        drawRect(
+            BlueCast,
+            Offset(x, y),
+            Size(w, h),
+            alpha = depth * blue,
+            blendMode = BlendMode.Multiply,
+        )
+    }
+
+    /**
+     * Rain stains under some of a stone or brick floor's windows: a faint darker streak running
+     * down from the sill, deeper while the street is wet.
+     */
+    private fun DrawScope.stains(fa: FloorArt, top: Float, alpha: Float) {
+        val w = fa.windows
+        val a = alpha * (.45f + .55f * weather.wet)
+        for (k in 0 until fa.windowCount) {
+            if (Ambient.hash(fa.seed, k, 400) >= .45f) continue
+            val ww = w[k * 4 + 2]
+            val x = w[k * 4] + ww * (.1f + .45f * Ambient.hash(fa.seed, k, 401))
+            val y = top + w[k * 4 + 1] + w[k * 4 + 3]
+            val len = 5f + 7f * Ambient.hash(fa.seed, k, 402)
+            withTransform({
+                translate(x, y)
+                scale(ww * (.25f + .2f * Ambient.hash(fa.seed, k, 403)), len, Offset.Zero)
+            }) {
+                drawRect(stainBrush, Offset.Zero, Size(1f, 1f), alpha = a)
+            }
+        }
+    }
+
+    private fun duskTints(sky: SkyColors) {
+        if (duskSky === sky) return
+        // steam: white by day, the sky's pale grey-blue at night with a little of the lamps' warmth
+        steamFilter =
+            ColorFilter.tint(
+                lerp(Color.White, lerp(sky.sky[2], SceneInk.LampLight, .25f), .6f * sky.dark),
+                BlendMode.SrcIn,
+            )
+        duskSky = sky
+    }
+
+    /**
+     * A steam vent beside the water tank at ([tx], [base]) on the roof of the building with [seed]:
+     * a short pipe and a plume of soft puffs rising from it, growing and thinning as they go,
+     * drifting with the wind the trees sway in; denser at night, in the morning and in the cold
+     * months ([Dusk.steam]).
+     */
+    private fun DrawScope.vent(seed: Int, tx: Float, base: Float, seconds: Float, sky: SkyColors) {
+        if (!Dusk.ventOn(seed)) return
+        val px = tx + 13f
+        val top = base - 6.5f
+        drawRect(SceneInk.Lamp, Offset(px - 1.1f, top), Size(2.2f, 6.5f))
+        drawRect(SceneInk.Highlight, Offset(px - 1.1f, top), Size(.7f, 6.5f), alpha = .4f)
+        val density = Dusk.steam(hour, season.dayOfYear)
+        if (density <= 0f) return
+        duskTints(sky)
+        val wind = Ambient.sway(seed, seconds)
+        val puffs = SceneSprites.dusk.puffs
+        val half = DuskSprites.PUFF / 2f
+        for (j in 0 until Dusk.PUFFS) {
+            val t = Dusk.puff(seed, j, seconds)
+            val size = (.4f + 1.7f * t) * 7f / DuskSprites.PUFF
+            val x = px + t * (2.5f + 1.8f * wind) + 2.5f * t * t
+            val y = top - t * 21f
+            val fade = (1f - t) * (1f - t)
+            val a = density * .45f * fade * min(1f, t * 10f)
+            if (a <= .01f) continue
+            withTransform({
+                translate(x, y)
+                scale(size, size, Offset.Zero)
+            }) {
+                drawImage(
+                    puffs[j % DuskSprites.PUFFS],
+                    Offset(-half, -half),
+                    alpha = a,
+                    colorFilter = steamFilter,
+                )
+            }
+        }
+    }
+
+    /**
+     * [count] pigeons standing along a perch from [x0] (building units) [span] wide, their feet at
+     * [y], pecking and looking round in a slow idle ([Dusk.pigeonFrame]). On the pavement
+     * ([ground]) a street walker passing within [Dusk.SCARE_REACH] sends them up in a short arc,
+     * wings beating, and they come back a while later. When they went is kept per building (nothing
+     * is made per frame).
+     */
+    private fun DrawScope.pigeons(
+        seed: Int,
+        count: Int,
+        x0: Float,
+        span: Float,
+        y: Float,
+        seconds: Float,
+        sky: SkyColors,
+        ground: Boolean,
+    ) {
+        if (count == 0) return
+        val slot = seed and (PIGEON_SLOTS - 1)
+        var since = seconds - scare[slot]
+        val life = streetLife
+        if (ground && life != null && Dusk.pigeonPhase(since) == Dusk.IDLE) {
+            val middle = buildingX + x0 + span / 2f
+            for (i in 0 until life.count) {
+                if (!Dusk.scared(abs(life.passers[i].x - middle))) continue
+                scare[slot] = seconds
+                since = 0f
+                break
+            }
+        }
+        val phase = Dusk.pigeonPhase(since)
+        if (phase == Dusk.GONE) return
+        val frames = SceneSprites.dusk.pigeon
+        val u = 1f / DuskSprites.PIGEON_PPU
+        val filter = if (sky.dark > .5f) pigeonNight else null
+        for (i in 0 until count) {
+            val lift = Dusk.pigeonLift(since, i)
+            if (lift >= 1f) continue
+            val facing = Dusk.pigeonFacing(seed, i, seconds)
+            val frame =
+                if (phase == Dusk.IDLE) Dusk.pigeonFrame(seed, i, seconds)
+                else Dusk.wingFrame(seconds, i)
+            val px = x0 + span * Dusk.pigeonAt(seed, i) + facing * lift * (22f + 8f * i)
+            val py = y - lift * (26f + 6f * i) * (1.6f - .6f * lift)
+            val a = 1f - ((lift - .7f) / .3f).coerceIn(0f, 1f)
+            withTransform({
+                translate(px, py)
+                scale(-facing * u, u, Offset.Zero)
+            }) {
+                drawImage(
+                    frames[frame],
+                    Offset(-DuskSprites.PIGEON_W / 2f, -DuskSprites.PIGEON_H.toFloat()),
+                    alpha = a,
+                    colorFilter = filter,
+                )
+            }
         }
     }
 
@@ -1794,6 +2035,16 @@ internal class BuildingPainter {
         }
         drawRect(SceneInk.Bench, Offset(from, -6.5f), Size(B.PARK_W - 10f, 1.2f))
         if (season.snow > .01f) snowPark(sky, from)
+        pigeons(
+            art.stack.id.hashCode(),
+            Dusk.pigeons(0, true),
+            from + 4f,
+            B.PARK_W - 18f,
+            6f,
+            seconds,
+            sky,
+            true,
+        )
     }
 
     private fun DrawScope.lobby(
@@ -1807,6 +2058,10 @@ internal class BuildingPainter {
         val top = -B.LOBBY_H
         drawRect(SceneInk.LobbyWall, Offset(-half, top), Size(B.W, B.LOBBY_H))
         facadeLight(top, 0f, 1f)
+        blueHour(-half, top, B.W, B.LOBBY_H, .42f)
+        val lobbySeed = art.stack.id.hashCode()
+        val signOn = Dusk.lightsOn(lobbySeed, hour, Dusk.SIGN)
+        val shopOn = Dusk.lightsOn(lobbySeed, hour, Dusk.SHOP)
         drawRect(SceneInk.LobbyWallLow, Offset(-half, -10f), Size(B.W, 10f))
         drawRect(aoWall, Offset(-half, -14f), Size(B.W, 14f))
         drawPath(art.lobbySide, SceneInk.LobbySide)
@@ -1818,14 +2073,14 @@ internal class BuildingPainter {
             drawRect(Color.White, Offset(-half + 10f, 0f), Size(B.W - 20f, .7f), alpha = .22f)
             drawRect(Color.Black, Offset(-half + 10f, 14.3f), Size(B.W - 20f, .7f), alpha = .3f)
         }
-        if (sky.dark > .2f)
+        if (sky.dark > .2f && signOn > 0f)
             translate(0f, top + 11.5f) {
                 scale(B.W * .56f, 20f, Offset.Zero) {
                     drawCircle(
                         bloom,
                         1f,
                         Offset.Zero,
-                        alpha = .5f * sky.dark,
+                        alpha = .5f * sky.dark * signOn,
                         blendMode = BlendMode.Plus,
                     )
                 }
@@ -1855,7 +2110,7 @@ internal class BuildingPainter {
         }
         if (season.snow > .01f) snowLobby(sky, top, a0)
         // the shopfront: a door between two windows, lit at night
-        val shop = lerp(SceneInk.Shop, SceneInk.ShopLit, .15f + .8f * sky.dark)
+        val shop = lerp(SceneInk.Shop, SceneInk.ShopLit, .15f + .8f * sky.dark * shopOn)
         val w0 = top + 35f
         drawRect(shop, Offset(-half + 9f, w0), Size(half - 9f - 13f, -4f - w0))
         drawRect(shop, Offset(13f, w0), Size(half - 9f - 13f, -4f - w0))
@@ -1988,6 +2243,9 @@ internal class BuildingPainter {
             style = thin,
         )
         drawPath(fa.trim, f.trim, alpha = alpha * .9f)
+        blueHour(-half, top, B.W, fa.bottom - top, .42f * alpha)
+        if (!ruin && (b.material == HabitMaterial.STONE || b.material == HabitMaterial.CLAY))
+            stains(fa, top, alpha)
         val done = !live || b.done
         val count = fa.windowCount
         val w = fa.windows
@@ -2087,25 +2345,60 @@ internal class BuildingPainter {
                         else -> 0f
                     }
                 if (bright > 0f) {
+                    // the room's lamp comes on at its own moment of the dusk hour (a failing light
+                    // is on already); late in the evening a few rooms watch television instead
+                    val wseed = seed + k * 7
+                    val lampOn = if (k < on) Dusk.lightsOn(wseed, hour) else 1f
+                    val tv = if (k < on && !landing) Dusk.tv(wseed, hour, seconds) else 0f
+                    val lamp = bright * lampOn * (1f - tv)
                     // the bloom of a lit window at night: light spilling past its frame
-                    if (sky.dark > .25f)
+                    if (sky.dark > .25f && lamp > 0f)
                         translate(x + ww / 2f, y + h / 2f) {
                             scale(ww * 1.5f, h * 1.55f, Offset.Zero) {
                                 drawCircle(
                                     bloom,
                                     1f,
                                     Offset.Zero,
-                                    alpha = alpha * bright * sky.dark * .75f,
+                                    alpha = alpha * lamp * sky.dark * .75f,
                                     blendMode = BlendMode.Plus,
                                 )
                             }
                         }
-                    drawRect(lit, Offset(x, y), Size(ww, h), alpha = alpha * bright)
+                    if (tv > 0f) {
+                        // the set's cool light in a dark room, its glow stepping with the picture
+                        translate(x + ww / 2f, y + h / 2f) {
+                            scale(ww * 1.4f, h * 1.4f, Offset.Zero) {
+                                drawCircle(
+                                    tvBloom,
+                                    1f,
+                                    Offset.Zero,
+                                    alpha = alpha * bright * sky.dark * .7f * tv,
+                                    blendMode = BlendMode.Plus,
+                                )
+                            }
+                        }
+                        drawRect(glass, Offset(x, y), Size(ww, h), alpha = alpha * bright)
+                        drawRect(
+                            TvLight,
+                            Offset(x, y),
+                            Size(ww, h),
+                            alpha = alpha * bright * (.25f + .6f * tv),
+                        )
+                    } else {
+                        // the room by the sky's light until its lamp is on
+                        val room = lerp(SceneInk.WindowLitDay, glass, sky.dark)
+                        drawRect(
+                            lerp(room, lit, lampOn),
+                            Offset(x, y),
+                            Size(ww, h),
+                            alpha = alpha * bright,
+                        )
+                    }
                     drawRect(
                         SceneInk.WindowLitLow,
                         Offset(x, y + h * .55f),
                         Size(ww, h * .45f),
-                        alpha = alpha * bright * .45f,
+                        alpha = alpha * lamp * .45f,
                     )
                     glint(x, y, ww, h, alpha * .22f * (1f - sky.dark))
                 } else {
@@ -2410,8 +2703,10 @@ internal class BuildingPainter {
                     Offset(tx + 8f, base - 15f),
                     .8f,
                 )
+                vent(art.stack.id.hashCode(), tx, base, seconds, sky)
             }
             if (season.snow > .01f) snowRoof(sky, y, art.craneOn == null)
+            cornicePigeons(art, y, seconds, sky)
         }
         val s = art.sign
         if (s != null) sign(art, s.top, s.width, detailed, sky, seconds)
@@ -2439,6 +2734,28 @@ internal class BuildingPainter {
                     Offset(-words.size.width / 2f, -g.middle - words.size.height / 2f),
                 )
         }
+    }
+
+    /** Two pigeons along the cornice of some buildings (the park's pigeons are on the pavement). */
+    private fun DrawScope.cornicePigeons(
+        art: BuildingArt,
+        y: Float,
+        seconds: Float,
+        sky: SkyColors,
+    ) {
+        val seed = art.stack.id.hashCode()
+        if (art.layout.trees.isNotEmpty() || art.sign != null) return
+        val half = B.W / 2f
+        pigeons(
+            seed,
+            Dusk.pigeons(seed, false),
+            -half + 40f,
+            B.W - 80f,
+            y - B.CORNICE,
+            seconds,
+            sky,
+            false,
+        )
     }
 
     /**
@@ -2515,7 +2832,8 @@ internal class BuildingPainter {
         if (st.claimed) {
             val x = half + 8f
             drawLine(SceneInk.FlagPole, Offset(x, y + B.SIGN_H), Offset(x, y - 14f), 1.6f)
-            val wave = if (seconds > 0f) Ambient.flag(seconds) * 1.8f else 0f
+            // the flag ripples in the wind the trees sway in, not a wind of its own
+            val wave = if (seconds > 0f) Ambient.sway(st.id.hashCode(), seconds) * .95f else 0f
             path.rewind()
             path.moveTo(x, y - 14f)
             path.quadraticTo(x + 8f, y - 12f - wave, x + 16f, y - 9.5f + wave)
@@ -3056,6 +3374,14 @@ internal class BuildingPainter {
 
         /** How far a street lamp's light reaches over a wall at night, in street units. */
         const val LAMP_REACH = 64f
+
+        /** How many buildings' pigeon scares are remembered (a power of two; seeds share slots). */
+        const val PIGEON_SLOTS = 64
+
+        /** The golden hour's light on a wall, the blue hour's cast, a television's light. */
+        private val GoldLight = Color(0xFFFFB55C)
+        private val BlueCast = Color(0xFFA8BCEE)
+        private val TvLight = Color(0xFFB8D4FF)
 
         /**
          * The shade's colours: the sun's (the sky's blue), dusk's violet, the moon's, a window's.

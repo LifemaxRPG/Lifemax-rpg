@@ -493,6 +493,13 @@ object Ambient {
     fun flag(seconds: Float): Float = sin(seconds * 4.2f)
 
     /**
+     * How far on the light with [seed] is at [hour], 0 to 1: each light has its own moment across
+     * the dusk hour and ramps up over a few minutes there, off in reverse around dawn ([Dusk]).
+     */
+    fun lightsOn(seed: Int, hour: Float, kind: Int = Dusk.HOME): Float =
+        Dusk.lightsOn(seed, hour, kind)
+
+    /**
      * The step the people in the windows are on at [seconds]: they move [PEOPLE_FPS] times a
      * second.
      */
