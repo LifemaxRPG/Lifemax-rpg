@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
@@ -113,8 +112,6 @@ internal class Backdrop(private val seed: Int) {
 
     // ---- shapes made once (in dp, in their own local units)
 
-    private val seamStroke = Stroke(.45f, cap = StrokeCap.Round)
-
     /** The sun's rays: twelve thin wedges round a disc of radius 1, from 1.3 out to 2.7. */
     private val rays =
         Path().apply {
@@ -129,117 +126,42 @@ internal class Backdrop(private val seed: Int) {
             }
         }
 
-    /** The blimp's envelope, nose to the right, 54 dp long: one smooth teardrop. */
-    private val envelopePath =
-        Path().apply {
-            moveTo(-27f, .4f)
-            cubicTo(-27f, -6.5f, -15f, -10f, 1f, -10f)
-            cubicTo(16f, -10f, 27.5f, -6f, 27.5f, 0f)
-            cubicTo(27.5f, 6f, 16f, 10f, 1f, 10f)
-            cubicTo(-15f, 10f, -27f, 6.8f, -27f, .4f)
-            close()
-        }
-
-    /** The crease round the blimp's middle, a very faint line. */
-    private val equator =
-        Path().apply {
-            moveTo(-25f, 1.4f)
-            quadraticBezierTo(0f, 3.6f, 26f, 1.4f)
-        }
-
-    /** The blimp's panel seams, ribs across the envelope. */
-    private val seams =
-        Path().apply {
-            for (k in 0 until 7) {
-                val x = -21f + k * 7f
-                val h = 9.5f * kotlin.math.sqrt((1f - (x / 27f) * (x / 27f)).coerceAtLeast(0f))
-                moveTo(x, -h)
-                quadraticBezierTo(x + x / 27f * 3.2f, 0f, x, h)
-            }
-        }
-    private val bellyBand =
-        Path().apply {
-            moveTo(-24.5f, 2.4f)
-            quadraticBezierTo(0f, 5.6f, 24.5f, 2.4f)
-            lineTo(24f, 4.3f)
-            quadraticBezierTo(0f, 7.7f, -24f, 4.3f)
-            close()
-        }
-    private val finTop =
-        Path().apply {
-            moveTo(-17f, -8f)
-            lineTo(-27.5f, -16f)
-            lineTo(-30f, -14.2f)
-            lineTo(-24.5f, -4f)
-            close()
-        }
-    private val finBottom =
-        Path().apply {
-            moveTo(-17f, 8f)
-            lineTo(-27f, 15f)
-            lineTo(-29.5f, 13.4f)
-            lineTo(-24.5f, 4f)
-            close()
-        }
-    private val finSide =
-        Path().apply {
-            moveTo(-18f, 0f)
-            lineTo(-29f, -3.2f)
-            lineTo(-29f, 3.2f)
-            close()
-        }
-
     /**
-     * The airplane, nose to the right, about 20 dp long, seen from below: fuselage, wings, tail.
+     * The blimp's advertising panel, in dp on the envelope's side (curved with the hull), to clip
+     * the light that sweeps along it at night.
      */
-    private val airplane =
+    private val bandPath =
         Path().apply {
-            // a fuselage with a rounded nose and a tapering tail
-            moveTo(9.6f, 0f)
-            cubicTo(8.2f, -1.3f, 6f, -1.5f, 3f, -1.45f)
-            lineTo(-7f, -.95f)
-            quadraticBezierTo(-9.2f, -.55f, -9.2f, 0f)
-            quadraticBezierTo(-9.2f, .55f, -7f, .95f)
-            lineTo(3f, 1.45f)
-            cubicTo(6f, 1.5f, 8.2f, 1.3f, 9.6f, 0f)
-            close()
-            for (side in intArrayOf(-1, 1)) {
-                moveTo(2f, side * 1f)
-                lineTo(-3.2f, side * 10.5f)
-                lineTo(-5.8f, side * 10.5f)
-                lineTo(-3.6f, side * 1f)
-                close()
-                moveTo(-6f, side * 1f)
-                lineTo(-9f, side * 4.3f)
-                lineTo(-10.4f, side * 4.3f)
-                lineTo(-8.6f, side * 1f)
-                close()
-            }
-        }
-    private val contrailSoft =
-        Path().apply {
-            moveTo(-9f, -1f)
-            lineTo(-190f, -6f)
-            lineTo(-190f, 6f)
-            lineTo(-9f, 1f)
+            val mid = (AirSprites.BAND_L + AirSprites.BAND_R) / 2f
+            moveTo(AirSprites.BAND_L + .4f, AirSprites.BAND_T + .3f)
+            quadraticBezierTo(
+                mid,
+                AirSprites.BAND_T + 2.1f,
+                AirSprites.BAND_R - .4f,
+                AirSprites.BAND_T + .3f,
+            )
+            lineTo(AirSprites.BAND_R - .4f, AirSprites.BAND_B - .3f)
+            quadraticBezierTo(
+                mid,
+                AirSprites.BAND_B + 1.5f,
+                AirSprites.BAND_L + .4f,
+                AirSprites.BAND_B - .3f,
+            )
             close()
         }
-    private val contrailHalo =
-        Path().apply {
-            moveTo(-9f, -2f)
-            lineTo(-210f, -13f)
-            lineTo(-210f, 13f)
-            lineTo(-9f, 2f)
-            close()
-        }
-    private val contrailCore =
-        Path().apply {
-            moveTo(-9f, -.55f)
-            lineTo(-130f, -1.9f)
-            lineTo(-130f, 1.9f)
-            lineTo(-9f, .55f)
-            close()
-        }
+
+    /** The light that sweeps along the blimp's panel: a soft spot, a unit circle. */
+    private val sheen =
+        Brush.radialGradient(
+            0f to Color.White.copy(alpha = .5f),
+            .5f to Color.White.copy(alpha = .16f),
+            1f to Color.Transparent,
+            center = Offset.Zero,
+            radius = 1f,
+        )
+
+    /** A bird's outline, written by [BirdShape] and read into [path] each frame. */
+    private val birdCmd = FloatArray(BirdShape.CAPACITY)
 
     // ---- brushes made once per sky (units of their own: unit circles, dp for the airships)
 
@@ -249,14 +171,21 @@ internal class Backdrop(private val seed: Int) {
     private val tintLit = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
     private var discSun: Brush? = null
     private var discMoon: Brush? = null
-    private var envelope: Brush? = null
     private var airGlow: Brush? = null
-    private var trailSoft: Brush? = null
-    private var trailCore: Brush? = null
-    private var trailHalo: Brush? = null
-    private var blimpSpec: Brush? = null
-    private var blimpBounce: Brush? = null
-    private var planeBody: Brush? = null
+
+    // the tints of the hour for the plane's, the contrail's and the blimp's layers, and how
+    // strongly each is drawn
+    private val planeTint = arrayOfNulls<ColorFilter>(AirSprites.LAYERS)
+    private val planeAlpha = FloatArray(AirSprites.LAYERS)
+    private val blimpTint = arrayOfNulls<ColorFilter>(AirSprites.LAYERS)
+    private val blimpAlpha = FloatArray(AirSprites.LAYERS)
+    private val trailTint = arrayOfNulls<ColorFilter>(AirSprites.TRAIL_LAYERS)
+    private val trailAlpha = FloatArray(AirSprites.TRAIL_LAYERS)
+
+    // the birds' ink by how far they are, and the warm rim the low sun gives them
+    private val birdInk = Array(3) { SceneInk.Bird }
+    private var birdRim = Color.Transparent
+    private var birdRimAlpha = 0f
 
     // ---- brushes that follow the horizon, the orb and the density
     private var skyBrush: Brush? = null
@@ -329,7 +258,8 @@ internal class Backdrop(private val seed: Int) {
             blimp(pass, sky, w, top, band, seconds)
         if (Ambient.plane(seconds, seed, pass)) plane(pass, sky, w, top, band, seconds, tone)
         for (r in rows.indices) row(r, sky, horizon, shift * drift[r], seconds)
-        if (tone >= .7f && Ambient.birds(seconds, seed, pass)) birds(pass, w, top, band, seconds)
+        if (tone >= .7f && Ambient.birds(seconds, seed, pass))
+            birds(pass, sky, w, top, band, seconds)
         // the glow over the horizon: the city's light at night, haze by day
         drawRect(glowBrush!!, Offset(0f, horizon - 60f * d), Size(w, 60f * d))
         drawRect(sky.ground[0], Offset(0f, horizon), Size(w, size.height - horizon))
@@ -429,70 +359,81 @@ internal class Backdrop(private val seed: Int) {
                 center = Offset(-.3f, -.3f),
                 radius = 1.4f,
             )
-        envelope =
-            Brush.verticalGradient(
-                0f to sky.cloudLit,
-                .3f to lerp(sky.cloudLit, sky.cloudBody, .55f),
-                .62f to sky.cloudBody,
-                1f to lerp(sky.cloudBody, sky.cloudShade, .8f),
-                startY = -10f,
-                endY = 10f,
-            )
-        // a soft specular along the top, and the sky's light bounced up under the belly
-        blimpSpec =
-            Brush.radialGradient(
-                0f to Color.White.copy(alpha = .8f),
-                .55f to Color.White.copy(alpha = .22f),
-                1f to Color.Transparent,
-                center = Offset.Zero,
-                radius = 1f,
-            )
-        blimpBounce =
-            Brush.radialGradient(
-                0f to lerp(sky.sky[2], sky.cloudLit, .5f).copy(alpha = .55f),
-                1f to Color.Transparent,
-                center = Offset.Zero,
-                radius = 1f,
-            )
-        planeBody =
-            Brush.linearGradient(
-                0f to Color.White,
-                .55f to lerp(SceneInk.PlaneDay, sky.cloudLit, .35f),
-                1f to lerp(SceneInk.PlaneDay, sky.cloudShade, .45f),
-                start = Offset(9f, -1.5f),
-                end = Offset(-9f, 1.5f),
-            )
-        trailHalo =
-            Brush.linearGradient(
-                0f to sky.cloudLit.copy(alpha = .16f),
-                .5f to sky.cloudLit.copy(alpha = .06f),
-                1f to sky.cloudLit.copy(alpha = 0f),
-                start = Offset(-9f, 0f),
-                end = Offset(-210f, 0f),
-            )
+        airTints(sky)
         airGlow =
             Brush.radialGradient(
                 listOf(sky.cloudLit.copy(alpha = .4f), Color.Transparent),
                 Offset.Zero,
                 1f,
             )
-        trailSoft =
-            Brush.linearGradient(
-                0f to sky.cloudLit.copy(alpha = .5f),
-                .45f to sky.cloudLit.copy(alpha = .22f),
-                1f to sky.cloudLit.copy(alpha = 0f),
-                start = Offset(-9f, 0f),
-                end = Offset(-190f, 0f),
-            )
-        trailCore =
-            Brush.linearGradient(
-                0f to sky.cloudLit.copy(alpha = .9f),
-                .6f to sky.cloudLit.copy(alpha = .35f),
-                1f to sky.cloudLit.copy(alpha = 0f),
-                start = Offset(-9f, 0f),
-                end = Offset(-130f, 0f),
-            )
         skyKey = sky
+    }
+
+    /**
+     * What the hour does to the things of the air. By day the plane is bright metal, lit from the
+     * upper left, its belly taking the sky's light; at dusk the belly warms with the horizon; at
+     * night it is a silhouette a shade darker than the sky with its windows lit. The blimp the
+     * same, and its panel goes from a painted band to a lit one. The birds are dark against the
+     * day, warm-rimmed at dusk; the far ones thin into the air.
+     */
+    private fun airTints(sky: SkyColors) {
+        fun tint(c: Color) = ColorFilter.tint(c, BlendMode.SrcIn)
+        val dark = sky.dark
+        val dusk = Px.smooth(.2f, .7f, dark)
+        val horizonGlow = sky.glow.copy(alpha = 1f)
+        run {
+            val night = Px.smooth(.6f, 1f, dark)
+            val litWindows = Px.smooth(.3f, .75f, dark)
+            planeTint[AirSprites.SHADE] =
+                tint(
+                    lerp(
+                        lerp(sky.cloudShade, SceneInk.Plane, .3f),
+                        lerp(sky.far[0], Color.Black, .55f),
+                        night,
+                    )
+                )
+            planeAlpha[AirSprites.SHADE] = 1f
+            planeTint[AirSprites.LIT] = tint(sky.cloudLit)
+            planeAlpha[AirSprites.LIT] = 1f - .72f * night
+            planeTint[AirSprites.GLINT] = tint(Color.White)
+            planeAlpha[AirSprites.GLINT] = 1f - .75f * night
+            planeTint[AirSprites.BOUNCE] = tint(lerp(sky.sky[2], horizonGlow, .35f * dusk))
+            planeAlpha[AirSprites.BOUNCE] = .62f - .3f * night
+            planeTint[AirSprites.GLOW] = tint(lerp(SceneInk.Plane, SceneInk.WindowLit, litWindows))
+            planeAlpha[AirSprites.GLOW] = .7f + .25f * litWindows
+        }
+        trailTint[AirSprites.TRAIL_BODY] = tint(lerp(sky.cloudBody, sky.sky[2], .25f))
+        trailAlpha[AirSprites.TRAIL_BODY] = .55f
+        trailTint[AirSprites.TRAIL_CORE] = tint(sky.cloudLit)
+        trailAlpha[AirSprites.TRAIL_CORE] = .9f
+        run {
+            val night = Px.smooth(.5f, 1f, dark)
+            val lit = Px.smooth(.35f, .8f, dark)
+            blimpTint[AirSprites.SHADE] =
+                tint(
+                    lerp(
+                        lerp(sky.cloudShade, SceneInk.BlimpShade, .25f),
+                        lerp(sky.cloudShade, sky.far[0], .5f),
+                        night,
+                    )
+                )
+            blimpAlpha[AirSprites.SHADE] = 1f
+            blimpTint[AirSprites.LIT] = tint(sky.cloudLit)
+            blimpAlpha[AirSprites.LIT] = 1f - .62f * night
+            blimpTint[AirSprites.GLINT] = tint(Color.White)
+            blimpAlpha[AirSprites.GLINT] = 1f - .8f * night
+            blimpTint[AirSprites.BOUNCE] = tint(lerp(sky.sky[2], horizonGlow, .4f * dusk))
+            blimpAlpha[AirSprites.BOUNCE] = .7f - .35f * night
+            blimpTint[AirSprites.GLOW] = tint(lerp(SceneInk.BlimpBand, SceneInk.WindowLit, lit))
+            blimpAlpha[AirSprites.GLOW] = .5f + .45f * lit
+        }
+        val duskInk = lerp(SceneInk.Bird, SceneInk.BirdDusk, dusk)
+        for (tier in 0 until 3) {
+            val fade = 1f - .22f * tier
+            birdInk[tier] = lerp(duskInk, sky.sky[1], (1f - fade) * .6f)
+        }
+        birdRim = sky.halo.copy(alpha = 1f)
+        birdRimAlpha = Px.smooth(.15f, .5f, dark) * Px.smooth(.95f, .6f, dark)
     }
 
     /** The sun (a corona, slow rays, a lit disc) or the moon (a cratered disc, a crescent). */
@@ -606,8 +547,10 @@ internal class Backdrop(private val seed: Int) {
     }
 
     /**
-     * An airship, bobbing as it drifts: a smooth envelope shaded top to belly, a soft specular, the
-     * sky's light bounced under it, faint panel seams, a gondola, tail fins. Small and unhurried.
+     * An airship, bobbing as it drifts: a painted sprite (an envelope shaded as the fabric cylinder
+     * it is, with a gleam along its top and the sky's light under its belly, fins, a gondola) drawn
+     * in the tints of the hour, its advertising panel lit at night with a light sweeping along it,
+     * a propeller and running lights. Small and unhurried.
      */
     private fun DrawScope.blimp(
         p: Pass,
@@ -621,6 +564,8 @@ internal class Backdrop(private val seed: Int) {
         val bob = sin(seconds * .9f + p.pass) * 1.6f
         val pitch = sin(seconds * .6f + p.pass * .7f) * 1.2f * p.dir
         val dark = sky.dark
+        val images = SceneSprites.blimp
+        val sp = images.sprite
         withTransform({
             translate(p.x * w, top + p.y * band + bob * d)
             rotate(pitch, Offset.Zero)
@@ -630,51 +575,24 @@ internal class Backdrop(private val seed: Int) {
                 scale(46f, 20f, Offset.Zero) {
                     drawCircle(airGlow!!, 1f, Offset(0f, .1f), alpha = (dark - .3f) * 1.1f)
                 }
-            // a soft shadow of the envelope on the gondola and the lower fin, then the fins, so the
-            // envelope overlaps their roots; the lower one in shadow
-            drawPath(finSide, sky.cloudShade, alpha = .9f)
-            drawPath(finBottom, sky.cloudShade)
-            drawPath(finTop, lerp(sky.cloudBody, sky.cloudShade, .3f))
-            // the gondola hangs beneath: two struts, a rounded cabin, a lit window strip
-            drawLine(sky.cloudShade, Offset(-3f, 8.8f), Offset(-3.4f, 10.2f), .7f, alpha = .8f)
-            drawLine(sky.cloudShade, Offset(5f, 9f), Offset(5.4f, 10.2f), .7f, alpha = .8f)
-            drawRoundRect(
-                lerp(SceneInk.Plane, SceneInk.BlimpShade, .55f * (1f - dark)),
-                Offset(-6.8f, 9.8f),
-                Size(15.6f, 5.2f),
-                androidx.compose.ui.geometry.CornerRadius(2.4f, 2.4f),
-            )
-            drawRoundRect(
-                Color.White,
-                Offset(-6.2f, 10f),
-                Size(14.4f, .8f),
-                androidx.compose.ui.geometry.CornerRadius(.4f, .4f),
-                alpha = .35f - .25f * dark,
-            )
-            val lit = lerp(Color(0xFFBFE3FF), SceneInk.WindowLit, dark)
-            drawRoundRect(
-                lit,
-                Offset(-5f, 11.1f),
-                Size(12f, 1.8f),
-                androidx.compose.ui.geometry.CornerRadius(.7f, .7f),
-                alpha = .92f,
-            )
-            if (dark > .3f)
-                drawCircle(SceneInk.WindowLit, 5.5f, Offset(1f, 12f), alpha = .16f * dark)
-            // the envelope: gradient, then, inside it, seams, equator, specular and bounce light
-            drawPath(envelopePath, envelope!!)
-            clipPath(envelopePath) {
-                drawPath(bellyBand, SceneInk.BlimpBand, alpha = .7f - .3f * dark)
-                drawPath(seams, sky.cloudShade, alpha = .26f, style = seamStroke)
-                drawPath(equator, sky.cloudShade, alpha = .22f, style = seamStroke)
-                translate(-5f, -6.6f) {
-                    scale(16f, 2.8f, Offset.Zero) {
-                        drawCircle(blimpSpec!!, 1f, Offset.Zero, alpha = .85f - .7f * dark)
-                    }
+            withTransform({ scale(1f / sp.ppd, 1f / sp.ppd, Offset.Zero) }) {
+                val at = Offset(-sp.ox, -sp.oy)
+                for (l in 0 until AirSprites.LAYERS) {
+                    val a = blimpAlpha[l]
+                    if (a > 0f) drawImage(images.layers[l], at, a, colorFilter = blimpTint[l])
                 }
-                translate(0f, 9.2f) {
-                    scale(23f, 4f, Offset.Zero) {
-                        drawCircle(blimpBounce!!, 1f, Offset.Zero, alpha = .9f)
+            }
+            if (dark > .3f) {
+                // the light that sweeps along the lit panel
+                val k = (dark - .3f) / .7f
+                val span = AirSprites.BAND_R - AirSprites.BAND_L + 16f
+                val sx =
+                    AirSprites.BAND_L - 8f + ((seconds * 4.2f + p.pass * 7f) % span + span) % span
+                clipPath(bandPath) {
+                    translate(sx, (AirSprites.BAND_T + AirSprites.BAND_B) / 2f + .9f) {
+                        scale(7f, 3.2f, Offset.Zero) {
+                            drawCircle(sheen, 1f, Offset.Zero, alpha = .55f * k)
+                        }
                     }
                 }
             }
@@ -689,10 +607,11 @@ internal class Backdrop(private val seed: Int) {
             )
             if (dark > .3f) {
                 // running lights: red at the top fin, green at the nose, a white strobe underneath
-                drawCircle(SceneInk.Warning, 3.6f, Offset(-28.6f, -14.4f), alpha = .25f * dark)
-                drawCircle(SceneInk.Warning, 1.1f, Offset(-28.6f, -14.4f), alpha = dark)
-                drawCircle(SceneInk.NavGreen, 3f, Offset(24.5f, 3.2f), alpha = .22f * dark)
-                drawCircle(SceneInk.NavGreen, .95f, Offset(24.5f, 3.2f), alpha = dark)
+                val k = (dark - .3f) / .7f
+                drawCircle(SceneInk.Warning, 3.6f, Offset(-28.6f, -14.4f), alpha = .25f * k)
+                drawCircle(SceneInk.Warning, 1.1f, Offset(-28.6f, -14.4f), alpha = k)
+                drawCircle(SceneInk.NavGreen, 3f, Offset(24.5f, 3.2f), alpha = .22f * k)
+                drawCircle(SceneInk.NavGreen, .95f, Offset(24.5f, 3.2f), alpha = k)
                 val strobe = Ambient.warning(11, seconds * 1.3f)
                 if (strobe > 0f)
                     drawCircle(SceneInk.Strobe, 1.4f, Offset(-27.6f, 13.6f), alpha = strobe)
@@ -701,8 +620,11 @@ internal class Backdrop(private val seed: Int) {
     }
 
     /**
-     * The airplane: by day a gleaming silhouette (a smooth fuselage, swept wings) with a contrail
-     * that is a soft tube fading out behind it, at night its lights.
+     * The airplane: a painted airliner seen from below (a shaded fuselage with a gleam along it and
+     * a row of windows, swept wings with engines under them, a fin), in the tints of the hour; by
+     * day with a contrail behind it, two cores of exhaust merging into one soft torn trail; at
+     * night a silhouette with its windows lit, red and green at the wingtips, a red beacon under
+     * its belly and a white strobe at its tail.
      */
     private fun DrawScope.plane(
         p: Pass,
@@ -716,77 +638,134 @@ internal class Backdrop(private val seed: Int) {
         val d = density
         val x = p.x * w
         val y = top + p.y * band
+        val images = SceneSprites.plane
+        val sp = images.sprite
         withTransform({
             translate(x, y)
             scale(d * p.dir, d, Offset.Zero)
         }) {
             if (tone > 1.3f) {
-                // a contrail behind it: a wide faint halo, a body, a bright core, ever thinner
-                drawPath(contrailHalo, trailHalo!!)
-                drawPath(contrailSoft, trailSoft!!)
-                drawPath(contrailCore, trailCore!!)
-                withTransform({ translate(.4f, .8f) }) {
-                    drawPath(airplane, SceneInk.Shadow, alpha = .22f)
+                val trail = SceneSprites.contrail
+                val ts = trail.sprite
+                withTransform({
+                    translate(-2.6f, 0f)
+                    scale(1f / ts.ppd, 1f / ts.ppd, Offset.Zero)
+                }) {
+                    val at = Offset(-ts.ox, -ts.oy)
+                    for (l in 0 until AirSprites.TRAIL_LAYERS) drawImage(
+                        trail.layers[l],
+                        at,
+                        trailAlpha[l],
+                        colorFilter = trailTint[l],
+                    )
                 }
-                drawPath(airplane, planeBody!!)
-            } else {
-                // at night only its lights: red and green at the wingtips, a white strobe
-                drawPath(airplane, sky.far[0])
-                drawCircle(SceneInk.Warning, 1.4f, Offset(-4.4f, -10.4f))
-                drawCircle(SceneInk.NavGreen, 1.4f, Offset(-4.4f, 10.4f))
+            }
+            withTransform({ scale(1f / sp.ppd, 1f / sp.ppd, Offset.Zero) }) {
+                val at = Offset(-sp.ox, -sp.oy)
+                for (l in 0 until AirSprites.LAYERS) {
+                    val a = planeAlpha[l]
+                    if (a > 0f) drawImage(images.layers[l], at, a, colorFilter = planeTint[l])
+                }
+            }
+            val dark = sky.dark
+            if (dark > .3f) {
+                val k = (dark - .3f) / .7f
+                // red and green at the wingtips, each with a little glow round it
+                drawCircle(SceneInk.Warning, 2f, Offset(-4.4f, -10.7f), alpha = .3f * k)
+                drawCircle(SceneInk.Warning, .55f, Offset(-4.4f, -10.7f), alpha = k)
+                drawCircle(SceneInk.NavGreen, 2f, Offset(-4.4f, 10.7f), alpha = .26f * k)
+                drawCircle(SceneInk.NavGreen, .55f, Offset(-4.4f, 10.7f), alpha = k)
+                // the beacon under the belly, a slow red pulse with a faint glow
+                val beacon = Ambient.warning(3, seconds * .8f)
+                drawCircle(
+                    SceneInk.Warning,
+                    2.4f,
+                    Offset(-1f, 1.3f),
+                    alpha = (.06f + .16f * beacon) * k,
+                )
+                drawCircle(
+                    SceneInk.Warning,
+                    .45f,
+                    Offset(-1f, 1.3f),
+                    alpha = (.3f + .6f * beacon) * k,
+                )
+                // and the white strobe at the tail
                 val strobe = Ambient.warning(7, seconds * 1.4f)
                 if (strobe > 0f) {
-                    drawCircle(SceneInk.Strobe, 4f, Offset(-8.5f, 0f), alpha = .2f * strobe)
-                    drawCircle(SceneInk.Strobe, 1.5f, Offset(-8.5f, 0f), alpha = strobe)
+                    drawCircle(
+                        SceneInk.Strobe,
+                        3.4f,
+                        Offset(-10.2f, -1.1f),
+                        alpha = .2f * strobe * k,
+                    )
+                    drawCircle(SceneInk.Strobe, .65f, Offset(-10.2f, -1.1f), alpha = strobe)
                 }
             }
         }
     }
 
     /**
-     * A flock in a V: each bird a gull, two tapering wings that bend at the wrist, the downstroke a
-     * little slower than the upstroke, every bird on its own beat.
+     * A flock in a V, in three sizes (the far ones smaller, fainter, slower on the wing): each bird
+     * a body with a head and a fanned tail and two wings that bend at the wrist, the hand curling
+     * on the downstroke; every bird on its own beat and rising and falling on its own path, one now
+     * and then gliding; the whole V drifting a little. Dark against the day's sky, warm-rimmed at
+     * dusk.
      */
-    private fun DrawScope.birds(p: Pass, w: Float, top: Float, band: Float, seconds: Float) {
+    private fun DrawScope.birds(
+        p: Pass,
+        sky: SkyColors,
+        w: Float,
+        top: Float,
+        band: Float,
+        seconds: Float,
+    ) {
         val d = density
-        val x0 = p.x * w
-        val y0 = top + p.y * band
+        val x0 = p.x * w + Ambient.flockDriftX(seconds) * d
+        val y0 = top + p.y * band + Ambient.flockDriftY(seconds) * d
         withTransform({
             translate(x0, y0)
             scale(d, d, Offset.Zero)
         }) {
             for (i in 0 until Ambient.FLOCK) {
+                val size = Ambient.birdSize(i)
+                val fade = Ambient.birdFade(i)
                 val x = Ambient.birdX(i, p.dir)
-                val y = Ambient.birdY(i)
-                val beat = Ambient.wing(i, seconds)
-                // the wings rise quickly and fall slowly: the beat is skewed
-                val flap = (beat + .35f * beat * beat * beat).coerceIn(-1f, 1f)
+                val y = Ambient.birdY(i) + Ambient.birdBob(i, seconds)
+                val n = BirdShape.build(x, y, Ambient.flap(i, seconds), size, p.dir, birdCmd)
                 path.rewind()
-                for (k in 0 until 2) {
-                    val s = 1f - 2f * k
-                    path.moveTo(x, y - .2f)
-                    // the leading edge out to the tip
-                    path.cubicTo(
-                        x + s * 2.4f,
-                        y - 1.5f - flap * 1.3f,
-                        x + s * 4.6f,
-                        y - 1.3f - flap * 3.3f,
-                        x + s * 7.2f,
-                        y + .3f - flap * 4.6f,
-                    )
-                    // and the trailing edge back
-                    path.cubicTo(
-                        x + s * 4.4f,
-                        y - .2f - flap * 2.2f,
-                        x + s * 2.3f,
-                        y + .7f - flap * .8f,
-                        x,
-                        y + 1.1f,
-                    )
-                    path.close()
+                var k = 0
+                while (k < n) {
+                    when (birdCmd[k]) {
+                        BirdShape.MOVE -> {
+                            path.moveTo(birdCmd[k + 1], birdCmd[k + 2])
+                            k += 3
+                        }
+                        BirdShape.LINE -> {
+                            path.lineTo(birdCmd[k + 1], birdCmd[k + 2])
+                            k += 3
+                        }
+                        BirdShape.CUBIC -> {
+                            path.cubicTo(
+                                birdCmd[k + 1],
+                                birdCmd[k + 2],
+                                birdCmd[k + 3],
+                                birdCmd[k + 4],
+                                birdCmd[k + 5],
+                                birdCmd[k + 6],
+                            )
+                            k += 7
+                        }
+                        else -> {
+                            path.close()
+                            k += 1
+                        }
+                    }
                 }
-                drawPath(path, SceneInk.Bird, alpha = .92f)
-                drawCircle(SceneInk.Bird, 1f, Offset(x, y + .2f))
+                if (birdRimAlpha > 0f)
+                    translate(-.35f * size, -.4f * size) {
+                        drawPath(path, birdRim, alpha = birdRimAlpha * .8f * fade)
+                    }
+                drawPath(path, birdInk[Ambient.birdTier(i)], alpha = .5f + .5f * fade)
             }
         }
     }

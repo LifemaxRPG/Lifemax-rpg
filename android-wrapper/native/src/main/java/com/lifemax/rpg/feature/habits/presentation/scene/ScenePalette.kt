@@ -355,6 +355,7 @@ internal object SceneInk {
     val PlaneDay = Color(0xFFE9EEF6)
     val Contrail = Color(0xFFFFFFFF)
     val Bird = Color(0xFF242838)
+    val BirdDusk = Color(0xFF2A1E2C)
     val Blimp = Color(0xFFDCE2EC)
     val BlimpShade = Color(0xFF8D98B0)
     val BlimpBand = Color(0xFFD9493F)
