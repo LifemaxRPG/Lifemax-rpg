@@ -54,6 +54,7 @@ import com.lifemax.rpg.feature.habits.domain.WindowCast
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.tan
@@ -1040,7 +1041,7 @@ internal class BuildingPainter {
             spillPath.close()
             drawPath(spillPath, spillBrush, alpha = dark)
             if (side == 1 && lod == PeopleLod.FULL && stroll.here) {
-                val xv = ox + 4f + stroll.x
+                val xv = ox + 4f + stroll.x + stroll.sway * size
                 val spread = ((xv - (ox + w / 2f)) / (w / 2f)).coerceIn(-1f, 1f)
                 spillFall.reset()
                 spillFall[1, 0] = -spread * .45f
@@ -1051,7 +1052,7 @@ internal class BuildingPainter {
                 personFilter = spillFilter
                 clipPath(spillPath) {
                     withTransform({
-                        translate(xv, 0f)
+                        translate(xv, -stroll.lift * size)
                         transform(spillFall)
                         scale(stroll.dir * size * frame, size * frame, Offset.Zero)
                     }) {
@@ -1062,7 +1063,16 @@ internal class BuildingPainter {
                                     SceneSprites.person(look, act, stroll.next),
                                     a * stroll.mix,
                                 )
-                        } else smoothFrame(look, act, stroll.frame, stroll.next, stroll.mix, a)
+                        } else
+                            smoothFrame(
+                                look,
+                                act,
+                                stroll.frame,
+                                stroll.next,
+                                stroll.mix,
+                                a,
+                                stroll.lean,
+                            )
                     }
                 }
                 personFilter = null
@@ -1725,21 +1735,31 @@ internal class BuildingPainter {
         var face = 1f
         var size = s * PeopleActivities.fitted(act)
         var phase = 0f
+        var lift = 0f
+        var lean = 0f
         if (act == Activity.WALKING) {
             // walking past: across the window and out of it, at the pace of the stride
             size = RoomSprites.personScale(h) * PeopleActivities.fitted(act)
-            // a taller person takes longer strides: the legs are as long as the body is tall
-            val pace = size * Looks.ALL[c.look].body.height
-            val at = Silhouettes.walkX(seconds, c.seed, w, pace)
-            if (at.isNaN()) return
+            // a taller person takes longer strides: the legs are as long as the body is tall, and
+            // the look has its own stride and the person their own tempo
+            val pace = Gait.pace(size, c.look)
+            val steady = Silhouettes.walkTravel(seconds, c.seed, w, pace, Gait.tempo(c.seed))
+            if (steady.isNaN()) return
+            // the live distance places them AND picks the frame: so the feet never slide
+            val travel = if (seconds > 0f) Gait.liveTravel(steady, pace, c.seed) else steady
+            val at = Silhouettes.walkAt(travel, c.seed, w)
             ax = if (dir > 0f) at else w - at
             face = Silhouettes.walkDir(c.seed) * dir
-            if (seconds > 0f)
-                phase = Gait.phase(Silhouettes.walkTravel(seconds, c.seed, w, pace), pace)
+            if (seconds > 0f) {
+                val strides = Gait.strides(travel, pace)
+                phase = strides - floor(strides)
+                lift = Gait.bob(strides, c.seed) * size
+                lean = Gait.lean(c.seed)
+            }
         } else if (spec.smooth) {
             phase = Silhouettes.phase(spec, seconds, c.seed)
         }
-        translate(ax, h) {
+        translate(ax, h - lift) {
             scale(face * size * frame, size * frame, Offset.Zero) {
                 if (spec.smooth) {
                     smoothFrame(
@@ -1749,6 +1769,7 @@ internal class BuildingPainter {
                         Gait.neighbour(phase, spec.frames),
                         abs(Gait.offset(phase, spec.frames)),
                         alpha * here,
+                        lean,
                     )
                 } else {
                     val f = Silhouettes.frame(spec, seconds, c.seed)
@@ -1770,6 +1791,25 @@ internal class BuildingPainter {
      * that it follows the display's own refresh, softened by its neighbour.
      */
     private fun DrawScope.smoothFrame(
+        look: Int,
+        act: Activity,
+        frame: Int,
+        next: Int,
+        mix: Float,
+        alpha: Float,
+        lean: Float = 0f,
+    ) {
+        if (lean != 0f) {
+            // the person's own posture: a tiny lean of the whole figure, as a skew about the feet
+            leanSkew.reset()
+            leanSkew[1, 0] = -tan(lean * (PI.toFloat() / 180f))
+            withTransform({ transform(leanSkew) }) { pair(look, act, frame, next, mix, alpha) }
+        } else pair(look, act, frame, next, mix, alpha)
+    }
+
+    private val leanSkew = Matrix()
+
+    private fun DrawScope.pair(
         look: Int,
         act: Activity,
         frame: Int,
@@ -1802,11 +1842,14 @@ internal class BuildingPainter {
         val spec = PeopleActivities.of(Activity.WALKING)
         val size = RoomSprites.personScale(h) * PeopleActivities.fitted(Activity.WALKING)
         val look = (seed and 0x7fffffff) % Looks.COUNT
-        // the steps follow the ground covered: nobody skates, whatever their size
-        val phase =
-            Gait.phase(travel, size * Looks.ALL[look].body.height, Ambient.hash(seed, 0, 62))
+        // the steps follow the ground covered: nobody skates, whatever their size; the live
+        // distance moves them a little ahead of or behind the steady one, and picks the frame
+        val pace = Gait.pace(size, look)
+        val live = Gait.liveTravel(travel, pace, seed)
+        val strides = Gait.strides(live, pace, Ambient.hash(seed, 0, 62))
+        val phase = strides - floor(strides)
         clipRect(x, y, x + w, y + h) {
-            translate(x + rel, y + h) {
+            translate(x + rel + (live - travel) * dir, y + h - Gait.bob(strides, seed) * size) {
                 scale(dir * size * frame, size * frame, Offset.Zero) {
                     smoothFrame(
                         look,
@@ -1815,6 +1858,7 @@ internal class BuildingPainter {
                         Gait.neighbour(phase, spec.frames),
                         abs(Gait.offset(phase, spec.frames)),
                         alpha * .92f,
+                        Gait.lean(seed),
                     )
                 }
             }
@@ -1984,12 +2028,15 @@ internal class BuildingPainter {
                     // turn back and in again; the feet follow the ground they cover
                     val look = ((seed and 0x7fffffff) + 3) % Looks.COUNT
                     val size = s * PeopleActivities.fitted(Activity.WALKING)
-                    Visit.at(seconds, w - 14f, seed, size * Looks.ALL[look].body.height, stroll)
+                    Visit.at(seconds, w - 14f, seed, Gait.pace(size, look), stroll)
                     if (stroll.here) {
                         val act =
                             if (stroll.mode == Stroll.STAND) Activity.LOOKING_OUT
                             else Activity.WALKING
-                        translate(ox + 4f + stroll.x, floor) {
+                        translate(
+                            ox + 4f + stroll.x + stroll.sway * size,
+                            floor - stroll.lift * size,
+                        ) {
                             scale(stroll.dir * size * frame, size * frame, Offset.Zero) {
                                 if (stroll.mode == Stroll.STAND) {
                                     drawPerson(SceneSprites.person(look, act, stroll.frame), 1f)
@@ -2006,6 +2053,7 @@ internal class BuildingPainter {
                                         stroll.next,
                                         stroll.mix,
                                         1f,
+                                        stroll.lean,
                                     )
                             }
                         }
