@@ -45,6 +45,8 @@ import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.RuinWindow
 import com.lifemax.rpg.feature.habits.domain.SceneLight
+import com.lifemax.rpg.feature.habits.domain.Season
+import com.lifemax.rpg.feature.habits.domain.SeasonState
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.Stroll
@@ -301,6 +303,28 @@ internal class BuildingPainter {
     private val shear = Matrix()
 
     /**
+     * The time of year ([Season]): which looks the trees wear and how much snow lies on the street.
+     * Set by the stage with the day.
+     */
+    var season: SeasonState = Season.SUMMER
+
+    /** The alpha of each of a tree's season looks for this frame ([TreeDress.plan]), reused. */
+    private val dress = FloatArray(TreeSeason.entries.size)
+
+    /** The snow's colour for the sky (white by day, the moon's blue at night) and its filter. */
+    private var snowKey: SkyColors? = null
+    private var snowInk = Color.White
+    private var snowFilter: ColorFilter? = null
+
+    /** The hood of a lamp with snow along it, in lamp units: the hood's curve, a little up. */
+    private val lampSnow =
+        Path().apply {
+            moveTo(4.6f, -95.4f)
+            quadraticBezierTo(11.5f, -101.8f, 19f, -95.4f)
+        }
+    private val snowStroke = Stroke(2.2f, cap = StrokeCap.Round)
+
+    /**
      * The key light's ground projection ([KeyLight]): what stands up falls flat along it, down the
      * pavement and leaning away from the light. One matrix, remade when the light changes.
      */
@@ -470,6 +494,7 @@ internal class BuildingPainter {
             }
         }
         drawRect(SceneInk.Occlusion, Offset(from, 0f), Size(width, 1.2f))
+        if (season.snow > .01f) snowGround(sky, from, to)
     }
 
     /** The pools of light the lamps throw on the pavement at night. */
@@ -504,6 +529,7 @@ internal class BuildingPainter {
                         Size(11f, 2.6f),
                         CornerRadius(1.2f, 1.2f),
                     )
+                    if (season.snow > .01f) snowLamp(sky)
                     if (on == 0f)
                         drawRect(Color.White, Offset(7.2f, -91.4f), Size(4f, .7f), alpha = .6f)
                     else
@@ -543,6 +569,7 @@ internal class BuildingPainter {
                         drawRect(SceneInk.Highlight, Offset(-14f, y), Size(28f, .6f), alpha = .45f)
                         drawRect(SceneInk.Occlusion, Offset(-14f, y + 1.5f), Size(28f, .4f))
                     }
+                    if (season.snow > .01f) snowBench(sky)
                 }
             }
         }
@@ -556,14 +583,18 @@ internal class BuildingPainter {
      * comes from [seed].
      */
     private fun DrawScope.tree(x: Float, seed: Int, seconds: Float, size: Float, sky: SkyColors) {
-        val images = SceneSprites.trees[Trees.variant(seed)]
-        val sp = images.sprite
+        val variant = Trees.variant(seed)
+        val sp = SceneSprites.trees[variant].sprite
         val lean = if (seconds > 0f) Ambient.sway(seed, seconds) else 0f
         // two looks, the one under and the other over it by how far the hour has gone on
         val dark = sky.dark
         val under = if (dark <= .55f) 0 else 1
         val over = under + 1
         val t = if (dark <= .55f) dark / .55f else (dark - .55f) / .45f
+        // and the looks of the season, the bare tree under the canopy ([TreeDress])
+        TreeDress.plan(season, variant, dress)
+        val snow = season.snow
+        if (snow > .01f) snowInk(sky)
         shear.reset()
         shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
         val u = size / sp.ppu
@@ -573,8 +604,151 @@ internal class BuildingPainter {
             transform(shear)
         }) {
             val at = Offset(-sp.footX, -sp.footY)
-            drawImage(images.looks[under], at)
-            if (t > .01f) drawImage(images.looks[over], at, alpha = t)
+            for (s in TreeDress.ORDER) {
+                val a = dress[s.ordinal]
+                if (a <= .01f) continue
+                val images = SceneSprites.tree(variant, s)
+                drawImage(images.looks[under], at, alpha = a)
+                if (t > .01f) drawImage(images.looks[over], at, alpha = a * t)
+            }
+            if (snow > .01f)
+                drawImage(
+                    SceneSprites.treeSnow(variant),
+                    at,
+                    alpha = snow,
+                    colorFilter = snowFilter,
+                )
+        }
+    }
+
+    // ------------------------------------------------------------------ snow
+
+    /** The snow's colour under this sky, kept with its filter until the sky changes. */
+    private fun snowInk(sky: SkyColors): Color {
+        if (snowKey !== sky) {
+            snowInk = lerp(SnowDay, SnowNight, Px.smooth(.15f, .9f, sky.dark))
+            snowFilter = ColorFilter.tint(snowInk, BlendMode.SrcIn)
+            snowKey = sky
+        }
+        return snowInk
+    }
+
+    /** A soft cap of snow lying on a ledge: a rounded strip, [w] by [h] from ([x], [y]). */
+    private fun DrawScope.cap(x: Float, y: Float, w: Float, h: Float, alpha: Float) {
+        drawRoundRect(
+            snowInk,
+            Offset(x, y),
+            Size(w, h),
+            CornerRadius(h * .5f, h * .5f),
+            alpha = alpha,
+        )
+    }
+
+    /**
+     * Fresh snow on the pavement from [from] to [to]: the slabs whitened (the joints showing
+     * faintly through), a sparkle on it by day, the kerb's top piled, and the road's edge gone to
+     * grey slush.
+     */
+    private fun DrawScope.snowGround(sky: SkyColors, from: Float, to: Float) {
+        val a = season.snow
+        val ink = snowInk(sky)
+        val width = to - from
+        drawRect(ink, Offset(from, 0f), Size(width, PAVEMENT), alpha = .84f * a)
+        drawRoundRect(
+            ink,
+            Offset(from, PAVEMENT - .6f),
+            Size(width, 1.9f),
+            CornerRadius(.9f, .9f),
+            alpha = a,
+        )
+        drawRect(ink, Offset(from, PAVEMENT + 2.5f), Size(width, 7f), alpha = .2f * a)
+        drawRect(ink, Offset(from, PAVEMENT + 9.5f), Size(width, 14f), alpha = .08f * a)
+        val sparkle = a * (1f - sky.dark) * .7f
+        if (width < 1500f && sparkle > .03f) {
+            var tile = kotlin.math.floor(from / SPECK_TILE) * SPECK_TILE
+            while (tile < to) {
+                translate(tile, 0f) {
+                    drawPoints(
+                        paveSpecks,
+                        PointMode.Points,
+                        Color.White,
+                        1.1f,
+                        StrokeCap.Round,
+                        alpha = sparkle,
+                    )
+                }
+                tile += SPECK_TILE
+            }
+        }
+    }
+
+    /** Snow along a lamp's hood and on its base. */
+    private fun DrawScope.snowLamp(sky: SkyColors) {
+        val a = season.snow
+        snowInk(sky)
+        drawPath(lampSnow, snowInk, alpha = a, style = snowStroke)
+        cap(-3.4f, -9.3f, 6.8f, 1.5f, a)
+    }
+
+    /** Snow on a bench's slats. */
+    private fun DrawScope.snowBench(sky: SkyColors) {
+        val a = season.snow
+        snowInk(sky)
+        for (y in BENCH_SLATS) cap(-14.2f, y - 1f, 28.4f, 1.6f, a)
+        cap(-14.4f, -13.2f, 3.6f, 1.3f, a)
+        cap(10.8f, -13.2f, 3.6f, 1.3f, a)
+    }
+
+    /** The park's grass under snow and its fence rail capped. */
+    private fun DrawScope.snowPark(sky: SkyColors, from: Float) {
+        val a = season.snow
+        snowInk(sky)
+        drawRect(snowInk, Offset(from, -4f), Size(B.PARK_W - 10f, 4f), alpha = .9f * a)
+        cap(from - .3f, -7.5f, B.PARK_W - 9.4f, 1.5f, a)
+    }
+
+    /**
+     * Snow on the lobby's sign and along the awning's top, with a little hanging at the scallops.
+     */
+    private fun DrawScope.snowLobby(sky: SkyColors, top: Float, a0: Float) {
+        val a = season.snow
+        val half = B.W / 2f
+        snowInk(sky)
+        cap(-half + 9.5f, top + 4f - 1.1f, B.W - 19f, 1.7f, a)
+        cap(-half + 5.5f, a0 - 1.2f, B.W - 11f, 2f, a)
+        var x = half - 1f
+        while (x - 8f >= -half + .5f) {
+            drawOval(snowInk, Offset(x - 1.7f, a0 + 8.4f), Size(3.4f, 1.5f), alpha = .65f * a)
+            x -= 8f
+        }
+    }
+
+    /** Snow on a floor's sills and along its cornice. */
+    private fun DrawScope.snowFloor(fa: FloorArt, alpha: Float, sky: SkyColors) {
+        val a = season.snow * alpha
+        val half = B.W / 2f
+        snowInk(sky)
+        val w = fa.windows
+        for (k in 0 until fa.windowCount) {
+            val x = w[k * 4]
+            val y = fa.top + w[k * 4 + 1]
+            cap(x - .7f, y + w[k * 4 + 3] - .5f, w[k * 4 + 2] + 1.4f, 1.6f, a)
+        }
+        cap(-half - 1.2f, fa.top - 1.1f, B.W + 2.4f, 2f, a)
+    }
+
+    /** Snow on the roof: the cornice capped, the flat whitened, the tank's lid. */
+    private fun DrawScope.snowRoof(sky: SkyColors, y: Float, tank: Boolean) {
+        val a = season.snow
+        val half = B.W / 2f
+        val ink = snowInk(sky)
+        roofFace(y - B.CORNICE, ink.copy(alpha = .86f * a), half + 3f)
+        cap(-half - 3.3f, y - B.CORNICE - 1.3f, B.W + 6.6f, 2.3f, a)
+        if (tank) {
+            val tx = -half + 26f
+            val base = y - B.CORNICE - B.DY / 2f
+            cap(tx - 9.2f, base - 22.8f, 18.4f, 1.6f, a)
+            cap(tx - 2.2f, base - 29f, 4.4f, 1.6f, a)
         }
     }
 
@@ -699,7 +873,8 @@ internal class BuildingPainter {
         tint: Color,
         light: KeyLight,
     ) {
-        val images = SceneSprites.trees[Trees.variant(seed)]
+        val variant = Trees.variant(seed)
+        val images = SceneSprites.trees[variant]
         val sp = images.sprite
         val lean = if (seconds > 0f) Ambient.sway(seed, seconds) else 0f
         shear.reset()
@@ -707,18 +882,31 @@ internal class BuildingPainter {
         val u = size / sp.ppu
         val filter = shadeFilter(tint)
         val at = Offset(-sp.footX, -sp.footY)
+        // the season's shape: the bare tree, and the canopy as full as its leaves are
+        TreeDress.plan(season, variant, dress)
+        val bare = dress[TreeSeason.BARE.ordinal]
+        val canopy = TreeDress.canopy(dress)
+        val skeleton =
+            if (bare > .01f) SceneSprites.tree(variant, TreeSeason.BARE).looks[0] else null
         withTransform({
             translate(x, 0f)
             transform(fallMatrix(light, x))
             scale(u * -lightFrom, u, Offset.Zero)
             transform(shear)
         }) {
-            drawImage(images.looks[0], at, alpha = PENUMBRA[0], colorFilter = filter)
-            scale(1.045f, 1.045f, Offset.Zero) {
-                drawImage(images.looks[0], at, alpha = PENUMBRA[1], colorFilter = filter)
-            }
-            scale(1.09f, 1.09f, Offset.Zero) {
-                drawImage(images.looks[0], at, alpha = PENUMBRA[2], colorFilter = filter)
+            for (k in PENUMBRA.indices) {
+                val grow = 1f + .045f * k
+                scale(grow, grow, Offset.Zero) {
+                    if (skeleton != null)
+                        drawImage(skeleton, at, alpha = PENUMBRA[k] * bare, colorFilter = filter)
+                    if (canopy > .01f)
+                        drawImage(
+                            images.looks[0],
+                            at,
+                            alpha = PENUMBRA[k] * canopy,
+                            colorFilter = filter,
+                        )
+                }
             }
         }
     }
@@ -1548,6 +1736,7 @@ internal class BuildingPainter {
             x += 8f
         }
         drawRect(SceneInk.Bench, Offset(from, -6.5f), Size(B.PARK_W - 10f, 1.2f))
+        if (season.snow > .01f) snowPark(sky, from)
     }
 
     private fun DrawScope.lobby(
@@ -1607,6 +1796,7 @@ internal class BuildingPainter {
             }
             drawRect(awningDrop, Offset(-half + 2f, 9f), Size(B.W - 4f, 10f))
         }
+        if (season.snow > .01f) snowLobby(sky, top, a0)
         // the shopfront: a door between two windows, lit at night
         val shop = lerp(SceneInk.Shop, SceneInk.ShopLit, .15f + .8f * sky.dark)
         val w0 = top + 35f
@@ -1993,6 +2183,7 @@ internal class BuildingPainter {
                     drawPath(crack, SceneInk.Seam, alpha = alpha, style = seam)
                 }
             }
+        if (season.snow > .01f) snowFloor(fa, alpha, sky)
         if (detailed && fa.name != null) plaque(fa, alpha)
         if (live && !done && b.miss >= 2 && !ruin) attention(half - 16f, top + 6f, seconds)
         val isNext = live && art.stack.next == b.id && fa.piece.labelled
@@ -2163,6 +2354,7 @@ internal class BuildingPainter {
                     .8f,
                 )
             }
+            if (season.snow > .01f) snowRoof(sky, y, art.craneOn == null)
         }
         val s = art.sign
         if (s != null) sign(art, s.top, s.width, detailed, sky, seconds)
@@ -2838,6 +3030,10 @@ internal class BuildingPainter {
         private val WetTint = Color(0xFF6E7A9A)
         private val SignReflect = Color(0xFF20263A)
         private val TreeReflect = Color(0xFF0E1420)
+
+        /** Lying snow: white by day, the moon's blue-grey at night. */
+        private val SnowDay = Color(0xFFF6F8FF)
+        private val SnowNight = Color(0xFF8FA4C8)
 
         /** The seat and back slats of a bench, from the pavement line up. */
         val BENCH_SLATS = floatArrayOf(-9.6f, -7.2f, -18.6f, -16.1f, -13.6f)

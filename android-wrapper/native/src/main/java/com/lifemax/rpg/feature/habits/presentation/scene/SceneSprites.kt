@@ -12,6 +12,8 @@ import com.lifemax.rpg.feature.habits.domain.BuildingSpec
 import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.RoomKind
+import com.lifemax.rpg.feature.habits.domain.SeasonState
+import com.lifemax.rpg.feature.habits.domain.Trees
 
 /** A cloud sprite's three layers, as images. */
 internal class CloudImages(
@@ -74,6 +76,22 @@ internal class WeatherImages(
     val puddles: Array<PuddleImages>,
     val fog: Brush,
 )
+
+/** The lens flare's parts as images: the three kinds of ghost and the streak. */
+internal class FlareImages(
+    val sprite: FlareSprite,
+    val disc: ImageBitmap,
+    val ring: ImageBitmap,
+    val poly: ImageBitmap,
+    val streak: ImageBitmap,
+) {
+    fun ghost(kind: Int): ImageBitmap =
+        when (kind) {
+            0 -> disc
+            1 -> ring
+            else -> poly
+        }
+}
 
 /** A room's two overlays as images: behind the person, and in front of them. */
 internal class RoomImages(val back: ImageBitmap, val front: ImageBitmap)
@@ -164,6 +182,88 @@ internal object SceneSprites {
             val s = TreeSprites.generate(it)
             TreeImages(s, Array(s.pixels.size) { look -> image(s.pixels[look], s.w, s.h) })
         }
+    }
+
+    // ---- the seasons: the other looks of the trees, made as the year first needs them
+
+    private val seasonTrees = HashMap<Int, TreeImages>()
+    private val snowTrees = arrayOfNulls<ImageBitmap>(Trees.VARIANTS)
+    private var seasonTreeBytes = 0
+
+    /**
+     * The tree [variant] in [season]: the summer pool for summer and for the evergreens, otherwise
+     * a look baked the first time that season is drawn and kept (a season's looks are about a
+     * megabyte; two or three are ever in use).
+     */
+    @Synchronized
+    fun tree(variant: Int, season: TreeSeason): TreeImages {
+        if (season == TreeSeason.SUMMER || Trees.evergreen(variant)) return trees[variant]
+        val key = season.ordinal * 64 + variant
+        seasonTrees[key]?.let {
+            return it
+        }
+        val s = TreeSprites.generate(variant, season)
+        seasonTreeBytes += s.w * s.h * 4 * s.pixels.size
+        return TreeImages(s, Array(s.pixels.size) { look -> image(s.pixels[look], s.w, s.h) })
+            .also { seasonTrees[key] = it }
+    }
+
+    /** The snow that lies on the tree [variant], made the first winter day it is drawn. */
+    @Synchronized
+    fun treeSnow(variant: Int): ImageBitmap {
+        snowTrees[variant]?.let {
+            return it
+        }
+        val sp = trees[variant].sprite
+        seasonTreeBytes += sp.w * sp.h * 4
+        return image(TreeSprites.snow(variant), sp.w, sp.h).also { snowTrees[variant] = it }
+    }
+
+    /** What the seasons' tree looks and snow made so far take, in bytes. */
+    @Synchronized fun seasonBytes(): Int = seasonTreeBytes
+
+    /**
+     * The falling leaves (shape times palette, [SeasonSprites.leaves]), petals and the snowflake.
+     */
+    val leaves: Array<ImageBitmap> by lazy {
+        SeasonSprites.leaves()
+            .map { image(it, SeasonSprites.LEAF, SeasonSprites.LEAF) }
+            .toTypedArray()
+    }
+    val petals: Array<ImageBitmap> by lazy {
+        SeasonSprites.petals()
+            .map { image(it, SeasonSprites.PETAL, SeasonSprites.PETAL) }
+            .toTypedArray()
+    }
+    val flake: ImageBitmap by lazy {
+        image(SeasonSprites.flake(), SeasonSprites.FLAKE, SeasonSprites.FLAKE)
+    }
+
+    val flare: FlareImages by lazy {
+        val f = FlareSprites.flare()
+        FlareImages(
+            f,
+            image(f.disc),
+            image(f.ring),
+            image(f.poly),
+            image(f.streak, f.streakW, f.streakH),
+        )
+    }
+
+    /**
+     * Makes now (off the main thread) what the trees of [season] are drawn with, so the first frame
+     * of a new season does not bake them.
+     */
+    fun warm(season: SeasonState) {
+        val plan = FloatArray(TreeSeason.entries.size)
+        for (v in 0 until Trees.VARIANTS) {
+            TreeDress.plan(season, v, plan)
+            for (s in TreeSeason.entries) if (plan[s.ordinal] > .01f) tree(v, s)
+            if (season.snow > .01f) treeSnow(v)
+        }
+        if (season.autumn > 0f) leaves
+        if (season.blossom > 0f) petals
+        if (season.snowfall > 0f) flake
     }
 
     /**
@@ -263,6 +363,8 @@ internal object SceneSprites {
         contrail
         blimp
         weather
+
+        flare
         for (h in BuildingSpec.HEIGHTS) {
             val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
             val wh = (h - BuildingSpec.BAND_TOP - BuildingSpec.PLAQUE_BAND - 6f * (rows - 1)) / rows
@@ -279,7 +381,8 @@ internal object SceneSprites {
             AirSprites.bytes() +
             WeatherSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
-            peopleBytes()
+            peopleBytes() +
+            seasonBytes()
 
     private fun image(l: SkyLayer): ImageBitmap = image(l.pixels, l.size, l.size)
 

@@ -46,6 +46,15 @@ object Trees {
 
     fun shape(seed: Int): TreeShape = shapes[variant(seed)]
 
+    /** Whether [variant] keeps its needles all year (a pine): the seasons leave it green. */
+    fun evergreen(variant: Int): Boolean = shapes[variant].kind == TreeKind.PINE
+
+    /** Whether [variant] flowers in spring: the ornamental (pink) and the shrub (white). */
+    fun blossoms(variant: Int): Boolean = variant == 2 || variant == 7
+
+    /** Whether [variant] turns red in autumn (the others turn amber). */
+    fun turnsRed(variant: Int): Boolean = variant % 2 == 1
+
     private fun kindOf(v: Int) =
         when (v) {
             0,
