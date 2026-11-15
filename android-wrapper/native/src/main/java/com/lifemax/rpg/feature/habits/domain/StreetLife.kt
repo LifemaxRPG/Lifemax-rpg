@@ -242,14 +242,21 @@ object StreetLife {
         p.look = look
         p.dir = dir
         p.size = size
-        p.travel = travel
+        // on foot the ground covered is lived, not metered: the steps drift and hesitate a little
+        // ([Gait.liveTravel]); the same live distance places them and picks the frame, so the feet
+        // never slide. A cyclist rolls steadily, and the dog walker keeps the metered pace so the
+        // stop lands exactly on the passing pose.
+        val live =
+            if (kind == Stroller.CYCLIST || kind == Stroller.DOG_WALKER) travel
+            else Gait.liveTravel(travel, size, seed * 31 + k)
+        p.travel = live
         p.lane = LANE - 2f + 4f * Ambient.hash(seed, k, 206)
-        p.x = if (dir > 0f) from - MARGIN + travel else to + MARGIN - travel
-        walk(StreetGait.phase(travel, size), p)
+        p.x = if (dir > 0f) from - MARGIN + live else to + MARGIN - live
+        walk(StreetGait.phase(live, size), p)
         when (kind) {
             Stroller.DOG_WALKER -> {
                 p.dogX = p.x + dir * DOG_LEAD
-                val dp = travel / (StreetGait.DOG_STRIDE * DOG_SIZE)
+                val dp = live / (StreetGait.DOG_STRIDE * DOG_SIZE)
                 val phase = dp - floor(dp)
                 p.dogFrame = Gait.nearest(phase, StreetGait.DOG_FRAMES)
                 p.dogNext = Gait.neighbour(phase, StreetGait.DOG_FRAMES)

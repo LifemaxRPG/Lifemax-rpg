@@ -306,6 +306,29 @@ faded where a building covers the sun (`Backdrop.sunClear`); drawn in `backdrop(
 building is behind it. New screenshot tests `autumnAfternoon`, `winterSnowDay`, `springBlossom`, `dayFlare`; every daytime
 reference with the sun in frame changes (the flare).
 
+## As built: street life (NativeApi 185)
+
+The owner's top ask, with the bar set at "the pedestrian is close to the camera and must look amazing". `domain/StreetRig.kt`
+builds the hero walker from the people rig at street scale (4 `StreetLooks`: long coat + crop + shoulder bag, jacket +
+beanie + backpack, jacket + skirt + ponytail + handbag, tee + cap; coat hem trailing the stride, lapel, collar, cuffs, shoes
+with heel and toe, hands with thumbs, bowed limbs, the far side at half tone, head nod with bob lag, hair/bag secondary
+motion; 32 frames a cycle plus 4 settle frames); `StreetProps.kt` the dog (6 trot frames + sniff) and the bicycle with a
+rider whose legs follow the cranks; `StreetSprites.kt` bakes them lazily at 3.6 px per unit with a `STREET` palette in
+`PeopleRaster` (walkers ≤ 2.9 MB), and paints the near car (3 bodies × 5 paints, day/night bodies and an additive lights
+layer). `domain/StreetLife.kt` is the pure schedule: a passer every 40–70 s (WALKER / DOG_WALKER / CYCLIST / PAIR),
+crossing the whole visible street with 40-unit margins, the dog walker pausing on a whole number of strides; a car every
+70 ± 20 s at ~95 units/s. Walkers and pairs take their ground from `Gait.liveTravel` (the per-step irregularity), the
+same live distance placing them and picking the frame, so no foot slides; the dog walker stays metered so its stop lands
+on the passing pose; the cyclist rolls. `SceneLight.NearLight` holds the lamp (lens 11.5, height 89.5, reach 70, lean and
+reach per caster, stretch 1.8) and headlight projections. `StreetLifePainter.kt`: `keyShadows` inside the key-light layer,
+`lampShadows` (a point-light shear per lamp, fading with the pool), `people` (contact shadows per foot, a rim on the lit
+side, a warm additive overlay under a lamp, ±6 % by lane, the sagging lead; hidden at DOT/NONE), `sweep` (a Plus layer:
+a warm wash clipped per facade and the lamp posts/trees cut out as DstOut silhouettes scaled about the headlight, so wall
+shadows swing as the car passes), `car` (pool, beam, tail glow, turning wheels, day/night crossfade). Hooks: one line in
+`BuildingPainter.shadows()`, draw calls in `HabitsStage` after shadows (lamp shadows), after the buildings (sweep,
+people), after the furniture (car). Screenshot tests `streetWalkerDay` (STREET_WALKER_AT) and `nearCarNight` (NEAR_CAR_AT).
+Tuned from contact sheets only: the wash strength, shadow depth (.6 × dark) and rim (.7) may want a nudge on the phone.
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The

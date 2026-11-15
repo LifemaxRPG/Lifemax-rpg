@@ -119,8 +119,12 @@ class StreetLifeTest {
                             abs(q.x - x0) > 20f
                     )
                         continue
-                    assertEquals(v * .4f, (q.x - x0) * dir, .01f)
-                    assertEquals(travel0 + v * .4f, q.travel, .01f)
+                    // the walk is lived, not metered (Gait.liveTravel): never backwards, never
+                    // much faster than the pace, and the ground covered is exactly what places them
+                    val moved = (q.x - x0) * dir
+                    assertTrue("forward: $moved", moved > 0f)
+                    assertTrue("pace: $moved vs ${v * .4f}", moved < v * .4f * 1.6f)
+                    assertEquals(q.travel - travel0, moved, .01f)
                     val phase = StreetGait.phase(q.travel, q.size)
                     assertEquals(Gait.nearest(phase, StreetGait.FRAMES), q.frame)
                     assertEquals(Gait.neighbour(phase, StreetGait.FRAMES), q.next)
