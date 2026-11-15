@@ -301,6 +301,12 @@ private fun StageCanvas(
     val measurer = rememberTextMeasurer(cacheSize = 96)
     val text = remember(measurer, density.fontScale) { SceneText(measurer, density.fontScale) }
     val painter = remember { BuildingPainter() }
+    val streetLife = remember {
+        StreetLifePainter().also {
+            painter.streetLife = it
+            it.painter = painter
+        }
+    }
     val seed = remember(p.day) { p.day.hashCode() }
     val backdrop = remember(seed) { Backdrop(seed, p.day) }
     val season = remember(p.day) { Season.at(p.day) }
@@ -698,6 +704,11 @@ private fun StageCanvas(
         backdrop.cloudiness = weather.cloudiness
         backdrop.mist = weather.mist
         painter.season = season
+        streetLife.light = light
+        streetLife.lightX = painter.lightX
+        streetLife.lightSpan = painter.lightSpan
+        streetLife.lightFrom = painter.lightFrom
+        streetLife.update(seconds, seed, street)
         val from = f.streetX(0f) - B.GAP
         val to = f.streetX(this.size.width) + B.GAP
         // the tallest building in view: it decides how high the clouds hang (clear of its roof and
@@ -734,6 +745,7 @@ private fun StageCanvas(
                     pavement(sky, from, to, depth)
                     pools(street.furniture, from, to, sky.dark)
                     shadows(light, sky, layouts, street, from, to, depth, seconds)
+                    with(streetLife) { lampShadows(sky.dark, street.furniture, from, to) }
                     val detailed = f.scale > .55f
                     for (i in layouts.indices) {
                         val l = street.lefts[i]
@@ -754,11 +766,16 @@ private fun StageCanvas(
                             )
                         }
                     }
+                    with(streetLife) {
+                        sweep(sky, layouts, street, from, to, seconds)
+                        people(sky, street.furniture, from, to, Silhouettes.lod(f.scale))
+                    }
                     for (k in street.furniture.indices) {
                         val item = street.furniture[k]
                         if (item.x < from - 30f || item.x > to + 30f) continue
                         furniture(item, sky, seconds)
                     }
+                    with(streetLife) { car(sky, from, to) }
                     with(seasonFall) {
                         particles(
                             season,

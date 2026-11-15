@@ -116,3 +116,102 @@ object SceneLight {
 
     private fun smooth(t: Float) = t * t * (3f - 2f * t)
 }
+
+/*
+ * The near lights of the night street, with no drawing in them: a street lamp's lens as a point light over the
+ * pavement (a walker's shadow swings from behind them to in front as they pass under it, and stretches as they
+ * walk away), and a passing car's headlights as a point light low over the road (the facades are washed as it
+ * passes, and the lamp posts and trees throw a second shadow up the walls that swings with it).
+ */
+object NearLight {
+    /** A street lamp's lens: how far right of the post it hangs and how high over the pavement. */
+    const val LAMP_LENS = 11.5f
+    const val LAMP_HEIGHT = 89.5f
+
+    /** How far from the lens a lamp's light still reaches a walker, in street units. */
+    const val LAMP_REACH = 70f
+
+    /**
+     * The shear approximation of a point light's projection is taken at a walker's middle: this far
+     * up them.
+     */
+    const val WALKER_MID = 13f
+
+    /**
+     * How far a walker's shadow leans sideways per unit of their height, under a lamp whose lens is
+     * at [lensX], for a walker standing at [x]: away from the lamp, nothing directly under it.
+     */
+    fun lampLean(lensX: Float, x: Float, height: Float = LAMP_HEIGHT): Float =
+        (x - lensX) / (height - WALKER_MID)
+
+    /**
+     * How far down the pavement (on screen) a walker's shadow reaches per unit of height, for a
+     * walker standing [depth] units out from the lamp's line: the ground's slant is eased
+     * ([STRETCH]) so that the shadow has some body on the thin pavement.
+     */
+    fun lampReach(depth: Float, height: Float = LAMP_HEIGHT): Float =
+        STRETCH * SceneLight.FLAT * depth / (height - WALKER_MID)
+
+    /** How much longer than the ground's slant allows a lamp's shadow is drawn. */
+    const val STRETCH = 1.8f
+
+    /**
+     * How strong a lamp's light is on a walker [d] units along the street from its lens, 1 under it
+     * to 0 at [LAMP_REACH] and beyond: the pool's own falloff.
+     */
+    fun lampFall(d: Float): Float {
+        val u = (d * d) / (LAMP_REACH * LAMP_REACH)
+        if (u >= 1f) return 0f
+        val k = 1f - u
+        return k * k
+    }
+
+    // ---- the headlights of a passing car
+
+    /** How high over the road a car's headlights are, in street units. */
+    const val HEADLIGHT = 3f
+
+    /** How far out from the facades the near car's lane is, in depth units. */
+    const val CAR_DEPTH = 56f
+
+    /** How far out from the facades the pavement's furniture stands, in depth units. */
+    const val FURNITURE_DEPTH = 10f
+
+    /** How far along the facades the headlights' wash is seen from the car, in street units. */
+    const val SWEEP_REACH = 190f
+
+    /**
+     * The scale a caster standing [casterDepth] out from a wall is drawn at on the wall, as a
+     * shadow from a light [lightDepth] out: its shadow is that much bigger than it, about the
+     * light's own spot on the wall.
+     */
+    fun wallScale(lightDepth: Float = CAR_DEPTH, casterDepth: Float = FURNITURE_DEPTH): Float =
+        lightDepth / (lightDepth - casterDepth)
+
+    /**
+     * How strongly the headlights of a car at [carX] facing [dir] (1 right, -1 left) light the
+     * facade at [x], 0 to 1: a wide, soft cone ahead of the car that fades with distance along the
+     * street, with a little spill beside and behind it.
+     */
+    fun sweep(carX: Float, dir: Float, x: Float): Float {
+        val d = (x - carX) * dir
+        val dist = kotlin.math.abs(d)
+        if (dist >= SWEEP_REACH) return 0f
+        val u = dist / SWEEP_REACH
+        val fall = (1f - u) * (1f - u)
+        // ahead of the car the beam, behind it only the spill
+        val ahead = if (d >= 0f) 1f else .2f
+        // the cone opens over the first stretch, so the spot on the wall leads the car
+        val cone = if (d <= 0f) 1f else kotlin.math.min(1f, .35f + d / 40f)
+        return fall * ahead * cone
+    }
+
+    /**
+     * Where along the wall the headlights' wash is brightest for a car at [carX] facing [dir]:
+     * ahead of the car.
+     */
+    fun sweepSpot(carX: Float, dir: Float): Float = carX + dir * 26f
+
+    /** How long the wash crosses one building's front, for a car going [speed] units a second. */
+    fun sweepSeconds(speed: Float): Float = (SWEEP_REACH * .9f) / speed
+}

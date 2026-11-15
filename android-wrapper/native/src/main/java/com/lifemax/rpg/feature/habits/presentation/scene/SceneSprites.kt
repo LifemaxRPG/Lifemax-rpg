@@ -9,11 +9,17 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
 import com.lifemax.rpg.feature.habits.domain.Activity
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec
+import com.lifemax.rpg.feature.habits.domain.DogRig
 import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.SeasonState
+import com.lifemax.rpg.feature.habits.domain.StreetGait
+import com.lifemax.rpg.feature.habits.domain.StreetLife
+import com.lifemax.rpg.feature.habits.domain.StreetLooks
+import com.lifemax.rpg.feature.habits.domain.StreetRig
 import com.lifemax.rpg.feature.habits.domain.Trees
+import com.lifemax.rpg.feature.habits.domain.WalkerJoints
 
 /** A cloud sprite's three layers, as images. */
 internal class CloudImages(
@@ -101,6 +107,27 @@ internal class RoomImages(val back: ImageBitmap, val front: ImageBitmap)
  * is from the figure's feet, in the picture's own pixels.
  */
 internal class PersonImage(val image: ImageBitmap, val dx: Float, val dy: Float)
+
+/**
+ * One baked street walker frame: the picture, its top-left from the feet in its pixels, its joints.
+ */
+internal class WalkerImage(
+    val image: ImageBitmap,
+    val dx: Float,
+    val dy: Float,
+    val joints: WalkerJoints,
+)
+
+/**
+ * The near car's pictures: by day, by night, and the lights to add at night; with the sprite's
+ * measures.
+ */
+internal class CarImages(
+    val sprite: CarSprite,
+    val day: ImageBitmap,
+    val night: ImageBitmap,
+    val lights: ImageBitmap,
+)
 
 /**
  * The scene's pre-rendered art, made once for the whole process the first time it is needed (or, in
@@ -289,6 +316,93 @@ internal object SceneSprites {
         return PersonImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy).also { frames[i] = it }
     }
 
+    // ---- the street's people and the near car, each made the first time it is drawn
+
+    private val walkers = arrayOfNulls<WalkerImage>(StreetLooks.COUNT * StreetRig.TOTAL_FRAMES)
+    private val dogs = arrayOfNulls<PersonImage>(DogRig.TOTAL_FRAMES)
+    private val cycles = arrayOfNulls<PersonImage>(StreetGait.CRANK_FRAMES)
+    private val cars = arrayOfNulls<CarImages>(StreetLife.CAR_BODIES * StreetLife.CAR_PAINTS)
+    private var streetBytes = 0
+
+    /** Street walker [look]'s frame [frame] ([StreetRig.TOTAL_FRAMES]). */
+    @Synchronized
+    fun walker(look: Int, frame: Int): WalkerImage {
+        val i = look * StreetRig.TOTAL_FRAMES + frame
+        walkers[i]?.let {
+            return it
+        }
+        val w = StreetSprites.walker(look, frame)
+        val sp = w.sprite
+        streetBytes += sp.w * sp.h * 4
+        return WalkerImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy, w.joints).also {
+            walkers[i] = it
+        }
+    }
+
+    /** The dog's frame [frame] ([DogRig.TOTAL_FRAMES]). */
+    @Synchronized
+    fun dog(frame: Int): PersonImage {
+        dogs[frame]?.let {
+            return it
+        }
+        val sp = StreetSprites.dog(frame)
+        streetBytes += sp.w * sp.h * 4
+        return PersonImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy).also { dogs[frame] = it }
+    }
+
+    /** The bicycle and its rider at crank frame [frame]. */
+    @Synchronized
+    fun cycle(frame: Int): PersonImage {
+        cycles[frame]?.let {
+            return it
+        }
+        val sp = StreetSprites.cycle(frame)
+        streetBytes += sp.w * sp.h * 4
+        return PersonImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy).also { cycles[frame] = it }
+    }
+
+    /** The bicycle's wheel, centred, at the walkers' resolution and size. */
+    val cycleWheel: Sprite by lazy {
+        StreetSprites.wheel(
+            StreetGait.WHEEL_R,
+            StreetSprites.PPU * StreetLife.SIZE,
+            10,
+            .55f,
+            .6f,
+            false,
+        )
+    }
+    val cycleWheelImage: ImageBitmap by lazy {
+        image(cycleWheel.pixels, cycleWheel.w, cycleWheel.h)
+    }
+
+    /** The near car's wheel, centred, at the car's resolution. */
+    val carWheel: Sprite by lazy {
+        StreetSprites.wheel(StreetLife.CAR_WHEEL, StreetSprites.CAR_PPU, 0, .9f, 2.2f, true)
+    }
+    val carWheelImage: ImageBitmap by lazy { image(carWheel.pixels, carWheel.w, carWheel.h) }
+
+    /** The near car [body] in [paint]. */
+    @Synchronized
+    fun car(body: Int, paint: Int): CarImages {
+        val i = body * StreetLife.CAR_PAINTS + paint
+        cars[i]?.let {
+            return it
+        }
+        val sp = StreetSprites.car(body, paint)
+        streetBytes += sp.w * sp.h * 4 * 3
+        return CarImages(
+                sp,
+                image(sp.day, sp.w, sp.h),
+                image(sp.night, sp.w, sp.h),
+                image(sp.lights, sp.w, sp.h),
+            )
+            .also { cars[i] = it }
+    }
+
+    /** What the street's people and cars made so far take, in bytes. */
+    @Synchronized fun streetBytes(): Int = streetBytes
+
     private val rooms = HashMap<Int, RoomImages>()
     private var roomBytes = 0
 
@@ -382,7 +496,8 @@ internal object SceneSprites {
             WeatherSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
             peopleBytes() +
-            seasonBytes()
+            seasonBytes() +
+            streetBytes()
 
     private fun image(l: SkyLayer): ImageBitmap = image(l.pixels, l.size, l.size)
 

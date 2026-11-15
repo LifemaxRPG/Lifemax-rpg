@@ -204,6 +204,17 @@ object HabitsScenarios {
     const val NIGHT_SKY_AT = 793.8797f
     const val DAY_SKY_AT = 4985.75f
 
+    /**
+     * A plain walker in the middle of the city street's first building by day (StreetLifeTest
+     * checks).
+     */
+    const val STREET_WALKER_AT = 301.55f
+
+    /**
+     * The near car passing the middle of the city street's first building (StreetLifeTest checks).
+     */
+    const val NEAR_CAR_AT = 283.9f
+
     fun save(name: String): HabitsSave =
         when (name) {
             "empty" -> HabitsSave()

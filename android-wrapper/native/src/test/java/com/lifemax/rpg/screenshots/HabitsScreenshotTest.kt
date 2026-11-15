@@ -271,6 +271,12 @@ class HabitsScreenshotTest {
     /** The day sky's: an airplane with its contrail, a flock of birds, people at work. */
     @Test fun daySkyBirdsAndContrail() = snap("city", ambientAt = HabitsScenarios.DAY_SKY_AT)
 
+    /** The street's life: a walker crossing the front building by day, with their shadow. */
+    @Test fun streetWalkerDay() = snap("city", ambientAt = HabitsScenarios.STREET_WALKER_AT)
+
+    /** The near car passing the front building at night: headlights, the sweep over the facade. */
+    @Test fun nearCarNight() = snap("city", hour = 23, ambientAt = HabitsScenarios.NEAR_CAR_AT)
+
     /** The first moment a blimp is crossing, about half way over (a bright day). */
     private fun blimpMoment(): Float {
         val seed = HabitsScenarios.TODAY.hashCode()

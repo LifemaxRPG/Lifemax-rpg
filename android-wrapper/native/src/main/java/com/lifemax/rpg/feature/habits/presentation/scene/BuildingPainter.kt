@@ -341,6 +341,9 @@ internal class BuildingPainter {
     var light: KeyLight? = null
     var lamps: List<Furniture> = emptyList()
 
+    /** The street's people and car, whose shadows go in the same layer as everything else's. */
+    var streetLife: StreetLifePainter? = null
+
     /**
      * The side of the building being drawn that the light finds, -1 left to 1 right, times the
      * light's strength (0 face on or in the dark): set per building, read by its parts.
@@ -378,6 +381,7 @@ internal class BuildingPainter {
     /** The figures' colour filter while a shadow of one is drawn (null: the figure itself). */
     private var personFilter: ColorFilter? = null
     private val spillFilter = ColorFilter.tint(SpillShade, BlendMode.SrcIn)
+    private val blackFilter = ColorFilter.tint(Color.Black, BlendMode.SrcIn)
 
     /** The light a lobby window throws on the pavement at night, and the visitor's shadow in it. */
     private val spillPath = Path()
@@ -856,7 +860,60 @@ internal class BuildingPainter {
                     }
             }
         }
+        streetLife?.let { with(it) { keyShadows(light, shadeFilter(tint), from, to) } }
         drawIntoCanvas { it.restore() }
+    }
+
+    /**
+     * A piece of furniture's shape at its own place as a flat silhouette in [color], [alpha]
+     * strong, with [blend]: what the street's other lights (a passing car's headlights) throw as
+     * its shadow under their own projection. A lamp is its post, arm, hood and lens; a tree its
+     * sprite under the wind's lean; a bench nothing.
+     */
+    fun DrawScope.caster(
+        f: Furniture,
+        seconds: Float,
+        color: Color,
+        blend: BlendMode,
+        alpha: Float,
+    ) {
+        when (f.kind) {
+            FurnitureKind.LAMP ->
+                translate(f.x, 0f) {
+                    drawPath(lampPole, color, alpha = alpha, blendMode = blend)
+                    drawPath(lampArm, color, alpha = alpha, style = armStroke, blendMode = blend)
+                    drawPath(lampHood, color, alpha = alpha, blendMode = blend)
+                    drawRect(
+                        color,
+                        Offset(6f, -91.8f),
+                        Size(11f, 2.6f),
+                        alpha = alpha,
+                        blendMode = blend,
+                    )
+                }
+            FurnitureKind.TREE -> {
+                val images = SceneSprites.trees[Trees.variant(f.seed)]
+                val sp = images.sprite
+                val lean = if (seconds > 0f) Ambient.sway(f.seed, seconds) else 0f
+                shear.reset()
+                shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
+                val u = 1f / sp.ppu
+                withTransform({
+                    translate(f.x, 0f)
+                    scale(u * -lightFrom, u, Offset.Zero)
+                    transform(shear)
+                }) {
+                    drawImage(
+                        images.looks[0],
+                        Offset(-sp.footX, -sp.footY),
+                        alpha = alpha,
+                        colorFilter = if (color == Color.Black) blackFilter else shadeFilter(color),
+                        blendMode = blend,
+                    )
+                }
+            }
+            FurnitureKind.BENCH -> {}
+        }
     }
 
     /**

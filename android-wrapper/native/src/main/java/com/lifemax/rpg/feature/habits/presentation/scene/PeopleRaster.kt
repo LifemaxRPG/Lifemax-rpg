@@ -32,12 +32,28 @@ internal class Sprite(
 internal object PeopleRaster {
     const val SS = 3
 
-    /** The figure's colours, deep to lit, and the light that rims it. */
-    private val DEEP = intArrayOf(0x1B, 0x10, 0x0B)
-    private val MID = intArrayOf(0x4A, 0x2D, 0x1B)
-    private val RIM = intArrayOf(0xFF, 0xB8, 0x6C)
-    private val TOP = intArrayOf(0x8A, 0x4E, 0x25)
-    private val HALO = intArrayOf(0xFF, 0xD6, 0x94)
+    /**
+     * A figure's colours: [deep] to [mid] by its tone, lit towards [top] from above, [rim] on the
+     * edges that face the light, [halo] bleeding out past the edge, [glow] strong.
+     */
+    class Palette(deep: Int, mid: Int, top: Int, rim: Int, halo: Int, val glow: Float) {
+        val deep = split(deep)
+        val mid = split(mid)
+        val top = split(top)
+        val rim = split(rim)
+        val halo = split(halo)
+
+        private fun split(c: Int) = intArrayOf(c shr 16 and 255, c shr 8 and 255, c and 255)
+    }
+
+    /** The window figures' colours: deep warm browns, back-lit by the room. */
+    val ROOM = Palette(0x1B100B, 0x4A2D1B, 0x8A4E25, 0xFFB86C, 0xFFD694, .42f)
+
+    /**
+     * The street walkers' colours: the same family with more room between the deep and the lit, so
+     * the near side stands off the far side at a hand's width, and less glow (they are outdoors).
+     */
+    val STREET = Palette(0x120B07, 0x6E4631, 0xA86A3C, 0xFFC27A, 0xFFD9A0, .26f)
 
     /** The planes shapes are painted into at [SS] times the sprite's size. */
     class Planes(val w: Int, val h: Int) {
@@ -114,10 +130,11 @@ internal object PeopleRaster {
         oy: Float,
         emit: List<Glow>,
         mirrorRim: Boolean = false,
+        palette: Palette = ROOM,
     ): Sprite {
         val big = Planes(w * SS, h * SS)
         for (s in shapes) fill(big, s.pts, s.tone, ox, oy, ppu)
-        return light(big, w, h, ppu, ox, oy, emit, mirrorRim)
+        return light(big, w, h, ppu, ox, oy, emit, mirrorRim, palette)
     }
 
     private fun light(
@@ -129,7 +146,13 @@ internal object PeopleRaster {
         oy: Float,
         emit: List<Glow>,
         mirrorRim: Boolean,
+        pal: Palette,
     ): Sprite {
+        val DEEP = pal.deep
+        val MID = pal.mid
+        val RIM = pal.rim
+        val TOP = pal.top
+        val HALO = pal.halo
         // down to the sprite's own pixels: coverage and the tone of what covers
         val a = FloatArray(w * h)
         val t = FloatArray(w * h)
@@ -160,7 +183,7 @@ internal object PeopleRaster {
         for (y in 0 until h) for (x in 0 until w) {
             val i = y * w + x
             val cov = a[i]
-            val halo = min(1f, wide[i] * 1.5f) * .42f
+            val halo = min(1f, wide[i] * 1.5f) * pal.glow
             if (cov <= 0.004f && halo <= .01f) continue
             // body colour from its tone, then lit a little more the nearer the top
             val tn = t[i].coerceIn(0f, 1f)
