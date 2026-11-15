@@ -99,6 +99,32 @@ internal class FlareImages(
         }
 }
 
+/** A baked far-city strip ([SkylineStrip]) as an image, with its measures. */
+internal class SkylineImage(val strip: SkylineStrip, val image: ImageBitmap) {
+    val h: Int
+        get() = strip.h
+
+    val ppd: Float
+        get() = strip.ppd
+
+    val topDp: Float
+        get() = strip.topDp
+
+    val footDp: Float
+        get() = strip.footDp
+}
+
+/** A far-city row's images: its body, and its windows (none for the furthest row). */
+internal class SkylineImages(val body: SkylineImage, val windows: SkylineImage?)
+
+/** The near layer's things as images ([ForegroundSprites]). */
+internal class ForegroundImages(
+    val rail: ImageBitmap,
+    val bollards: ImageBitmap,
+    val post: ImageBitmap,
+    val branch: ImageBitmap,
+)
+
 /** A room's two overlays as images: behind the person, and in front of them. */
 internal class RoomImages(val back: ImageBitmap, val front: ImageBitmap)
 
@@ -158,6 +184,28 @@ internal object SceneSprites {
 
     val glow: ImageBitmap by lazy {
         image(RoadSkySprites.glow(), RoadSkySprites.GLOW, RoadSkySprites.GLOW)
+    }
+
+    /** The far city's three rows, furthest first ([SkylineSprites]). */
+    val skyline: Array<SkylineImages> by lazy {
+        Array(SkylineSprites.ROWS.size) {
+            val r = SkylineSprites.generate(it)
+            SkylineImages(
+                SkylineImage(r.body, image(r.body.pixels, r.body.w, r.body.h)),
+                r.windows?.let { w -> SkylineImage(w, image(w.pixels, w.w, w.h)) },
+            )
+        }
+    }
+
+    /** The near layer's things ([ForegroundSprites]). */
+    val foreground: ForegroundImages by lazy {
+        fun img(s: ForegroundSprite) = image(s.pixels, s.w, s.h)
+        ForegroundImages(
+            img(ForegroundSprites.rail()),
+            img(ForegroundSprites.bollards()),
+            img(ForegroundSprites.post()),
+            img(ForegroundSprites.branch()),
+        )
     }
 
     val beam: ImageBitmap by lazy {
@@ -496,6 +544,8 @@ internal object SceneSprites {
         weather
         dusk
 
+        skyline
+        foreground
         flare
         for (h in BuildingSpec.HEIGHTS) {
             val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
@@ -513,6 +563,8 @@ internal object SceneSprites {
             AirSprites.bytes() +
             WeatherSprites.bytes() +
             DuskSprites.bytes() +
+            SkylineSprites.bytes() +
+            ForegroundSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
             peopleBytes() +
             seasonBytes() +
