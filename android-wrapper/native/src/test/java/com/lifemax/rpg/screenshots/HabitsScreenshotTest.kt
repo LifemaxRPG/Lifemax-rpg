@@ -14,6 +14,8 @@ import com.lifemax.rpg.feature.habits.TestClock
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.HabitsLoad
 import com.lifemax.rpg.feature.habits.domain.Pass
+import com.lifemax.rpg.feature.habits.domain.WeatherOverride
+import com.lifemax.rpg.feature.habits.domain.WeatherState
 import com.lifemax.rpg.feature.habits.presentation.HabitsScreen
 import com.lifemax.rpg.feature.habits.presentation.HabitsViewModel
 import java.time.ZoneOffset
@@ -44,7 +46,11 @@ class HabitsScreenshotTest {
             fontScale = fontScale,
         )
 
-    /** Scenario [name] at [hour], after [use], with the street's life held at [ambientAt]. */
+    /**
+     * Scenario [name] at [hour], after [use], with the street's life held at [ambientAt] and, for
+     * the weather pictures, the [weather] forced on the stage (the screenshot date itself is a
+     * clear day: [StreetWeatherTest]).
+     */
     private fun snap(
         name: String,
         hour: Int = 14,
@@ -53,7 +59,26 @@ class HabitsScreenshotTest {
         keyboardDp: Int = 0,
         ambientAt: Float? = null,
         topInsetDp: Float = 64f,
+        weather: WeatherState? = null,
         use: HabitsViewModel.() -> Unit = {},
+    ) {
+        WeatherOverride.forced = weather
+        try {
+            snapForced(name, hour, light, opened, keyboardDp, ambientAt, topInsetDp, use)
+        } finally {
+            WeatherOverride.forced = null
+        }
+    }
+
+    private fun snapForced(
+        name: String,
+        hour: Int,
+        light: Boolean,
+        opened: HabitsLoad?,
+        keyboardDp: Int,
+        ambientAt: Float?,
+        topInsetDp: Float,
+        use: HabitsViewModel.() -> Unit,
     ) {
         val clock = TestClock(ZonedDateTime.of(2026, 3, 2, hour, 0, 0, 0, ZoneOffset.UTC))
         val surroundings =
@@ -302,6 +327,43 @@ class HabitsScreenshotTest {
             newHabit(projection.value!!.stacks[2].id)
             type(0, "pu")
         }
+
+    /**
+     * The weather, forced on a clear date. Rain at night on the busy street: slanted streaks at two
+     * depths, bright in the lamps' cones; the pavement and the road dark and glossy, mirroring the
+     * lamps (long streaks of light down the road), the lit shopfronts, signs and awnings upside
+     * down and fading away from the wall; puddles holding the lamps with rings on them; splashes on
+     * the pavement and the awnings, drips off the awnings' edges; the shadows nearly gone.
+     */
+    @Test
+    fun rainNight() =
+        snap("city", hour = 22, ambientAt = 45f, weather = WeatherState(1f, .85f, 1f, 0f))
+
+    /**
+     * An overcast afternoon: the sky one flat grey, the sun a pale disc through it, the far city
+     * and the horizon's glow flattened, low grey stratus dragging over the far tops; no cloud
+     * shadows and only faint, grey, flat shadows under the trees and lamps.
+     */
+    @Test
+    fun overcastDay() =
+        snap("city", hour = 15, ambientAt = 45f, weather = WeatherState(1f, 0f, 0f, 0f))
+
+    /**
+     * After the rain, by day: the sky clearing, the street still wet (dark slabs mirroring the
+     * trees, the awnings and the shopfronts in soft, broken reflections; puddles holding the sky)
+     * but no rain falling.
+     */
+    @Test
+    fun wetAfterRainDay() =
+        snap("park", hour = 16, ambientAt = 45f, weather = WeatherState(.5f, 0f, .8f, 0f))
+
+    /**
+     * A misty dawn in the park street: a bright band of fog over the far city's feet and the lower
+     * sky, the far rows fading into it, the low sun's shadows faint and soft.
+     */
+    @Test
+    fun mistMorning() =
+        snap("park", hour = 7, ambientAt = 45f, weather = WeatherState(.3f, 0f, 0f, 1f))
 
     /** A habits file from a newer app: the plain message, and nothing to change. */
     @Test

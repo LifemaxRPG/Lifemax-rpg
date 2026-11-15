@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.Building
+import com.lifemax.rpg.feature.habits.domain.CloudKind
 import com.lifemax.rpg.feature.habits.domain.MoonPhase
 import com.lifemax.rpg.feature.habits.domain.Pass
 import com.lifemax.rpg.feature.habits.domain.SkyPhase
@@ -268,7 +269,103 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         drawRect(glowBrush!!, Offset(0f, horizon - 60f * d), Size(w, 60f * d))
         drawRect(sky.ground[0], Offset(0f, horizon), Size(w, size.height - horizon))
         drawLine(sky.line, Offset(0f, horizon), Offset(w, horizon), d)
+        weather(sky, w, horizon, shift, seconds)
         if (Ambient.car(seconds, seed, pass)) car(pass, sky, w, horizon, seconds)
+    }
+
+    // ---- the weather over the sky and the far city
+    // ([com.lifemax.rpg.feature.habits.domain.StreetWeather])
+
+    /** How much of the sky is one cloud, and how thick the morning mist is: set by the stage. */
+    var cloudiness = 0f
+    var mist = 0f
+
+    private var veilKey: Any? = null
+    private var veilH = 0f
+    private var veilBrush: Brush? = null
+    private var veilTint: ColorFilter? = null
+    private var fogTint: ColorFilter? = null
+
+    /**
+     * An overcast sky is one cloud: a grey veil over everything above the horizon (the sun a pale
+     * disc through it, the far city and the horizon's glow flattened), darker overhead and paler at
+     * the horizon, with a few low grey stratus dragging across the far city's tops. A misty morning
+     * is a bright band of fog over the far city's feet and the lower sky, in two layers drifting
+     * apart, which the far rows fade into; the stage lets it clear by mid-morning.
+     */
+    private fun DrawScope.weather(
+        sky: SkyColors,
+        w: Float,
+        horizon: Float,
+        shift: Float,
+        seconds: Float,
+    ) {
+        val cloud = cloudiness
+        val fog = mist
+        if (cloud < .01f && fog < .01f) return
+        val d = density
+        if (veilKey !== sky || veilH != horizon || veilBrush == null) {
+            // by day the veil is the grey of a rain sky; at night it is the sky's own dark
+            val grey = lerp(Color(0xFF9CA3AF), lerp(sky.sky[1], sky.sky[0], .5f), sky.dark * .85f)
+            veilBrush =
+                Brush.verticalGradient(
+                    0f to lerp(grey, Color.Black, .28f),
+                    .55f to grey,
+                    1f to lerp(grey, Color.White, .12f * (1f - sky.dark)),
+                    startY = 0f,
+                    endY = horizon,
+                )
+            veilTint = ColorFilter.tint(lerp(grey, Color.Black, .18f), BlendMode.SrcIn)
+            fogTint = ColorFilter.tint(lerp(sky.sky[2], Color.White, .55f), BlendMode.SrcIn)
+            veilKey = sky
+            veilH = horizon
+        }
+        if (cloud >= .01f) {
+            drawRect(veilBrush!!, Offset.Zero, Size(w, horizon + d), alpha = .82f * cloud)
+            // the low ragged ceiling: stratus over the far city, slow, wide, grey
+            val pool = SceneSprites.clouds
+            val which = CloudSprites.of(CloudKind.STRATUS)
+            val span = w * 1.5f
+            for (i in 0 until 3) {
+                val images = pool[which[i % which.size]]
+                val sp = images.sprite
+                val s = d * 1.5f / CloudSprites.PX_PER_DP
+                val travel = seconds * (3f + i) * d - shift * .02f * d + i * span * .37f
+                val x = ((travel % span) + span) % span - span * .2f
+                val base = horizon - (96f - i * 14f) * d
+                withTransform({
+                    translate(x, base)
+                    scale(if (i == 1) -s else s, s * .8f, Offset.Zero)
+                }) {
+                    val at = Offset(-sp.w / 2f, -sp.h * .86f)
+                    drawImage(images.shade, at, .5f * cloud, colorFilter = veilTint)
+                }
+            }
+        }
+        if (fog >= .01f) {
+            val brush = SceneSprites.weather.fog
+            val px = d / WeatherSprites.PX_PER_UNIT
+            for (layer in 0 until 2) {
+                val s = px * (if (layer == 0) 1.5f else 2.4f)
+                val tall = WeatherSprites.FOG_H * s
+                val drift = seconds * (if (layer == 0) 2.5f else -1.5f) * d - shift * .04f * d
+                val a = fog * (if (layer == 0) .85f else .4f)
+                withTransform({
+                    translate(drift, horizon - tall * .78f)
+                    scale(s, s, Offset.Zero)
+                }) {
+                    // the band, and (the brush holds its last row) on down over the ground's strip
+                    val x0 = -drift / s - WeatherSprites.FOG_W
+                    drawRect(
+                        brush,
+                        Offset(x0, 0f),
+                        Size(w / s - x0 + WeatherSprites.FOG_W, WeatherSprites.FOG_H + 60f * d / s),
+                        alpha = a,
+                        colorFilter = fogTint,
+                    )
+                }
+            }
+        }
     }
 
     private fun DrawScope.brushes(sky: SkyColors, horizon: Float, orb: Offset) {

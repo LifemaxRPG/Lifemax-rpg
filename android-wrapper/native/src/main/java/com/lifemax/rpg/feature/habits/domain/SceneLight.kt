@@ -19,7 +19,9 @@ import kotlin.math.sqrt
  * The key light at one moment. Light travels along ([across], -[down], [out]), a unit vector:
  * [across] sideways (positive to the right: the light stands on the left), [down] downward, [out]
  * out of the facades towards the viewer. [strength] is how hard it is, 1 full sun to 0 none (the
- * hand-over at the horizon). [cool] is 0 for the sun's shade and 1 for the moon's.
+ * hand-over at the horizon). [cool] is 0 for the sun's shade and 1 for the moon's. [flat] is how
+ * much of the sky is one cloud (0 crisp shadows, 1 overcast: the shade grey and shallow, the clouds
+ * throwing none of their own): [StreetWeather.light].
  */
 class KeyLight(
     val across: Float,
@@ -27,6 +29,7 @@ class KeyLight(
     val out: Float,
     val strength: Float,
     val cool: Float,
+    val flat: Float = 0f,
 ) {
     /** How far a shadow leans sideways per unit of the caster's height (positive: to the right). */
     val lean: Float
@@ -95,8 +98,12 @@ object SceneLight {
      */
     fun sunSide(offset: Float): Float = (-offset * 1.6f).coerceIn(-1f, 1f)
 
-    /** How dark a cloud's shadow is at [light]: only the sun's clouds shade the street. */
-    fun cloudShade(light: KeyLight): Float = CLOUD_SHADE * light.strength * (1f - light.cool)
+    /**
+     * How dark a cloud's shadow is at [light]: only the sun's clouds shade the street, and under an
+     * overcast sky (one cloud) none does.
+     */
+    fun cloudShade(light: KeyLight): Float =
+        CLOUD_SHADE * light.strength * (1f - light.cool) * (1f - light.flat)
 
     /** How far a cloud's shadow stands from the cloud, sideways, in dp: it leans with the light. */
     fun cloudDrop(light: KeyLight): Float = light.lean * CLOUD_HEIGHT

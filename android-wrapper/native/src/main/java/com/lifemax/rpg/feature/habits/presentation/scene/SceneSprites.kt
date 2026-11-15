@@ -59,6 +59,22 @@ internal class MoonShadeImage(val step: Int, val layer: SkyLayer, val image: Ima
 /** A tree variant's images, one per [TreeLook]. */
 internal class TreeImages(val sprite: TreeSprite, val looks: Array<ImageBitmap>)
 
+/** A puddle's two layers as images: the pool itself and the bright rim of its far edge. */
+internal class PuddleImages(val fill: ImageBitmap, val rim: ImageBitmap)
+
+/**
+ * The weather's pieces as images ([WeatherSprites]): the rain tile as a repeating brush (scrolled
+ * by translating the canvas under it), the splash frames, the puddles, the mist band as a brush
+ * that repeats sideways and holds its last row downward.
+ */
+internal class WeatherImages(
+    val rain: Brush,
+    val rainImage: ImageBitmap,
+    val splashes: Array<ImageBitmap>,
+    val puddles: Array<PuddleImages>,
+    val fog: Brush,
+)
+
 /** A room's two overlays as images: behind the person, and in front of them. */
 internal class RoomImages(val back: ImageBitmap, val front: ImageBitmap)
 
@@ -200,6 +216,27 @@ internal object SceneSprites {
      */
     @Synchronized fun peopleBytes(): Int = personBytes + roomBytes
 
+    val weather: WeatherImages by lazy {
+        val rain = WeatherSprites.streaks()
+        val rainImage = image(rain.pixels, rain.w, rain.h)
+        val fog = WeatherSprites.fog()
+        WeatherImages(
+            ShaderBrush(ImageShader(rainImage, TileMode.Repeated, TileMode.Repeated)),
+            rainImage,
+            Array(WeatherSprites.SPLASH_FRAMES) {
+                val f = WeatherSprites.splash(it)
+                image(f.pixels, f.w, f.h)
+            },
+            Array(WeatherSprites.PUDDLES) {
+                val (fill, rim) = WeatherSprites.puddle(it)
+                PuddleImages(image(fill.pixels, fill.w, fill.h), image(rim.pixels, rim.w, rim.h))
+            },
+            ShaderBrush(
+                ImageShader(image(fog.pixels, fog.w, fog.h), TileMode.Repeated, TileMode.Clamp)
+            ),
+        )
+    }
+
     /** The film grain, a tile repeated over the picture. */
     val grain: Brush by lazy {
         ShaderBrush(
@@ -225,6 +262,7 @@ internal object SceneSprites {
         plane
         contrail
         blimp
+        weather
         for (h in BuildingSpec.HEIGHTS) {
             val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
             val wh = (h - BuildingSpec.BAND_TOP - BuildingSpec.PLAQUE_BAND - 6f * (rows - 1)) / rows
@@ -239,6 +277,7 @@ internal object SceneSprites {
             TreeSprites.bytes() +
             RoadSkySprites.bytes() +
             AirSprites.bytes() +
+            WeatherSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
             peopleBytes()
 
