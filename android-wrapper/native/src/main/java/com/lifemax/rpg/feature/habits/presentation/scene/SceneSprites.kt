@@ -135,6 +135,9 @@ internal class CarImages(
  * generators are deterministic and know nothing of Compose; this only turns their pixels into
  * images. The pool is about 6 MB: [bytes].
  */
+/** The small life's images: the steam's [puffs] and the [pigeon]'s frames. */
+internal class DuskImages(val puffs: Array<ImageBitmap>, val pigeon: Array<ImageBitmap>)
+
 internal object SceneSprites {
     val clouds: Array<CloudImages> by lazy {
         Array(CloudSprites.SPECS.size) {
@@ -451,6 +454,20 @@ internal object SceneSprites {
         )
     }
 
+    /** The street's small life: the steam's puffs and the pigeon's frames ([DuskSprites]). */
+    val dusk: DuskImages by lazy {
+        DuskImages(
+            Array(DuskSprites.PUFFS) {
+                val p = DuskSprites.puff(it)
+                image(p.pixels, p.w, p.h)
+            },
+            Array(DuskSprites.PIGEON_FRAMES) {
+                val p = DuskSprites.pigeon(it)
+                image(p.pixels, p.w, p.h)
+            },
+        )
+    }
+
     /** The film grain, a tile repeated over the picture. */
     val grain: Brush by lazy {
         ShaderBrush(
@@ -477,6 +494,7 @@ internal object SceneSprites {
         contrail
         blimp
         weather
+        dusk
 
         flare
         for (h in BuildingSpec.HEIGHTS) {
@@ -494,6 +512,7 @@ internal object SceneSprites {
             RoadSkySprites.bytes() +
             AirSprites.bytes() +
             WeatherSprites.bytes() +
+            DuskSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
             peopleBytes() +
             seasonBytes() +
