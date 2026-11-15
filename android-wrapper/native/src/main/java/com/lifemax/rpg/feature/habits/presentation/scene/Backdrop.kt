@@ -25,8 +25,11 @@ import com.lifemax.rpg.feature.habits.domain.skyTone
 import com.lifemax.rpg.feature.habits.domain.starsShown
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Everything behind the street, and alive: the sky of the hour with its twinkling stars (the bright
@@ -35,10 +38,11 @@ import kotlin.math.sin
  * an airplane with a contrail, birds, a blimp; three rows of far city, hazier at their feet, that
  * slide at their own speeds as the street scrolls (depth), with windows of several kinds going on
  * and off at night, antennas, and red warning lights on the tallest; the glow over the horizon; a
- * car on the far road. Every moving thing is a function of [seconds] and the [seed] ([Ambient]); at
- * 0 seconds (motion reduced, or the tab hidden) it is a still picture with nothing passing. Nothing
- * is made per frame: the passes, paths, strokes and brushes are kept here, drawn under transforms
- * (shapes are in dp, brushes in the shape's own units).
+ * car on the far road (a painted vehicle with its lights). Every moving thing is a function of
+ * [seconds] and the [seed] ([Ambient]); at 0 seconds (motion reduced, or the tab hidden) it is a
+ * still picture with nothing passing. Nothing is made per frame: the passes, paths, strokes and
+ * brushes are kept here, drawn under transforms (shapes are in dp, brushes in the shape's own
+ * units).
  */
 internal class Backdrop(private val seed: Int) {
     private val starField: Array<Star> = Ambient.stars(72, seed).toTypedArray()
@@ -334,7 +338,7 @@ internal class Backdrop(private val seed: Int) {
         drawRect(glowBrush!!, Offset(0f, horizon - 60f * d), Size(w, 60f * d))
         drawRect(sky.ground[0], Offset(0f, horizon), Size(w, size.height - horizon))
         drawLine(sky.line, Offset(0f, horizon), Offset(w, horizon), d)
-        if (Ambient.car(seconds, seed, pass)) car(pass, sky, w, horizon)
+        if (Ambient.car(seconds, seed, pass)) car(pass, sky, w, horizon, seconds)
     }
 
     private fun DrawScope.brushes(sky: SkyColors, horizon: Float, orb: Offset) {
@@ -530,25 +534,115 @@ internal class Backdrop(private val seed: Int) {
         }
     }
 
+    // ---- the meteor and the far road: tints for their baked sprites ([RoadSkySprites]), made once
+
+    private val meteorCore = ColorFilter.tint(Color.White, BlendMode.SrcIn)
+    private val meteorCoreFire = ColorFilter.tint(Color(0xFFFFEBC2), BlendMode.SrcIn)
+    private val meteorHalo = ColorFilter.tint(Color(0xFFA9C2FF), BlendMode.SrcIn)
+    private val meteorHaloFire = ColorFilter.tint(Color(0xFF96F0BE), BlendMode.SrcIn)
+    private val meteorHead = ColorFilter.tint(Color(0xFFEAF0FF), BlendMode.SrcIn)
+    private val meteorHeadFire = ColorFilter.tint(Color(0xFFFFD39A), BlendMode.SrcIn)
+    private val sparkColor = Color(0xFFFFF6DC)
+    private val sparkTint = ColorFilter.tint(sparkColor, BlendMode.SrcIn)
+    private val headlightTint = ColorFilter.tint(SceneInk.Headlight, BlendMode.SrcIn)
+    private val taillightTint = ColorFilter.tint(SceneInk.Taillight, BlendMode.SrcIn)
+
+    /** The haze of distance over a vehicle by day: the far row's colour, a little, per sky. */
+    private var hazeKey: Any? = null
+    private var hazeTint: ColorFilter? = null
+
+    /**
+     * A shooting star as a meteor: a bright head with a soft bloom that is brightest in the middle
+     * of its run, a streak behind it (a hot core in a cooler, wider halo, slightly curved, baked in
+     * [RoadSkySprites.streak] and drawn turned along the way it flies), a few sparkles shed behind
+     * the head that drift off the line and fade, and, after the head has gone out, its train
+     * lingering a moment where it went. Each pass has its own length, brightness and slope; rarely
+     * one is a fireball, longer and brighter, with green and orange in it ([Ambient.fireball]).
+     */
     private fun DrawScope.shootingStar(p: Pass, w: Float, top: Float, band: Float, alpha: Float) {
         val d = density
-        val x = p.x * w
-        val y = top + p.y * band
-        val fade = (if (p.t < .15f) p.t / .15f else 1f - (p.t - .15f) / .85f) * alpha
-        // a bright head and a tail in three fading pieces, back along the way it came
-        val dx = -p.dir * 22f * d
-        val dy = -12f * d
-        for (k in 0 until 3) {
-            drawLine(
-                SceneInk.Star,
-                Offset(x + dx * k, y + dy * k),
-                Offset(x + dx * (k + 1), y + dy * (k + 1)),
-                (1.6f - k * .4f) * d,
-                cap = StrokeCap.Round,
-                alpha = fade * (1f - k * .3f),
-            )
+        val t = p.t
+        val k = p.pass
+        val hx = p.x * w
+        val hy = top + p.y * band
+        // the head's way across the sky, in px for a whole pass
+        val vx = p.dir * Ambient.METEOR_RUN * w
+        val vy = Ambient.meteorSlope(seed, k) * band
+        val angle = (atan2(vy, vx) * 180f / PI).toFloat()
+        val size = Ambient.meteorSize(seed, k)
+        val fire = Ambient.fireball(seed, k)
+        val bright = Ambient.meteorBright(seed, k) * alpha
+        val train = Ambient.meteorTrain(t) * bright
+        val head = Ambient.meteorHead(t) * bright
+        val len = (40f + 36f * size) * d * Ambient.meteorReach(t)
+        val streak = SceneSprites.streak
+        val sp = streak.sprite
+        val g = RoadSkySprites.GLOW.toFloat()
+        val glow = SceneSprites.glow
+        if (train > 0f) {
+            // along the streak, px per sprite px; across, mirrored for a meteor flying left so the
+            // curve still hangs down
+            val sx = len / (sp.headX - 10f)
+            val sy =
+                d * (.55f + .45f * size) / RoadSkySprites.PX_PER_DP * (if (p.dir < 0f) -1f else 1f)
+            withTransform({
+                translate(hx, hy)
+                rotate(angle, Offset.Zero)
+                scale(sx, sy, Offset.Zero)
+            }) {
+                val at = Offset(-sp.headX, -sp.h * .42f)
+                drawImage(
+                    streak.halo,
+                    at,
+                    train * .95f,
+                    colorFilter = if (fire) meteorHaloFire else meteorHalo,
+                )
+                drawImage(
+                    streak.core,
+                    at,
+                    train,
+                    colorFilter = if (fire) meteorCoreFire else meteorCore,
+                )
+            }
         }
-        drawCircle(SceneInk.Strobe, 1.6f * d, Offset(x, y), fade)
+        if (head > 0f) {
+            val r = (5f + 3.5f * size) * d
+            val tint = if (fire) meteorHeadFire else meteorHead
+            withTransform({
+                translate(hx, hy)
+                scale(2f * r / g, 2f * r / g, Offset.Zero)
+            }) {
+                drawImage(glow, Offset(-g / 2f, -g / 2f), head * .85f, colorFilter = tint)
+            }
+            withTransform({
+                translate(hx, hy)
+                scale(.9f * r / g, .9f * r / g, Offset.Zero)
+            }) {
+                drawImage(glow, Offset(-g / 2f, -g / 2f), head, colorFilter = tint)
+            }
+            drawCircle(SceneInk.Strobe, (1f + .45f * size) * d, Offset(hx, hy), head)
+        }
+        // the sparkles: each shed where the head was when it was born, drifting off the line
+        val tc = min(t, Ambient.METEOR_HEAD_END)
+        val vl = sqrt(vx * vx + vy * vy)
+        val nx = -vy / vl
+        val ny = vx / vl
+        for (i in 0 until Ambient.SPARKS) {
+            val b = Ambient.sparkBirth(seed, k, i)
+            val a = Ambient.sparkAlpha(b, t) * bright
+            if (a <= 0f) continue
+            val age = (t - b) / Ambient.SPARK_LIFE
+            val off = Ambient.sparkSide(seed, k, i) * (1.5f + 5f * age) * d
+            val sx = hx - vx * (tc - b) + nx * off
+            val sy = hy - vy * (tc - b) + ny * off + age * age * 7f * d
+            withTransform({
+                translate(sx, sy)
+                scale(4.5f * d / g, 4.5f * d / g, Offset.Zero)
+            }) {
+                drawImage(glow, Offset(-g / 2f, -g / 2f), a * .55f, colorFilter = sparkTint)
+            }
+            drawCircle(sparkColor, (.3f + .4f * (1f - age)) * d, Offset(sx, sy), a)
+        }
     }
 
     /**
@@ -848,15 +942,125 @@ internal class Backdrop(private val seed: Int) {
         }
     }
 
-    private fun DrawScope.car(p: Pass, sky: SkyColors, w: Float, horizon: Float) {
+    /**
+     * A vehicle on the far road (one of the painted pool, [RoadSkySprites.VEHICLES], a different
+     * one each pass, mirrored for the other way; now and then a second follows it): by day its own
+     * colour under a little of the horizon's haze; at dusk and night a dark body, a headlight (a
+     * hot core in a soft bloom) throwing a beam forward and down the road and a pool of light on
+     * it, a red tail-light with its glow and a faint red on the road. It rides with a very small
+     * bob.
+     */
+    private fun DrawScope.car(p: Pass, sky: SkyColors, w: Float, horizon: Float, seconds: Float) {
         val d = density
-        val x = p.x * w
-        val y = horizon + 3f * d
-        if (sky.dark > .3f) {
-            val front = x + p.dir * 3f * d
-            drawCircle(SceneInk.Headlight, 4f * d, Offset(front, y), .2f)
-            drawCircle(SceneInk.Headlight, 1.2f * d, Offset(front, y))
-            drawCircle(SceneInk.Taillight, 1f * d, Offset(x - p.dir * 3f * d, y))
-        } else drawRect(sky.far[2], Offset(x - 4f * d, y - 2f * d), Size(8f * d, 3f * d))
+        if (hazeKey !== sky) {
+            hazeTint = ColorFilter.tint(sky.far[2].copy(alpha = .35f), BlendMode.SrcAtop)
+            hazeKey = sky
+        }
+        val pool = SceneSprites.vehicles
+        val dark = sky.dark
+        val lights = Px.smooth(.3f, .8f, dark)
+        val roadY = horizon + 2.6f * d
+        val follow = Ambient.carFollow(seed, p.pass)
+        val s = d / RoadSkySprites.CAR_PX_PER_DP
+        val g = RoadSkySprites.GLOW.toFloat()
+        val glow = SceneSprites.glow
+        for (k in 0 until 2) {
+            if (k == 1 && follow <= 0f) break
+            val v = pool[Ambient.vehicle(seed, p.pass, k, pool.size)]
+            val sp = v.sprite
+            val x = (p.x - p.dir * follow * k) * w
+            val bob = if (seconds > 0f) sin(seconds * 9f + k * 2.3f + p.pass) * .14f * d else 0f
+            withTransform({
+                translate(x, roadY + bob)
+                scale(s * p.dir, s, Offset.Zero)
+            }) {
+                // in the sprite's pixels, the origin under the vehicle's middle on the road
+                val ax = -sp.w / 2f
+                val ay = -sp.roadY
+                val fx = ax + sp.frontX
+                val bx = ax + sp.backX
+                val ly = ay + sp.lightY
+                if (lights > 0f) {
+                    // the beam thrown forward and a little down the road, and its pool on it
+                    val bs = 124f / RoadSkySprites.BEAM_W
+                    withTransform({
+                        translate(fx - 1f, ly + 1f)
+                        rotate(5f, Offset.Zero)
+                        scale(bs, bs * .75f, Offset.Zero)
+                    }) {
+                        drawImage(
+                            SceneSprites.beam,
+                            Offset(-6f, -RoadSkySprites.BEAM_H / 2f),
+                            .62f * lights,
+                            colorFilter = headlightTint,
+                        )
+                    }
+                    withTransform({
+                        translate(fx + 24f, 1.5f)
+                        scale(64f / g, 9f / g, Offset.Zero)
+                    }) {
+                        drawImage(
+                            glow,
+                            Offset(-g / 2f, -g / 2f),
+                            .38f * lights,
+                            colorFilter = headlightTint,
+                        )
+                    }
+                    // the tail-light's red on the road
+                    withTransform({
+                        translate(bx + 2f, 1.5f)
+                        scale(40f / g, 7f / g, Offset.Zero)
+                    }) {
+                        drawImage(
+                            glow,
+                            Offset(-g / 2f, -g / 2f),
+                            .3f * lights,
+                            colorFilter = taillightTint,
+                        )
+                    }
+                }
+                val at = Offset(ax, ay)
+                if (dark < 1f) drawImage(v.day, at, colorFilter = hazeTint)
+                if (dark > 0f) drawImage(v.night, at, dark)
+                if (lights > 0f) {
+                    // the headlight: a wide soft bloom and a hot core; the tail-light small and red
+                    withTransform({
+                        translate(fx, ly)
+                        scale(42f / g, 42f / g, Offset.Zero)
+                    }) {
+                        drawImage(
+                            glow,
+                            Offset(-g / 2f, -g / 2f),
+                            .8f * lights,
+                            colorFilter = headlightTint,
+                        )
+                    }
+                    withTransform({
+                        translate(fx, ly)
+                        scale(14f / g, 14f / g, Offset.Zero)
+                    }) {
+                        drawImage(
+                            glow,
+                            Offset(-g / 2f, -g / 2f),
+                            lights,
+                            colorFilter = headlightTint,
+                        )
+                    }
+                    drawCircle(SceneInk.Strobe, 1.5f, Offset(fx, ly), lights)
+                    withTransform({
+                        translate(bx, ly)
+                        scale(22f / g, 22f / g, Offset.Zero)
+                    }) {
+                        drawImage(
+                            glow,
+                            Offset(-g / 2f, -g / 2f),
+                            .7f * lights,
+                            colorFilter = taillightTint,
+                        )
+                    }
+                    drawCircle(SceneInk.Taillight, 1.4f, Offset(bx, ly), lights)
+                }
+            }
+        }
     }
 }

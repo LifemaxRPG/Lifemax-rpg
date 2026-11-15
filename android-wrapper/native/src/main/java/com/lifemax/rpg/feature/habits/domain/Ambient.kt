@@ -2,7 +2,9 @@ package com.lifemax.rpg.feature.habits.domain
 
 import kotlin.math.PI
 import kotlin.math.floor
+import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /*
  * The street's own life, with no drawing in it: what the sky and the far city do at any moment. Everything is
@@ -81,7 +83,7 @@ object Ambient {
     const val PEOPLE_FPS = 12f
 
     const val SHOOT_PERIOD = 37f
-    const val SHOOT_SECONDS = 1.1f
+    const val SHOOT_SECONDS = 1.6f
     const val PLANE_PERIOD = 110f
     const val PLANE_SECONDS = 34f
     const val BIRD_PERIOD = 70f
@@ -201,13 +203,97 @@ object Ambient {
     private fun across(t: Float, dir: Float): Float =
         if (dir > 0f) -.12f + 1.24f * t else 1.12f - 1.24f * t
 
-    /** A shooting star, now and then on a clear night: a short streak, high in the sky. */
+    /**
+     * A shooting star, now and then on a clear night: a meteor high in the sky. [Pass.x] and
+     * [Pass.y] are its head, which burns for the first [METEOR_HEAD_END] of the pass and then goes
+     * out where it is, its train fading behind it for the rest ([meteorHead], [meteorTrain]).
+     */
     fun shootingStar(seconds: Float, seed: Int, out: Pass): Boolean {
         if (!pass(seconds, seed, 20, SHOOT_PERIOD, SHOOT_SECONDS, .5f, out)) return false
         val k = out.pass
-        out.x = .18f + .64f * hash(seed, k, 23) + out.dir * .26f * out.t
-        out.y = .04f + .3f * hash(seed, k, 24) + .14f * out.t
+        val m = min(out.t, METEOR_HEAD_END)
+        out.x = .18f + .64f * hash(seed, k, 23) + out.dir * METEOR_RUN * m
+        out.y = .04f + .3f * hash(seed, k, 24) + meteorSlope(seed, k) * m
         return true
+    }
+
+    // ---- the meteor: a pass is its head burning, then its train fading where the head went out
+
+    /** The share of a shooting star's pass its head burns for. */
+    const val METEOR_HEAD_END = .7f
+
+    /** How far across the view (a share of the width) a meteor's head runs in a whole pass. */
+    const val METEOR_RUN = .26f
+
+    /** The sparkles a meteor sheds in a pass. */
+    const val SPARKS = 7
+
+    /** How long a sparkle lives, as a share of the pass. */
+    const val SPARK_LIFE = .3f
+
+    /**
+     * How far down the sky's band a meteor's head drops in a whole pass: a steeper one or a
+     * flatter.
+     */
+    fun meteorSlope(seed: Int, pass: Int): Float = .08f + .14f * hash(seed, pass, 25)
+
+    /**
+     * How bright a meteor's head is at [t] of its pass, 0 to 1: it flares up quickly, is brightest
+     * in the middle of its run and is gone by [METEOR_HEAD_END].
+     */
+    fun meteorHead(t: Float): Float {
+        val u = t / METEOR_HEAD_END
+        if (u <= 0f || u >= 1f) return 0f
+        return sqrt(4f * u * (1f - u))
+    }
+
+    /**
+     * How strong the train (the streak behind the head) is at [t], 0 to 1: it is drawn out over the
+     * first part of the run, holds while the head burns and fades after the head is gone, to
+     * nothing by the end of the pass.
+     */
+    fun meteorTrain(t: Float): Float = smooth(0f, .25f, t) * (1f - smooth(.55f, 1f, t))
+
+    /** How much of a meteor's full streak has been drawn out at [t], 0 to 1. */
+    fun meteorReach(t: Float): Float = smooth(0f, .45f, t)
+
+    /**
+     * Whether the meteor of [pass] is a fireball: rarely, a bigger, brighter one with colour in it.
+     */
+    fun fireball(seed: Int, pass: Int): Boolean = hash(seed, pass, 26) < .12f
+
+    /** How long the meteor of [pass] is, 1 for the usual one: a fireball is much longer. */
+    fun meteorSize(seed: Int, pass: Int): Float =
+        (.8f + .5f * hash(seed, pass, 27)) * (if (fireball(seed, pass)) 1.45f else 1f)
+
+    /** How bright the meteor of [pass] is, up to 1: a fireball always is. */
+    fun meteorBright(seed: Int, pass: Int): Float =
+        if (fireball(seed, pass)) 1f else .7f + .3f * hash(seed, pass, 28)
+
+    /**
+     * When sparkle [i] of the meteor of [pass] is shed, as a share of the pass: while the head
+     * still burns, so every one is shed where the head has been.
+     */
+    fun sparkBirth(seed: Int, pass: Int, i: Int): Float =
+        .06f + (METEOR_HEAD_END - SPARK_LIFE - .06f) * hash(seed, pass, 90 + i)
+
+    /** Which way sparkle [i] drifts off the streak, -1 to 1. */
+    fun sparkSide(seed: Int, pass: Int, i: Int): Float = hash(seed, pass, 110 + i) * 2f - 1f
+
+    /**
+     * How bright a sparkle shed at [birth] is at [t], 0 to 1: it winks on and fades out over
+     * [SPARK_LIFE] of the pass.
+     */
+    fun sparkAlpha(birth: Float, t: Float): Float {
+        val age = (t - birth) / SPARK_LIFE
+        if (age <= 0f || age >= 1f) return 0f
+        val fade = 1f - age
+        return smooth(0f, .1f, age) * fade * fade
+    }
+
+    private fun smooth(e0: Float, e1: Float, x: Float): Float {
+        val t = ((x - e0) / (e1 - e0)).coerceIn(0f, 1f)
+        return t * t * (3f - 2f * t)
     }
 
     /** An airplane crossing slowly, climbing a little: about every other minute. */
@@ -245,13 +331,27 @@ object Ambient {
         return true
     }
 
-    /** A car's lights along the far road, going one way or the other. */
+    /** A car along the far road, going one way or the other. */
     fun car(seconds: Float, seed: Int, out: Pass): Boolean {
         if (!pass(seconds, seed, 60, CAR_PERIOD, CAR_SECONDS, .8f, out)) return false
         out.x = across(out.t, out.dir)
         out.y = 1f
         return true
     }
+
+    /**
+     * Which of [count] vehicles the [k]th car of [pass] is (the first, then the one following it):
+     * a different one each pass.
+     */
+    fun vehicle(seed: Int, pass: Int, k: Int, count: Int): Int =
+        (hash(seed, pass, 61 + k) * count).toInt().coerceIn(0, count - 1)
+
+    /**
+     * How far behind the car of [pass] a second one follows, as a share of the width, or 0 when it
+     * drives alone (most do).
+     */
+    fun carFollow(seed: Int, pass: Int): Float =
+        if (hash(seed, pass, 64) < .3f) .045f + .035f * hash(seed, pass, 65) else 0f
 
     /**
      * Where cloud [i] (of a few) is across the view at [seconds]: they drift right at their own

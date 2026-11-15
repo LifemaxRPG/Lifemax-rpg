@@ -21,6 +21,16 @@ internal class CloudImages(
     val lit: ImageBitmap,
 )
 
+/** A far-road vehicle's two pictures as images, by day and by night. */
+internal class VehicleImages(
+    val sprite: VehicleSprite,
+    val day: ImageBitmap,
+    val night: ImageBitmap,
+)
+
+/** The meteor's streak as images: its hot core and its wider halo. */
+internal class StreakImages(val sprite: StreakSprite, val core: ImageBitmap, val halo: ImageBitmap)
+
 /** A tree variant's images, one per [TreeLook]. */
 internal class TreeImages(val sprite: TreeSprite, val looks: Array<ImageBitmap>)
 
@@ -45,6 +55,29 @@ internal object SceneSprites {
             val s = CloudSprites.generate(it)
             CloudImages(s, image(s.shade, s.w, s.h), image(s.mid, s.w, s.h), image(s.lit, s.w, s.h))
         }
+    }
+
+    /**
+     * The far road's vehicles, the lights they throw and the meteor's streak ([RoadSkySprites]).
+     */
+    val vehicles: Array<VehicleImages> by lazy {
+        Array(RoadSkySprites.VEHICLES.size) {
+            val s = RoadSkySprites.generate(it)
+            VehicleImages(s, image(s.day, s.w, s.h), image(s.night, s.w, s.h))
+        }
+    }
+
+    val glow: ImageBitmap by lazy {
+        image(RoadSkySprites.glow(), RoadSkySprites.GLOW, RoadSkySprites.GLOW)
+    }
+
+    val beam: ImageBitmap by lazy {
+        image(RoadSkySprites.beam(), RoadSkySprites.BEAM_W, RoadSkySprites.BEAM_H)
+    }
+
+    val streak: StreakImages by lazy {
+        val s = RoadSkySprites.streak()
+        StreakImages(s, image(s.core, s.w, s.h), image(s.halo, s.w, s.h))
     }
 
     val trees: Array<TreeImages> by lazy {
@@ -119,6 +152,10 @@ internal object SceneSprites {
     fun warm() {
         clouds
         trees
+        vehicles
+        glow
+        beam
+        streak
         grain
         for (h in BuildingSpec.HEIGHTS) {
             val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
@@ -129,7 +166,11 @@ internal object SceneSprites {
 
     /** What the pools hold, in bytes. */
     fun bytes(): Int =
-        CloudSprites.bytes() + TreeSprites.bytes() + Grain.SIZE * Grain.SIZE * 4 + peopleBytes()
+        CloudSprites.bytes() +
+            TreeSprites.bytes() +
+            RoadSkySprites.bytes() +
+            Grain.SIZE * Grain.SIZE * 4 +
+            peopleBytes()
 
     private fun image(pixels: IntArray, w: Int, h: Int): ImageBitmap =
         Bitmap.createBitmap(pixels, w, h, Bitmap.Config.ARGB_8888).asImageBitmap()
