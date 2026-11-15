@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.habits
 
 import com.lifemax.rpg.feature.habits.domain.Ambient
+import com.lifemax.rpg.feature.habits.domain.Flight
 import com.lifemax.rpg.feature.habits.domain.Pass
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
@@ -100,22 +101,21 @@ class AmbientTest {
         val p = Pass()
         assertTrue(share { Ambient.birds(it, seed, p) } in .05f..0.3f)
         // the leader in front, the others on alternate arms behind it
-        assertEquals(0f, Ambient.birdX(0, 1f), 0f)
-        for (i in 1 until Ambient.FLOCK) {
-            assertTrue(Ambient.birdX(i, 1f) < 0f)
-            assertTrue(Ambient.birdX(i, -1f) > 0f)
-        }
-        assertTrue(Ambient.birdY(1) * Ambient.birdY(2) < 0f || Ambient.birdY(1) != Ambient.birdY(2))
+        assertEquals(0f, Flight.behind(0), 0f)
+        for (i in 1 until Ambient.FLOCK) assertTrue(Flight.behind(i) > 0f)
+        assertTrue(Flight.outboard(1) * Flight.outboard(2) < 0f)
         // each beats its wings on its own time, between down and up
         val now = (0 until Ambient.FLOCK).map { Ambient.wing(it, 3f) }
         assertTrue(now.all { it in -1f..1f })
         assertTrue(now.toSet().size == Ambient.FLOCK)
-        // on a gentle arc: never more than a fifth of the sky up or down from where it starts
+        // it flies in at a height of its own in the sky's band, the same all through the pass
         var t = 1f
         while (!Ambient.birds(t, seed, p)) t += .5f
         val y0 = p.y
+        assertTrue(y0 in .2f..0.5f)
         while (Ambient.birds(t, seed, p)) {
-            assertTrue(abs(p.y - y0) < .2f)
+            assertEquals(y0, p.y, 0f)
+            assertTrue(p.x in -.3f..1.3f)
             t += .5f
         }
     }

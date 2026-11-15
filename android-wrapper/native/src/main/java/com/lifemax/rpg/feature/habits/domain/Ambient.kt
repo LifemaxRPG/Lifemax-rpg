@@ -304,21 +304,26 @@ object Ambient {
         return true
     }
 
-    /** A flock of birds on a gentle arc: by day and at dusk. */
+    private val flockScratch = FlockPose()
+
+    /**
+     * A flock of birds, by day and at dusk, on the [Flight] of its pass ([Flight.variant]): in at
+     * an edge and away into the distance, or the other way round. [Pass.x] is the flock's centre,
+     * [Pass.y] the share of the sky's band it starts at (it sinks from there as it recedes),
+     * [Pass.dir] the way it heads across the screen as it comes in.
+     */
     fun birds(seconds: Float, seed: Int, out: Pass): Boolean {
         if (!pass(seconds, seed, 40, BIRD_PERIOD, BIRD_SECONDS, .6f, out)) return false
-        out.x = across(out.t, out.dir)
-        out.y = .42f + .28f * hash(seed, out.pass, 43) - .1f * sin(out.t * PI.toFloat())
+        val variant = Flight.variant(seed, out.pass)
+        Flight.flock(out.t, variant, flockScratch)
+        out.x = flockScratch.x
+        out.y = birdsHeight(seed, out.pass)
+        out.dir = if (Flight.towards(variant)) -Flight.side(variant) else Flight.side(variant)
         return true
     }
 
-    /**
-     * Bird [i] of a flock flying [dir]: how far behind the leader (in dp, across and down) it flies
-     * in the V. The leader is bird 0; the others take turns on either arm.
-     */
-    fun birdX(i: Int, dir: Float): Float = -dir * ((i + 1) / 2) * 13f
-
-    fun birdY(i: Int): Float = ((i + 1) / 2) * 7f * if (i % 2 == 0) 1f else -.15f
+    /** The share of the sky's band (under the heading) the flock of [pass] flies in at. */
+    fun birdsHeight(seed: Int, pass: Int): Float = .26f + .16f * hash(seed, pass, 43)
 
     /** How far bird [i]'s wings are raised at [seconds], -1 down to 1 up: each its own beat. */
     fun wing(i: Int, seconds: Float): Float = sin(seconds * birdRate(i) + i * 1.7f)
@@ -370,12 +375,6 @@ object Ambient {
     fun birdBob(i: Int, seconds: Float): Float =
         .7f * sin(seconds * (1.1f + .25f * hash(i, 0, 97)) + i * 2.1f) +
             .3f * sin(seconds * 2.7f + i * .9f)
-
-    /** How far the whole V has drifted across at [seconds], in dp: it never flies a ruled line. */
-    fun flockDriftX(seconds: Float): Float = 3.5f * sin(seconds * .37f) + 1.2f * sin(seconds * .91f)
-
-    fun flockDriftY(seconds: Float): Float =
-        2.6f * sin(seconds * .23f + 1f) + .9f * sin(seconds * .67f)
 
     /** A blimp drifting across on a bright day, rarely. */
     fun blimp(seconds: Float, seed: Int, out: Pass): Boolean {

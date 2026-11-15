@@ -217,11 +217,6 @@ class AirSpritesTest {
         assertTrue((0 until Ambient.FLOCK).map { Ambient.birdTier(it) }.toSet().size == 3)
         // the far ones beat slower
         assertTrue(Ambient.birdRate(3) < Ambient.birdRate(0))
-        for (t in 0 until 600) {
-            val s = t * .1f
-            assertTrue(abs(Ambient.flockDriftX(s)) < 5f)
-            assertTrue(abs(Ambient.flockDriftY(s)) < 4f)
-        }
     }
 
     @Test
