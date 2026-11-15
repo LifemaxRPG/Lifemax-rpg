@@ -329,6 +329,19 @@ shadows swing as the car passes), `car` (pool, beam, tail glow, turning wheels, 
 people), after the furniture (car). Screenshot tests `streetWalkerDay` (STREET_WALKER_AT) and `nearCarNight` (NEAR_CAR_AT).
 Tuned from contact sheets only: the wash strength, shadow depth (.6 × dark) and rim (.7) may want a nudge on the phone.
 
+## As built: perspective, the side faces follow the camera (NativeApi 186)
+
+`domain/Perspective.kt` (`PerspectiveTest`): `side(u, k)` = `((.5 − u)·2k).coerceIn(−1, 1)` for a building at screen fraction u
+(positive: the right face shows, negative: the left, 0 at the middle, continuous through it), `width(side)` = DX·ease(|side|),
+`shift(side)` the signed width the drawing uses, `left/right(shift)` the drawn footprint; `K_FOCUS` 1.2, `K_STREET` .5 blended
+by zoom. `BuildingArt` now bakes a UNIT side face hinged on x 0 per floor and for the lobby; `BuildingPainter.onSide {}`
+scales it to the live width and mirrors it for a left face; `roofFace`'s back edge, the cornice slab, the selection outline,
+the shadow block, the ground AO strip, `lampLight`'s clip, the wet reflections' lobby block and street life's sweep clips all
+take `shiftAt(cx)`; `sideLight` flips its lit side for a left face; `BuildingLayout.hit(x, at, shift)` tests the shown side;
+`HabitsStage` sets `painter.viewX`/`perspectiveK` and uses the shift for cloud-shade rects, `sunClear` and taps. The park
+keeps its lot position. Screenshot tests `perspectiveStreetLeft/Right/City`; every Habits reference changes (the front
+building near the middle now shows a thin side).
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The

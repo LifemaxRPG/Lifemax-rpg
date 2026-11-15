@@ -252,22 +252,25 @@ data class Hit(val kind: HitKind, val id: String)
 /**
  * What stands at ([x], [at]) of this building, in its own units: the part whose front, roof or side
  * face holds the point, the highest one first (a part hides the roof face of the one under it),
- * else a tree in its park.
+ * else a tree in its park. [shift] is where the back edge is drawn against the front
+ * ([Perspective.shift]): the right side face when positive, the left when negative, none at 0.
  */
-fun BuildingLayout.hit(x: Float, at: Float): Hit? {
+fun BuildingLayout.hit(x: Float, at: Float, shift: Float = BuildingSpec.DX): Hit? {
     val b = BuildingSpec
+    val depth = abs(shift)
     for (p in pieces.asReversed()) {
         val half = p.width / 2f
         val front = abs(x) <= half && at >= p.bottom && at <= p.top
-        // the roof face leans right as it goes up; the side face rises as it goes right
+        // the roof face leans with the shown side as it goes up; the side face rises as it goes out
         val up = at - p.top
         val onTop =
-            up > 0f && up <= b.DY && (x - up * b.DX / b.DY).let { it >= -half && it <= half }
-        val right = x - half
+            up > 0f && up <= b.DY && (x - up * shift / b.DY).let { it >= -half && it <= half }
+        val out = if (shift < 0f) -half - x else x - half
         val onSide =
-            right > 0f &&
-                right <= b.DX &&
-                (at - right * b.DY / b.DX).let { it >= p.bottom && it <= p.top }
+            depth > 0f &&
+                out > 0f &&
+                out <= depth &&
+                (at - out * b.DY / depth).let { it >= p.bottom && it <= p.top }
         if (front || onTop || onSide)
             return Hit(
                 when (p.kind) {

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -41,6 +42,7 @@ import com.lifemax.rpg.feature.habits.domain.KeyLight
 import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.PeopleLod
+import com.lifemax.rpg.feature.habits.domain.Perspective
 import com.lifemax.rpg.feature.habits.domain.PieceKind
 import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.RoomKind
@@ -423,6 +425,26 @@ internal class BuildingPainter {
     /** Where along the street the building being drawn stands (its front's middle). */
     private var buildingX = 0f
 
+    /**
+     * Where along the street the middle of the view stands, and how fast a building's side face
+     * comes round with its place across the view ([Perspective.k], gentler zoomed out): which side
+     * each building shows, as a camera in the street would see it. Set by the stage each frame; the
+     * view's width is [lightSpan].
+     */
+    var viewX = 0f
+    var perspectiveK = Perspective.K_FOCUS
+
+    /**
+     * The side face the building being drawn shows ([Perspective.shift]): how far its back edge is
+     * drawn to the side of the front, positive for the right face, negative for the left. Set per
+     * building, read by its parts.
+     */
+    private var sideShift = B.DX
+
+    /** The shown side's shift for a building at [x] along the street. */
+    internal fun shiftAt(x: Float): Float =
+        Perspective.shift(Perspective.sideAt(x, viewX, lightSpan, perspectiveK))
+
     /** A facade's light and shade across it, unit brushes drawn under a transform. */
     private val litWash =
         Brush.horizontalGradient(
@@ -450,6 +472,40 @@ internal class BuildingPainter {
 
     /** The figures' colour filter while a shadow of one is drawn (null: the figure itself). */
     private var personFilter: ColorFilter? = null
+
+    /**
+     * How much of the day's flat look the figures in the windows take (1 by day, 0 at night): set
+     * per building from the sky. [dayFilter] flattens a figure to one cool dark tone and cuts the
+     * faint glow round it (alpha below about .4 goes to nothing).
+     */
+    private var dayMix = 0f
+    private val dayFilter =
+        ColorFilter.colorMatrix(
+            ColorMatrix(
+                floatArrayOf(
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    40f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    33f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    40f,
+                    0f,
+                    0f,
+                    0f,
+                    1.7f,
+                    -178f,
+                )
+            )
+        )
     private val spillFilter = ColorFilter.tint(SpillShade, BlendMode.SrcIn)
     private val blackFilter = ColorFilter.tint(Color.Black, BlendMode.SrcIn)
 
@@ -916,11 +972,14 @@ internal class BuildingPainter {
             val spread = lean * h + 80f
             if (left + l.lot + spread < from || left - spread > to) continue
             val cx = street.centers[i]
+            // the block of shade is the front plus whichever side shows
+            val s = shiftAt(cx)
+            val l0 = Perspective.left(s)
             withTransform({
                 translate(cx, 0f)
                 transform(fallMatrix(light, cx))
             }) {
-                drawRect(tint, Offset(-half, -h), Size(B.W + B.DX, h))
+                drawRect(tint, Offset(l0, -h), Size(Perspective.right(s) - l0, h))
             }
             for (t in l.trees) treeSilhouette(cx + t.x, t.id.hashCode(), seconds, .8f, tint, light)
         }
@@ -1221,17 +1280,20 @@ internal class BuildingPainter {
         val lobbyTop = -B.LOBBY_H
         for (i in layouts.indices) {
             val cx = street.centers[i]
-            if (cx + half + B.DX + B.PARK_W < from || cx - half > to) continue
+            if (cx + half + B.DX + B.PARK_W < from || cx - half - B.DX > to) continue
             val art = arts[i]
+            val s = shiftAt(cx)
+            val l0 = Perspective.left(s)
             withTransform({
                 translate(cx + ox, 0f)
                 scale(1f, -SQUASH, Offset.Zero)
             }) {
-                // the lobby's dark wall, its lit shopfront, the door, the awning, the sign
+                // the lobby's dark wall (with its shown side), its lit shopfront, the door, the
+                // awning, the sign
                 drawRect(
                     SceneInk.LobbyWallLow,
-                    Offset(-half, lobbyTop),
-                    Size(B.W + B.DX, B.LOBBY_H),
+                    Offset(l0, lobbyTop),
+                    Size(Perspective.right(s) - l0, B.LOBBY_H),
                     alpha = a * .85f,
                 )
                 val w0 = lobbyTop + 35f
@@ -1707,12 +1769,16 @@ internal class BuildingPainter {
         // which side of it the light finds, and how hard (the moon lights a little, the sun a lot)
         val key = light
         buildingX = x
+        dayMix = (1f - sky.dark * 1.6f).coerceIn(0f, 1f)
         sunSide =
             if (key == null) 0f
             else SceneLight.sunSide(offset(x)) * key.strength * (1f - .6f * key.cool)
+        // and which of its side faces the camera sees from where it stands in the view
+        sideShift = shiftAt(x)
         park(art, selected, accent, seconds, sky)
-        // the building's shadow on the pavement
-        drawRect(aoGround, Offset(-half + 1f, 0f), Size(B.W + B.DX + 6f, 8f))
+        // the building's shadow on the pavement, under its front and its shown side
+        val l0 = Perspective.left(sideShift)
+        drawRect(aoGround, Offset(l0 + 1f, 0f), Size(Perspective.right(sideShift) - l0 + 6f, 8f))
         lobby(art, sky, detailed, seconds, lod)
         val lit = lerp(SceneInk.WindowLitDay, SceneInk.WindowLit, sky.dark)
         val glass = lerp(SceneInk.GlassDay, SceneInk.GlassNight, sky.dark)
@@ -1778,14 +1844,15 @@ internal class BuildingPainter {
     private fun DrawScope.lampLight(art: BuildingArt, sky: SkyColors, x: Float) {
         val dark = sky.dark
         if (dark <= .2f) return
-        val half = B.W / 2f
+        val l0 = Perspective.left(sideShift)
+        val r0 = Perspective.right(sideShift)
         val height = art.layout.height
         for (i in lamps.indices) {
             val f = lamps[i]
             if (f.kind != FurnitureKind.LAMP) continue
             val lx = f.x + 11.5f - x
-            if (lx < -half - LAMP_REACH || lx > half + B.DX + LAMP_REACH) continue
-            clipRect(-half, -height, half + B.DX, 0f) {
+            if (lx < l0 - LAMP_REACH || lx > r0 + LAMP_REACH) continue
+            clipRect(l0, -height, r0, 0f) {
                 translate(lx, -89.5f) {
                     scale(LAMP_REACH, LAMP_REACH * .8f, Offset.Zero) {
                         drawCircle(
@@ -1979,13 +2046,29 @@ internal class BuildingPainter {
     }
 
     /**
-     * The building's right-hand side face: lit when the light is on that side, deeper in shade
-     * otherwise.
+     * The building's shown side face: lit when the light is on that side (the right face with the
+     * sun to the right, the left face with it to the left), deeper in shade otherwise.
      */
     private fun DrawScope.sideLight(side: Path, alpha: Float) {
-        val s = sunSide
+        val s = if (sideShift < 0f) -sunSide else sunSide
         if (s > .02f) drawPath(side, Color.White, alpha = .26f * s * alpha)
         else if (s < -.02f) drawPath(side, Color.Black, alpha = .18f * -s * alpha)
+    }
+
+    /**
+     * Draws [block], whose paths are unit side faces hinged on x 0 ([FloorArt.side]), as the shown
+     * side of the building being drawn: from the front's edge the side hangs from, scaled out to
+     * the side's width, mirrored for the left face. Nothing when no side shows.
+     */
+    private inline fun DrawScope.onSide(block: DrawScope.() -> Unit) {
+        val s = sideShift
+        if (abs(s) < .02f) return
+        withTransform({
+            translate(if (s > 0f) B.W / 2f else -B.W / 2f, 0f)
+            scale(s, 1f, Offset.Zero)
+        }) {
+            block()
+        }
     }
 
     /**
@@ -2064,8 +2147,10 @@ internal class BuildingPainter {
         val shopOn = Dusk.lightsOn(lobbySeed, hour, Dusk.SHOP)
         drawRect(SceneInk.LobbyWallLow, Offset(-half, -10f), Size(B.W, 10f))
         drawRect(aoWall, Offset(-half, -14f), Size(B.W, 14f))
-        drawPath(art.lobbySide, SceneInk.LobbySide)
-        sideLight(art.lobbySide, 1f)
+        onSide {
+            drawPath(art.lobbySide, SceneInk.LobbySide)
+            sideLight(art.lobbySide, 1f)
+        }
         if (art.floors.isEmpty()) roofFace(-art.layout.roof, SceneInk.LobbyWall, half)
         // the sign over the awning: a board with a fine rim, lit at night (and glowing)
         translate(0f, top + 4f) {
@@ -2234,8 +2319,10 @@ internal class BuildingPainter {
         val top = fa.top
         drawRect(fa.wall, Offset(-half, top), Size(B.W, fa.bottom - top), alpha = alpha)
         facadeLight(top, fa.bottom, alpha)
-        drawPath(fa.side, f.side, alpha = alpha)
-        sideLight(fa.side, alpha)
+        onSide {
+            drawPath(fa.side, f.side, alpha = alpha)
+            sideLight(fa.side, alpha)
+        }
         drawPath(
             fa.texture,
             TEXTURE[if (ruin) 4 else b.material.ordinal],
@@ -2641,11 +2728,16 @@ internal class BuildingPainter {
         drawRect(SceneInk.Boards, Offset(hook - 5f, top - 26f), Size(10f, 5f))
     }
 
+    /**
+     * The roof face over a front [half] wide with its front edge at [y]: [B.DY] deep, its back edge
+     * skewed to the shown side ([sideShift]), square on when none shows.
+     */
     private fun DrawScope.roofFace(y: Float, color: Color, half: Float) {
+        val s = sideShift
         path.rewind()
         path.moveTo(-half, y)
-        path.lineTo(-half + B.DX, y - B.DY)
-        path.lineTo(half + B.DX, y - B.DY)
+        path.lineTo(-half + s, y - B.DY)
+        path.lineTo(half + s, y - B.DY)
         path.lineTo(half, y)
         path.close()
         drawPath(path, color)
@@ -2668,14 +2760,19 @@ internal class BuildingPainter {
             drawRect(c, Offset(-half - 3f, y - B.CORNICE), Size(B.W + 6f, B.CORNICE))
             drawRect(SceneInk.Occlusion, Offset(-half - 3f, y - 1.5f), Size(B.W + 6f, 1.5f))
             roofFace(y - B.CORNICE, f.roof, half + 3f)
-            path.rewind()
-            path.moveTo(half + 3f, y - B.CORNICE)
-            path.lineTo(half + 3f + B.DX, y - B.CORNICE - B.DY)
-            path.lineTo(half + 3f + B.DX, y - B.DY)
-            path.lineTo(half + 3f, y)
-            path.close()
-            drawPath(path, f.side)
-            sideLight(path, 1f)
+            // the cornice's own side slab, on the edge the shown side hangs from
+            val s = sideShift
+            if (abs(s) >= .02f) {
+                val edge = if (s > 0f) half + 3f else -half - 3f
+                path.rewind()
+                path.moveTo(edge, y - B.CORNICE)
+                path.lineTo(edge + s, y - B.CORNICE - B.DY)
+                path.lineTo(edge + s, y - B.DY)
+                path.lineTo(edge, y)
+                path.close()
+                drawPath(path, f.side)
+                sideLight(path, 1f)
+            }
             if (gold) {
                 // gold finials along the cornice
                 var x = -half
@@ -3020,7 +3117,16 @@ internal class BuildingPainter {
 
     /** A baked figure at the current origin (its feet's middle), in the sprite's own pixels. */
     private fun DrawScope.drawPerson(p: PersonImage, alpha: Float) {
-        drawImage(p.image, Offset(p.dx, p.dy), alpha, colorFilter = personFilter)
+        val f = personFilter
+        if (f != null || dayMix < .01f) {
+            drawImage(p.image, Offset(p.dx, p.dy), alpha, colorFilter = f)
+            return
+        }
+        // by day a figure behind glass is a flat dark shape: the warm rim and the glow baked in for
+        // a lit room at night are flattened away, and the two looks cross-fade through dusk
+        if (dayMix < .99f)
+            drawImage(p.image, Offset(p.dx, p.dy), alpha * (1f - dayMix), colorFilter = null)
+        drawImage(p.image, Offset(p.dx, p.dy), alpha * dayMix, colorFilter = dayFilter)
     }
 
     /** Someone walking along the floor, seen in the window [x], [y] ([rel] from its left edge). */
@@ -3259,14 +3365,23 @@ internal class BuildingPainter {
         }
     }
 
+    /** A storey's outline: its front, its roof face and whichever side face shows. */
     private fun silhouette(top: Float, bottom: Float) {
         val half = B.W / 2f
+        val s = sideShift
         path.rewind()
         path.moveTo(-half, bottom)
-        path.lineTo(-half, top)
-        path.lineTo(-half + B.DX, top - B.DY)
-        path.lineTo(half + B.DX, top - B.DY)
-        path.lineTo(half + B.DX, bottom - B.DY)
+        if (s >= 0f) {
+            path.lineTo(-half, top)
+            path.lineTo(-half + s, top - B.DY)
+            path.lineTo(half + s, top - B.DY)
+            path.lineTo(half + s, bottom - B.DY)
+        } else {
+            path.lineTo(-half + s, bottom - B.DY)
+            path.lineTo(-half + s, top - B.DY)
+            path.lineTo(half + s, top - B.DY)
+            path.lineTo(half, top)
+        }
         path.lineTo(half, bottom)
         path.close()
     }
