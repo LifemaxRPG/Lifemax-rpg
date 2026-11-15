@@ -14,6 +14,8 @@ import com.lifemax.rpg.feature.habits.TestClock
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.HabitsLoad
 import com.lifemax.rpg.feature.habits.domain.Pass
+import com.lifemax.rpg.feature.habits.domain.Season
+import com.lifemax.rpg.feature.habits.domain.SeasonState
 import com.lifemax.rpg.feature.habits.presentation.HabitsScreen
 import com.lifemax.rpg.feature.habits.presentation.HabitsViewModel
 import java.time.ZoneOffset
@@ -44,7 +46,11 @@ class HabitsScreenshotTest {
             fontScale = fontScale,
         )
 
-    /** Scenario [name] at [hour], after [use], with the street's life held at [ambientAt]. */
+    /**
+     * Scenario [name] at [hour], after [use], with the street's life held at [ambientAt], in
+     * [season] (high summer unless a picture is of a season: the date is early March, whose bare
+     * trees would otherwise be in every picture).
+     */
     private fun snap(
         name: String,
         hour: Int = 14,
@@ -53,7 +59,26 @@ class HabitsScreenshotTest {
         keyboardDp: Int = 0,
         ambientAt: Float? = null,
         topInsetDp: Float = 64f,
+        season: SeasonState = Season.SUMMER,
         use: HabitsViewModel.() -> Unit = {},
+    ) {
+        Season.override = season
+        try {
+            snapIn(name, hour, light, opened, keyboardDp, ambientAt, topInsetDp, use)
+        } finally {
+            Season.override = null
+        }
+    }
+
+    private fun snapIn(
+        name: String,
+        hour: Int,
+        light: Boolean,
+        opened: HabitsLoad?,
+        keyboardDp: Int,
+        ambientAt: Float?,
+        topInsetDp: Float,
+        use: HabitsViewModel.() -> Unit,
     ) {
         val clock = TestClock(ZonedDateTime.of(2026, 3, 2, hour, 0, 0, 0, ZoneOffset.UTC))
         val surroundings =
@@ -284,6 +309,34 @@ class HabitsScreenshotTest {
     @Test fun shadowsMorning() = snap("park", hour = 8, ambientAt = 45f)
 
     @Test fun shadowsAfternoon() = snap("city", hour = 16, ambientAt = 45f)
+
+    // ---- the seasons and the flare
+
+    /**
+     * Late October in the afternoon: the park's trees turned amber and red, leaves in the air and
+     * on the pavement, a bare tree's shadow where the leaves have gone.
+     */
+    @Test
+    fun autumnAfternoon() =
+        snap("park", hour = 16, ambientAt = 45f, season = Season.atDay(300f, 2026))
+
+    /**
+     * A January snow day: the trees bare with snow on their branches, snow on the sills, the
+     * awnings, the roofs, the bench and the lamps, the pavement white, flakes falling at two
+     * depths.
+     */
+    @Test
+    fun winterSnowDay() =
+        snap("park", ambientAt = 45f, season = SeasonState(0f, 0f, 0f, 0f, 1f, .8f, 20))
+
+    /** Late April: thin new leaves, the ornamental tree in pink blossom, petals drifting down. */
+    @Test fun springBlossom() = snap("park", ambientAt = 45f, season = Season.atDay(110f, 2026))
+
+    /**
+     * Mid-morning with the sun in frame on the left: the camera's flare, a streak through the sun
+     * and faint ghosts on the far side of the picture.
+     */
+    @Test fun dayFlare() = snap("city", hour = 10, ambientAt = 45f)
 
     @Test fun lobbySpillNight() = snap("tall", hour = 23, ambientAt = 9.6f)
 

@@ -60,9 +60,11 @@ import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
 import com.lifemax.rpg.feature.habits.domain.KeyLight
+import com.lifemax.rpg.feature.habits.domain.LensFlare
 import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.SceneLight
 import com.lifemax.rpg.feature.habits.domain.SceneWindow
+import com.lifemax.rpg.feature.habits.domain.Season
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.StreetView
@@ -299,6 +301,8 @@ private fun StageCanvas(
     val painter = remember { BuildingPainter() }
     val seed = remember(p.day) { p.day.hashCode() }
     val backdrop = remember(seed) { Backdrop(seed, p.day) }
+    val season = remember(p.day) { Season.at(p.day) }
+    val seasonFall = remember { SeasonFall() }
     val sky = remember(p.hour) { skyColors(p.hour) }
     val light = remember(p.hour) { SceneLight.key(p.hour) }
     val layer = remember { Paint() }
@@ -308,6 +312,7 @@ private fun StageCanvas(
     val scope = rememberCoroutineScope()
     // the painted skies and trees are made once, off the main thread (a still frame waits for them)
     LaunchedEffect(Unit) { withContext(Dispatchers.Default) { SceneSprites.warm() } }
+    LaunchedEffect(season) { withContext(Dispatchers.Default) { SceneSprites.warm(season) } }
     val still = p.reducedMotion
     val zoomedOut = ui.city
     val live = !zoomedOut || ui.weeks == 0
@@ -684,6 +689,7 @@ private fun StageCanvas(
         painter.lightX = f.streetX(orb.first * d)
         painter.lightSpan = this.size.width / f.unit
         painter.lamps = street.furniture
+        painter.season = season
         val from = f.streetX(0f) - B.GAP
         val to = f.streetX(this.size.width) + B.GAP
         // the tallest building in view: it decides how high the clouds hang (clear of its roof and
@@ -694,6 +700,7 @@ private fun StageCanvas(
             if (l + layouts[i].lot < from || l > to) continue
             reach = max(reach, layouts[i].height)
         }
+        backdrop.sunClear = sunClear(orb.first * d, orb.second * d, layouts, street, f, from, to, d)
         with(backdrop) {
             backdrop(
                 p.hour,
@@ -744,6 +751,19 @@ private fun StageCanvas(
                         if (item.x < from - 30f || item.x > to + 30f) continue
                         furniture(item, sky, seconds)
                     }
+                    with(seasonFall) {
+                        particles(
+                            season,
+                            layouts,
+                            street,
+                            from,
+                            to,
+                            (f.top - f.ground) / f.unit,
+                            depth,
+                            seconds,
+                            sky,
+                        )
+                    }
                     if (layouts.isEmpty()) emptyLot(sky)
                 }
             }
@@ -773,6 +793,42 @@ private fun StageCanvas(
                 sky.ink,
             )
     }
+}
+
+/**
+ * How clear the sun at ([x], [y]) (px) is of the buildings in view: 0 behind one, 1 in the open,
+ * fading over a short way at their edges ([LensFlare.clear]), for the flare.
+ */
+private fun sunClear(
+    x: Float,
+    y: Float,
+    layouts: List<BuildingLayout>,
+    street: StreetLayout,
+    f: Frame,
+    from: Float,
+    to: Float,
+    d: Float,
+): Float {
+    var clear = 1f
+    for (i in layouts.indices) {
+        val l = street.lefts[i]
+        if (l + layouts[i].lot < from || l > to) continue
+        clear =
+            min(
+                clear,
+                LensFlare.clear(
+                    x,
+                    y,
+                    f.screenX(l),
+                    f.ground - layouts[i].height * f.unit,
+                    f.screenX(l + B.W + B.DX),
+                    f.ground,
+                    24f * d,
+                ),
+            )
+        if (clear <= 0f) break
+    }
+    return clear
 }
 
 /**

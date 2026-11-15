@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.Building
+import com.lifemax.rpg.feature.habits.domain.LensFlare
 import com.lifemax.rpg.feature.habits.domain.MoonPhase
 import com.lifemax.rpg.feature.habits.domain.Pass
 import com.lifemax.rpg.feature.habits.domain.SkyPhase
@@ -257,6 +259,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 shootingStar(pass, w, top, band, starAlpha)
         }
         heavenlyBody(sky, orb, seconds)
+        lensFlare(sky, orb, top, shift)
         clouds(sky, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds)
         if (tone > 1.6f && Ambient.blimp(seconds, seed, pass))
             blimp(pass, sky, w, top, band, seconds)
@@ -511,6 +514,79 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         }
     }
 
+    // ---- the lens flare
+
+    /**
+     * How clear the sun is of the buildings in front of it, 0 behind one to 1 in the open: set by
+     * the stage each frame from the layouts, so the flare fades as the sun goes behind a roof.
+     */
+    var sunClear = 1f
+
+    private var flareKey: Any? = null
+    private var streakTint: ColorFilter? = null
+    private val ghostTint = arrayOfNulls<ColorFilter>(LensFlare.GHOSTS)
+
+    /**
+     * The camera's flare when the sun is in frame by day: an anamorphic streak through the sun, and
+     * a few ghosts of the iris (soft discs, rings, hexagons, each a little its own colour) on the
+     * line from the sun through the middle of the picture, on the far side, so they travel across
+     * the picture as the sun's place changes and wander as the street pans ([LensFlare]). All added
+     * over the sky, faint; dimmer at dusk, gone at night and behind a building; never over the
+     * heading (clipped under [top]).
+     */
+    private fun DrawScope.lensFlare(sky: SkyColors, orb: Offset, top: Float, shift: Float) {
+        if (sky.phase == SkyPhase.NIGHT) return
+        val k = LensFlare.strength(sky.dark, sunClear)
+        if (k < .01f) return
+        if (flareKey !== sky) {
+            val base = lerp(sky.halo.copy(alpha = 1f), Color.White, .35f)
+            streakTint = ColorFilter.tint(lerp(base, Color.White, .3f), BlendMode.SrcIn)
+            for (i in 0 until LensFlare.GHOSTS) ghostTint[i] =
+                ColorFilter.tint(lerp(base, GHOST_HUES[i], .45f), BlendMode.SrcIn)
+            flareKey = sky
+        }
+        val d = density
+        val w = size.width
+        val h = size.height
+        val f = SceneSprites.flare
+        val sp = f.sprite
+        clipRect(0f, top, w, h) {
+            val s = d / sp.streakPpd * 1.4f
+            withTransform({
+                translate(orb.x, orb.y)
+                scale(s, s * .85f, Offset.Zero)
+            }) {
+                drawImage(
+                    f.streak,
+                    Offset(-sp.streakW / 2f, -sp.streakH / 2f),
+                    alpha = .16f * k,
+                    colorFilter = streakTint,
+                    blendMode = BlendMode.Plus,
+                )
+            }
+            val cx = w / 2f
+            val cy = h / 2f
+            for (i in 0 until LensFlare.GHOSTS) {
+                val gx = LensFlare.ghostX(orb.x, cx, i, shift, d)
+                val gy = LensFlare.ghostY(orb.y, cy, i, shift, d)
+                val l = sp.layer(LensFlare.KIND[i])
+                val g = d / l.pxPerDp * LensFlare.SIZE[i]
+                withTransform({
+                    translate(gx, gy)
+                    scale(g, g, Offset.Zero)
+                }) {
+                    drawImage(
+                        f.ghost(LensFlare.KIND[i]),
+                        Offset(-l.size / 2f, -l.size / 2f),
+                        alpha = LensFlare.ALPHA[i] * k,
+                        colorFilter = ghostTint[i],
+                        blendMode = BlendMode.Plus,
+                    )
+                }
+            }
+        }
+    }
+
     /** One layer of the sun or the moon, centred on the origin, [grow] times its size in dp. */
     private inline fun DrawScope.orbLayer(
         image: ImageBitmap,
@@ -550,6 +626,17 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         tintNight = tint(lerp(sky.sky[1], sky.sky[0], .5f))
         orbKey = sky
     }
+
+    /** Each ghost's own cast: the lens's coatings colour them a little apart from the sun. */
+    private val GHOST_HUES =
+        arrayOf(
+            Color(0xFFFFE2A8),
+            Color(0xFFA8E0FF),
+            Color(0xFFFFD090),
+            Color(0xFFB8FFD8),
+            Color(0xFFFFC0E0),
+            Color(0xFFC8D8FF),
+        )
 
     // ---- the meteor and the far road: tints for their baked sprites ([RoadSkySprites]), made once
 
