@@ -93,9 +93,11 @@ internal class SunLook {
         tint[BAND] = mixArgb(0xFFFFA060.toInt(), 0xFFFF6030.toInt(), w)
         tint[GLOW] = mixArgb(0xFFFFD8A8.toInt(), 0xFFFF6A30.toInt(), w)
         tint[RAYS] = mixArgb(mixArgb(haloC, WHITE, .5f), 0xFFFFB070.toInt(), w)
-        tint[DISC] = mixArgb(0xFFFFA848.toInt(), 0xFFFF7428.toInt(), w)
-        tint[HUG] = mixArgb(0xFFFFA848.toInt(), 0xFFFF7428.toInt(), w)
-        tint[DISC_LIGHT] = mixArgb(0xFFFFF0C8.toInt(), 0xFFFFD27C.toInt(), w)
+        // the low sun's limb a bright orange, its middle paler and brighter, the light round it
+        // warmer and redder outward: never a darker rim
+        tint[DISC] = mixArgb(0xFFFFC060.toInt(), 0xFFFFA44C.toInt(), w)
+        tint[HUG] = mixArgb(0xFFFFA050.toInt(), 0xFFFF7A3A.toInt(), w)
+        tint[DISC_LIGHT] = mixArgb(0xFFFFF2CC.toInt(), 0xFFFFE6A0.toInt(), w)
         tint[BLOOM] = mixArgb(mixArgb(orb, WHITE, .7f), 0xFFFFB878.toInt(), w)
         tint[CORE] = mixArgb(WHITE, 0xFFFFE6B0.toInt(), w)
         tint[VEIL] = mixArgb(0xFFFFFBF0.toInt(), 0xFFFFD8B0.toInt(), w)
@@ -215,9 +217,9 @@ internal class MoonLook {
         val wm = Px.clamp01(warm)
         val lit = mixArgb(0xFFE4EAF4.toInt(), 0xFFF2DEC2.toInt(), wm * .8f)
         // the earthshine is brightest when the earth, seen from the moon, is full: a thin moon
-        val es =
-            (.025f + .1f * (1f - Px.clamp01(illumination)).pow(2)) *
-                Px.smooth(0f, .04f, illumination)
+        // faint ash-grey, and only on a thin moon: about a tenth of the lit side's light on a
+        // tenth-lit crescent, nothing from about a quarter on (nor at new, in the sun's glare)
+        val es = .1f * Px.smooth(.3f, .05f, illumination) * Px.smooth(0f, .04f, illumination)
         val earth = 0xFF8FA6D8.toInt()
         matrix.fill(0f)
         for (c in 0 until 3) {
@@ -329,14 +331,14 @@ internal object SunMoonSprites {
         val disc =
             layer(120, 4f) { x, y, _, _ ->
                 val e = sqrt(x * x + (y / FLATTEN) * (y / FLATTEN))
-                Px.smooth(r0 + 1f, r0 - 1f, e)
+                Px.smooth(r0 + 1.3f, r0 - 1.3f, e)
             }
         val discLight =
             layer(120, 4f) { x, y, _, _ ->
                 val e = sqrt(x * x + (y / FLATTEN) * (y / FLATTEN))
                 val q = min(1f, e / r0)
                 val mu = sqrt(max(0f, 1f - q * q))
-                Px.smooth(r0 + 1f, r0 - 1f, e) * mu.pow(.4f)
+                Px.smooth(r0 + 1.3f, r0 - 1.3f, e) * mu.pow(.6f)
             }
         return SunSprite(core, bloom, sky, rays, disc, discLight)
     }
@@ -598,14 +600,16 @@ internal object SunMoonSprites {
             // Lommel-Seeliger, as the moon's dust reflects: as bright at the limb of a full moon
             // as in its middle, dimming towards the terminator; the light runs on a little past
             // it onto the night side, raggedly, as it catches the peaks
-            val ragged = (Noise.fbm(u * 9f, v * 9f, SEED + 50, 2) - .5f) * .03f
+            val ragged = (Noise.fbm(u * 9f, v * 9f, SEED + 50, 2) - .5f) * .02f
             val mu0 = nx * lx + nz * lz + ragged
-            val lit = if (mu0 <= 0f) 0f else min(1f, 2f * mu0 / (mu0 + max(nz, .02f))).pow(.7f)
-            // (the soft edge of the light lies on the night side of the terminator)
-            val dusk = Px.smooth(-.06f, .015f, mu0) * .2f
+            // the sunlit ground is as bright at every phase (a crescent's limb as bright as the
+            // full moon), soft only across the terminator; the relief shows near it
+            val shade = if (mu0 <= 0f) 0f else min(1f, 2f * mu0 / (mu0 + max(nz, .02f)))
+            val lit = Px.smooth(-.09f, .05f, mu0) * (.8f + .2f * shade)
             val a = m.albedo[k]
-            val light = Px.clamp01(a * max(lit, dusk) * (.86f + .14f * z) * 1.04f)
-            px[k] = Px.argbF(cover, light, a, 0f)
+            val light = Px.clamp01(a * lit * (.86f + .14f * z) * 1.04f)
+            // the earthshine's surface: only the faintest hint of the seas in it
+            px[k] = Px.argbF(cover, light, Px.mix(.55f, a, .4f), 0f)
         }
         return SkyLayer(size, ppd, px)
     }

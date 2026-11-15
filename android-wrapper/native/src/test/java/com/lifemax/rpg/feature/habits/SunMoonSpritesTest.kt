@@ -260,6 +260,14 @@ class SunMoonSpritesTest {
         assertEquals(0f, look.matrix[1], 0f)
         // full: lit to the limb all round, the limb crisp
         val full = picture(MoonPhase.STEPS / 2)
+        // the sunlit ground is as bright at every phase: a crescent's limb as the full moon's
+        assertTrue(moonAt(crescent, .9f, 0f, red) > moonAt(full, .9f, 0f, red) * .85f)
+        // and the earthshine is faint (about a tenth of that on a tenth-lit crescent) and gone
+        // from a quarter on
+        look.colours(.1f, 0f, 0xFF0B1330.toInt(), 0x2EE9EDFF)
+        assertTrue(look.matrix[1] in .05f..0.12f)
+        look.colours(.3f, 0f, 0xFF0B1330.toInt(), 0x2EE9EDFF)
+        assertEquals(0f, look.matrix[1], .002f)
         for ((u, v) in listOf(.9f to 0f, -.9f to 0f, 0f to .9f, 0f to -.9f)) assertTrue(
             moonAt(full, u, v, red) > 60
         )
@@ -270,9 +278,11 @@ class SunMoonSpritesTest {
         // edge on the night side of it
         val (x0, y0) = px(first, -.3f * r, 0f)
         val (x1, _) = px(first, .3f * r, 0f)
-        val half = channel(first, x1, y0, red) / 2
-        val dawn = (x0..x1).first { channel(first, it, y0, red) > 3 }
-        val bright = (x0..x1).first { channel(first, it, y0, red) > half }
+        // (across a band of rows, so a crater rim catching the light does not count)
+        fun across(x: Int) = (y0 - 8..y0 + 8).sumOf { channel(first, x, it, red) } / 17
+        val half = across(x1) / 2
+        val dawn = (x0..x1).first { across(it) > 3 }
+        val bright = (x0..x1).first { across(it) > half }
         assertTrue("terminator ${bright - dawn} px", bright - dawn >= 3)
         assertTrue(dawn <= px(first, 0f, 0f).first)
         // the halo grows with the light, and is wider in mist
