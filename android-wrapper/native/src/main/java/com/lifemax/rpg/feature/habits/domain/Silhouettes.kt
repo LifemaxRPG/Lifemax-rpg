@@ -27,11 +27,13 @@ enum class PeopleLod {
 /**
  * One lit window of a floor: a furnished room that someone may be in now and then (see [Presence]).
  * [activity] is what the person who takes their turn here does, [room] what the window looks into
- * (the room that goes with it), [look] which of the [Looks], [flip] which way they face, [seed]
- * their own number, [curtain] 0 for none, 1 a drape on the left, 2 on the right, 3 blinds half
- * down, 4 both drapes, [sill] 0 for nothing, 1 a pot plant, 2 a cat. [group] is the window's
- * checker colour (0 or 1: neighbours differ) and [rank] its place among the lit windows of its
- * colour.
+ * (one of the rooms the activity is seen in, spread so a floor's rooms differ) in its [variant]
+ * (one of a few layouts and colour schemes of the kind), [look] which of the [Looks], [flip] which
+ * way they face, [seed] their own number, [curtain] 0 for none, 1 a drape on the left, 2 on the
+ * right, 3 venetian blinds half down, 4 both drapes, 5 a roller blind half down, 6 a pair of
+ * half-drawn curtains, 7 venetian blinds all the way down with the slats open, [sill] 0 for
+ * nothing, 1 a pot plant, 2 a cat. [group] is the window's checker colour (0 or 1: neighbours
+ * differ) and [rank] its place among the lit windows of its colour.
  */
 class WindowCast(
     val activity: Activity,
@@ -44,6 +46,7 @@ class WindowCast(
     val sill: Int,
     val group: Int,
     val rank: Int,
+    val variant: Int = 0,
 )
 
 object Silhouettes {
@@ -378,14 +381,53 @@ object Silhouettes {
                 (Ambient.hash(seed, nth, 35) * OFFICE.size).toInt().coerceAtMost(OFFICE.size - 1)]
     }
 
+    /** The number of layouts and colour schemes every kind of room is painted in. */
+    const val VARIANTS = 3
+
+    /** How many kinds of curtain a window can have ([WindowCast.curtain] 1 up to this). */
+    const val CURTAINS = 7
+
+    /**
+     * What anyone does at home when the room their habit wants is taken: the everyday life of a
+     * flat, each in a room of its own kind.
+     */
+    private val HOME =
+        arrayOf(
+            Activity.READING,
+            Activity.TV_WATCHING,
+            Activity.PHONE_CALL,
+            Activity.WATERING,
+            Activity.LOOKING_OUT,
+            Activity.STRETCHING,
+            Activity.DRINKING,
+            Activity.GUITAR,
+            Activity.CHILD_PLAYING,
+            Activity.TALKING,
+            Activity.SWEEPING,
+            Activity.MEDITATING,
+            Activity.TREE_POSE,
+            Activity.TYPING,
+        )
+
     /**
      * The room of each of a floor's first [lit] windows (in the order they light) and who takes
      * their turn in it: every lit window is a furnished room of the activity its person does, and
      * [Presence] says when somebody is in it. [groups] is each window's checker colour (column plus
-     * row, odd or even). Every window of a floor has its own look, curtains and sill; all of it is
-     * a function of the floor's [key] and [title] and [groups] alone.
+     * row, odd or even); [cols] and [rows] say where each window is, so that the rooms can be
+     * spread: no two windows side by side or one above the other look into the same kind of room
+     * (without them, neighbours in the order given are kept apart), and the habit's own kind of
+     * room (a cooking habit's kitchen) is in at most half of the windows, the others being the
+     * homes of people doing something else. Every window of a floor has its own look, curtains and
+     * sill; all of it is a function of the floor's [key] and [title] and [groups] alone.
      */
-    fun cast(title: String, key: String, lit: Int, groups: IntArray): Array<WindowCast> {
+    fun cast(
+        title: String,
+        key: String,
+        lit: Int,
+        groups: IntArray,
+        cols: IntArray? = null,
+        rows: IntArray? = null,
+    ): Array<WindowCast> {
         val seed = key.hashCode()
         val ranks = IntArray(lit)
         for (g in 0..1) {
@@ -393,19 +435,48 @@ object Silhouettes {
                 (0 until lit).filter { groups[it] == g }.sortedBy { Ambient.hash(seed, it, 48) }
             for ((r, k) in of.withIndex()) ranks[k] = r
         }
+        val own = activitiesOf(title)
+        val lead = own.firstOrNull()?.let { PeopleActivities.of(it).room }
+        val quota = maxOf(1, lit / 2)
+        val acts = Array(lit) { activityFor(title, it, seed) }
+        val kinds = arrayOfNulls<RoomKind>(lit)
+        var leadCount = 0
+        for (k in 0 until lit) {
+            val free = { r: RoomKind ->
+                (r != lead || k == 0 || leadCount < quota) &&
+                    (0 until k).none { kinds[it] == r && adjacent(k, it, cols, rows) }
+            }
+            var room = roomFor(acts[k], k, seed, free)
+            if (room == null) {
+                // the room the habit wants is taken: someone at home doing something else
+                val from = (Ambient.hash(seed, k, 50) * HOME.size).toInt()
+                for (n in HOME.indices) {
+                    val a = HOME[(from + n) % HOME.size]
+                    room = roomFor(a, k, seed, free)
+                    if (room != null) {
+                        acts[k] = a
+                        break
+                    }
+                }
+            }
+            kinds[k] = room ?: PeopleActivities.of(acts[k]).room
+            if (kinds[k] == lead) leadCount++
+        }
+        val variantBase = (Ambient.hash(seed, 0, 49) * VARIANTS).toInt()
         return Array(lit) { k ->
             val s = (Ambient.hash(seed, k, 5) * 100000).toInt()
-            val act = activityFor(title, k, seed)
-            val room = PeopleActivities.of(act).room
+            val act = acts[k]
             val look = (((Ambient.hash(seed, 0, 42) * Looks.COUNT).toInt()) + k * 5) % Looks.COUNT
             val c = Ambient.hash(seed, k, 43)
             val curtain =
-                if (c < .3f) 1 + (Ambient.hash(seed, k, 44) * 4).toInt().coerceAtMost(3) else 0
+                if (c < .42f)
+                    1 + (Ambient.hash(seed, k, 44) * CURTAINS).toInt().coerceAtMost(CURTAINS - 1)
+                else 0
             val sillRoll = Ambient.hash(seed, k, 45)
             val sill = if (sillRoll < .3f) (if (sillRoll < .14f) 1 else 2) else 0
             WindowCast(
                 act,
-                room,
+                kinds[k]!!,
                 look,
                 Ambient.hash(seed, k, 46) < .5f,
                 s,
@@ -414,8 +485,36 @@ object Silhouettes {
                 sill,
                 groups[k] and 1,
                 ranks[k],
+                (variantBase + k) % VARIANTS,
             )
         }
+    }
+
+    /**
+     * Whether windows [k] and [j] of a floor are side by side or one above the other (by [cols] and
+     * [rows]; next to each other in the order when there are none).
+     */
+    private fun adjacent(k: Int, j: Int, cols: IntArray?, rows: IntArray?): Boolean {
+        if (cols == null || rows == null) return kotlin.math.abs(k - j) == 1
+        val dc = kotlin.math.abs(cols[k] - cols[j])
+        val dr = kotlin.math.abs(rows[k] - rows[j])
+        return dc + dr == 1
+    }
+
+    /**
+     * The first of the rooms [a] is seen in that passes [free]: its natural room first, the others
+     * in an order of the window's own; null when none does.
+     */
+    private fun roomFor(a: Activity, k: Int, seed: Int, free: (RoomKind) -> Boolean): RoomKind? {
+        val rooms = PeopleActivities.roomsOf(a)
+        if (free(rooms[0])) return rooms[0]
+        if (rooms.size == 1) return null
+        val from = 1 + (Ambient.hash(seed, k, 52) * (rooms.size - 1)).toInt()
+        for (n in 1 until rooms.size) {
+            val r = rooms[1 + (from - 1 + n - 1) % (rooms.size - 1)]
+            if (free(r)) return r
+        }
+        return null
     }
 
     /**

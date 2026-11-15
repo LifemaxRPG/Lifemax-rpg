@@ -243,7 +243,15 @@ private fun floorArt(
     val occ = occupancy(b.reps, spots.size)
     val key = b.id + "/" + storey
     val groups = IntArray(occ.lit) { k -> (spots[order[k]].col + spots[order[k]].row) and 1 }
-    val cast = Silhouettes.cast(b.title, key, occ.lit, groups)
+    val cast =
+        Silhouettes.cast(
+            b.title,
+            key,
+            occ.lit,
+            groups,
+            IntArray(occ.lit) { spots[order[it]].col },
+            IntArray(occ.lit) { spots[order[it]].row },
+        )
     val seed = key.hashCode()
     val hall = Silhouettes.hallLight(key, spots.size)
     val ruins = Array(spots.size) { ruinWindow(b.id, storey, storeys, it) }
