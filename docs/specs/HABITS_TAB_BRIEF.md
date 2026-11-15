@@ -381,6 +381,19 @@ drop shadow and `clutter()`; the reward sign's steel frame and lamps. Untouched:
 lighting passes, `Perspective`, `crackLine`, snow caps (same sill/cornice geometry). Screenshot tests `facadesDay`,
 `lobbyNight`; every Habits reference changes.
 
+## As built: the sun and moon redesign (NativeApi 196)
+
+`SunMoonSprites.kt` rewritten (`SunMoonSpritesTest`): the sun as six white layers (core, bloom, sky, rays, disc, disc light,
+long gradients dithered); by day only bloom (brightness monotone from the centre, no ring or limb), the disc and its light
+coming out low in the sky as a soft, flattened, gently limb-darkened orange body with a warm glow along the horizon; it fades
+into the haze over the last half hour of dusk as the moon fades in. The moon's surface (true maria placement, Plato and
+Grimaldi floors, Tycho's rays, Copernicus/Kepler/Aristarchus, fine crater texture, terminator relief) is stored once at
+5 px/dp; only the current phase's picture is made, lazily, and a colour matrix turns it into the lit side (full brightness
+at every phase), earthshine (about a tenth of the lit side on a 10 % crescent, none from ~25 % lit) and the sky behind. Per
+hour colours and strengths live in pure `SunLook` / `MoonLook`. `Backdrop.heavenlyBody/orbLayer/orbTints` rewritten, plus
+`sunLayer`, `skyAt`, `throughVeil` (the sun or moon through overcast, after the veil); the lens flare scales with sun
+presence and (1 − cloudiness). 695 KB. The airliner is drawn at `PLANE_SIZE` .75 of its sprite (owner: "further away").
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The

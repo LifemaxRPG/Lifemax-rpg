@@ -1041,7 +1041,8 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         val sp = images.sprite
         withTransform({
             translate(x, y)
-            scale(d * p.dir, d, Offset.Zero)
+            // drawn a little smaller than its sprite, so it reads as further away, high up
+            scale(d * p.dir * PLANE_SIZE, d * PLANE_SIZE, Offset.Zero)
         }) {
             if (tone > 1.3f) {
                 val trail = SceneSprites.contrail
@@ -1405,3 +1406,6 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         }
     }
 }
+
+/** How big the airliner is drawn against its sprite: a little smaller, so it reads as far off. */
+private const val PLANE_SIZE = .75f
