@@ -50,6 +50,16 @@ internal class Backdrop(private val seed: Int) {
         )
     private val clouds = Ambient.clouds(seed).toTypedArray()
 
+    /**
+     * Where the latest frame's clouds are, for the shadows they throw on the street: the middle and
+     * the width of each in px, and how solid it is (a near cloud more than a far one).
+     */
+    val shadeX = FloatArray(Ambient.CLOUDS)
+    val shadeW = FloatArray(Ambient.CLOUDS)
+    val shadeA = FloatArray(Ambient.CLOUDS)
+    var shadeN = 0
+        private set
+
     /** How far each row slides for a street unit scrolled: the furthest least. */
     private val drift = floatArrayOf(.05f, .1f, .18f)
 
@@ -565,6 +575,7 @@ internal class Backdrop(private val seed: Int) {
         val count = if (night) 3 else if (sky.dark > .3f) 4 else Ambient.CLOUDS
         val strength = if (sky.phase == SkyPhase.DAY) 1f else if (night) .8f else .94f
         val room = CloudLayout.room(top, horizon, ceiling, d)
+        shadeN = 0
         if (room <= 0f) return
         val pool = SceneSprites.clouds
         for (i in 0 until count) {
@@ -577,6 +588,10 @@ internal class Backdrop(private val seed: Int) {
             // breathing: the sky never quite stands still, a few percent over half a minute
             val breathe = 1f + .04f * sin(seconds * .21f + i * 2.1f)
             val a = (strength * breathe * room * (1f - .28f * c.haze)).coerceIn(0f, 1f)
+            shadeX[i] = x
+            shadeW[i] = sp.w * s
+            shadeA[i] = a * c.depth
+            shadeN = i + 1
             val sx = if (mirror) -s else s
             withTransform({
                 translate(x, base)

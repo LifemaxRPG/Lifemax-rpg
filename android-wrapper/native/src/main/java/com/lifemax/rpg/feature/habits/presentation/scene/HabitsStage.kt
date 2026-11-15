@@ -29,9 +29,12 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.changedToUp
@@ -56,7 +59,9 @@ import com.lifemax.rpg.feature.habits.domain.HabitStack
 import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
+import com.lifemax.rpg.feature.habits.domain.KeyLight
 import com.lifemax.rpg.feature.habits.domain.Presence
+import com.lifemax.rpg.feature.habits.domain.SceneLight
 import com.lifemax.rpg.feature.habits.domain.SceneWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
@@ -295,8 +300,11 @@ private fun StageCanvas(
     val seed = remember(p.day) { p.day.hashCode() }
     val backdrop = remember(seed) { Backdrop(seed) }
     val sky = remember(p.hour) { skyColors(p.hour) }
+    val light = remember(p.hour) { SceneLight.key(p.hour) }
     val layer = remember { Paint() }
     val vignette = remember { VignetteBrush() }
+    val shadePath = remember { Path() }
+    val shadeBrush = remember { cloudShadeBrush() }
     val scope = rememberCoroutineScope()
     // the painted skies and trees are made once, off the main thread (a still frame waits for them)
     LaunchedEffect(Unit) { withContext(Dispatchers.Default) { SceneSprites.warm() } }
@@ -702,8 +710,10 @@ private fun StageCanvas(
                 scale(f.unit, f.unit, Offset.Zero)
             }) {
                 with(painter) {
-                    pavement(sky, from, to, (this@Canvas.size.height - f.ground) / f.unit + 4f)
+                    val depth = (this@Canvas.size.height - f.ground) / f.unit + 4f
+                    pavement(sky, from, to, depth)
                     pools(street.furniture, from, to, sky.dark)
+                    shadows(light, sky, layouts, street, from, to, depth, seconds)
                     val detailed = f.scale > .55f
                     for (i in layouts.indices) {
                         val l = street.lefts[i]
@@ -731,6 +741,7 @@ private fun StageCanvas(
                     if (layouts.isEmpty()) emptyLot(sky)
                 }
             }
+            cloudShade(light, backdrop, layouts, street, f, horizon, d, shadePath, shadeBrush)
         }
         if (fades) {
             // rub the layer out above the window, and ever less over the fade under it
@@ -756,6 +767,68 @@ private fun StageCanvas(
                 sky.ink,
             )
     }
+}
+
+/**
+ * The clouds' shadows crossing the street: under each cloud a soft band of shade down the buildings
+ * and over the ground, standing to the side the light leans to and drifting with its cloud. Only
+ * the sun's clouds shade the street; the band is in [brush], a unit wide, drawn under a transform.
+ */
+private fun DrawScope.cloudShade(
+    light: KeyLight,
+    backdrop: Backdrop,
+    layouts: List<BuildingLayout>,
+    street: StreetLayout,
+    f: Frame,
+    horizon: Float,
+    d: Float,
+    path: Path,
+    brush: Brush,
+) {
+    val deep = SceneLight.cloudShade(light)
+    if (deep < .005f || backdrop.shadeN == 0) return
+    val w = size.width
+    path.rewind()
+    path.addRect(Rect(0f, horizon, w, size.height))
+    for (i in layouts.indices) {
+        val x0 = f.screenX(street.centers[i] - B.W / 2f)
+        val x1 = f.screenX(street.centers[i] + B.W / 2f + B.DX)
+        if (x1 < 0f || x0 > w) continue
+        val top = f.ground - (layouts[i].roof + B.CORNICE + B.DY) * f.unit
+        path.addRect(Rect(x0, top, x1, f.ground))
+    }
+    val drop = SceneLight.cloudDrop(light) * d
+    clipPath(path) {
+        for (i in 0 until backdrop.shadeN) {
+            val x = backdrop.shadeX[i] + drop
+            val half = backdrop.shadeW[i] * .55f
+            if (x + half < 0f || x - half > w) continue
+            withTransform({
+                translate(x, 0f)
+                scale(half, 1f, Offset.Zero)
+            }) {
+                drawRect(
+                    brush,
+                    Offset(-1f, f.top),
+                    Size(2f, size.height - f.top),
+                    alpha = deep * backdrop.shadeA[i],
+                )
+            }
+        }
+    }
+}
+
+/** A cloud's shadow across, soft at both sides, from -1 to 1. */
+private fun cloudShadeBrush(): Brush {
+    val shade = Color(0xFF0E1428)
+    return Brush.horizontalGradient(
+        0f to Color.Transparent,
+        .35f to shade,
+        .65f to shade,
+        1f to Color.Transparent,
+        startX = -1f,
+        endX = 1f,
+    )
 }
 
 /** The vignette: a radial brush for a view of this size, kept until the view changes size. */

@@ -345,13 +345,30 @@ object Ambient {
     fun step(seconds: Float): Int = floor(seconds * PEOPLE_FPS).toInt()
 
     /**
-     * A failing light at [seconds]: for a floor missed once ([sputter] false) a flicker that is on
-     * most of the time and drops out for a blink; missed twice, a sputter, off as often as on.
+     * A failing light at [seconds]: for a floor missed once ([sputter] false) a light that holds
+     * steady and now and then dips for a moment; missed twice, a sputter that dips far more often.
      */
-    fun flicker(seed: Int, seconds: Float, sputter: Boolean): Boolean {
-        val k = floor(seconds * (if (sputter) 9f else 14f)).toInt()
-        // a run of good moments, then a stumble
-        val burst = hash(seed, k / 10, 80) < (if (sputter) .7f else .35f)
-        return !burst || hash(seed, k, 81) < (if (sputter) .42f else .72f)
+    fun flicker(seed: Int, seconds: Float, sputter: Boolean): Boolean =
+        flickerLevel(seed, seconds, sputter) > .5f
+
+    /**
+     * How bright a failing light is at [seconds], 0 to 1. It is slow and eased, never a strobe:
+     * time is cut into slots (about a second and a half, or under a second when sputtering); in
+     * some of them the light dips, dimming down and brightening back over a fraction of a second.
+     */
+    fun flickerLevel(seed: Int, seconds: Float, sputter: Boolean): Float {
+        val slotLen = if (sputter) .9f else 1.6f
+        val t = seconds / slotLen + hash(seed, 0, 82)
+        val k = floor(t).toInt()
+        if (hash(seed, k, 83) >= (if (sputter) .7f else .3f)) return 1f
+        val u = t - k
+        val start = hash(seed, k, 84) * .4f
+        val len = if (sputter) .5f else .16f
+        val x = (u - start) / len
+        if (x <= 0f || x >= 1f) return 1f
+        // a smooth dip: 1 down to the floor and back, flat at the bottom
+        val depth = if (sputter) .85f else .8f
+        val ease = minOf(1f, minOf(x, 1f - x) * 4f)
+        return 1f - depth * ease * ease * (3f - 2f * ease)
     }
 }

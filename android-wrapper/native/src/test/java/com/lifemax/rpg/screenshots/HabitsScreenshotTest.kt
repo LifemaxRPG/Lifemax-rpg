@@ -276,6 +276,18 @@ class HabitsScreenshotTest {
     @Test fun cloudsNight() = snap("park", hour = 23, ambientAt = 45f)
 
     /**
+     * The key light's shadows: the morning sun on the left throws long shadows leaning right (the
+     * buildings' blocks of shade with the light falling through the gaps, the trees, the lamps);
+     * late afternoon they lean left and the clouds' shadows cross the street; at night the lobby
+     * windows light the pavement and the visitor's shadow stands in it.
+     */
+    @Test fun shadowsMorning() = snap("park", hour = 8, ambientAt = 45f)
+
+    @Test fun shadowsAfternoon() = snap("city", hour = 16, ambientAt = 45f)
+
+    @Test fun lobbySpillNight() = snap("tall", hour = 23, ambientAt = 9.6f)
+
+    /**
      * The page's header band (the status bar, the picture, the name, the buttons are the page's,
      * drawn over this screen) is filled with the app's own surface and the sky starts under it:
      * dark, light, and with the keyboard sheet open.

@@ -2,12 +2,15 @@ package com.lifemax.rpg.feature.habits.presentation.scene
 
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PointMode
@@ -17,6 +20,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -25,12 +29,14 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.drawText
 import com.lifemax.rpg.feature.habits.domain.Activity
 import com.lifemax.rpg.feature.habits.domain.Ambient
+import com.lifemax.rpg.feature.habits.domain.BuildingLayout
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec as B
 import com.lifemax.rpg.feature.habits.domain.Dice
 import com.lifemax.rpg.feature.habits.domain.Furniture
 import com.lifemax.rpg.feature.habits.domain.FurnitureKind
 import com.lifemax.rpg.feature.habits.domain.Gait
 import com.lifemax.rpg.feature.habits.domain.HabitMaterial
+import com.lifemax.rpg.feature.habits.domain.KeyLight
 import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.PeopleLod
@@ -39,6 +45,7 @@ import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.RuinWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
+import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.Stroll
 import com.lifemax.rpg.feature.habits.domain.Trees
 import com.lifemax.rpg.feature.habits.domain.Visit
@@ -290,6 +297,36 @@ internal class BuildingPainter {
     /** The wind's lean on a tree, as a shear: one matrix, kept (nothing is made per frame). */
     private val shear = Matrix()
 
+    /**
+     * The key light's ground projection ([KeyLight]): what stands up falls flat along it, down the
+     * pavement and leaning away from the light. One matrix, remade when the light changes.
+     */
+    private val fall = Matrix()
+    private var fallFor: KeyLight? = null
+
+    /** The layer a frame's shadows are drawn in, so two shadows over each other are no deeper. */
+    private val shadowPaint = Paint()
+
+    /** Sprites drawn as shadows take the shade's colour through this filter (kept per colour). */
+    private var shadeColor = Color.Unspecified
+    private var shadeFilter: ColorFilter? = null
+
+    /** The figures' colour filter while a shadow of one is drawn (null: the figure itself). */
+    private var personFilter: ColorFilter? = null
+    private val spillFilter = ColorFilter.tint(SpillShade, BlendMode.SrcIn)
+
+    /** The light a lobby window throws on the pavement at night, and the visitor's shadow in it. */
+    private val spillPath = Path()
+    private val spillFall = Matrix()
+    private val spillBrush =
+        Brush.verticalGradient(
+            0f to SceneInk.WindowLit.copy(alpha = .3f),
+            .55f to SceneInk.WindowLit.copy(alpha = .1f),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = SPILL,
+        )
+
     /** Asphalt and paving specks, a tile of [SPECK_TILE] street units, made once. */
     private val roadSpecks: List<Offset> =
         List(46) {
@@ -501,6 +538,138 @@ internal class BuildingPainter {
         }
     }
 
+    // ------------------------------------------------------------------ shadows
+
+    /**
+     * The shade the key light leaves: the sky's blue in the sun's shadows, violet at dusk, near
+     * black under the moon.
+     */
+    private fun shade(light: KeyLight, sky: SkyColors): Color =
+        if (light.cool > .5f) MoonShade
+        else lerp(SunShade, DuskShade, (sky.dark / .55f).coerceIn(0f, 1f))
+
+    private fun fallMatrix(light: KeyLight): Matrix {
+        if (fallFor !== light) {
+            fall.reset()
+            // x' = x - lean * y and y' = -reach * y: a point up a caster (y under 0) lands down the
+            // pavement, to the side the light leans to
+            fall[1, 0] = -light.lean
+            fall[1, 1] = -light.reach
+            fallFor = light
+        }
+        return fall
+    }
+
+    private fun shadeFilter(c: Color): ColorFilter {
+        val f = shadeFilter
+        if (f != null && c == shadeColor) return f
+        shadeColor = c
+        return ColorFilter.tint(c, BlendMode.SrcIn).also { shadeFilter = it }
+    }
+
+    /**
+     * Every shadow the key light throws on the street from [from] to [to], in one layer at the
+     * shade's depth: each building's block of shade (the light falls through the gaps between
+     * buildings), the trees in the parks (swaying as the trees do), and the lamps, trees and
+     * benches on the pavement. Drawn after the pavement and before anything that stands on it.
+     */
+    fun DrawScope.shadows(
+        light: KeyLight,
+        sky: SkyColors,
+        layouts: List<BuildingLayout>,
+        street: StreetLayout,
+        from: Float,
+        to: Float,
+        depth: Float,
+        seconds: Float,
+    ) {
+        if (light.strength < .02f) return
+        val tint = shade(light, sky)
+        shadowPaint.alpha = (if (light.cool > .5f) MOON_SHADE else SUN_SHADE) * light.strength
+        drawIntoCanvas { it.saveLayer(Rect(from, 0f, to, depth), shadowPaint) }
+        val m = fallMatrix(light)
+        val half = B.W / 2f
+        // how far a shadow leans from what throws it (per unit of height), to know what is in view
+        val lean = abs(light.lean)
+        for (i in layouts.indices) {
+            val l = layouts[i]
+            val left = street.lefts[i]
+            var h = l.roof
+            for (p in l.pieces) if (p.kind == PieceKind.FLOOR || p.kind == PieceKind.RUIN) {
+                h += B.CORNICE
+                break
+            }
+            val spread = lean * h + 80f
+            if (left + l.lot + spread < from || left - spread > to) continue
+            val cx = street.centers[i]
+            withTransform({
+                translate(cx, 0f)
+                transform(m)
+            }) {
+                drawRect(tint, Offset(-half, -h), Size(B.W + B.DX, h))
+            }
+            for (t in l.trees) treeSilhouette(cx + t.x, t.id.hashCode(), seconds, .8f, tint, m)
+        }
+        val near = lean * 100f + 60f
+        for (k in street.furniture.indices) {
+            val f = street.furniture[k]
+            if (f.x + near < from || f.x - near > to) continue
+            when (f.kind) {
+                FurnitureKind.TREE -> treeSilhouette(f.x, f.seed, seconds, 1f, tint, m)
+                FurnitureKind.LAMP ->
+                    withTransform({
+                        translate(f.x, 0f)
+                        transform(m)
+                    }) {
+                        drawPath(lampPole, tint)
+                        drawPath(lampArm, tint, style = armStroke)
+                        drawPath(lampHood, tint)
+                        drawRect(tint, Offset(6f, -91.8f), Size(11f, 2.6f))
+                    }
+                FurnitureKind.BENCH ->
+                    withTransform({
+                        translate(f.x, 0f)
+                        transform(m)
+                    }) {
+                        drawRect(tint, Offset(-12.6f, -9f), Size(1.9f, 9f))
+                        drawRect(tint, Offset(10.7f, -9f), Size(1.9f, 9f))
+                        drawRect(tint, Offset(-14f, -9.6f), Size(28f, 4.3f))
+                        drawRect(tint, Offset(-14f, -18.6f), Size(28f, 6.4f))
+                    }
+            }
+        }
+        drawIntoCanvas { it.restore() }
+    }
+
+    /**
+     * A tree's shape in the shade, fallen along [m] from its foot at [x]: the same sprite under the
+     * same lean, so the shadow sways with the tree.
+     */
+    private fun DrawScope.treeSilhouette(
+        x: Float,
+        seed: Int,
+        seconds: Float,
+        size: Float,
+        tint: Color,
+        m: Matrix,
+    ) {
+        val images = SceneSprites.trees[Trees.variant(seed)]
+        val sp = images.sprite
+        val lean = if (seconds > 0f) Ambient.sway(seed, seconds) else 0f
+        shear.reset()
+        shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
+        val u = size / sp.ppu
+        val filter = shadeFilter(tint)
+        withTransform({
+            translate(x, 0f)
+            transform(m)
+            scale(u * -lightFrom, u, Offset.Zero)
+            transform(shear)
+        }) {
+            drawImage(images.looks[0], Offset(-sp.footX, -sp.footY), colorFilter = filter)
+        }
+    }
+
     // ------------------------------------------------------------------ a building
 
     /**
@@ -686,7 +855,72 @@ internal class BuildingPainter {
         }
         // the lobby: a reception desk with someone at it, a plant, and a visitor who comes and goes
         lobbyLife(art, -half + 9f, w0, half - 22f, -4f - w0, seconds, sky, lod)
+        spill(
+            -half + 9f,
+            half - 22f,
+            sky,
+            lod,
+            .52f * PeopleActivities.fitted(Activity.WALKING),
+            ((art.stack.id.hashCode() and 0x7fffffff) + 3) % Looks.COUNT,
+        )
         drawRect(SceneInk.Highlight, Offset(-half, top), Size(B.W, 1f))
+    }
+
+    /**
+     * At night the lobby's two lit windows (at [x] and to the right of the door, [w] wide) throw
+     * their light out onto the pavement, and the visitor walking past the glass throws a shadow
+     * across it: feet at the glass, long from the low light inside, spreading from the window's
+     * middle as that light spreads. The visitor's state is [stroll], as [lobbyLife] just left it.
+     */
+    private fun DrawScope.spill(
+        x: Float,
+        w: Float,
+        sky: SkyColors,
+        lod: PeopleLod,
+        size: Float,
+        look: Int,
+    ) {
+        val dark = sky.dark
+        if (dark <= .2f || lod == PeopleLod.NONE) return
+        val flare = w * .14f
+        for (side in 0..1) {
+            val ox = if (side == 0) x else 13f
+            spillPath.rewind()
+            spillPath.moveTo(ox, 0f)
+            spillPath.lineTo(ox + w, 0f)
+            spillPath.lineTo(ox + w + flare, SPILL)
+            spillPath.lineTo(ox - flare, SPILL)
+            spillPath.close()
+            drawPath(spillPath, spillBrush, alpha = dark)
+            if (side == 1 && lod == PeopleLod.FULL && stroll.here) {
+                val xv = ox + 4f + stroll.x
+                val spread = ((xv - (ox + w / 2f)) / (w / 2f)).coerceIn(-1f, 1f)
+                spillFall.reset()
+                spillFall[1, 0] = -spread * .45f
+                spillFall[1, 1] = -1.15f
+                val act =
+                    if (stroll.mode == Stroll.STAND) Activity.LOOKING_OUT else Activity.WALKING
+                val a = .55f * dark
+                personFilter = spillFilter
+                clipPath(spillPath) {
+                    withTransform({
+                        translate(xv, 0f)
+                        transform(spillFall)
+                        scale(stroll.dir * size * frame, size * frame, Offset.Zero)
+                    }) {
+                        if (stroll.mode == Stroll.STAND) {
+                            drawPerson(SceneSprites.person(look, act, stroll.frame), a)
+                            if (stroll.mix > .01f)
+                                drawPerson(
+                                    SceneSprites.person(look, act, stroll.next),
+                                    a * stroll.mix,
+                                )
+                        } else smoothFrame(look, act, stroll.frame, stroll.next, stroll.mix, a)
+                    }
+                }
+                personFilter = null
+            }
+        }
     }
 
     private fun DrawScope.floor(
@@ -814,7 +1048,7 @@ internal class BuildingPainter {
                             else 1f
                         k < failing ->
                             if (seconds <= 0f) (if (k == 0) .55f else 0f)
-                            else if (Ambient.flicker(seed + k * 7, seconds, sputter)) .75f else 0f
+                            else .75f * Ambient.flickerLevel(seed + k * 7, seconds, sputter)
                         else -> 0f
                     }
                 if (bright > 0f) {
@@ -1398,7 +1632,7 @@ internal class BuildingPainter {
 
     /** A baked figure at the current origin (its feet's middle), in the sprite's own pixels. */
     private fun DrawScope.drawPerson(p: PersonImage, alpha: Float) {
-        drawImage(p.image, Offset(p.dx, p.dy), alpha)
+        drawImage(p.image, Offset(p.dx, p.dy), alpha, colorFilter = personFilter)
     }
 
     /** Someone walking along the floor, seen in the window [x], [y] ([rel] from its left edge). */
@@ -1731,6 +1965,21 @@ internal class BuildingPainter {
 
         /** The tile the asphalt's specks repeat in, in street units. */
         const val SPECK_TILE = 120f
+
+        /** How far a lobby window's light reaches down the pavement at night. */
+        const val SPILL = 26f
+
+        /** How deep the sun's shadows are at full strength, and the moon's. */
+        const val SUN_SHADE = .3f
+        const val MOON_SHADE = .22f
+
+        /**
+         * The shade's colours: the sun's (the sky's blue), dusk's violet, the moon's, a window's.
+         */
+        private val SunShade = Color(0xFF1C2746)
+        private val DuskShade = Color(0xFF2E1F42)
+        private val MoonShade = Color(0xFF070B1E)
+        private val SpillShade = Color(0xFF14100C)
 
         /** The seat and back slats of a bench, from the pavement line up. */
         val BENCH_SLATS = floatArrayOf(-9.6f, -7.2f, -18.6f, -16.1f, -13.6f)
