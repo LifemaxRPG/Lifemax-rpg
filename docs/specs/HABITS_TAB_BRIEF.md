@@ -235,6 +235,34 @@ fainter (`PENUMBRA`), so they are sharp at the trunk and soft at the crown. At n
 (64) of a building throws a warm additive pool on its walls (`lampLight`, clipped to the front and side). Shade depth
 went to sun 0.46 / moon 0.28 to keep the tree cores dark under the penumbra split.
 
+## As built: the sky's small things as painted art (NativeApi 181)
+
+The owner: "detail all the little small details, like the car in the background going by, the plane, the shooting stars...
+also the sun and moon, AAA quality." Three parallel passes, each a pure-Kotlin generator (reusing `Noise`/`Px`) baked once
+into ARGB layers and drawn with `drawImage` + `ColorFilter.tint`, as the clouds are; each checked on java.awt contact sheets
+before merging:
+
+- `SunMoonSprites.kt` + `domain/MoonPhase.kt` (`SunMoonSpritesTest`): the sun as disc/core/limb/rays/corona/glow layers
+  (limb darkening, a corona of noise streamers, rays turning 2.5°/s, a Plus-blended glow; at dusk 1.16× and deep orange);
+  the moon as body/highlands/halo plus one dark-side layer per 1/32 of the cycle, baked lazily for the current phase only.
+  The phase comes from the scene's date (mean synodic month from the 2000-01-06 new moon, at local midday); the terminator
+  is soft on the night side only, with 8 % earthshine; the halo scales with illumination. `Backdrop(seed, day)` now takes
+  the date. 523 KB.
+- `AirSprites.kt` + `BirdShape.kt` (`AirSpritesTest`): the plane (5 tintable layers: shade, lit, glint, belly bounce,
+  windows/beacon), its contrail (two engine cores merging into a noisy body that dissipates over 216 dp), the blimp (whole
+  airship baked; the night panel's sweeping light, propeller and running lights stay vector). Birds stay vector: `BirdShape`
+  writes a body/head/tail and wrist-bending wings into a reused FloatArray; `Ambient` gained tiers (3 sizes), per-tier
+  flap rates, glides, bobs and a flock drift (`FLOCK` 7). 1,362 KB.
+- `RoadSkySprites.kt` (`RoadSkySpritesTest`): four vehicles (hatchback, sedan, SUV, van) with day and night layers,
+  headlight beam/pool/glow and tail-light reflection at night, a haze tint by day, 30 % of passes followed by a second
+  vehicle; the meteor as a baked streak (core + halo, a fireball variant with green/orange) with a head bloom peaking
+  mid-run, 7 sparkles from pure helpers and a train that fades after the head burns out (`SHOOT_SECONDS` 1.6). 214 KB.
+
+Merging the three touched `Backdrop.kt` and `SceneSprites.kt` in overlapping places (each pass removed a different piece of
+the old vector art); the old `rays` path, disc brushes and the blimp/plane paths and brushes are gone. Dead code left:
+`haloBrush`/`haloWide` in `Backdrop.brushes()` and `SceneInk.Crater`/`SceneInk.Rays`. The pool is now about 6 MB
+(`SceneSprites.bytes()`), the people's frames apart.
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The
