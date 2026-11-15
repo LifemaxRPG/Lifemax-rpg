@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.lifemax.rpg.feature.habits.domain.Ambient
@@ -31,6 +32,7 @@ import com.lifemax.rpg.feature.habits.domain.MoonPhase
 import com.lifemax.rpg.feature.habits.domain.Pass
 import com.lifemax.rpg.feature.habits.domain.SkyPhase
 import com.lifemax.rpg.feature.habits.domain.Star
+import com.lifemax.rpg.feature.habits.domain.orbAt
 import com.lifemax.rpg.feature.habits.domain.skyTone
 import com.lifemax.rpg.feature.habits.domain.starsShown
 import kotlin.math.PI
@@ -179,18 +181,18 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     private var birdRim = Color.Transparent
     private var birdRimAlpha = 0f
 
-    // ---- the sun and the moon: sprites ([SceneSprites]), tinted once per sky
+    // ---- the sun and the moon: sprites ([SceneSprites]), coloured once per sky ([SunLook],
+    // [MoonLook]); their alphas follow the weather each frame, written in place
     private val moonStep = MoonPhase.step(MoonPhase.fraction(day))
-    private val moonLight = sqrt(MoonPhase.illumination(MoonPhase.fraction(day)))
+    private val moonLit = MoonPhase.illumination(MoonPhase.fraction(day))
+    private val sunLook = SunLook()
+    private val moonLook = MoonLook()
     private var orbKey: Any? = null
-    private var tintHalo: ColorFilter? = null
-    private var tintRays: ColorFilter? = null
-    private var tintRim: ColorFilter? = null
-    private var tintCore: ColorFilter? = null
-    private var tintLimb: ColorFilter? = null
-    private var tintMaria: ColorFilter? = null
-    private var tintHigh: ColorFilter? = null
-    private var tintNight: ColorFilter? = null
+    private val sunTint = arrayOfNulls<ColorFilter>(SunLook.LAYERS)
+    private var moonWarm = 0f
+    private var moonAt = -1f
+    private var moonFilter: ColorFilter? = null
+    private var moonHalo: ColorFilter? = null
 
     // ---- brushes that follow the horizon, the orb and the density
     private var skyBrush: Brush? = null
@@ -258,7 +260,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
             if (starAlpha > .6f && Ambient.shootingStar(seconds, seed, pass))
                 shootingStar(pass, w, top, band, starAlpha)
         }
-        heavenlyBody(sky, orb, seconds)
+        heavenlyBody(sky, hour, orb, horizon, seconds)
         lensFlare(sky, orb, top, shift)
         clouds(sky, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds)
         if (tone > 1.6f && Ambient.blimp(seconds, seed, pass))
@@ -271,7 +273,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         drawRect(glowBrush!!, Offset(0f, horizon - 60f * d), Size(w, 60f * d))
         drawRect(sky.ground[0], Offset(0f, horizon), Size(w, size.height - horizon))
         drawLine(sky.line, Offset(0f, horizon), Offset(w, horizon), d)
-        weather(sky, w, horizon, shift, seconds)
+        weather(sky, w, horizon, orb, shift, seconds)
         if (Ambient.car(seconds, seed, pass)) car(pass, sky, w, horizon, seconds)
     }
 
@@ -299,6 +301,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         sky: SkyColors,
         w: Float,
         horizon: Float,
+        orb: Offset,
         shift: Float,
         seconds: Float,
     ) {
@@ -324,6 +327,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         }
         if (cloud >= .01f) {
             drawRect(veilBrush!!, Offset.Zero, Size(w, horizon + d), alpha = .82f * cloud)
+            throughVeil(sky, orb)
             // the low ragged ceiling: stratus over the far city, slow, wide, grey
             val pool = SceneSprites.clouds
             val which = CloudSprites.of(CloudKind.STRATUS)
@@ -529,89 +533,103 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     }
 
     /**
-     * The sun or the moon, from sprites painted once ([SunMoonSprites]) and tinted with the hour's
-     * colours. The sun: its wide glow and corona, soft rays turning slowly (still in a still
-     * picture), the disc with its limb darkening and thin bright limb; at dusk larger, deeper
-     * orange and flatter, in a warmer, wider halo. The moon: its halo (as strong as the phase is
-     * bright), its seas and highlands, and the dark of the [moonStep] over them, with earthshine
-     * through it.
+     * The sun or the moon, from sprites painted once ([SunMoonSprites]) and coloured for the hour
+     * ([SunLook], [MoonLook]). The sun by day is light, not a thing: an overexposed core blooming
+     * smoothly into the sky it brightens, with a few long soft rays turning slowly (still in a
+     * still picture); through the dusk hour its body comes out of the bloom, low, large, orange,
+     * flattened, its glow hugging it and spreading along the horizon, and after sunset it fades
+     * into the haze. The moon: the picture of its phase (its seas and ray craters, the relief along
+     * the terminator, the earthshine on its dark side), fading in as the sun goes, under the air's
+     * soft halo, as strong as it is bright, wider in mist.
      */
-    private fun DrawScope.heavenlyBody(sky: SkyColors, orb: Offset, seconds: Float) {
-        orbTints(sky)
+    private fun DrawScope.heavenlyBody(
+        sky: SkyColors,
+        hour: Float,
+        orb: Offset,
+        horizon: Float,
+        seconds: Float,
+    ) {
+        orbTints(sky, hour, orb, horizon)
         val d = density
-        val haloA = sky.halo.alpha
         if (sky.phase == SkyPhase.NIGHT) {
             val m = SceneSprites.moon
-            val shade = SceneSprites.moonShade(moonStep)
+            val l = moonLook
+            l.alphas(moonLit, MoonLook.up(sky.dark), cloudiness, mist)
+            if (l.body < .004f) return
+            val pic = SceneSprites.moonPicture(moonStep)
             translate(orb.x, orb.y) {
-                orbLayer(m.body, m.sprite.body, d, 1f, 1f, tintMaria, BlendMode.SrcOver)
-                orbLayer(m.high, m.sprite.high, d, 1f, 1f, tintHigh, BlendMode.SrcOver)
-                orbLayer(shade.image, shade.layer, d, 1f, .92f, tintNight, BlendMode.SrcOver)
-                // the halo last, added over the sky round the disc (it is clear of the disc)
-                orbLayer(
-                    m.halo,
-                    m.sprite.halo,
-                    d,
-                    1f,
-                    haloA * 1.6f * moonLight,
-                    tintHalo,
-                    BlendMode.Plus,
-                )
+                orbLayer(pic.image, pic.layer, d, 1f, 1f, l.body, moonFilter, BlendMode.SrcOver)
+                // the air in front of it, over its dark side too
+                orbLayer(m.halo, m.sprite.halo, d, 1f, 1f, l.halo, moonHalo, BlendMode.Plus)
+                if (l.haze > .004f)
+                    orbLayer(m.halo, m.sprite.halo, d, 2.4f, 2.4f, l.haze, moonHalo, BlendMode.Plus)
             }
-        } else {
-            val day = sky.phase == SkyPhase.DAY
-            val s = SceneSprites.sun
-            val grow = if (day) 1f else 1.16f
-            translate(orb.x, orb.y) {
-                orbLayer(
-                    s.glow,
-                    s.sprite.glow,
-                    d,
-                    1f,
-                    haloA * (if (day) .8f else 1.1f),
-                    tintHalo,
-                    BlendMode.Plus,
-                )
-                orbLayer(
-                    s.corona,
-                    s.sprite.corona,
-                    d,
-                    grow,
-                    haloA * 2.2f,
-                    tintHalo,
-                    BlendMode.SrcOver,
-                )
-                rotate(seconds * 2.5f, Offset.Zero) {
+            return
+        }
+        val k = sunLook
+        k.alphas(
+            SunLook.dusk(sky.dark),
+            SunLook.up(sky.dark),
+            SunLook.low((horizon - orb.y) / d),
+            cloudiness,
+            mist,
+        )
+        val s = SceneSprites.sun
+        val p = s.sprite
+        translate(orb.x, orb.y) {
+            sunLayer(s.sky, p.sky, SunLook.WIDE)
+            // the band of glow along the horizon under a low sun
+            if (k.alpha[SunLook.BAND] > .004f)
+                translate(0f, (horizon - orb.y) * k.bandDrop) {
                     orbLayer(
-                        s.rays,
-                        s.sprite.rays,
+                        s.sky,
+                        p.sky,
                         d,
-                        grow,
-                        if (day) .55f else .5f,
-                        tintRays,
-                        BlendMode.SrcOver,
+                        SunLook.BAND_SX,
+                        SunLook.BAND_SY,
+                        k.alpha[SunLook.BAND],
+                        sunTint[SunLook.BAND],
+                        BlendMode.Plus,
                     )
                 }
-                orbLayer(s.disc, s.sprite.disc, d, grow, 1f, tintRim, BlendMode.SrcOver)
-                orbLayer(
-                    s.core,
-                    s.sprite.core,
-                    d,
-                    grow,
-                    if (day) 1f else .55f,
-                    tintCore,
-                    BlendMode.SrcOver,
-                )
-                orbLayer(
-                    s.limb,
-                    s.sprite.limb,
-                    d,
-                    grow,
-                    if (day) .8f else .3f,
-                    tintLimb,
-                    BlendMode.SrcOver,
-                )
+            sunLayer(s.bloom, p.bloom, SunLook.GLOW)
+            rotate(seconds * SunLook.RAY_TURN, Offset.Zero) {
+                sunLayer(s.rays, p.rays, SunLook.RAYS)
             }
+            sunLayer(s.core, p.core, SunLook.HUG)
+            sunLayer(s.disc, p.disc, SunLook.DISC)
+            sunLayer(s.discLight, p.discLight, SunLook.DISC_LIGHT)
+            sunLayer(s.bloom, p.bloom, SunLook.BLOOM)
+            sunLayer(s.core, p.core, SunLook.CORE)
+        }
+    }
+
+    /** One of the sun's layers, as [sunLook] has it now. */
+    private fun DrawScope.sunLayer(image: ImageBitmap, l: SkyLayer, layer: Int) {
+        val a = sunLook.alpha[layer]
+        if (a < .004f) return
+        val g = sunLook.grow[layer]
+        val blend = if (SunLook.added(layer)) BlendMode.Plus else BlendMode.SrcOver
+        orbLayer(image, l, density, g, g, a, sunTint[layer], blend)
+    }
+
+    /**
+     * The sun or the moon through the overcast's veil (drawn over it): a pale diffuse brightness
+     * where it is, not a disc.
+     */
+    private fun DrawScope.throughVeil(sky: SkyColors, orb: Offset) {
+        if (orbKey !== sky) return
+        val d = density
+        if (sky.phase == SkyPhase.NIGHT) {
+            val a = moonLook.veil
+            if (a < .004f) return
+            val m = SceneSprites.moon
+            translate(orb.x, orb.y) {
+                orbLayer(m.halo, m.sprite.halo, d, 1.6f, 1.6f, a, moonHalo, BlendMode.Plus)
+            }
+        } else {
+            val s = SceneSprites.sun
+            translate(orb.x, orb.y) { sunLayer(s.bloom, s.sprite.bloom, SunLook.VEIL) }
         }
     }
 
@@ -637,7 +655,11 @@ internal class Backdrop(private val seed: Int, day: String = "") {
      */
     private fun DrawScope.lensFlare(sky: SkyColors, orb: Offset, top: Float, shift: Float) {
         if (sky.phase == SkyPhase.NIGHT) return
-        val k = LensFlare.strength(sky.dark, sunClear)
+        // (gone with the sun after sunset, and behind the overcast)
+        val k =
+            LensFlare.strength(sky.dark, sunClear) *
+                SunLook.up(sky.dark) *
+                (1f - cloudiness.coerceIn(0f, 1f))
         if (k < .01f) return
         if (flareKey !== sky) {
             val base = lerp(sky.halo.copy(alpha = 1f), Color.White, .35f)
@@ -688,18 +710,21 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         }
     }
 
-    /** One layer of the sun or the moon, centred on the origin, [grow] times its size in dp. */
-    private inline fun DrawScope.orbLayer(
+    /**
+     * One layer of the sun or the moon, centred on the origin, [gx] by [gy] times its size in dp.
+     */
+    private fun DrawScope.orbLayer(
         image: ImageBitmap,
         l: SkyLayer,
         d: Float,
-        grow: Float,
+        gx: Float,
+        gy: Float,
         alpha: Float,
         tint: ColorFilter?,
         blend: BlendMode,
     ) {
-        val s = d / l.pxPerDp * grow
-        scale(s, s, Offset.Zero) {
+        val s = d / l.pxPerDp
+        scale(s * gx, s * gy, Offset.Zero) {
             drawImage(
                 image,
                 Offset(-l.size / 2f, -l.size / 2f),
@@ -710,22 +735,38 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         }
     }
 
-    /** The tints of the sun's and the moon's layers for this sky (kept until the sky changes). */
-    private fun orbTints(sky: SkyColors) {
-        if (orbKey === sky) return
-        val day = sky.phase == SkyPhase.DAY
-        fun tint(c: Color) = ColorFilter.tint(c.copy(alpha = 1f), BlendMode.SrcIn)
-        tintHalo = tint(sky.halo)
-        tintRays = tint(lerp(sky.halo, Color.White, .3f))
-        // the disc: white-gold by day, deep orange at dusk, brighter in the middle than at the rim
-        tintRim = tint(lerp(sky.orb, Color(0xFFFF8A2A), if (day) .35f else .8f))
-        tintCore = tint(lerp(sky.orb, Color.White, if (day) .85f else .3f))
-        tintLimb = tint(if (day) Color.White else Color(0xFFFFF0C8))
-        // the moon: bluish-grey seas under pale highlands; the night side the sky's own colour
-        tintMaria = tint(lerp(sky.orb, Color(0xFF3E4A74), .72f))
-        tintHigh = tint(lerp(sky.orb, Color.White, .55f))
-        tintNight = tint(lerp(sky.sky[1], sky.sky[0], .5f))
-        orbKey = sky
+    /**
+     * The sun's and the moon's colours for this sky (kept until the sky changes), and the moon's
+     * for the sky behind it where it stands (kept until it moves).
+     */
+    private fun orbTints(sky: SkyColors, hour: Float, orb: Offset, horizon: Float) {
+        if (orbKey !== sky) {
+            sunLook.tints(SunLook.dusk(sky.dark), sky.halo.toArgb(), sky.orb.toArgb())
+            for (i in 0 until SunLook.LAYERS) sunTint[i] =
+                ColorFilter.tint(Color(sunLook.tint[i]), BlendMode.SrcIn)
+            moonWarm = MoonLook.warm(orbAt(hour).second)
+            moonAt = -1f
+            orbKey = sky
+        }
+        if (sky.phase != SkyPhase.NIGHT) return
+        val at = (orb.y / horizon.coerceAtLeast(1f)).coerceIn(0f, 1f)
+        if (moonFilter != null && abs(at - moonAt) < .02f) return
+        moonLook.colours(moonLit, moonWarm, skyAt(sky, at).toArgb(), sky.halo.toArgb())
+        moonFilter = ColorFilter.colorMatrix(ColorMatrix(moonLook.matrix.copyOf()))
+        moonHalo = ColorFilter.tint(Color(moonLook.haloTint), BlendMode.SrcIn)
+        moonAt = at
+    }
+
+    /** The sky's colour [at] a share of the way down to the horizon, as [skyBrush] paints it. */
+    private fun skyAt(sky: SkyColors, at: Float): Color {
+        val c = sky.sky
+        val b = lerp(c[0], c[1], .72f)
+        val m = lerp(c[1], c[2], .3f)
+        return when {
+            at < .32f -> lerp(c[0], b, at / .32f)
+            at < .66f -> lerp(b, m, (at - .32f) / .34f)
+            else -> lerp(m, c[2], (at - .66f) / .34f)
+        }
     }
 
     /** Each ghost's own cast: the lens's coatings colour them a little apart from the sun. */

@@ -46,24 +46,22 @@ internal class AirImages(val sprite: AirSprite, val layers: Array<ImageBitmap>)
 /** The sun's layers as images, with the sprite that says their sizes. */
 internal class SunImages(
     val sprite: SunSprite,
-    val disc: ImageBitmap,
     val core: ImageBitmap,
-    val limb: ImageBitmap,
+    val bloom: ImageBitmap,
+    val sky: ImageBitmap,
     val rays: ImageBitmap,
-    val corona: ImageBitmap,
-    val glow: ImageBitmap,
+    val disc: ImageBitmap,
+    val discLight: ImageBitmap,
 )
 
-/** The moon's layers as images (its dark side is [SceneSprites.moonShade]). */
-internal class MoonImages(
-    val sprite: MoonSprite,
-    val body: ImageBitmap,
-    val high: ImageBitmap,
-    val halo: ImageBitmap,
-)
+/**
+ * The moon's surface (to make the picture of a phase from, [SceneSprites.moonPicture]) and its halo
+ * as an image.
+ */
+internal class MoonImages(val sprite: MoonSprite, val halo: ImageBitmap)
 
-/** The dark of the moon at one [step] of its cycle, as an image. */
-internal class MoonShadeImage(val step: Int, val layer: SkyLayer, val image: ImageBitmap)
+/** The moon at one [step] of its cycle, as an image. */
+internal class MoonPictureImage(val step: Int, val layer: SkyLayer, val image: ImageBitmap)
 
 /** A tree variant's images, one per [TreeLook]. */
 internal class TreeImages(val sprite: TreeSprite, val looks: Array<ImageBitmap>)
@@ -253,31 +251,31 @@ internal object SceneSprites {
         val s = SunMoonSprites.sun()
         SunImages(
             s,
-            image(s.disc),
             image(s.core),
-            image(s.limb),
+            image(s.bloom),
+            image(s.sky),
             image(s.rays),
-            image(s.corona),
-            image(s.glow),
+            image(s.disc),
+            image(s.discLight),
         )
     }
 
     val moon: MoonImages by lazy {
         val m = SunMoonSprites.moon()
-        MoonImages(m, image(m.body), image(m.high), image(m.halo))
+        MoonImages(m, image(m.halo))
     }
 
-    private var shade: MoonShadeImage? = null
+    private var picture: MoonPictureImage? = null
 
     /**
-     * The dark of the moon at [step] of [com.lifemax.rpg.feature.habits.domain.MoonPhase.STEPS]:
-     * only the current one is kept, made the first time a night of that phase is drawn.
+     * The moon at [step] of [com.lifemax.rpg.feature.habits.domain.MoonPhase.STEPS]: only the
+     * current one is kept, made from the surface the first time a night of that phase is drawn.
      */
     @Synchronized
-    fun moonShade(step: Int): MoonShadeImage {
-        shade?.let { if (it.step == step) return it }
-        val l = SunMoonSprites.moonShade(step)
-        return MoonShadeImage(step, l, image(l)).also { shade = it }
+    fun moonPicture(step: Int): MoonPictureImage {
+        picture?.let { if (it.step == step) return it }
+        val l = SunMoonSprites.moonPicture(moon.sprite, step)
+        return MoonPictureImage(step, l, image(l)).also { picture = it }
     }
 
     val trees: Array<TreeImages> by lazy {
