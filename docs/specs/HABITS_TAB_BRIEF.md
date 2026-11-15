@@ -351,6 +351,22 @@ Natively `HabitsSurroundings.dev` (optional, strict when present, `HabitsFileTes
 developer mode is on; `Controls` shows the chips Real / Day 13:00 / Dusk 18:36 / Night 23:00 under the dots. Toggling
 developer mode in Settings reaches the open screen at the kit's next refresh (or on re-opening the tab).
 
+## As built: the rooms behind the windows (NativeApi 192)
+
+`RoomSprites.kt` rewritten (`RoomsTest`): a room is baked once per (kind, variant, window height) as `Room(base, lamp,
+screen?, front)`: the unlit room at 3.2 px/unit (textured back wall, side walls narrowing to the back, a floor in perspective
+with boards and a rug, skirting, corner shade, 2–4 shaded furniture pieces, props, the lamp fixture), an additive lamp layer
+(warm pool on the wall and floor, sill spill, drawn Plus × the dusk pass's `lightsOn`), an additive screen glow for OFFICE and
+LIVING (× `max(tv, monitor)`), and what stands in front of the person (desk, counter, sink, piano, table, board). Fifteen
+kinds, three `Scheme` variants each, 135 bakes ≤ 4 MB lazily (variant 0 warmed, ~1.2 MB). `PeopleActivities` gained
+TV_WATCHING, TREE_POSE, CHILD_PLAYING (two child looks, `Looks.CHILDREN`), TALKING (a mirrored pair), `RoomKind.DINING`,
+per-room `shift` tables; people atlas 5.65 MB (< 6 MB kept). `Silhouettes.cast()` applies the spread rule: no two spatially
+adjacent windows of one kind, the habit's lead kind capped at half the lit windows, variants rotating; curtains in seven
+kinds. `windowLife()` draw order: base → lamp → day tint and `sunlight()` (a warm parallelogram skewed by `sunSide`, Plus,
+by day) → person → screen → front → cooking steam (the dusk puffs) → curtains → sill item → glass sheen. The lobby got a lit
+sign behind the desk. Screenshot tests `roomsDay`, `roomsNight`. The combined people+rooms budget assertion went from 6 to
+8 MB (actual ≈ 7.0).
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The
