@@ -263,6 +263,30 @@ the old vector art); the old `rays` path, disc brushes and the blimp/plane paths
 `haloBrush`/`haloWide` in `Backdrop.brushes()` and `SceneInk.Crater`/`SceneInk.Rays`. The pool is now about 6 MB
 (`SceneSprites.bytes()`), the people's frames apart.
 
+## As built: walking like people, and weather (NativeApi 183)
+
+Walk irregularity (`domain/Gait.kt`, `Visit.kt`, `PeopleActivities.kt`, `GaitTest`): a per-look `Gait.Style` baked into each
+look's own 16 walk frames (stride ±12 %, arm swing per arm, bob, posture lean, far-step timing split, shoulder roll, hip);
+a per-person `Gait.Signature` applied at draw time with no memory (tempo .92–1.08, lean as a skew about the feet, bob
+scale, a limp for ~6 % of seeds, hitch rate); per-step `Gait.liveTravel/livePhase/bob` (two incommensurate sines ±3 %
+plus occasional hitches, slope always > 0 so the same live distance drives position and frame and feet never slide);
+standing `Gait.sway/settle` and a watch-glance for 60 % of lobby visitors (3 extra baked frames per look). People atlas
+5.2 MB. The pedestrian pass (street walkers) is to call `Gait.pace(size, look)`, `liveTravel`, `strides`, `bob`, `lean`,
+`tempo`.
+
+Weather (`domain/StreetWeather.kt`, `presentation/scene/WeatherSprites.kt`, `StreetWeatherTest`, `WeatherSpritesTest`):
+the day's weather from the date (CLEAR 58 / OVERCAST 18 / RAIN 14 / MIST 10 per 100; a rain spell 1.5–5 h with 20 min
+ramps; the pavement wets in 15 min and dries over 2 h; mist from ~4 h gone by 8.5–10 h; 2026-03-02, the screenshot date,
+is clear), as `WeatherState(cloudiness, rain, wet, mist)` with `WeatherOverride.forced` for tests. `KeyLight.flat` and
+`StreetWeather.light()` flatten the key light under cloud (strength ×.2 when overcast, no cloud shadows, grey shade).
+Painter: `weather()` after everything on the street: `wet()` (Multiply darkening, a reflection layer of the lobby fronts,
+signs, awnings, first-storey lit windows, trees, lamps with a long streak down the road, drawn twice ±0.6 for ripple,
+masked to fade by the kerb), `puddles()` (3 per 200 units, sky-filled with a far rim, lamp glow at night, rain rings),
+`rain()` (two scrolled streak layers, brighter in the lamp cones, splashes on pavement and awnings, drips). Backdrop:
+`weather()` draws a grey veil, three low stratus and the mist band after the horizon. New screenshot tests `rainNight`,
+`overcastDay`, `wetAfterRainDay`, `mistMorning`. Not verified in Compose before CI: the reflection layer's masks and
+the lamp streak strength are the knobs if the wet street reads wrong. 232 KB of sprites.
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The
