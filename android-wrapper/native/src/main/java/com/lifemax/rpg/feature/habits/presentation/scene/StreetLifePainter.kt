@@ -30,6 +30,7 @@ import com.lifemax.rpg.feature.habits.domain.KeyLight
 import com.lifemax.rpg.feature.habits.domain.NearLight
 import com.lifemax.rpg.feature.habits.domain.Passer
 import com.lifemax.rpg.feature.habits.domain.PeopleLod
+import com.lifemax.rpg.feature.habits.domain.Perspective
 import com.lifemax.rpg.feature.habits.domain.SceneLight
 import com.lifemax.rpg.feature.habits.domain.StreetGait
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
@@ -502,10 +503,13 @@ internal class StreetLifePainter {
         for (i in layouts.indices) tallest = max(tallest, layouts[i].height)
         val half = B.W / 2f
         drawIntoCanvas { it.saveLayer(Rect(from, -tallest - 10f, to, 0f), sweepPaint) }
+        val p = painter
         for (i in layouts.indices) {
             val cx = street.centers[i]
-            val left = cx - half
-            val right = cx + half + B.DX
+            // the wash covers the front and whichever side face the building shows
+            val shift = p?.shiftAt(cx) ?: B.DX
+            val left = cx + Perspective.left(shift)
+            val right = cx + Perspective.right(shift)
             if (right < from || left > to) continue
             val strength = NearLight.sweep(lampX, car.dir, cx)
             if (strength < .02f) continue
@@ -525,7 +529,6 @@ internal class StreetLifePainter {
         }
         // the shadows of the pavement's furniture up the walls: each scaled about the headlight,
         // on the wall of each building in view
-        val p = painter
         if (p != null) {
             val scale = NearLight.wallScale()
             wall.reset()
@@ -534,8 +537,9 @@ internal class StreetLifePainter {
             wall.translate(-lampX, NearLight.HEADLIGHT)
             for (i in layouts.indices) {
                 val cx = street.centers[i]
-                val left = cx - half
-                val right = cx + half + B.DX
+                val shift = p.shiftAt(cx)
+                val left = cx + Perspective.left(shift)
+                val right = cx + Perspective.right(shift)
                 if (right < from || left > to) continue
                 if (NearLight.sweep(lampX, car.dir, cx) < .02f) continue
                 clipRect(left, -layouts[i].height, right, 0f) {

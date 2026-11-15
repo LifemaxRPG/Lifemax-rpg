@@ -61,6 +61,7 @@ import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
 import com.lifemax.rpg.feature.habits.domain.KeyLight
 import com.lifemax.rpg.feature.habits.domain.LensFlare
+import com.lifemax.rpg.feature.habits.domain.Perspective
 import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.SceneLight
 import com.lifemax.rpg.feature.habits.domain.SceneWindow
@@ -240,6 +241,14 @@ private class Frame(
     val top: Float = max(min(inset, skyTop), skyTop - lift)
 
     fun screenX(x: Float): Float = size.width / 2f + (x - middle) * unit
+
+    /**
+     * Which side face the building whose front's middle is at street [x] shows, as its back edge's
+     * shift ([Perspective.shift]): its right face left of the view's middle, its left face right of
+     * it, coming round as the street scrolls; gentler zoomed out.
+     */
+    fun sideShift(x: Float): Float =
+        Perspective.shift(Perspective.sideAt(x, middle, size.width / unit, Perspective.k(zoom)))
 
     fun streetX(px: Float): Float = middle + (px - size.width / 2f) / unit
 }
@@ -705,6 +714,8 @@ private fun StageCanvas(
         painter.light = light
         painter.lightX = f.streetX(orb.first * d)
         painter.lightSpan = this.size.width / f.unit
+        painter.viewX = f.middle
+        painter.perspectiveK = Perspective.k(f.zoom)
         painter.lamps = street.furniture
         painter.weather = weather
         backdrop.cloudiness = weather.cloudiness
@@ -874,16 +885,18 @@ private fun sunClear(
     var clear = 1f
     for (i in layouts.indices) {
         val l = street.lefts[i]
-        if (l + layouts[i].lot < from || l > to) continue
+        if (l + layouts[i].lot < from || l - B.DX > to) continue
+        val cx = street.centers[i]
+        val shift = f.sideShift(cx)
         clear =
             min(
                 clear,
                 LensFlare.clear(
                     x,
                     y,
-                    f.screenX(l),
+                    f.screenX(cx + Perspective.left(shift)),
                     f.ground - layouts[i].height * f.unit,
-                    f.screenX(l + B.W + B.DX),
+                    f.screenX(cx + Perspective.right(shift)),
                     f.ground,
                     24f * d,
                 ),
@@ -915,8 +928,10 @@ private fun DrawScope.cloudShade(
     path.rewind()
     path.addRect(Rect(0f, horizon, w, size.height))
     for (i in layouts.indices) {
-        val x0 = f.screenX(street.centers[i] - B.W / 2f)
-        val x1 = f.screenX(street.centers[i] + B.W / 2f + B.DX)
+        val cx = street.centers[i]
+        val shift = f.sideShift(cx)
+        val x0 = f.screenX(cx + Perspective.left(shift))
+        val x1 = f.screenX(cx + Perspective.right(shift))
         if (x1 < 0f || x0 > w) continue
         val top = f.ground - (layouts[i].roof + B.CORNICE + B.DY) * f.unit
         path.addRect(Rect(x0, top, x1, f.ground))
@@ -1051,7 +1066,8 @@ private fun tap(
     // the building in front first
     for (i in stacks.indices.sortedBy { abs(it - f.focus) }) {
         val l: BuildingLayout = arts[i].layout
-        val hit = l.hit(x - f.street.centers[i], y) ?: continue
+        val cx = f.street.centers[i]
+        val hit = l.hit(x - cx, y, f.sideShift(cx)) ?: continue
         if (i == f.focus) actions.tapped(stacks[i].id, hit) else actions.chosen(stacks[i].id)
         return
     }

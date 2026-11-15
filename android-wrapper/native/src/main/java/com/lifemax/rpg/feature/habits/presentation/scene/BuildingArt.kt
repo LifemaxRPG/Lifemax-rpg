@@ -80,7 +80,10 @@ internal class FloorArt(
     val top: Float,
     val bottom: Float,
     val wall: Brush,
-    /** The side face and the brick, stone, steel or grime drawn over the wall. */
+    /**
+     * The side face as a unit ([sidePath]), and the brick, stone, steel or grime drawn over the
+     * wall.
+     */
     val side: Path,
     val texture: Path,
     val trim: Path,
@@ -125,6 +128,7 @@ internal class BuildingArt(
     val treat: TextLayoutResult?,
     val ghostWords: TextLayoutResult?,
     val awning: Color,
+    /** The lobby's side face as a unit ([sidePath]). */
     val lobbySide: Path,
     /** The material of its top storey, which sets its cornice. */
     val crown: HabitMaterial?,
@@ -177,12 +181,18 @@ internal fun buildingArt(layout: BuildingLayout, stack: HabitStack, text: SceneT
     )
 }
 
+/**
+ * A side face from [top] to [bottom] as a unit: hinged on x 0 (the front's edge), one unit wide,
+ * its back edge [B.DY] up. The painter draws it under a transform that moves it to the edge the
+ * shown side hangs from and scales it out to that side's width, mirrored for the left face
+ * ([com.lifemax.rpg.feature.habits.domain.Perspective]), so no path is made per frame.
+ */
 private fun sidePath(top: Float, bottom: Float): Path =
     Path().apply {
-        moveTo(B.W / 2f, top)
-        lineTo(B.W / 2f + B.DX, top - B.DY)
-        lineTo(B.W / 2f + B.DX, bottom - B.DY)
-        lineTo(B.W / 2f, bottom)
+        moveTo(0f, top)
+        lineTo(1f, top - B.DY)
+        lineTo(1f, bottom - B.DY)
+        lineTo(0f, bottom)
         close()
     }
 

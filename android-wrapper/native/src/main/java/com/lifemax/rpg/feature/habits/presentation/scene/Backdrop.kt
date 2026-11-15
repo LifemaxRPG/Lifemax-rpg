@@ -21,8 +21,11 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.lifemax.rpg.feature.habits.domain.Ambient
+import com.lifemax.rpg.feature.habits.domain.BirdPose
 import com.lifemax.rpg.feature.habits.domain.Building
 import com.lifemax.rpg.feature.habits.domain.CloudKind
+import com.lifemax.rpg.feature.habits.domain.Flight
+import com.lifemax.rpg.feature.habits.domain.FlockPose
 import com.lifemax.rpg.feature.habits.domain.LensFlare
 import com.lifemax.rpg.feature.habits.domain.MoonPhase
 import com.lifemax.rpg.feature.habits.domain.Pass
@@ -150,6 +153,10 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     /** A bird's outline, written by [BirdShape] and read into [path] each frame. */
     private val birdCmd = FloatArray(BirdShape.CAPACITY)
 
+    /** Where the flock and the bird being drawn are, written by [Flight] each frame. */
+    private val flock = FlockPose()
+    private val bird = BirdPose()
+
     // ---- brushes made once per sky (units of their own: unit circles, dp for the airships)
 
     private var skyKey: Any? = null
@@ -259,7 +266,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         if (Ambient.plane(seconds, seed, pass)) plane(pass, sky, w, top, band, seconds, tone)
         for (r in rows.indices) row(r, sky, horizon, shift * drift[r], seconds)
         if (tone >= .7f && Ambient.birds(seconds, seed, pass))
-            birds(pass, sky, w, top, band, seconds)
+            birds(pass, sky, w, top, horizon, ceiling, seconds)
         // the glow over the horizon: the city's light at night, haze by day
         drawRect(glowBrush!!, Offset(0f, horizon - 60f * d), Size(w, 60f * d))
         drawRect(sky.ground[0], Offset(0f, horizon), Size(w, size.height - horizon))
@@ -1046,67 +1053,95 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     }
 
     /**
-     * A flock in a V, in three sizes (the far ones smaller, fainter, slower on the wing): each bird
-     * a body with a head and a fanned tail and two wings that bend at the wrist, the hand curling
-     * on the downstroke; every bird on its own beat and rising and falling on its own path, one now
-     * and then gliding; the whole V drifting a little. Dark against the day's sky, warm-rimmed at
-     * dusk.
+     * A flock in a V on its [Flight]: in at an edge at mid-sky, near, banking in a wide arc until
+     * it flies away towards the far city, shrinking, sinking towards the vanishing height and
+     * thinning into the air until it is gone (or the same the other way round, out of the
+     * distance). Each bird keeps its place in the V, laid along the heading, so the near arm and
+     * the followers are the bigger birds and the V turns with the flock; each on its own beat
+     * (smaller seen end-on), rising and falling on its own path, one now and then gliding. A bird
+     * with a body, a head and a fanned tail and wings that bend at the wrist. Dark against the
+     * day's sky, warm-rimmed at dusk, the far ones the colour of the far city's air.
      */
     private fun DrawScope.birds(
         p: Pass,
         sky: SkyColors,
         w: Float,
         top: Float,
-        band: Float,
+        horizon: Float,
+        ceiling: Float,
         seconds: Float,
     ) {
         val d = density
-        val x0 = p.x * w + Ambient.flockDriftX(seconds) * d
-        val y0 = top + p.y * band + Ambient.flockDriftY(seconds) * d
-        withTransform({
-            translate(x0, y0)
-            scale(d, d, Offset.Zero)
-        }) {
-            for (i in 0 until Ambient.FLOCK) {
-                val size = Ambient.birdSize(i)
-                val fade = Ambient.birdFade(i)
-                val x = Ambient.birdX(i, p.dir)
-                val y = Ambient.birdY(i) + Ambient.birdBob(i, seconds)
-                val n = BirdShape.build(x, y, Ambient.flap(i, seconds), size, p.dir, birdCmd)
-                path.rewind()
-                var k = 0
-                while (k < n) {
-                    when (birdCmd[k]) {
-                        BirdShape.MOVE -> {
-                            path.moveTo(birdCmd[k + 1], birdCmd[k + 2])
-                            k += 3
-                        }
-                        BirdShape.LINE -> {
-                            path.lineTo(birdCmd[k + 1], birdCmd[k + 2])
-                            k += 3
-                        }
-                        BirdShape.CUBIC -> {
-                            path.cubicTo(
-                                birdCmd[k + 1],
-                                birdCmd[k + 2],
-                                birdCmd[k + 3],
-                                birdCmd[k + 4],
-                                birdCmd[k + 5],
-                                birdCmd[k + 6],
-                            )
-                            k += 7
-                        }
-                        else -> {
-                            path.close()
-                            k += 1
-                        }
+        val variant = Flight.variant(seed, p.pass)
+        Flight.flock(p.t, variant, flock)
+        if (flock.fade <= 0f) return
+        // its height: in at a share of the sky's band, sinking as it recedes towards the vanishing
+        // height, which stays over the far city's tops and clear of the "add a floor" ghost
+        val band = (horizon - top).coerceAtLeast(40f * d)
+        val vanish = minOf(horizon - 44f * d, CloudLayout.floor(horizon, ceiling, d) - 4f * d)
+        if (vanish <= top + 24f * d) return
+        val start = minOf(top + Ambient.birdsHeight(seed, p.pass) * band, vanish - 40f * d)
+        val endOn = Flight.endOn(flock)
+        val headX = if (flock.ux < 0f) -1f else 1f
+        val airInk = lerp(sky.far[0], sky.sky[2], .5f)
+        for (i in 0 until Ambient.FLOCK) {
+            Flight.bird(flock, i, bird)
+            if (bird.fade <= .01f) continue
+            val near = bird.near
+            val size = Ambient.birdSize(i) * minOf(near * 1.45f, 1.6f)
+            val fade = Ambient.birdFade(i)
+            val x = bird.x * w
+            val y =
+                vanish - (vanish - start) * near +
+                    (bird.dy + Ambient.birdBob(i, seconds)) * near * d
+            val flap = Ambient.flap(i, seconds) * (1f - .4f * endOn)
+            val n = BirdShape.build(0f, 0f, flap, size, headX * (1f - endOn), birdCmd)
+            path.rewind()
+            var k = 0
+            while (k < n) {
+                when (birdCmd[k]) {
+                    BirdShape.MOVE -> {
+                        path.moveTo(birdCmd[k + 1], birdCmd[k + 2])
+                        k += 3
+                    }
+                    BirdShape.LINE -> {
+                        path.lineTo(birdCmd[k + 1], birdCmd[k + 2])
+                        k += 3
+                    }
+                    BirdShape.CUBIC -> {
+                        path.cubicTo(
+                            birdCmd[k + 1],
+                            birdCmd[k + 2],
+                            birdCmd[k + 3],
+                            birdCmd[k + 4],
+                            birdCmd[k + 5],
+                            birdCmd[k + 6],
+                        )
+                        k += 7
+                    }
+                    else -> {
+                        path.close()
+                        k += 1
                     }
                 }
+            }
+            // aerial perspective: the further, the more it takes the colour of the air
+            val haze = ((1f - near) * .7f + mist * .5f).coerceIn(0f, 1f)
+            val ink = lerp(birdInk[Ambient.birdTier(i)], airInk, haze)
+            val alpha = (.5f + .5f * fade) * bird.fade
+            withTransform({
+                translate(x, y)
+                scale(d, d, Offset.Zero)
+            }) {
                 if (birdRimAlpha > 0f)
                     translate(-.35f * size, -.4f * size) {
-                        drawPath(path, birdRim, alpha = birdRimAlpha * .8f * fade)
+                        drawPath(
+                            path,
+                            birdRim,
+                            alpha = birdRimAlpha * .8f * fade * bird.fade * near,
+                        )
                     }
-                drawPath(path, birdInk[Ambient.birdTier(i)], alpha = .5f + .5f * fade)
+                drawPath(path, ink, alpha = alpha)
             }
         }
     }
