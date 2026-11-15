@@ -451,6 +451,17 @@ object Silhouettes {
     }
 
     /**
+     * Where in its loop (0 up to 1) a smooth activity (a walk, a jog) is at [seconds] for a person
+     * with their own [seed]: continuous, not stepped, so that the picture can follow the display's
+     * own refresh. 0 while time stands still.
+     */
+    fun phase(spec: ActivitySpec, seconds: Float, seed: Int): Float {
+        if (seconds <= 0f) return 0f
+        val t = seconds / spec.seconds + Ambient.hash(seed, 0, 61)
+        return t - floor(t)
+    }
+
+    /**
      * How lit an empty room's lamp is at [seconds]: off for a few seconds every minute or so, then
      * on again.
      */
@@ -462,25 +473,39 @@ object Silhouettes {
     }
 
     /**
-     * Where someone walking past stands across a window [width] wide at [seconds], from its left
-     * edge, or NaN while they are out of it: they cross in about four seconds, then the window is
-     * empty for a while. Standing still (0 seconds), they stand in the middle.
+     * How far someone walking past a window [width] wide has walked at [seconds], from the window's
+     * edge they came in at, or NaN while they are out of it. They walk at the pace of the gait for
+     * a person drawn [size] times the rig (so their feet keep up with the ground), cross, and the
+     * window is empty for a while. Standing still (0 seconds), they stand in the middle.
      */
-    fun walkX(seconds: Float, seed: Int, width: Float): Float {
-        if (seconds <= 0f) return width / 2f
+    fun walkTravel(seconds: Float, seed: Int, width: Float, size: Float = .8f): Float {
+        if (seconds <= 0f) return width / 2f + 6f
         val cycle = 6.5f
-        val t = ((seconds / cycle + Ambient.hash(seed, 0, 90)) % 1f + 1f) % 1f
-        if (t >= .7f) return Float.NaN
-        val u = t / .7f
-        val x = -6f + (width + 12f) * u
+        val u = ((seconds / cycle + Ambient.hash(seed, 0, 90)) % 1f + 1f) % 1f
+        val d = u * cycle * Gait.SPEED * size
+        return if (d > width + 12f) Float.NaN else d
+    }
+
+    /**
+     * Where someone walking past stands across a window [width] wide at [seconds], from its left
+     * edge, or NaN while they are out of it (see [walkTravel]).
+     */
+    fun walkX(seconds: Float, seed: Int, width: Float, size: Float = .8f): Float {
+        if (seconds <= 0f) return width / 2f
+        val d = walkTravel(seconds, seed, width, size)
+        if (d.isNaN()) return d
+        val x = -6f + d
         return if (Ambient.hash(seed, 0, 91) < .5f) x else width - x
     }
 
     /** Which way someone walking past faces: 1 right, -1 left. */
     fun walkDir(seed: Int): Float = if (Ambient.hash(seed, 0, 91) < .5f) 1f else -1f
 
-    /** How long one walker takes to cross a whole floor, in seconds. */
-    private const val CROSSING = 11f
+    /**
+     * How long one walker takes to cross a whole floor, in seconds: a walking pace for a person
+     * about as big as the windows draw them.
+     */
+    private const val CROSSING = 17f
 
     private fun commuterCycle(seed: Int) = 60f + Ambient.hash(seed, 0, 81) * 60f
 
@@ -501,16 +526,27 @@ object Silhouettes {
     }
 
     /**
-     * Where the building's walker is across a floor [width] wide at [seconds], from its left edge,
-     * or NaN while there is none.
+     * How far the building's walker has gone across a floor [width] wide at [seconds], from the
+     * edge they came in at, or NaN while there is none.
      */
-    fun commuterX(seconds: Float, seed: Int, width: Float): Float {
+    fun commuterTravel(seconds: Float, seed: Int, width: Float): Float {
         if (seconds <= 0f) return Float.NaN
         val p = commuterPhase(seconds, seed)
         val e = floor(p).toInt()
         val u = (p - e) * commuterCycle(seed) / CROSSING
         if (u >= 1f) return Float.NaN
-        val x = -10f + (width + 20f) * u
+        return (width + 20f) * u
+    }
+
+    /**
+     * Where the building's walker is across a floor [width] wide at [seconds], from its left edge,
+     * or NaN while there is none.
+     */
+    fun commuterX(seconds: Float, seed: Int, width: Float): Float {
+        val d = commuterTravel(seconds, seed, width)
+        if (d.isNaN()) return d
+        val x = -10f + d
+        val e = floor(commuterPhase(seconds, seed)).toInt()
         return if (Ambient.hash(seed, e, 83) < .5f) x else width - x
     }
 
@@ -530,45 +566,32 @@ object Silhouettes {
         return minOf((t / 1f).coerceIn(0f, 1f), ((on - t) / 1f).coerceIn(0f, 1f))
     }
 
-    /**
-     * Where in a visit (0 to 1) the lobby's visitor is at [seconds], or -1 while they are inside.
-     */
-    private fun visitT(seconds: Float, seed: Int): Float {
-        val cycle = 70f + Ambient.hash(seed, 0, 99) * 40f
-        val t = (seconds + Ambient.hash(seed, 0, 100) * cycle) % cycle
-        return if (t < VISIT) t / VISIT else -1f
-    }
-
-    /** How long a visitor stays out, in seconds. */
-    private const val VISIT = 20f
+    /** The size the lobby's visitor is drawn at, for the old calls that do not say. */
+    private const val LOBBY_SIZE = .5f
 
     /**
      * The visitor in the lobby: how far from the door's side of the window [width] wide they are at
      * [seconds], or NaN while they are inside. Every minute and a half or so they walk out, stand
-     * and look at the street for a while, and walk back in. At rest, one building in three has them
-     * standing at the far end.
+     * and look at the street for a while, and walk back in (see [Visit]). At rest, one building in
+     * three has them standing at the far end.
      */
     fun lobbyVisitor(seconds: Float, width: Float, seed: Int = 0): Float {
-        val far = width * .55f
-        if (seconds <= 0f) return if (Ambient.hash(seed, 0, 96) < .35f) far else Float.NaN
-        val t = visitT(seconds, seed)
-        if (t < 0f) return Float.NaN
-        return when {
-            t < .3f -> far * t / .3f
-            t < .62f -> far
-            t < .92f -> far * (1f - (t - .62f) / .3f)
-            else -> Float.NaN
-        }
+        val s = Stroll()
+        Visit.at(seconds, width, seed, LOBBY_SIZE, s)
+        return if (s.here) s.x else Float.NaN
     }
 
     /** Whether the lobby's visitor is on the move at [seconds]. */
     fun lobbyWalking(seconds: Float, seed: Int = 0): Boolean {
-        if (seconds <= 0f) return false
-        val t = visitT(seconds, seed)
-        return (t >= 0f && t < .3f) || (t >= .62f && t < .92f)
+        val s = Stroll()
+        Visit.at(seconds, 56f, seed, LOBBY_SIZE, s)
+        return s.here && s.mode == Stroll.WALK
     }
 
-    /** Whether the lobby's visitor is on the way back in. */
-    fun lobbyReturning(seconds: Float, seed: Int = 0): Boolean =
-        seconds > 0f && visitT(seconds, seed) >= .62f
+    /** Whether the lobby's visitor is on the way back in (or turned that way). */
+    fun lobbyReturning(seconds: Float, seed: Int = 0): Boolean {
+        val s = Stroll()
+        Visit.at(seconds, 56f, seed, LOBBY_SIZE, s)
+        return s.here && s.dir < 0f
+    }
 }

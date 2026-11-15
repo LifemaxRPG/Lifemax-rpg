@@ -28,6 +28,12 @@ internal class TreeImages(val sprite: TreeSprite, val looks: Array<ImageBitmap>)
 internal class RoomImages(val back: ImageBitmap, val front: ImageBitmap)
 
 /**
+ * One baked figure: the picture (only the part with anything in it) and where its top-left corner
+ * is from the figure's feet, in the picture's own pixels.
+ */
+internal class PersonImage(val image: ImageBitmap, val dx: Float, val dy: Float)
+
+/**
  * The scene's pre-rendered art, made once for the whole process the first time it is needed (or, in
  * the app, ahead of that on a background thread: [warm]) and shared by every scene after it. The
  * generators are deterministic and know nothing of Compose; this only turns their pixels into
@@ -53,21 +59,22 @@ internal object SceneSprites {
      * [frame].
      */
     private val frames =
-        arrayOfNulls<ImageBitmap>(
-            Looks.COUNT * Activity.entries.size * PeopleActivities.ALL.maxOf { it.frames }
+        arrayOfNulls<PersonImage>(
+            Looks.COUNT * Activity.entries.size * PeopleActivities.ALL.maxOf { it.totalFrames }
         )
-    private val mostFrames = PeopleActivities.ALL.maxOf { it.frames }
+    private val mostFrames = PeopleActivities.ALL.maxOf { it.totalFrames }
     private var personBytes = 0
 
     @Synchronized
-    fun person(look: Int, a: Activity, frame: Int): ImageBitmap {
+    fun person(look: Int, a: Activity, frame: Int): PersonImage {
         val i = (look * Activity.entries.size + a.ordinal) * mostFrames + frame
         frames[i]?.let {
             return it
         }
-        val sp = PeopleSprites.render(look, a, frame)
+        // only the part of the box a frame uses is kept: the pose reaches less than the box
+        val sp = PeopleSprites.bake(look, a, frame)
         personBytes += sp.w * sp.h * 4
-        return image(sp.pixels, sp.w, sp.h).also { frames[i] = it }
+        return PersonImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy).also { frames[i] = it }
     }
 
     private val rooms = HashMap<Int, RoomImages>()

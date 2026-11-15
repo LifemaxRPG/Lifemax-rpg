@@ -56,12 +56,61 @@ internal object PeopleSprites {
         )
     }
 
-    /** What every frame of [a] takes, for every look, in bytes. */
-    fun bytes(a: Activity): Int {
-        val b = box(a)
-        return b.w * b.h * 4 * PeopleActivities.of(a).frames * Looks.COUNT
+    /**
+     * [render] cut down to the pixels that have anything in them (so a walk's narrow passing frame
+     * does not keep the room its wide contact frame needs): the same picture, less memory. The
+     * origin stays the feet's middle, so [Sprite.ox] and [Sprite.oy] say where it is in the crop.
+     */
+    fun bake(look: Int, a: Activity, frame: Int): Sprite = crop(render(look, a, frame))
+
+    fun crop(sp: Sprite): Sprite {
+        var x0 = sp.w
+        var y0 = sp.h
+        var x1 = -1
+        var y1 = -1
+        for (y in 0 until sp.h) for (x in 0 until sp.w) if (
+            (sp.pixels[y * sp.w + x] ushr 24) != 0
+        ) {
+            if (x < x0) x0 = x
+            if (x > x1) x1 = x
+            if (y < y0) y0 = y
+            if (y > y1) y1 = y
+        }
+        if (x1 < 0) return Sprite(1, 1, sp.ppu, sp.ox - sp.w / 2, sp.oy - sp.h / 2, IntArray(1))
+        val w = x1 - x0 + 1
+        val h = y1 - y0 + 1
+        val out = IntArray(w * h)
+        for (y in 0 until h) System.arraycopy(sp.pixels, (y + y0) * sp.w + x0, out, y * w, w)
+        return Sprite(w, h, sp.ppu, sp.ox - x0, sp.oy - y0, out)
     }
 
-    /** What the whole atlas would take if every frame of every look were made, in bytes. */
+    /**
+     * What every frame of [a] takes in the box, for every look, in bytes (what [bake] saves is on
+     * top).
+     */
+    fun bytes(a: Activity): Int {
+        val b = box(a)
+        return b.w * b.h * 4 * PeopleActivities.of(a).totalFrames * Looks.COUNT
+    }
+
+    /**
+     * What the whole atlas would take if every frame of every look were made in its box, in bytes.
+     */
     fun worstCaseBytes(): Int = Activity.entries.sumOf { bytes(it) }
+
+    /**
+     * What every frame of every look takes as [bake] keeps it, in bytes: what the atlas really
+     * grows to if every one of them is made (they are made as they are first drawn).
+     */
+    fun bakedBytes(): Int {
+        var total = 0
+        for (a in Activity.entries) {
+            val spec = PeopleActivities.of(a)
+            for (l in 0 until Looks.COUNT) for (f in 0 until spec.totalFrames) {
+                val s = bake(l, a, f)
+                total += s.w * s.h * 4
+            }
+        }
+        return total
+    }
 }
