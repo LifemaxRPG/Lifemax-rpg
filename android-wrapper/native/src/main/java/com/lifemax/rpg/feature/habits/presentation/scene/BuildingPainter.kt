@@ -2539,7 +2539,21 @@ internal class BuildingPainter {
                             Silhouettes.lamp(c.seed, seconds) <= 0f
                     )
                         continue
-                    windowLife(c, x, y, ww, hh, seconds, alpha * appear, lod, sky, vis)
+                    val wseed = seed + k * 7
+                    windowLife(
+                        c,
+                        x,
+                        y,
+                        ww,
+                        hh,
+                        seconds,
+                        alpha * appear,
+                        lod,
+                        sky,
+                        vis,
+                        Dusk.lightsOn(wseed, hour),
+                        if (landing) 0f else Dusk.tv(wseed, hour, seconds),
+                    )
                 }
                 if (lod == PeopleLod.FULL && crowd.walker && seconds > 0f) {
                     val at = Silhouettes.commuterX(seconds, crowd.seed, B.W)
@@ -2945,7 +2959,23 @@ internal class BuildingPainter {
     private val leaf = Color(0xFF3A4A22)
     private val furniture = Color(0xFF3B2415)
     private val room = 1f / RoomSprites.PPU
+    private val roomLight = 1f / RoomSprites.LIGHT_PPU
     private val frame = 1f / PeopleSprites.PPU
+
+    /** The sun falling into a room through its window: a warm patch on the floor and back wall. */
+    private val sunPatch =
+        Brush.verticalGradient(
+            0f to Color(0x00FFE2B0),
+            .45f to Color(0x66FFE2B0),
+            1f to Color(0x99FFE2B0),
+            startY = 0f,
+            endY = 1f,
+        )
+    private val sunSkew = Matrix()
+
+    /** The venetian blind's slats and the roller blind's cloth. */
+    private val slat = Color(0xFFE8E2D4)
+    private val roller = Color(0xFFD8CCB4)
 
     /**
      * The lobby visitor's state this frame (filled in place: nothing is allocated while drawing).
@@ -2970,6 +3000,8 @@ internal class BuildingPainter {
         lod: PeopleLod,
         sky: SkyColors,
         here: Float,
+        lampOn: Float,
+        tv: Float,
     ) {
         val act = c.activity
         if (lod != PeopleLod.FULL) {
@@ -2991,19 +3023,134 @@ internal class BuildingPainter {
                 drawCircle(SceneInk.Person, 1.5f, Offset(cx, y + h - 3f + bob), alpha * here * .85f)
             return
         }
-        val rm = SceneSprites.room(c.room, h)
+        val rm = SceneSprites.room(c.room, c.variant, h)
         val dir = if (c.flip) -1f else 1f
         val s = RoomSprites.personScale(h) * PeopleActivities.roomFit(c.room)
-        val overlay = alpha * (.78f + .22f * sky.dark)
+        val overlay = alpha * (.9f + .1f * sky.dark)
+        val day = 1f - sky.dark
+        // the lamp lights the room when it is on and the set is off; a monitor is on whenever the
+        // room is lit, a set as much as its picture flickers
+        val lampK = overlay * lampOn * (1f - tv)
+        val screenK =
+            if (rm.screen == null) 0f
+            else
+                alpha *
+                    max(tv, if (c.room == RoomKind.OFFICE) .35f + .3f * here else 0f) *
+                    (.35f + .65f * sky.dark)
         clipRect(x, y, x + w, y + h) {
             translate(x, y) {
                 scale(dir, 1f, Offset(w / 2f, 0f)) {
-                    scale(room, room, Offset.Zero) { drawImage(rm.back, Offset.Zero, overlay) }
+                    scale(room, room, Offset.Zero) { drawImage(rm.base, Offset.Zero, overlay) }
+                    if (lampK > .01f)
+                        scale(roomLight, roomLight, Offset.Zero) {
+                            drawImage(
+                                rm.lamp,
+                                Offset(rm.lampDx, rm.lampDy),
+                                lampK,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                    if (day > .01f) {
+                        // the day's light through the glass, and the sun's patch on the sun's side
+                        drawRect(
+                            SceneInk.WindowLitDay,
+                            Offset.Zero,
+                            Size(w, h),
+                            alpha = alpha * day * .16f,
+                        )
+                        if (sunSide != 0f) sunlight(w, h, sunSide * dir, alpha * day)
+                    }
+                    if (tv > 0f && rm.screen == null)
+                        drawRect(TvLight, Offset.Zero, Size(w, h), alpha = alpha * tv * .25f)
                     if (here > 0f) person(act, c, w, h, s, seconds, alpha, dir, here)
-                    scale(room, room, Offset.Zero) { drawImage(rm.front, Offset.Zero, overlay) }
+                    if (screenK > .01f)
+                        scale(roomLight, roomLight, Offset.Zero) {
+                            drawImage(
+                                rm.screen!!,
+                                Offset(rm.screenDx, rm.screenDy),
+                                screenK,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                    scale(room, room, Offset.Zero) {
+                        drawImage(rm.front, Offset(rm.frontDx, rm.frontDy), overlay)
+                    }
+                    if (act == Activity.COOKING && here > 0f && seconds > 0f)
+                        steam(c, w, h, s, seconds, alpha * here, sky)
                 }
                 if (c.curtain != 0) curtains(c, w, h, alpha)
                 if (c.sill != 0 && here < 1f) sillItem(c, w, h, alpha * (1f - here))
+                // the glass: the sky in the top of the pane by day
+                if (day > .01f)
+                    scale(w, h, Offset.Zero) {
+                        drawRect(glassSheen, Offset.Zero, Size(1f, 1f), alpha = alpha * day * .55f)
+                    }
+            }
+        }
+    }
+
+    /**
+     * The sun falling into the room: a warm patch on the floor and the foot of the back wall,
+     * leaning away from the side the sun is on ([side], -1 to 1 times the light's strength).
+     */
+    private fun DrawScope.sunlight(w: Float, h: Float, side: Float, alpha: Float) {
+        val k = abs(side)
+        if (k < .02f) return
+        val lean = if (side > 0f) -.55f else .55f
+        val pw = w * .5f
+        val x0 = if (side > 0f) w * .05f + w * .25f else w * .45f
+        sunSkew.reset()
+        sunSkew[1, 0] = lean
+        withTransform({
+            translate(x0, h * .4f)
+            transform(sunSkew)
+            scale(pw, h * .6f, Offset.Zero)
+        }) {
+            drawRect(
+                sunPatch,
+                Offset.Zero,
+                Size(1f, 1f),
+                alpha = alpha * k * .5f,
+                blendMode = BlendMode.Plus,
+            )
+        }
+    }
+
+    /**
+     * The steam off the pan on the hob of a kitchen someone is cooking in: a few soft puffs rising
+     * and thinning, the same puffs as the roof vents'.
+     */
+    private fun DrawScope.steam(
+        c: WindowCast,
+        w: Float,
+        h: Float,
+        s: Float,
+        seconds: Float,
+        alpha: Float,
+        sky: SkyColors,
+    ) {
+        duskTints(sky)
+        val puffs = SceneSprites.dusk.puffs
+        val half = DuskSprites.PUFF / 2f
+        val px = w / 2f + s * (9f + PeopleActivities.shift(RoomKind.KITCHEN))
+        val top = h - s * 10.6f
+        for (j in 0 until Dusk.PUFFS) {
+            val t = Dusk.puff(c.seed, j, seconds * 1.4f)
+            val size = (.3f + 1.1f * t) * 3.2f * s / DuskSprites.PUFF
+            val x = px + t * 1.2f + .8f * t * t
+            val y = top - t * 7f * s
+            val a = .4f * (1f - t) * (1f - t) * min(1f, t * 10f)
+            if (a <= .01f) continue
+            withTransform({
+                translate(x, y)
+                scale(size, size, Offset.Zero)
+            }) {
+                drawImage(
+                    puffs[j % DuskSprites.PUFFS],
+                    Offset(-half, -half),
+                    alpha = alpha * a,
+                    colorFilter = steamFilter,
+                )
             }
         }
     }
@@ -3024,7 +3171,7 @@ internal class BuildingPainter {
         here: Float,
     ) {
         val spec = PeopleActivities.of(act)
-        var ax = s * PeopleActivities.shift(spec.room) + w / 2f + (1f - here) * 7f * dir
+        var ax = s * PeopleActivities.shift(c.room) + w / 2f + (1f - here) * 7f * dir
         var face = 1f
         var size = s * PeopleActivities.fitted(act)
         var phase = 0f
@@ -3065,12 +3212,29 @@ internal class BuildingPainter {
                         lean,
                     )
                 } else {
+                    val look = PeopleActivities.lookFor(act, c.look)
                     val f = Silhouettes.frame(spec, seconds, c.seed)
-                    drawPerson(SceneSprites.person(c.look, act, f), alpha * here)
+                    drawPerson(SceneSprites.person(look, act, f), alpha * here)
                     val mix = Silhouettes.blend(spec, seconds, c.seed)
                     if (mix > .01f)
                         drawPerson(
-                            SceneSprites.person(c.look, act, (f + 1) % spec.frames),
+                            SceneSprites.person(look, act, (f + 1) % spec.frames),
+                            alpha * here * mix,
+                        )
+                }
+            }
+        }
+        if (spec.pair && act != Activity.WALKING) {
+            // the second of a pair: mirrored about the room's middle, another look, out of step
+            val look = PeopleActivities.lookFor(act, (c.look + 3) % Looks.COUNT)
+            val f = Silhouettes.frame(spec, seconds, c.seed + 977)
+            val mix = Silhouettes.blend(spec, seconds, c.seed + 977)
+            translate(ax, h) {
+                scale(-face * size * frame, size * frame, Offset.Zero) {
+                    drawPerson(SceneSprites.person(look, act, f), alpha * here)
+                    if (mix > .01f)
+                        drawPerson(
+                            SceneSprites.person(look, act, (f + 1) % spec.frames),
                             alpha * here * mix,
                         )
                 }
@@ -3167,30 +3331,53 @@ internal class BuildingPainter {
         }
     }
 
+    /**
+     * The window's curtains or blind ([WindowCast.curtain]): drapes to one side or both, a pair
+     * half drawn, venetian blinds half or all the way down (their slats open), a roller blind half
+     * down.
+     */
     private fun DrawScope.curtains(c: WindowCast, w: Float, h: Float, alpha: Float) {
         val col = curtainColors[c.curtainTone]
         when (c.curtain) {
-            3 -> {
-                drawRect(col, Offset.Zero, Size(w, h * .34f), alpha = alpha * .55f)
-                for (i in 1..3) drawRect(
+            3,
+            7 -> {
+                val down = if (c.curtain == 3) h * .38f else h
+                drawRect(slat, Offset.Zero, Size(w, down), alpha = alpha * .5f)
+                val n = (down / 2.2f).toInt()
+                for (i in 1..n) drawRect(
                     Color.Black,
-                    Offset(0f, h * .34f * i / 4f),
-                    Size(w, .5f),
-                    alpha = alpha * .2f,
+                    Offset(0f, down * i / (n + 1f)),
+                    Size(w, .55f),
+                    alpha = alpha * .22f,
                 )
-                drawRect(col, Offset(0f, h * .34f), Size(w, 1f), alpha = alpha * .7f)
+                drawRect(slat, Offset(0f, down - 1f), Size(w, 1f), alpha = alpha * .85f)
+                drawRect(Color.Black, Offset(0f, down), Size(w, .7f), alpha = alpha * .25f)
+                drawRect(slat, Offset(w * .78f, 0f), Size(.5f, down + 2f), alpha = alpha * .5f)
+            }
+            5 -> {
+                drawRect(roller, Offset.Zero, Size(w, h * .42f), alpha = alpha * .92f)
+                drawRect(Color.Black, Offset.Zero, Size(w, 1.2f), alpha = alpha * .2f)
+                drawRect(Color.Black, Offset(0f, h * .42f - 1f), Size(w, 1f), alpha = alpha * .25f)
+                drawRect(roller, Offset(w / 2f - .6f, h * .42f), Size(1.2f, 1.6f), alpha = alpha)
+            }
+            6 -> {
+                drawDrape(col, 0f, w * .18f, h, alpha)
+                drawDrape(col, w * .82f, w * .18f, h, alpha)
             }
             else -> {
-                if (c.curtain == 1 || c.curtain == 4) {
-                    drawRect(col, Offset.Zero, Size(w * .28f, h), alpha = alpha * .62f)
-                    drawRect(Color.Black, Offset(w * .1f, 0f), Size(.8f, h), alpha = alpha * .18f)
-                }
-                if (c.curtain == 2 || c.curtain == 4) {
-                    drawRect(col, Offset(w * .72f, 0f), Size(w * .28f, h), alpha = alpha * .62f)
-                    drawRect(Color.Black, Offset(w * .88f, 0f), Size(.8f, h), alpha = alpha * .18f)
-                }
+                if (c.curtain == 1 || c.curtain == 4) drawDrape(col, 0f, w * .28f, h, alpha)
+                if (c.curtain == 2 || c.curtain == 4) drawDrape(col, w * .72f, w * .28f, h, alpha)
             }
         }
+    }
+
+    /** One drape from [x], [dw] wide: its cloth with a fold's shadow and a lit edge. */
+    private fun DrawScope.drawDrape(col: Color, x: Float, dw: Float, h: Float, alpha: Float) {
+        drawRect(col, Offset(x, 0f), Size(dw, h), alpha = alpha * .72f)
+        drawRect(Color.Black, Offset(x + dw * .3f, 0f), Size(dw * .22f, h), alpha = alpha * .2f)
+        drawRect(Color.Black, Offset(x + dw * .7f, 0f), Size(dw * .14f, h), alpha = alpha * .14f)
+        drawRect(Color.White, Offset(x + dw * .52f, 0f), Size(dw * .1f, h), alpha = alpha * .1f)
+        drawRect(Color.Black, Offset(x, h - 1.2f), Size(dw, 1.2f), alpha = alpha * .2f)
     }
 
     /** A pot plant or a cat on the sill of an empty room. */
@@ -3294,17 +3481,43 @@ internal class BuildingPainter {
                             }
                         }
                     val dx0 = ax + (shift + 2.2f) * s
+                    // the lit sign on the wall behind the desk
+                    drawRect(signFace, Offset(dx0 - 1f, y + 3f), Size(11f * s + 8f, 4.6f))
+                    drawRect(
+                        SceneInk.WindowLit,
+                        Offset(dx0 + .2f, y + 4.2f),
+                        Size(11f * s + 5.6f, 2.2f),
+                        alpha = .45f + .45f * sky.dark,
+                    )
+                    translate(dx0 + 5.5f * s + 3f, y + 5.3f) {
+                        scale(14f, 5f, Offset.Zero) {
+                            drawCircle(
+                                bloom,
+                                1f,
+                                Offset.Zero,
+                                alpha = .25f + .35f * sky.dark,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                    }
                     drawRect(
                         furniture,
                         Offset(dx0, floor - 9.2f * s),
                         Size(11f * s + 6f, 9.2f * s),
                         alpha = .96f,
                     )
+                    // the desk's top, lit, and the shade of its front panel
                     drawRect(
                         SceneInk.WindowLit,
                         Offset(dx0, floor - 9.2f * s),
-                        Size(11f * s + 6f, .6f),
-                        alpha = .5f,
+                        Size(11f * s + 6f, .8f),
+                        alpha = .55f,
+                    )
+                    drawRect(
+                        Color.Black,
+                        Offset(dx0 + .6f, floor - 7.4f * s),
+                        Size(11f * s + 4.8f, 5.6f * s),
+                        alpha = .22f,
                     )
                 } else {
                     // a bench along the wall and the visitor

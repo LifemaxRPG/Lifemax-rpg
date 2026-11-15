@@ -99,8 +99,23 @@ internal class FlareImages(
         }
 }
 
-/** A room's two overlays as images: behind the person, and in front of them. */
-internal class RoomImages(val back: ImageBitmap, val front: ImageBitmap)
+/**
+ * A room's layers as images ([Room]): the unlit room, its lamp's light and its screen's (soft, at
+ * [RoomSprites.LIGHT_PPU]) and what is in front of the person, each cut to what it uses and drawn
+ * at its own offset from the window's top left, in its own pixels.
+ */
+internal class RoomImages(
+    val base: ImageBitmap,
+    val lamp: ImageBitmap,
+    val lampDx: Float,
+    val lampDy: Float,
+    val screen: ImageBitmap?,
+    val screenDx: Float,
+    val screenDy: Float,
+    val front: ImageBitmap,
+    val frontDx: Float,
+    val frontDy: Float,
+)
 
 /**
  * One baked figure: the picture (only the part with anything in it) and where its top-left corner
@@ -410,22 +425,39 @@ internal object SceneSprites {
     private var roomBytes = 0
 
     /**
-     * The room [kind] as seen through a window [h] tall (heights are told apart to half a unit).
+     * The room [kind] in its [variant] as seen through a window [h] tall (heights are told apart to
+     * half a unit).
      */
     @Synchronized
-    fun room(kind: RoomKind, h: Float): RoomImages {
-        val key = kind.ordinal * 4096 + (h * 2f).toInt()
+    fun room(kind: RoomKind, variant: Int, h: Float): RoomImages {
+        val v = ((variant % RoomSprites.VARIANTS) + RoomSprites.VARIANTS) % RoomSprites.VARIANTS
+        val key = (kind.ordinal * RoomSprites.VARIANTS + v) * 4096 + (h * 2f).toInt()
         rooms[key]?.let {
             return it
         }
-        val r = RoomSprites.render(kind, (h * 2f).toInt() / 2f)
-        roomBytes += (r.back.w * r.back.h + r.front.w * r.front.h) * 4
+        val r = RoomSprites.render(kind, v, (h * 2f).toInt() / 2f)
+        roomBytes +=
+            (r.base.w * r.base.h +
+                r.front.w * r.front.h +
+                r.lamp.w * r.lamp.h +
+                (r.screen?.let { it.w * it.h } ?: 0)) * 4
         return RoomImages(
-                image(r.back.pixels, r.back.w, r.back.h),
+                image(r.base.pixels, r.base.w, r.base.h),
+                image(r.lamp.pixels, r.lamp.w, r.lamp.h),
+                -r.lamp.ox,
+                -r.lamp.oy,
+                r.screen?.let { image(it.pixels, it.w, it.h) },
+                -(r.screen?.ox ?: 0f),
+                -(r.screen?.oy ?: 0f),
                 image(r.front.pixels, r.front.w, r.front.h),
+                -r.front.ox,
+                -r.front.oy,
             )
             .also { rooms[key] = it }
     }
+
+    /** What the rooms made so far take, in bytes. */
+    @Synchronized fun roomBytes(): Int = roomBytes
 
     /**
      * What the people and their rooms made so far take, in bytes (they are made as they are first
@@ -500,7 +532,8 @@ internal object SceneSprites {
         for (h in BuildingSpec.HEIGHTS) {
             val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
             val wh = (h - BuildingSpec.BAND_TOP - BuildingSpec.PLAQUE_BAND - 6f * (rows - 1)) / rows
-            for (k in RoomKind.entries) room(k, wh)
+            // the first variant of every kind; the others are made as they are first seen
+            for (k in RoomKind.entries) room(k, 0, wh)
         }
     }
 

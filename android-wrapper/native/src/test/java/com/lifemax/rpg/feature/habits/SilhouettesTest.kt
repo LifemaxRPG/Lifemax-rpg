@@ -104,8 +104,9 @@ class SilhouettesTest {
                     a[it].rank == b[it].rank
             }
         )
-        // every lit window has a room (the one its activity is seen in) and someone for its turn
-        for (w in a) assertEquals(PeopleActivities.of(w.activity).room, w.room)
+        // every lit window has a room (one its activity is seen in) and someone for its turn
+        for (w in a) assertTrue(w.room in PeopleActivities.roomsOf(w.activity))
+        assertEquals(PeopleActivities.of(a[0].activity).room, a[0].room)
         // the first window's person does the habit; most of the rest do it too
         assertEquals(Activity.READING, a[0].activity)
         assertTrue(a.count { it.activity == Activity.READING } >= 4)
@@ -553,10 +554,12 @@ class SilhouettesTest {
         assertTrue(RoomSprites.personScale(21f) < RoomSprites.personScale(37f))
         assertEquals(1f, RoomSprites.personScale(37f), 0f)
         for (kind in RoomKind.entries) {
-            val r = RoomSprites.render(kind, 27.5f)
-            assertEquals(r.back.w * r.back.h, r.back.pixels.size)
+            val r = RoomSprites.render(kind, 0, 27.5f)
+            assertEquals(r.base.w * r.base.h, r.base.pixels.size)
             // the room has something in it: not an empty overlay
-            assertTrue(r.back.pixels.count { (it ushr 24) > 40 } > 100)
+            assertTrue(r.base.pixels.count { (it ushr 24) > 40 } > 100)
+            // and a short window's room is shorter
+            assertTrue(RoomSprites.render(kind, 0, 21f).base.h < r.base.h)
         }
     }
 
@@ -566,6 +569,8 @@ class SilhouettesTest {
         // activity shares is only the bound it can never pass
         val worst = PeopleSprites.bakedBytes()
         assertTrue(worst <= PeopleSprites.worstCaseBytes())
+        assertTrue("people worst case $worst", worst < 6 * 1024 * 1024)
+        // the rooms warmed up front (the first variant of every kind at every height) on top
         var rooms = 0
         for (h in com.lifemax.rpg.feature.habits.domain.BuildingSpec.HEIGHTS) {
             val rows =
@@ -573,7 +578,7 @@ class SilhouettesTest {
             val wh = (h - 23f - 6f * (rows - 1)) / rows
             rooms += RoomKind.entries.size * RoomSprites.bytes(wh)
         }
-        assertTrue("worst case ${worst + rooms}", worst + rooms < 6 * 1024 * 1024)
+        assertTrue("worst case ${worst + rooms}", worst + rooms < 8 * 1024 * 1024)
         // a frame is lit: not black, with a soft glow past its edge
         val f = PeopleSprites.render(0, Activity.TYPING, 0)
         val solid = f.pixels.count { (it ushr 24) == 255 }

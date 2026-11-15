@@ -32,6 +32,10 @@ enum class Activity {
     WALKING,
     LOOKING_OUT,
     WAVING,
+    TV_WATCHING,
+    TREE_POSE,
+    CHILD_PLAYING,
+    TALKING,
 }
 
 /** The kind of room behind a window: the furniture and light a person is seen against. */
@@ -50,6 +54,7 @@ enum class RoomKind {
     PLANTS,
     BOARD,
     HALL,
+    DINING,
 }
 
 /** A light on a figure besides the room's own: a screen's cool glow, a lamp's warm one. */
@@ -76,7 +81,22 @@ class ActivitySpec(
     val smooth: Boolean = false,
     val lookKeys: List<List<FloatArray>>? = null,
     val lookExtra: List<List<FloatArray>>? = null,
+    /**
+     * Every kind of room the activity can be seen in, besides [room] (its natural one): what a
+     * window gets when its floor would otherwise repeat a room (see `Silhouettes.cast`).
+     */
+    val alsoIn: List<RoomKind> = emptyList(),
+    /** A small figure (a child), drawn from the child looks instead of the grown-up ones. */
+    val child: Boolean = false,
+    /**
+     * Two people: the figure and, mirrored across the room's middle and out of step, a second one
+     * facing them.
+     */
+    val pair: Boolean = false,
 ) {
+    /** The rooms the activity is seen in, its natural one first. */
+    val rooms: List<RoomKind> = listOf(room) + alsoIn.filter { it != room }
+
     /**
      * The pose [frame] shows: the loop sampled evenly for the first [frames], then the [extra]
      * poses (a turn, say) that are not part of the loop. With [look], that look's own keys and
@@ -1680,6 +1700,265 @@ object PeopleActivities {
             ),
         )
 
+    // ---- watching television from the sofa, slumped a little, the remote in hand
+    private val TV_KEYS =
+        loop(
+            pose(
+                x = 3.2f,
+                turn = .78f,
+                lean = -12f,
+                head = 8f,
+                an = 14f,
+                en = 72f,
+                af = 10f,
+                ef = 60f,
+                ln = 86f,
+                kn = 82f,
+                lf = 80f,
+                kf = 74f,
+                pin = 1f,
+            ),
+            pose(
+                x = 3.2f,
+                turn = .78f,
+                lean = -12f,
+                head = 10f,
+                an = 12f,
+                en = 74f,
+                af = 10f,
+                ef = 60f,
+                ln = 86f,
+                kn = 82f,
+                lf = 80f,
+                kf = 74f,
+                pin = 1f,
+            ),
+            pose(
+                x = 3.2f,
+                turn = .78f,
+                lean = -11f,
+                head = 6f,
+                an = 36f,
+                en = 40f,
+                af = 10f,
+                ef = 62f,
+                ln = 86f,
+                kn = 82f,
+                lf = 80f,
+                kf = 74f,
+                pin = 1f,
+            ),
+            pose(
+                x = 3.2f,
+                turn = .78f,
+                lean = -13f,
+                head = 9f,
+                an = 14f,
+                en = 72f,
+                af = 12f,
+                ef = 58f,
+                ln = 86f,
+                kn = 82f,
+                lf = 80f,
+                kf = 74f,
+                pin = 1f,
+            ),
+        )
+
+    private val REMOTE = PropMaker { f, j, _ ->
+        f.add(Shape.PROP, Props.box(j.handNX + .3f, j.handNY - .4f, .8f, 2.6f, j.foreN - 70f), .25f)
+    }
+
+    // ---- the tree pose: one foot on the other knee, the hands together overhead, a slow sway
+    private val TREE_KEYS =
+        loop(
+            pose(
+                turn = .08f,
+                lean = 0f,
+                head = -2f,
+                an = 164f,
+                en = 24f,
+                af = 162f,
+                ef = -24f,
+                ln = 0f,
+                kn = 0f,
+                lf = 38f,
+                kf = 112f,
+                anf = -30f,
+            ),
+            pose(
+                turn = .08f,
+                lean = 1f,
+                head = -1f,
+                an = 166f,
+                en = 22f,
+                af = 164f,
+                ef = -22f,
+                ln = 1f,
+                kn = 1f,
+                lf = 40f,
+                kf = 114f,
+                anf = -30f,
+            ),
+            pose(
+                turn = .08f,
+                lean = -1f,
+                head = -3f,
+                an = 163f,
+                en = 26f,
+                af = 161f,
+                ef = -26f,
+                ln = 0f,
+                kn = 0f,
+                lf = 37f,
+                kf = 110f,
+                anf = -30f,
+            ),
+            pose(
+                turn = .08f,
+                lean = 0f,
+                head = -2f,
+                an = 165f,
+                en = 23f,
+                af = 163f,
+                ef = -23f,
+                ln = 0f,
+                kn = 0f,
+                lf = 39f,
+                kf = 113f,
+                anf = -30f,
+            ),
+        )
+
+    // ---- a child cross-legged on the floor, stacking blocks
+    private val CHILD_KEYS =
+        loop(
+            pose(
+                turn = .2f,
+                lean = 16f,
+                head = 22f,
+                an = 46f,
+                en = 30f,
+                af = 30f,
+                ef = 40f,
+                ln = 54f,
+                kn = 118f,
+                lf = -54f,
+                kf = -118f,
+            ),
+            pose(
+                turn = .2f,
+                lean = 20f,
+                head = 26f,
+                an = 58f,
+                en = 16f,
+                af = 32f,
+                ef = 38f,
+                ln = 54f,
+                kn = 118f,
+                lf = -54f,
+                kf = -118f,
+            ),
+            pose(
+                turn = .2f,
+                lean = 12f,
+                head = 14f,
+                an = 40f,
+                en = 48f,
+                af = 26f,
+                ef = 46f,
+                ln = 54f,
+                kn = 118f,
+                lf = -54f,
+                kf = -118f,
+            ),
+            pose(
+                turn = .2f,
+                lean = 18f,
+                head = 24f,
+                an = 50f,
+                en = 24f,
+                af = 34f,
+                ef = 36f,
+                ln = 54f,
+                kn = 118f,
+                lf = -54f,
+                kf = -118f,
+            ),
+        )
+
+    private val BLOCKS = PropMaker { f, _, phase ->
+        f.add(Shape.PROP, Props.box(4.2f, -.75f, 1.5f, 1.5f), .3f)
+        f.add(Shape.PROP, Props.box(4.3f, -2.2f, 1.4f, 1.4f, 6f), .42f)
+        f.add(Shape.PROP, Props.box(6.1f, -.7f, 1.4f, 1.4f, -4f), .36f)
+        if (phase > .5f) f.add(Shape.PROP, Props.box(4.4f, -3.6f, 1.3f, 1.3f, -8f), .3f)
+    }
+
+    // ---- two people at a table, talking: a hand raised, a nod
+    private val TALK_KEYS =
+        loop(
+            pose(
+                x = -3f,
+                turn = .82f,
+                lean = 5f,
+                head = 4f,
+                an = 34f,
+                en = 96f,
+                af = 22f,
+                ef = 74f,
+                ln = 78f,
+                kn = 84f,
+                lf = 74f,
+                kf = 78f,
+                pin = 1f,
+            ),
+            pose(
+                x = -3f,
+                turn = .82f,
+                lean = 7f,
+                head = 8f,
+                an = 46f,
+                en = 84f,
+                af = 22f,
+                ef = 74f,
+                ln = 78f,
+                kn = 84f,
+                lf = 74f,
+                kf = 78f,
+                pin = 1f,
+            ),
+            pose(
+                x = -3f,
+                turn = .82f,
+                lean = 4f,
+                head = 2f,
+                an = 28f,
+                en = 104f,
+                af = 26f,
+                ef = 70f,
+                ln = 78f,
+                kn = 84f,
+                lf = 74f,
+                kf = 78f,
+                pin = 1f,
+            ),
+            pose(
+                x = -3f,
+                turn = .82f,
+                lean = 6f,
+                head = 10f,
+                an = 30f,
+                en = 90f,
+                af = 20f,
+                ef = 78f,
+                ln = 78f,
+                kn = 84f,
+                lf = 74f,
+                kf = 78f,
+                pin = 1f,
+            ),
+        )
+
     private fun glow(x: Float, y: Float, r: Float, c: Int, k: Float) = Glow(x, y, r, c, k)
 
     val ALL: Array<ActivitySpec> =
@@ -1694,6 +1973,7 @@ object PeopleActivities {
                 .3f,
                 listOf(glow(8.4f, -13f, 8.5f, COOL, .62f)),
                 LAPTOP,
+                alsoIn = listOf(RoomKind.DESK),
             ),
             ActivitySpec(
                 Activity.READING,
@@ -1705,6 +1985,7 @@ object PeopleActivities {
                 0f,
                 listOf(glow(9f, -14f, 9f, WARM, .3f)),
                 BOOK,
+                alsoIn = listOf(RoomKind.LIVING),
             ),
             ActivitySpec(
                 Activity.WRITING,
@@ -1716,6 +1997,7 @@ object PeopleActivities {
                 .1f,
                 listOf(glow(7f, -14f, 8f, WARM, .35f)),
                 PEN,
+                alsoIn = listOf(RoomKind.OFFICE),
             ),
             ActivitySpec(
                 Activity.STRETCHING,
@@ -1727,6 +2009,7 @@ object PeopleActivities {
                 .2f,
                 emptyList(),
                 null,
+                alsoIn = listOf(RoomKind.GYM, RoomKind.LIVING),
             ),
             ActivitySpec(
                 Activity.LIFTING,
@@ -1749,6 +2032,7 @@ object PeopleActivities {
                 .3f,
                 emptyList(),
                 GOBLET,
+                alsoIn = listOf(RoomKind.YOGA),
             ),
             ActivitySpec(
                 Activity.PUSHUPS,
@@ -1760,6 +2044,7 @@ object PeopleActivities {
                 0f,
                 emptyList(),
                 null,
+                alsoIn = listOf(RoomKind.GYM),
             ),
             ActivitySpec(
                 Activity.JOGGING,
@@ -1783,6 +2068,7 @@ object PeopleActivities {
                 0f,
                 emptyList(),
                 null,
+                alsoIn = listOf(RoomKind.LIVING),
             ),
             ActivitySpec(
                 Activity.DRINKING,
@@ -1794,6 +2080,7 @@ object PeopleActivities {
                 0f,
                 emptyList(),
                 CUP,
+                alsoIn = listOf(RoomKind.LIVING, RoomKind.OFFICE, RoomKind.HALL, RoomKind.DINING),
             ),
             ActivitySpec(
                 Activity.COOKING,
@@ -1819,7 +2106,7 @@ object PeopleActivities {
             ),
             ActivitySpec(
                 Activity.SWEEPING,
-                RoomKind.LIVING,
+                RoomKind.HALL,
                 SWEEP_KEYS,
                 4,
                 8f,
@@ -1827,6 +2114,7 @@ object PeopleActivities {
                 .4f,
                 emptyList(),
                 BROOM,
+                alsoIn = listOf(RoomKind.KITCHEN),
             ),
             ActivitySpec(
                 Activity.PHONE_CALL,
@@ -1838,6 +2126,7 @@ object PeopleActivities {
                 .3f,
                 listOf(glow(2.5f, -20f, 5f, COOL, .35f)),
                 PHONE,
+                alsoIn = listOf(RoomKind.OFFICE, RoomKind.LIVING, RoomKind.BOARD, RoomKind.BEDROOM),
             ),
             ActivitySpec(
                 Activity.DANCING,
@@ -1849,6 +2138,7 @@ object PeopleActivities {
                 1f,
                 emptyList(),
                 null,
+                alsoIn = listOf(RoomKind.MUSIC),
             ),
             ActivitySpec(
                 Activity.MAKING_BED,
@@ -1871,6 +2161,7 @@ object PeopleActivities {
                 0f,
                 emptyList(),
                 null,
+                alsoIn = listOf(RoomKind.OFFICE),
             ),
             ActivitySpec(
                 Activity.WATERING,
@@ -1893,6 +2184,7 @@ object PeopleActivities {
                 .2f,
                 emptyList(),
                 GUITAR,
+                alsoIn = listOf(RoomKind.LIVING, RoomKind.BEDROOM),
             ),
             ActivitySpec(
                 Activity.PIANO,
@@ -1920,6 +2212,7 @@ object PeopleActivities {
                 // every look walks in its own style: its own frames
                 lookKeys = Gait.LOOK_WALK_KEYS,
                 lookExtra = List(Looks.COUNT) { walkExtra(Gait.style(it)) },
+                alsoIn = listOf(RoomKind.OFFICE, RoomKind.LIVING, RoomKind.BOARD),
             ),
             ActivitySpec(
                 Activity.LOOKING_OUT,
@@ -1931,6 +2224,7 @@ object PeopleActivities {
                 0f,
                 emptyList(),
                 null,
+                alsoIn = listOf(RoomKind.LIVING, RoomKind.BEDROOM, RoomKind.OFFICE, RoomKind.STUDY),
             ),
             ActivitySpec(
                 Activity.WAVING,
@@ -1942,6 +2236,56 @@ object PeopleActivities {
                 .1f,
                 emptyList(),
                 null,
+                alsoIn = listOf(RoomKind.OFFICE, RoomKind.KITCHEN),
+            ),
+            ActivitySpec(
+                Activity.TV_WATCHING,
+                RoomKind.LIVING,
+                TV_KEYS,
+                4,
+                .7f,
+                true,
+                0f,
+                listOf(glow(7.6f, -17f, 9f, COOL, .5f)),
+                REMOTE,
+            ),
+            ActivitySpec(
+                Activity.TREE_POSE,
+                RoomKind.YOGA,
+                TREE_KEYS,
+                4,
+                .5f,
+                true,
+                0f,
+                emptyList(),
+                null,
+                alsoIn = listOf(RoomKind.LIVING, RoomKind.BEDROOM),
+            ),
+            ActivitySpec(
+                Activity.CHILD_PLAYING,
+                RoomKind.LIVING,
+                CHILD_KEYS,
+                4,
+                1.6f,
+                true,
+                0f,
+                emptyList(),
+                BLOCKS,
+                alsoIn = listOf(RoomKind.BEDROOM),
+                child = true,
+            ),
+            ActivitySpec(
+                Activity.TALKING,
+                RoomKind.DINING,
+                TALK_KEYS,
+                4,
+                1.3f,
+                true,
+                .1f,
+                emptyList(),
+                null,
+                alsoIn = listOf(RoomKind.BOARD),
+                pair = true,
             ),
         )
 
@@ -1969,41 +2313,64 @@ object PeopleActivities {
                     sin(Gait.PASSING * 6.2832f * 2f + 1f) *
                     (1f - s * s * (3f - 2f * s))
         }
-        return FigBuilder(Looks.ALL[look], spec.poseAt(frame, look), swing).build(spec.props, phase)
+        return FigBuilder(lookOf(spec, look), spec.poseAt(frame, look), swing)
+            .build(spec.props, phase)
     }
 
-    /** The activities that are seen in [room]. */
+    /** The look [look] takes doing [spec]: a child's for a child's activity. */
+    private fun lookOf(spec: ActivitySpec, look: Int): Look =
+        if (spec.child) Looks.CHILDREN[look % Looks.CHILDREN.size] else Looks.ALL[look]
+
+    /**
+     * Which look number is baked for [look] doing [a]: a child's activity has only the few child
+     * looks, so the same frames serve several of the grown-up look numbers.
+     */
+    fun lookFor(a: Activity, look: Int): Int = if (of(a).child) look % Looks.CHILDREN.size else look
+
+    /** How many distinct looks [a] is baked in. */
+    fun looksOf(a: Activity): Int = if (of(a).child) Looks.CHILDREN.size else Looks.COUNT
+
+    /** The activities whose natural room is [room]. */
     fun inRoom(room: RoomKind): List<Activity> = Activity.entries.filter { of(it).room == room }
+
+    /** The activities that can be seen in [room], the ones at home there first. */
+    fun seenIn(room: RoomKind): List<Activity> =
+        inRoom(room) + Activity.entries.filter { it !in inRoom(room) && room in of(it).rooms }
+
+    /** The rooms [a] can be seen in, its natural one first. */
+    fun roomsOf(a: Activity): List<RoomKind> = of(a).rooms
+
+    private val fits = FloatArray(Activity.entries.size) { Float.NaN }
 
     /**
      * How far a room's people and furniture are moved sideways to sit in the middle of a window:
-     * minus the middle of what its activities reach.
+     * part of each room's design (its furniture is drawn at the same shift), so that the people of
+     * the room's activities stand where its furniture expects them.
      */
-    private val shifts = FloatArray(RoomKind.entries.size) { Float.NaN }
-    private val fits = FloatArray(Activity.entries.size) { Float.NaN }
-
-    @Synchronized
-    fun shift(room: RoomKind): Float {
-        if (!shifts[room.ordinal].isNaN()) return shifts[room.ordinal]
-        return computeShift(room).also { shifts[room.ordinal] = it }
-    }
+    fun shift(room: RoomKind): Float =
+        when (room) {
+            RoomKind.OFFICE -> -1.5f
+            RoomKind.DESK -> -.8f
+            RoomKind.STUDY -> 1f
+            RoomKind.GYM -> -.4f
+            RoomKind.YOGA -> -1f
+            RoomKind.KITCHEN -> -4.1f
+            RoomKind.BATH -> -5.3f
+            RoomKind.BEDROOM -> -3.2f
+            RoomKind.LIVING -> -.5f
+            RoomKind.MUSIC -> -1.6f
+            RoomKind.PIANO -> .2f
+            RoomKind.PLANTS -> -5.2f
+            RoomKind.BOARD -> -.9f
+            RoomKind.HALL -> -1.3f
+            RoomKind.DINING -> 0f
+        }
 
     /** [fit] for a window 15.5 wide (the window's width less a margin), made once. */
     @Synchronized
     fun fitted(a: Activity): Float {
         if (!fits[a.ordinal].isNaN()) return fits[a.ordinal]
         return fit(a, 15.5f).also { fits[a.ordinal] = it }
-    }
-
-    private fun computeShift(room: RoomKind): Float {
-        val acts = inRoom(room)
-        if (acts.isEmpty()) return 0f
-        var c = 0f
-        for (a in acts) {
-            val r = reach(a)
-            c += (r[0] + r[2]) / 2f * fit(a, 15.5f)
-        }
-        return -c / acts.size
     }
 
     /**
@@ -2033,10 +2400,12 @@ object PeopleActivities {
 
     /**
      * How much [a]'s figure is drawn smaller to fit across a window [width] wide (1 when it fits).
+     * A pair's two figures, mirrored about the room's middle, both have to fit.
      */
     fun fit(a: Activity, width: Float): Float {
         val r = reach(a)
-        return minOf(1f, width / (r[2] - r[0]))
+        val span = if (of(a).pair) 2f * maxOf(-r[0], r[2]) else r[2] - r[0]
+        return minOf(1f, width / span)
     }
 
     /**
@@ -2054,7 +2423,7 @@ object PeopleActivities {
         var y0 = 1e9f
         var x1 = -1e9f
         var y1 = -1e9f
-        for (l in 0 until Looks.COUNT) for (f in 0 until spec.totalFrames) {
+        for (l in 0 until looksOf(a)) for (f in 0 until spec.totalFrames) {
             val b = FigBuilder.bounds(figure(l, a, f).shapes())
             x0 = minOf(x0, b[0])
             y0 = minOf(y0, b[1])

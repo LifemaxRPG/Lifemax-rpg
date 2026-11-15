@@ -71,6 +71,13 @@ object Looks {
 
     val COUNT: Int
         get() = ALL.size
+
+    /** The children: small, a big head, two of them. */
+    val CHILDREN =
+        arrayOf(
+            Look(Body(.6f, 1.02f, 1.36f), Hair.SHORT, Top.TEE, false),
+            Look(Body(.56f, 1f, 1.4f), Hair.PONY, Top.TEE, true),
+        )
 }
 
 /** The numbers that make a pose, by position in a pose's array. */

@@ -154,6 +154,15 @@ class HabitsScreenshotTest {
 
     @Test fun peopleMovingDay() = snap("city", ambientAt = 31.7f)
 
+    /**
+     * The rooms behind the windows of the tall building, by day and by night: their walls, floors
+     * and furniture in the kinds and variants a floor spreads them in, the lamps' pools and the
+     * screens' glow at night, the sun's patch and the glass by day, at one moment of the street.
+     */
+    @Test fun roomsDay() = snap("tall", hour = 15, ambientAt = 21.4f)
+
+    @Test fun roomsNight() = snap("tall", hour = 22, ambientAt = 21.4f)
+
     /** A brand-new building at dusk: steel and glass with scaffolding, one window, one person. */
     @Test fun brandNewBuilding() = snap("fresh", hour = 19)
 

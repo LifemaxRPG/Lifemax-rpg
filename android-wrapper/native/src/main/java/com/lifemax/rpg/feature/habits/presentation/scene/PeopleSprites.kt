@@ -1,7 +1,6 @@
 package com.lifemax.rpg.feature.habits.presentation.scene
 
 import com.lifemax.rpg.feature.habits.domain.Activity
-import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -90,7 +89,7 @@ internal object PeopleSprites {
      */
     fun bytes(a: Activity): Int {
         val b = box(a)
-        return b.w * b.h * 4 * PeopleActivities.of(a).totalFrames * Looks.COUNT
+        return b.w * b.h * 4 * PeopleActivities.of(a).totalFrames * PeopleActivities.looksOf(a)
     }
 
     /**
@@ -106,7 +105,7 @@ internal object PeopleSprites {
         var total = 0
         for (a in Activity.entries) {
             val spec = PeopleActivities.of(a)
-            for (l in 0 until Looks.COUNT) for (f in 0 until spec.totalFrames) {
+            for (l in 0 until PeopleActivities.looksOf(a)) for (f in 0 until spec.totalFrames) {
                 val s = bake(l, a, f)
                 total += s.w * s.h * 4
             }
