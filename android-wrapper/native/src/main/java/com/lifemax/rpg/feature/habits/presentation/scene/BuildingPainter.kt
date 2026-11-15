@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -401,6 +402,40 @@ internal class BuildingPainter {
 
     /** The figures' colour filter while a shadow of one is drawn (null: the figure itself). */
     private var personFilter: ColorFilter? = null
+
+    /**
+     * How much of the day's flat look the figures in the windows take (1 by day, 0 at night): set
+     * per building from the sky. [dayFilter] flattens a figure to one cool dark tone and cuts the
+     * faint glow round it (alpha below about .4 goes to nothing).
+     */
+    private var dayMix = 0f
+    private val dayFilter =
+        ColorFilter.colorMatrix(
+            ColorMatrix(
+                floatArrayOf(
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    40f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    33f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    40f,
+                    0f,
+                    0f,
+                    0f,
+                    1.7f,
+                    -178f,
+                )
+            )
+        )
     private val spillFilter = ColorFilter.tint(SpillShade, BlendMode.SrcIn)
     private val blackFilter = ColorFilter.tint(Color.Black, BlendMode.SrcIn)
 
@@ -1642,6 +1677,7 @@ internal class BuildingPainter {
         // which side of it the light finds, and how hard (the moon lights a little, the sun a lot)
         val key = light
         buildingX = x
+        dayMix = (1f - sky.dark * 1.6f).coerceIn(0f, 1f)
         sunSide =
             if (key == null) 0f
             else SceneLight.sunSide(offset(x)) * key.strength * (1f - .6f * key.cool)
@@ -2763,7 +2799,16 @@ internal class BuildingPainter {
 
     /** A baked figure at the current origin (its feet's middle), in the sprite's own pixels. */
     private fun DrawScope.drawPerson(p: PersonImage, alpha: Float) {
-        drawImage(p.image, Offset(p.dx, p.dy), alpha, colorFilter = personFilter)
+        val f = personFilter
+        if (f != null || dayMix < .01f) {
+            drawImage(p.image, Offset(p.dx, p.dy), alpha, colorFilter = f)
+            return
+        }
+        // by day a figure behind glass is a flat dark shape: the warm rim and the glow baked in for
+        // a lit room at night are flattened away, and the two looks cross-fade through dusk
+        if (dayMix < .99f)
+            drawImage(p.image, Offset(p.dx, p.dy), alpha * (1f - dayMix), colorFilter = null)
+        drawImage(p.image, Offset(p.dx, p.dy), alpha * dayMix, colorFilter = dayFilter)
     }
 
     /** Someone walking along the floor, seen in the window [x], [y] ([rel] from its left edge). */
