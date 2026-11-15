@@ -329,7 +329,19 @@ const STATES = {
     /* the goldens the native decoders read */
     const text = JSON.stringify(out, null, 1) + '\n';
     if (process.env.RECORD) { fs.writeFileSync(GOLDEN, text); console.log('wrote ' + GOLDEN) }
-    else ok('the blocks and imports equal tests/fixtures/cat-world-golden.json (RECORD=1 rewrites it)', fs.existsSync(GOLDEN) && fs.readFileSync(GOLDEN, 'utf8') === text);
+    else {
+      const kept = fs.existsSync(GOLDEN) ? fs.readFileSync(GOLDEN, 'utf8') : '';
+      const same = kept === text;
+      ok('the blocks and imports equal tests/fixtures/cat-world-golden.json (RECORD=1 rewrites it)', same);
+      if (!same) {
+        // say what moved, so a run that differs only now and then can be understood from its log
+        const a = kept.split('\n'), b = text.split('\n');
+        let shown = 0;
+        for (let i = 0; i < Math.max(a.length, b.length) && shown < 24; i++) {
+          if (a[i] !== b[i]) { console.log(`     golden line ${i + 1}:\n       kept: ${a[i]}\n       now:  ${b[i]}`); shown++ }
+        }
+      }
+    }
   } finally { await b.close() }
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
