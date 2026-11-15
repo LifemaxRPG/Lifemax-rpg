@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec
-import com.lifemax.rpg.feature.habits.domain.FurnitureKind
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import kotlin.math.floor
 import kotlin.math.max
@@ -202,19 +201,7 @@ internal class ForegroundPainter {
                     }
                 }
             }
-            // a branch hanging in from a top corner, where a street tree stands near that edge
-            val bw = ForegroundSprites.BRANCH_W * d
-            for (f in street.furniture) {
-                if (f.kind != FurnitureKind.TREE || !ForegroundLayout.hasBranch(seed, f.seed))
-                    continue
-                val xs = ForegroundLayout.screenX(f.x, middle, unit, w)
-                val e = ForegroundLayout.edge(xs, w)
-                if (e <= 0f) continue
-                val x = xs - bw / 2f
-                val a = ALPHA * fade * e * ForegroundLayout.clearance(x, x + bw, ex0, ex1, soft)
-                val sway = if (seconds > 0f) Ambient.sway(f.seed, seconds) * .6f * d else 0f
-                thing(images.branch, x + sway, skyTop - 2f * d, a, xs > w / 2f)
-            }
+            // (no branch hanging in from a top corner: at phone size it read as a dark smudge)
         }
     }
 

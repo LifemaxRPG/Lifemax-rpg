@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -70,7 +71,40 @@ internal class StreetLifePainter {
     /** The shade a walker throws under a street lamp, and the warmth the lamp lends them. */
     private val lampShadeFilter = ColorFilter.tint(Color(0xFF0A0806), BlendMode.SrcIn)
     private val warmFilter = ColorFilter.tint(Color(0xFFFFB866), BlendMode.SrcIn)
-    private val dayRimFilter = ColorFilter.tint(Color(0xFFFFEBC8), BlendMode.SrcIn)
+    private val dayRimFilter = ColorFilter.tint(Color(0xFFF2F5FA), BlendMode.SrcIn)
+
+    /**
+     * A walker by day: the figures are baked warm and glowing for lamp-lit nights; in daylight a
+     * person in the street is a cool, flat, dark shape with only a little modelling, so their tones
+     * are taken to cool greys by brightness and the baked glow round them is cut away.
+     */
+    private val dayFigure =
+        ColorFilter.colorMatrix(
+            ColorMatrix(
+                floatArrayOf(
+                    .105f,
+                    .206f,
+                    .039f,
+                    0f,
+                    20f,
+                    .114f,
+                    .224f,
+                    .042f,
+                    0f,
+                    24f,
+                    .135f,
+                    .266f,
+                    .05f,
+                    0f,
+                    32f,
+                    0f,
+                    0f,
+                    0f,
+                    1.7f,
+                    -178f,
+                )
+            )
+        )
     private val moonRimFilter = ColorFilter.tint(Color(0xFFC9D6FF), BlendMode.SrcIn)
 
     /** A foot's soft contact shadow: a unit disc fading out. */
@@ -413,9 +447,14 @@ internal class StreetLifePainter {
                     p.lane + StreetLife.SIDE_OUT,
                     perspective(p.lane + StreetLife.SIDE_OUT),
                 )
-            // the rim on the lit side: the figure once more, a sliver towards the light
+            // how much of the day's look they take: all of it by day, none once it is dark
+            val day = (1f - dark * 1.6f).coerceIn(0f, 1f)
+            // the rim on the lit side: the figure once more, a sliver towards the light (by day a
+            // faint cool edge, at night the lamp's warmth or the moon's blue)
             val rim =
-                if (key != null) key.strength * (1f - .5f * key.cool) * (1f - dark * .5f) else 0f
+                if (key != null)
+                    key.strength * (1f - .5f * key.cool) * (1f - dark * .5f) * (1f - .55f * day)
+                else 0f
             if (rim > .03f || lamp > .03f) {
                 val side = if (lamp > rim) lampSide else lightFrom
                 val filter =
@@ -427,7 +466,8 @@ internal class StreetLifePainter {
                 nudgeX = 0f
                 nudgeY = 0f
             }
-            party(p, persp, 1f, null, PLAIN)
+            if (day < .99f) party(p, persp, 1f - day, null, PLAIN)
+            if (day > .01f) party(p, persp, day, dayFigure, PLAIN)
             // the lamp's warmth over them, added
             if (lamp > .03f) party(p, persp, lamp * .38f, warmFilter, PLAIN)
             if (p.kind == Stroller.DOG_WALKER) lead(p, persp)

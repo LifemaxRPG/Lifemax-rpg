@@ -738,6 +738,16 @@ private fun StageCanvas(
             reach = max(reach, layouts[i].height)
         }
         backdrop.sunClear = sunClear(orb.first * d, orb.second * d, layouts, street, f, from, to, d)
+        // the clouds hang under one ceiling for the whole street: the highest any building's roof
+        // (with the "add a floor" outline on it) is drawn when it stands in front, so scrolling
+        // from
+        // a tall building to a short one never moves the sky. Zoomed out, the street's own view.
+        var still = window.ground * d
+        for (i in layouts.indices) still =
+            min(still, window.ground * d - layouts[i].height * cameras[i].scale * d)
+        val ceiling =
+            if (layouts.isEmpty()) f.ground - reach * f.unit
+            else lerp(still, f.ground - reach * f.unit, f.zoom)
         with(backdrop) {
             backdrop(
                 p.hour,
@@ -745,7 +755,7 @@ private fun StageCanvas(
                 horizon,
                 f.skyTop,
                 Offset(orb.first * d, orb.second * d),
-                f.ground - reach * f.unit,
+                ceiling,
                 f.middle,
                 seconds,
             )
