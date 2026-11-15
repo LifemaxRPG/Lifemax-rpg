@@ -745,6 +745,9 @@ private fun StageCanvas(
         var still = window.ground * d
         for (i in layouts.indices) still =
             min(still, window.ground * d - layouts[i].height * cameras[i].scale * d)
+        // but the sky always keeps a band for them: a street with one very tall tower would
+        // otherwise have none at all, and a tall building simply stands in front of its clouds
+        still = max(still, window.windowTop * d + CLOUD_BAND * d)
         val ceiling =
             if (layouts.isEmpty()) f.ground - reach * f.unit
             else lerp(still, f.ground - reach * f.unit, f.zoom)
@@ -1002,6 +1005,9 @@ private class VignetteBrush {
             .also { brush = it }
     }
 }
+
+/** The band of sky (dp under the heading) the clouds always keep, however tall the street. */
+private const val CLOUD_BAND = 150f
 
 /** How strong the film grain is (alpha of the black and white specks of the tile). */
 private const val GRAIN = .05f
