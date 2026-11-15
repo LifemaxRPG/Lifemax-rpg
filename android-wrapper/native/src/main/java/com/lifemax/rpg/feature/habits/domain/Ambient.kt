@@ -94,7 +94,7 @@ object Ambient {
     const val CAR_SECONDS = 8f
 
     /** The birds of a flock. */
-    const val FLOCK = 5
+    const val FLOCK = 7
 
     /** A number from 0 up to but not 1 for ([a], [b], [c]), the same every time. */
     fun hash(a: Int, b: Int = 0, c: Int = 0): Float {
@@ -321,7 +321,61 @@ object Ambient {
     fun birdY(i: Int): Float = ((i + 1) / 2) * 7f * if (i % 2 == 0) 1f else -.15f
 
     /** How far bird [i]'s wings are raised at [seconds], -1 down to 1 up: each its own beat. */
-    fun wing(i: Int, seconds: Float): Float = sin(seconds * 8.5f + i * 1.7f)
+    fun wing(i: Int, seconds: Float): Float = sin(seconds * birdRate(i) + i * 1.7f)
+
+    /** How far bird [i] is: 0 near, 1 further, 2 far (smaller, fainter, slower on the wing). */
+    fun birdTier(i: Int): Int = BIRD_TIERS[i % BIRD_TIERS.size]
+
+    private val BIRD_TIERS = intArrayOf(0, 1, 1, 2, 0, 2, 1)
+
+    /** Bird [i]'s size, 1 for a near bird. */
+    fun birdSize(i: Int): Float = 1f - .2f * birdTier(i)
+
+    /** How hard bird [i] is to see, 1 for a near bird: the far ones fade into the air. */
+    fun birdFade(i: Int): Float = 1f - .22f * birdTier(i)
+
+    /** Bird [i]'s wingbeat, radians a second: the far ones slower. */
+    fun birdRate(i: Int): Float = 8.5f - 1.1f * birdTier(i) + .3f * hash(i, 0, 91)
+
+    /**
+     * How much bird [i] is gliding at [seconds], 0 beating to 1 wings held still: now and then one
+     * holds its wings for a second or two, easing in and out of it. At most a couple glide at once.
+     */
+    fun glide(i: Int, seconds: Float): Float {
+        val slot = 5.5f + 2.5f * hash(i, 0, 92)
+        val t = seconds / slot + hash(i, 0, 93)
+        val k = floor(t).toInt()
+        if (hash(i, k, 94) >= .4f) return 0f
+        val u = t - k
+        val start = .1f + .35f * hash(i, k, 95)
+        val len = (1.4f + 1.2f * hash(i, k, 96)) / slot
+        val x = (u - start) / len
+        if (x <= 0f || x >= 1f) return 0f
+        val ease = minOf(1f, minOf(x, 1f - x) * 3.5f)
+        return ease * ease * (3f - 2f * ease)
+    }
+
+    /**
+     * Where bird [i]'s wings are at [seconds], -1 down to 1 up, with the beat skewed (the wings
+     * rise quickly and fall slowly) and a glide held with the wings a little above level.
+     */
+    fun flap(i: Int, seconds: Float): Float {
+        val beat = wing(i, seconds)
+        val skew = (beat + .35f * beat * beat * beat).coerceIn(-1f, 1f)
+        val g = glide(i, seconds)
+        return skew + (.28f - skew) * g
+    }
+
+    /** Bird [i]'s rise and fall on its own path at [seconds], in dp: a slow undulation. */
+    fun birdBob(i: Int, seconds: Float): Float =
+        .7f * sin(seconds * (1.1f + .25f * hash(i, 0, 97)) + i * 2.1f) +
+            .3f * sin(seconds * 2.7f + i * .9f)
+
+    /** How far the whole V has drifted across at [seconds], in dp: it never flies a ruled line. */
+    fun flockDriftX(seconds: Float): Float = 3.5f * sin(seconds * .37f) + 1.2f * sin(seconds * .91f)
+
+    fun flockDriftY(seconds: Float): Float =
+        2.6f * sin(seconds * .23f + 1f) + .9f * sin(seconds * .67f)
 
     /** A blimp drifting across on a bright day, rarely. */
     fun blimp(seconds: Float, seed: Int, out: Pass): Boolean {

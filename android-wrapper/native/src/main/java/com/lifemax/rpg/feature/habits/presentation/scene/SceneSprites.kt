@@ -31,6 +31,9 @@ internal class VehicleImages(
 /** The meteor's streak as images: its hot core and its wider halo. */
 internal class StreakImages(val sprite: StreakSprite, val core: ImageBitmap, val halo: ImageBitmap)
 
+/** A thing of the air (the plane, its contrail, the blimp): its tintable layers as images. */
+internal class AirImages(val sprite: AirSprite, val layers: Array<ImageBitmap>)
+
 /** A tree variant's images, one per [TreeLook]. */
 internal class TreeImages(val sprite: TreeSprite, val looks: Array<ImageBitmap>)
 
@@ -47,7 +50,7 @@ internal class PersonImage(val image: ImageBitmap, val dx: Float, val dy: Float)
  * The scene's pre-rendered art, made once for the whole process the first time it is needed (or, in
  * the app, ahead of that on a background thread: [warm]) and shared by every scene after it. The
  * generators are deterministic and know nothing of Compose; this only turns their pixels into
- * images. The pool is about 4 MB: [bytes].
+ * images. The pool is about 5 MB: [bytes].
  */
 internal object SceneSprites {
     val clouds: Array<CloudImages> by lazy {
@@ -79,6 +82,13 @@ internal object SceneSprites {
         val s = RoadSkySprites.streak()
         StreakImages(s, image(s.core, s.w, s.h), image(s.halo, s.w, s.h))
     }
+
+    val plane: AirImages by lazy { air(AirSprites.plane()) }
+    val contrail: AirImages by lazy { air(AirSprites.contrail()) }
+    val blimp: AirImages by lazy { air(AirSprites.blimp()) }
+
+    private fun air(s: AirSprite) =
+        AirImages(s, Array(s.layers.size) { image(s.layers[it], s.w, s.h) })
 
     val trees: Array<TreeImages> by lazy {
         Array(com.lifemax.rpg.feature.habits.domain.Trees.VARIANTS) {
@@ -157,6 +167,9 @@ internal object SceneSprites {
         beam
         streak
         grain
+        plane
+        contrail
+        blimp
         for (h in BuildingSpec.HEIGHTS) {
             val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
             val wh = (h - BuildingSpec.BAND_TOP - BuildingSpec.PLAQUE_BAND - 6f * (rows - 1)) / rows
@@ -169,6 +182,7 @@ internal object SceneSprites {
         CloudSprites.bytes() +
             TreeSprites.bytes() +
             RoadSkySprites.bytes() +
+            AirSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
             peopleBytes()
 
