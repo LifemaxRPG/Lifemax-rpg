@@ -1,87 +1,257 @@
 package com.lifemax.rpg.feature.habits.domain
 
-import kotlin.math.abs
+import kotlin.math.floor
 
 /*
- * The people in the lit windows: what they are doing (by what the habit is called), the few poses of each
- * doing it as small lists of points, and which pose shows at a moment. Pure data and arithmetic: the painter
- * turns each pose into a path once and only picks one per window per frame.
- *
- * A pose is drawn from the middle of its window's sill, in building units (dp at scale 1): x to the right,
- * y up as negative numbers. A standing person is about 18 tall; the smallest window is 24.
+ * Who is in the lit windows and what they are doing: the activity of a habit by the words in its name (and in the
+ * catalogue entry it came from), the cast of a floor (who, which of the looks, which room, which curtains, in
+ * which window), the frame an activity shows at a moment, and how much detail a building gets at a zoom. Pure data
+ * and arithmetic: the rigs themselves are in PeopleRig and PeopleActivities, the pixels in the scene's sprites.
  */
 
-/** What someone in a window is doing. */
-enum class Activity {
-    TYPING,
-    STRETCHING,
-    READING,
-    LIFTING,
-    WALKING,
+/** How much of a person is drawn at a zoom. */
+enum class PeopleLod {
+    /** The whole rig in its room. */
+    FULL,
+
+    /** A simple warm shape with a head and shoulders, bobbing. */
+    BLOB,
+
+    /** Only a moving dot in the glow. */
+    DOT,
+
+    /** Only the lit window. */
+    NONE,
 }
 
 /**
- * One pose: the head's middle ([headX], [headY]), solid [shapes] (each a polygon as x, y, x, y...:
- * the body, the legs, a desk, a book), and [limbs] (lines as x0, y0, x1, y1... drawn with a stroke:
- * arms).
+ * Who is in one lit window of a floor. [activity] is null for an empty room (its light on, nobody
+ * in), [room] what the window looks into, [look] which of the [Looks], [flip] which way they face,
+ * [seed] their own number, [curtain] 0 for none, 1 a drape on the left, 2 on the right, 3 blinds
+ * half down, 4 both drapes, [sill] 0 for nothing, 1 a pot plant, 2 a cat, and [commuter] whether
+ * someone walking along the floor passes this window.
  */
-class Pose(
-    val headX: Float,
-    val headY: Float,
-    val shapes: Array<FloatArray>,
-    val limbs: FloatArray,
+class WindowCast(
+    val activity: Activity?,
+    val room: RoomKind,
+    val look: Int,
+    val flip: Boolean,
+    val seed: Int,
+    val curtain: Int,
+    val curtainTone: Int,
+    val sill: Int,
 )
 
 object Silhouettes {
-    const val HEAD_R = 2.4f
-    const val LIMB = 1.5f
+    /** The zoom (dp to a unit) from which each level of detail is drawn. */
+    const val FULL_FROM = .55f
+    const val BLOB_FROM = .28f
+    const val DOT_FROM = .12f
+
+    fun lod(scale: Float): PeopleLod =
+        when {
+            scale >= FULL_FROM -> PeopleLod.FULL
+            scale >= BLOB_FROM -> PeopleLod.BLOB
+            scale >= DOT_FROM -> PeopleLod.DOT
+            else -> PeopleLod.NONE
+        }
 
     /** What the habit [name] has its people doing, by the words in it; null when nothing fits. */
-    fun activityOf(name: String): Activity? {
-        val n = name.lowercase()
-        return KEYWORDS.firstOrNull { (_, words) -> words.any { n.contains(it) } }?.first
+    fun activityOf(name: String): Activity? = activitiesOf(name).firstOrNull()
+
+    /**
+     * Everything the habit [name] could have its people doing, the likeliest first: the words of
+     * its name and of the catalogue entry it matches (its other names and keys) are looked for in
+     * the keyword table.
+     */
+    fun activitiesOf(name: String): List<Activity> {
+        val text = StringBuilder(name.lowercase())
+        val idea =
+            HabitCatalog.ALL.firstOrNull {
+                it.name.equals(name, true) ||
+                    it.small.equals(name, true) ||
+                    it.stretch.equals(name, true)
+            }
+        if (idea != null) for (k in idea.keys) text.append(' ').append(k)
+        val t = text.toString()
+        for ((acts, words) in KEYWORDS) if (words.any { t.contains(it) }) return acts
+        return emptyList()
     }
 
-    private val KEYWORDS: List<Pair<Activity, List<String>>> =
+    private fun a(vararg x: Activity) = x.toList()
+
+    private val KEYWORDS: List<Pair<List<Activity>, List<String>>> =
         listOf(
-            Activity.LIFTING to
+            a(Activity.WATERING) to
+                listOf("water the", "water plant", "plants", "garden", "flower", "watering"),
+            a(Activity.MAKING_BED, Activity.SWEEPING) to
+                listOf("make the bed", "make your bed", "make bed", "bed made", "make my bed"),
+            a(Activity.PUSHUPS, Activity.LIFTING) to
                 listOf(
                     "push-up",
                     "pushup",
                     "push up",
-                    "pull-up",
-                    "pullup",
-                    "squat",
-                    "lift",
-                    "gym",
-                    "weight",
+                    "press-up",
+                    "press up",
                     "plank",
-                    "workout",
-                    "work out",
                     "burpee",
                     "sit-up",
                     "situp",
-                    "exercise",
+                ),
+            a(Activity.SQUATTING, Activity.LIFTING) to listOf("squat", "lunge", "legs", "glute"),
+            a(Activity.JOGGING, Activity.WALKING) to
+                listOf(
+                    "run",
+                    "jog",
+                    "cardio",
+                    "treadmill",
+                    "sprint",
+                    "cycling",
+                    "bike",
+                    "hiit",
+                    "swim",
+                ),
+            a(Activity.LIFTING, Activity.SQUATTING, Activity.PUSHUPS, Activity.JOGGING) to
+                listOf(
+                    "lift",
+                    "gym",
+                    "weight",
                     "dumbbell",
                     "kettlebell",
                     "strength",
+                    "pull-up",
+                    "pullup",
+                    "curl",
+                    "workout",
+                    "work out",
+                    "exercise",
+                    "train",
+                    "chest",
                 ),
-            Activity.STRETCHING to
+            a(Activity.STRETCHING) to
                 listOf(
                     "stretch",
                     "yoga",
-                    "medita",
-                    "breath",
                     "mobility",
                     "pilates",
                     "posture",
                     "toes",
-                    "cold shower",
-                    "shower",
                     "tai chi",
-                    "relax",
+                    "foam roll",
+                    "warm up",
+                    "warm-up",
+                    "flexib",
                 ),
-            Activity.READING to
+            a(Activity.MEDITATING) to
+                listOf(
+                    "medita",
+                    "mindful",
+                    "breath",
+                    "relax",
+                    "calm",
+                    "pray",
+                    "stillness",
+                    "unwind",
+                    "gratitude pause",
+                ),
+            a(Activity.BRUSHING, Activity.DRINKING) to
+                listOf(
+                    "teeth",
+                    "floss",
+                    "shower",
+                    "skincare",
+                    "skin care",
+                    "wash face",
+                    "wash your face",
+                    "brush",
+                    "moistur",
+                    "sunscreen",
+                    "shave",
+                    "hygiene",
+                    "mouthwash",
+                ),
+            a(Activity.COOKING, Activity.DRINKING) to
+                listOf(
+                    "cook",
+                    "meal",
+                    "chop",
+                    "breakfast",
+                    "lunch",
+                    "dinner",
+                    "salad",
+                    "vegetable",
+                    "veg",
+                    "fruit",
+                    "protein",
+                    "healthy",
+                    "snack",
+                    "prep",
+                ),
+            a(Activity.DRINKING, Activity.COOKING, Activity.LOOKING_OUT) to
+                listOf(
+                    "water",
+                    "drink",
+                    "tea",
+                    "coffee",
+                    "hydrat",
+                    "glass of",
+                    "juice",
+                    "smoothie",
+                    "vitamin",
+                    "supplement",
+                    "pill",
+                    "medicine",
+                    "meds",
+                ),
+            a(Activity.SWEEPING) to
+                listOf(
+                    "tidy",
+                    "clean",
+                    "dish",
+                    "laundry",
+                    "declutter",
+                    "sweep",
+                    "vacuum",
+                    "chore",
+                    "pick up",
+                    "organi",
+                    "mop",
+                    "dust",
+                    "clothes",
+                    "lay out",
+                    "trash",
+                    "bins",
+                ),
+            a(Activity.PLANNING) to
+                listOf(
+                    "plan",
+                    "schedule",
+                    "goal",
+                    "to-do",
+                    "todo",
+                    "priorit",
+                    "agenda",
+                    "calendar",
+                    "top 3",
+                    "top three",
+                    "review the day",
+                    "weekly review",
+                ),
+            a(Activity.WRITING, Activity.READING, Activity.TYPING) to
+                listOf(
+                    "write",
+                    "journal",
+                    "diary",
+                    "note",
+                    "gratitude",
+                    "draft",
+                    "blog",
+                    "essay",
+                    "letter",
+                    "handwrit",
+                    "reflect",
+                ),
+            a(Activity.READING) to
                 listOf(
                     "read",
                     "book",
@@ -91,70 +261,231 @@ object Silhouettes {
                     "language",
                     "vocab",
                     "flashcard",
-                    "pray",
+                    "course",
+                    "lesson",
+                    "podcast",
+                    "audiobook",
+                    "article",
                 ),
-            Activity.TYPING to
+            a(Activity.TYPING, Activity.WRITING, Activity.PHONE_CALL) to
                 listOf(
-                    "write",
-                    "journal",
-                    "plan",
                     "email",
                     "inbox",
                     "code",
                     "type",
-                    "note",
                     "budget",
                     "work",
                     "focus",
-                    "diary",
-                    "gratitude",
-                    "review",
-                    "list",
-                    "draft",
+                    "deep",
+                    "finance",
+                    "invoice",
+                    "spreadsheet",
+                    "admin",
+                    "bills",
+                    "screen",
+                    "computer",
+                    "laptop",
+                    "task",
                 ),
-            Activity.WALKING to
+            a(Activity.PHONE_CALL) to
+                listOf(
+                    "call",
+                    "phone",
+                    "text",
+                    "message",
+                    "friend",
+                    "family",
+                    "mom",
+                    "dad",
+                    "parent",
+                    "network",
+                    "reach out",
+                    "check in",
+                    "catch up",
+                    "kids",
+                    "partner",
+                ),
+            a(Activity.GUITAR) to listOf("guitar", "ukulele", "instrument", "bass", "violin"),
+            a(Activity.PIANO) to listOf("piano", "keyboard", "scales", "music", "practice"),
+            a(Activity.DANCING) to listOf("dance", "dancing", "sing", "karaoke", "move to"),
+            a(Activity.WALKING) to
                 listOf(
                     "walk",
-                    "run",
-                    "jog",
                     "step",
-                    "tidy",
-                    "clean",
-                    "dish",
-                    "laundry",
-                    "bed",
-                    "water",
-                    "cook",
+                    "stroll",
                     "commute",
                     "dog",
                     "errand",
-                    "clothes",
+                    "outside",
+                    "fresh air",
+                    "hike",
+                    "outdoors",
+                    "sunlight",
                 ),
+            a(Activity.LOOKING_OUT) to
+                listOf(
+                    "window",
+                    "look out",
+                    "gaze",
+                    "sunrise",
+                    "sunset",
+                    "sky",
+                    "daydream",
+                    "take a break",
+                ),
+            a(Activity.WAVING) to
+                listOf("wave", "smile", "greet", "hello", "thank", "compliment", "hug", "kind"),
         )
 
     /**
-     * What the person in the [nth] occupied window of a floor called [name] does: the first ones do
-     * the habit itself; now and then someone walks past instead. A name nothing fits fills its
-     * windows with everyday office life by turns.
+     * What anyone does in an office: the people who are not doing the habit, and the people on a
+     * floor nothing fits.
      */
-    fun activityFor(name: String, nth: Int): Activity {
-        val own = activityOf(name) ?: return GENERIC[nth % GENERIC.size]
-        return if (nth % 3 == 2 && own != Activity.WALKING) Activity.WALKING else own
-    }
-
-    private val GENERIC = arrayOf(Activity.TYPING, Activity.WALKING, Activity.READING)
+    private val OFFICE =
+        arrayOf(
+            Activity.TYPING,
+            Activity.READING,
+            Activity.PHONE_CALL,
+            Activity.DRINKING,
+            Activity.LOOKING_OUT,
+            Activity.WRITING,
+            Activity.PLANNING,
+            Activity.WALKING,
+            Activity.TYPING,
+            Activity.WAVING,
+        )
 
     /**
-     * Which pose of [activity] shows at [step] ([Ambient.step]) for a person of their own [seed].
+     * What the person in the [nth] occupied window of a floor called [name] does, deterministic in
+     * the floor's [seed]: the first does the habit; of the others most do it too (or something like
+     * it) and some are colleagues doing office things, one walking past now and then. A name
+     * nothing fits fills its windows with everyday office life, different in each window.
      */
-    fun frame(activity: Activity, step: Int, seed: Int): Int {
-        val seq = SEQUENCES[activity.ordinal]
-        val i = (step + abs(seed) % seq.size) % seq.size
-        return seq[if (i < 0) i + seq.size else i]
+    fun activityFor(name: String, nth: Int, seed: Int = name.hashCode()): Activity {
+        val own = activitiesOf(name)
+        if (own.isEmpty())
+            return OFFICE[((Ambient.hash(seed, nth, 31) * OFFICE.size).toInt() + nth) % OFFICE.size]
+        if (nth == 0)
+            return own[(Ambient.hash(seed, 0, 32) * own.size).toInt().coerceAtMost(own.size - 1)]
+        return if (Ambient.hash(seed, nth, 33) < .62f)
+            own[(nth + (Ambient.hash(seed, 1, 34) * own.size).toInt()) % own.size]
+        else
+            OFFICE[
+                (Ambient.hash(seed, nth, 35) * OFFICE.size).toInt().coerceAtMost(OFFICE.size - 1)]
     }
 
-    /** The poses of [activity]. */
-    fun poses(activity: Activity): Array<Pose> = POSES[activity.ordinal]
+    private val EMPTY_ROOMS =
+        arrayOf(
+            RoomKind.OFFICE,
+            RoomKind.LIVING,
+            RoomKind.HALL,
+            RoomKind.KITCHEN,
+            RoomKind.STUDY,
+            RoomKind.PLANTS,
+            RoomKind.DESK,
+            RoomKind.BEDROOM,
+            RoomKind.BOARD,
+        )
+
+    /**
+     * Who is in each of a floor's first [lit] windows (in the order they light): the first [people]
+     * have someone in them doing something, the rest an empty room with its lights on. Every window
+     * of a floor has its own look, room, curtains and sill; all of it is a function of the floor's
+     * [key] and [title] and [lit] alone.
+     */
+    fun cast(title: String, key: String, lit: Int, people: Int): Array<WindowCast> {
+        val seed = key.hashCode()
+        return Array(lit) { k ->
+            val s = (Ambient.hash(seed, k, 5) * 100000).toInt()
+            val occupant = k < people
+            val act = if (occupant) activityFor(title, k, seed) else null
+            val room =
+                if (act != null) PeopleActivities.of(act).room
+                else
+                    EMPTY_ROOMS[
+                        (Ambient.hash(seed, k, 41) * EMPTY_ROOMS.size)
+                            .toInt()
+                            .coerceAtMost(EMPTY_ROOMS.size - 1)]
+            val look = (((Ambient.hash(seed, 0, 42) * Looks.COUNT).toInt()) + k * 5) % Looks.COUNT
+            val c = Ambient.hash(seed, k, 43)
+            val curtain =
+                if (c < .3f) 1 + (Ambient.hash(seed, k, 44) * 4).toInt().coerceAtMost(3) else 0
+            val sillRoll = Ambient.hash(seed, k, 45)
+            val sill = if (!occupant && sillRoll < .3f) (if (sillRoll < .14f) 1 else 2) else 0
+            WindowCast(
+                act,
+                room,
+                look,
+                Ambient.hash(seed, k, 46) < .5f,
+                s,
+                curtain,
+                (Ambient.hash(seed, k, 47) * 3).toInt().coerceAtMost(2),
+                sill,
+            )
+        }
+    }
+
+    /**
+     * Which of a done-today floor's dark windows has a dim hallway light (-1 for none): one floor
+     * in three has one.
+     */
+    fun hallLight(key: String, count: Int): Int {
+        val h = Ambient.hash(key.hashCode(), 0, 51)
+        return if (count > 0 && h < .34f) (h * 100f).toInt() % count else -1
+    }
+
+    // ------------------------------------------------------------------ time
+
+    /**
+     * The frame of [spec] showing at [seconds] for a person with their own [seed]; frame 0 while
+     * time stands still.
+     */
+    fun frame(spec: ActivitySpec, seconds: Float, seed: Int): Int {
+        if (seconds <= 0f) return 0
+        val t = seconds * spec.fps + Ambient.hash(seed, 0, 61) * spec.frames
+        val i = floor(t).toInt() % spec.frames
+        return if (i < 0) i + spec.frames else i
+    }
+
+    /**
+     * How far into the next frame [seconds] is (0 to 1) for a slow activity that blends its frames;
+     * 0 otherwise.
+     */
+    fun blend(spec: ActivitySpec, seconds: Float, seed: Int): Float {
+        if (!spec.blend || seconds <= 0f) return 0f
+        val t = seconds * spec.fps + Ambient.hash(seed, 0, 61) * spec.frames
+        return t - floor(t)
+    }
+
+    /**
+     * How much someone is in their window at [seconds]: they step out for a few seconds now and
+     * then (a cycle of about two minutes, its own for [seed]) and come back; 1 while time stands
+     * still.
+     */
+    fun here(seed: Int, seconds: Float): Float {
+        if (seconds <= 0f) return 1f
+        val cycle = 70f + Ambient.hash(seed, 0, 71) * 70f
+        val t = (seconds + Ambient.hash(seed, 0, 72) * cycle) % cycle
+        val away = 7f
+        val edge = 1f
+        return when {
+            t >= cycle - away -> 0f
+            t >= cycle - away - edge -> (cycle - away - t) / edge
+            t < edge -> t / edge
+            else -> 1f
+        }.coerceIn(0f, 1f)
+    }
+
+    /**
+     * How lit an empty room's lamp is at [seconds]: off for a few seconds every minute or so, then
+     * on again.
+     */
+    fun lamp(seed: Int, seconds: Float): Float {
+        if (seconds <= 0f) return 1f
+        val cycle = 45f + Ambient.hash(seed, 0, 73) * 50f
+        val t = (seconds + Ambient.hash(seed, 0, 74) * cycle) % cycle
+        return if (t > cycle - 9f) 0f else 1f
+    }
 
     /**
      * Where someone walking past stands across a window [width] wide at [seconds], from its left
@@ -174,192 +505,48 @@ object Silhouettes {
     /** Which way someone walking past faces: 1 right, -1 left. */
     fun walkDir(seed: Int): Float = if (Ambient.hash(seed, 0, 91) < .5f) 1f else -1f
 
-    // ------------------------------------------------------------------ the poses
-
-    private fun poly(vararg p: Float) = p
-
-    private val LEGS_STANDING =
-        arrayOf(
-            poly(-3f, -8f, -1f, -8f, -1.2f, 0f, -3.4f, 0f),
-            poly(1f, -8f, 3f, -8f, 3.4f, 0f, 1.2f, 0f),
-            poly(-3.2f, -14.5f, 3.2f, -14.5f, 2.8f, -7.6f, -2.8f, -7.6f),
-        )
-
-    private fun standing(headX: Float, limbs: FloatArray, vararg extra: FloatArray) =
-        Pose(headX, -16.9f, arrayOf(*LEGS_STANDING, *extra), limbs)
-
-    private val STRETCHING =
-        arrayOf(
-            standing(0f, poly(-2.6f, -14f, -3.2f, -21f, 2.6f, -14f, 3.2f, -21f)),
-            standing(0f, poly(-2.8f, -14f, -7.5f, -19.5f, 2.8f, -14f, 7.5f, -19.5f)),
-            standing(-1.4f, poly(-2.6f, -14f, -6.2f, -19f, 2.6f, -14f, -1.8f, -21f)),
-            standing(1.4f, poly(-2.6f, -14f, 1.8f, -21f, 2.6f, -14f, 6.2f, -19f)),
-        )
-
-    private val BAR_LOW =
-        arrayOf(
-            poly(-8f, -15f, 8f, -15f, 8f, -13.8f, -8f, -13.8f),
-            poly(-8.8f, -16.6f, -7.2f, -16.6f, -7.2f, -12.2f, -8.8f, -12.2f),
-            poly(7.2f, -16.6f, 8.8f, -16.6f, 8.8f, -12.2f, 7.2f, -12.2f),
-        )
-    private val BAR_HIGH =
-        arrayOf(
-            poly(-8f, -22.2f, 8f, -22.2f, 8f, -21f, -8f, -21f),
-            poly(-8.8f, -23.8f, -7.2f, -23.8f, -7.2f, -19.4f, -8.8f, -19.4f),
-            poly(7.2f, -23.8f, 8.8f, -23.8f, 8.8f, -19.4f, 7.2f, -19.4f),
-        )
-
-    private val LIFTING =
-        arrayOf(
-            standing(
-                0f,
-                poly(
-                    -3f,
-                    -14f,
-                    -4.6f,
-                    -11.4f,
-                    -4.6f,
-                    -11.4f,
-                    -4f,
-                    -14.4f,
-                    3f,
-                    -14f,
-                    4.6f,
-                    -11.4f,
-                    4.6f,
-                    -11.4f,
-                    4f,
-                    -14.4f,
-                ),
-                *BAR_LOW,
-            ),
-            standing(0f, poly(-3f, -14f, -4.4f, -21.6f, 3f, -14f, 4.4f, -21.6f), *BAR_HIGH),
-        )
-
-    private val DESK =
-        arrayOf(
-            poly(1.5f, -9.2f, 10.5f, -9.2f, 10.5f, -8.1f, 1.5f, -8.1f),
-            poly(9.4f, -8.1f, 10.3f, -8.1f, 10.3f, 0f, 9.4f, 0f),
-            poly(5f, -9.2f, 6.2f, -9.2f, 8.4f, -14f, 7.2f, -14f),
-            poly(-4.6f, -6.6f, 1.4f, -6.6f, 1.4f, -5.6f, -4.6f, -5.6f),
-            poly(-5.2f, -13f, -4.2f, -13f, -4.2f, -5.6f, -5.2f, -5.6f),
-            poly(-2.2f, -5.6f, -1.2f, -5.6f, -1.2f, 0f, -2.2f, 0f),
-        )
-    private val SITTING =
-        arrayOf(
-            poly(-3.8f, -7f, -.2f, -7f, .6f, -14f, -3f, -14.3f),
-            poly(-3.6f, -7.6f, 3f, -7.6f, 3f, -5.8f, -3.6f, -5.8f),
-            poly(1.6f, -6.2f, 3f, -6.2f, 3.2f, 0f, 1.8f, 0f),
-        )
-
-    private val TYPING =
-        arrayOf(
-            Pose(
-                -.6f,
-                -16.7f,
-                arrayOf(*DESK, *SITTING),
-                poly(-.8f, -13.4f, 1.2f, -10f, 1.2f, -10f, 4.2f, -9.8f),
-            ),
-            Pose(
-                -.6f,
-                -16.7f,
-                arrayOf(*DESK, *SITTING),
-                poly(-.8f, -13.4f, 1.4f, -10.3f, 1.4f, -10.3f, 4.8f, -10.4f),
-            ),
-            Pose(
-                -.9f,
-                -16.9f,
-                arrayOf(*DESK, *SITTING),
-                poly(-.8f, -13.4f, 2f, -10.4f, 2f, -10.4f, .6f, -15.2f),
-            ),
-        )
-
-    private val CHAIR =
-        arrayOf(
-            poly(-5f, -6.4f, 4f, -6.4f, 4f, -4.8f, -5f, -4.8f),
-            poly(-6.2f, -14.4f, -4.6f, -14.4f, -4.6f, -4.8f, -6.2f, -4.8f),
-            poly(-5f, -4.8f, -4f, -4.8f, -4f, 0f, -5f, 0f),
-        )
-    private val LOUNGING =
-        arrayOf(
-            poly(-4.4f, -6.5f, -1f, -6.5f, -.4f, -14f, -3.4f, -14.2f),
-            poly(-4f, -7f, 2.8f, -7.6f, 2.8f, -5.8f, -4f, -5.4f),
-            poly(1.6f, -6.4f, 3f, -6.4f, 3.6f, 0f, 2.2f, 0f),
-        )
-    private val BOOK = poly(2f, -14f, 4.2f, -12.4f, 4.2f, -9.6f, 2f, -11.2f)
-    private val PAGE = poly(3.6f, -13f, 5.8f, -14.4f, 5.8f, -11.4f, 3.6f, -10.2f)
-
-    private val READING =
-        arrayOf(
-            Pose(
-                -.8f,
-                -16.6f,
-                arrayOf(*CHAIR, *LOUNGING, BOOK),
-                poly(-1f, -13f, 1.2f, -10f, 1.2f, -10f, 2.4f, -11.6f),
-            ),
-            Pose(
-                -.8f,
-                -16.6f,
-                arrayOf(*CHAIR, *LOUNGING, BOOK, PAGE),
-                poly(-1f, -13f, 1.6f, -10.6f, 1.6f, -10.6f, 5f, -12.8f),
-            ),
-            Pose(
-                -.4f,
-                -16.1f,
-                arrayOf(*CHAIR, *LOUNGING, BOOK),
-                poly(-1f, -13f, 1.2f, -10f, 1.2f, -10f, 2.4f, -11.6f),
-            ),
-        )
-
-    private val WALKER = poly(-1.6f, -14.5f, 1.6f, -14.5f, 1.4f, -7.8f, -1.4f, -7.8f)
-    private val WALKING =
-        arrayOf(
-            Pose(
-                .4f,
-                -16.9f,
-                arrayOf(
-                    WALKER,
-                    poly(-1f, -8f, 1f, -8f, 3.2f, 0f, 1.4f, 0f),
-                    poly(-1f, -8f, 1f, -8f, -1.6f, 0f, -3.4f, 0f),
-                ),
-                poly(0f, -14f, 2.2f, -9.5f, 0f, -14f, -2.2f, -9.5f),
-            ),
-            Pose(
-                .4f,
-                -17.1f,
-                arrayOf(WALKER, poly(-1.2f, -8f, 1.2f, -8f, 1f, 0f, -1f, 0f)),
-                poly(0f, -14f, .5f, -9f),
-            ),
-        )
-
-    private val POSES: Array<Array<Pose>> = arrayOf(TYPING, STRETCHING, READING, LIFTING, WALKING)
-
-    private fun hold(vararg runs: Int): IntArray {
-        // pairs of (pose, steps)
-        val out = ArrayList<Int>()
-        var i = 0
-        while (i < runs.size) {
-            repeat(runs[i + 1]) { out += runs[i] }
-            i += 2
-        }
-        return out.toIntArray()
+    /**
+     * Where someone walking along a whole floor [width] wide is at [seconds], from its left edge,
+     * or NaN while no one is: they cross in about eleven seconds, every half minute or so; each
+     * floor has its own pace. They pass behind the wall between the windows.
+     */
+    fun commuterX(seconds: Float, seed: Int, width: Float): Float {
+        if (seconds <= 0f) return Float.NaN
+        val cycle = 26f + Ambient.hash(seed, 0, 81) * 20f
+        val t = ((seconds / cycle + Ambient.hash(seed, 0, 82)) % 1f + 1f) % 1f
+        val span = 11f / cycle
+        if (t >= span) return Float.NaN
+        val u = t / span
+        val x = -10f + (width + 20f) * u
+        return if (Ambient.hash(seed, 0, 83) < .5f) x else width - x
     }
 
-    /** Each activity's poses in turn, a step at a time ([Ambient.PEOPLE_FPS] a second). */
-    private val SEQUENCES: Array<IntArray> =
-        arrayOf(
-            // typing in bursts, then a pause to think
-            hold(0, 2, 1, 2, 0, 2, 1, 2, 0, 2, 1, 2, 0, 2, 1, 2, 2, 14, 0, 2, 1, 2, 0, 2, 1, 2),
-            // slow stretches, held
-            hold(0, 14, 1, 12, 0, 8, 2, 14, 0, 6, 3, 14),
-            // reading, a page now and then, a nod
-            hold(0, 30, 1, 4, 0, 26, 2, 8),
-            // reps, then a breather
-            hold(0, 5, 1, 5, 0, 5, 1, 5, 0, 5, 1, 5, 0, 16),
-            // a stride
-            hold(0, 3, 1, 3),
-        )
+    fun commuterDir(seed: Int): Float = if (Ambient.hash(seed, 0, 83) < .5f) 1f else -1f
 
-    /** How many steps a full turn of [activity]'s poses takes. */
-    fun cycle(activity: Activity): Int = SEQUENCES[activity.ordinal].size
+    /**
+     * The visitor in the lobby: how far from the door's side of the window [width] wide they are at
+     * [seconds], or NaN while they are inside. They walk out, stand and look at the street for a
+     * while, and walk back in. Standing still (0 seconds), they stand at the far end.
+     */
+    fun lobbyVisitor(seconds: Float, width: Float): Float {
+        val far = width * .55f
+        if (seconds <= 0f) return far
+        val t = (seconds / 20f) % 1f
+        return when {
+            t < .3f -> far * t / .3f
+            t < .62f -> far
+            t < .92f -> far * (1f - (t - .62f) / .3f)
+            else -> Float.NaN
+        }
+    }
+
+    /** Whether the lobby's visitor is on the move at [seconds]. */
+    fun lobbyWalking(seconds: Float): Boolean {
+        if (seconds <= 0f) return false
+        val t = (seconds / 20f) % 1f
+        return t < .3f || (t >= .62f && t < .92f)
+    }
+
+    /** Whether the floor with [seed] has someone who walks along it. */
+    fun hasCommuter(seed: Int, lit: Int): Boolean = lit >= 3 && Ambient.hash(seed, 0, 84) < .75f
 }

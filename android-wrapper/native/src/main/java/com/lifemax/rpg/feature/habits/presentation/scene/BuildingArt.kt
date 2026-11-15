@@ -12,8 +12,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.sp
-import com.lifemax.rpg.feature.habits.domain.Activity
-import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.BuildingLayout
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec as B
 import com.lifemax.rpg.feature.habits.domain.Dice
@@ -25,6 +23,7 @@ import com.lifemax.rpg.feature.habits.domain.Piece
 import com.lifemax.rpg.feature.habits.domain.PieceKind
 import com.lifemax.rpg.feature.habits.domain.RuinWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
+import com.lifemax.rpg.feature.habits.domain.WindowCast
 import com.lifemax.rpg.feature.habits.domain.crackLine
 import com.lifemax.rpg.feature.habits.domain.floorWindows
 import com.lifemax.rpg.feature.habits.domain.lightOrder
@@ -89,9 +88,15 @@ internal class FloorArt(
     /** Its windows as x, y, w, h (y from the front's top), in the order they light up. */
     val windows: FloatArray,
     val occupancy: Occupancy,
-    /** Who is in the first [Occupancy.people] lit windows, and their own seeds. */
-    val activities: Array<Activity>,
-    val seeds: IntArray,
+    /** Who is in each lit window (in the order they light), and what room it looks into. */
+    val cast: Array<WindowCast>,
+    /**
+     * The floor's own number, which of its dark windows has a hallway light (-1 none), whether
+     * someone walks along it.
+     */
+    val seed: Int,
+    val hall: Int,
+    val commuter: Boolean,
     /** A run-down storey's windows, in window order. */
     val ruin: Array<RuinWindow>,
     val name: TextLayoutResult?,
@@ -225,8 +230,11 @@ private fun floorArt(
         windows[k * 4 + 3] = s.h
     }
     val occ = occupancy(b.reps, spots.size)
-    val activities = Array(occ.people) { Silhouettes.activityFor(b.title, it) }
-    val seeds = IntArray(occ.people) { (Ambient.hash(b.id.hashCode(), it, 5) * 100000).toInt() }
+    val key = b.id + "/" + storey
+    val cast = Silhouettes.cast(b.title, key, occ.lit, occ.people)
+    val seed = key.hashCode()
+    val hall = Silhouettes.hallLight(key, spots.size)
+    val commuter = Silhouettes.hasCommuter(seed, occ.lit)
     val ruins = Array(spots.size) { ruinWindow(b.id, storey, storeys, it) }
     val texture = Path()
     val trim = Path()
@@ -334,8 +342,10 @@ private fun floorArt(
         reflect,
         windows,
         occ,
-        activities,
-        seeds,
+        cast,
+        seed,
+        hall,
+        commuter,
         ruins,
         name,
         count,

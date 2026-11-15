@@ -7,6 +7,11 @@ import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
+import com.lifemax.rpg.feature.habits.domain.Activity
+import com.lifemax.rpg.feature.habits.domain.BuildingSpec
+import com.lifemax.rpg.feature.habits.domain.Looks
+import com.lifemax.rpg.feature.habits.domain.PeopleActivities
+import com.lifemax.rpg.feature.habits.domain.RoomKind
 
 /** A cloud sprite's three layers, as images. */
 internal class CloudImages(
@@ -18,6 +23,9 @@ internal class CloudImages(
 
 /** A tree variant's images, one per [TreeLook]. */
 internal class TreeImages(val sprite: TreeSprite, val looks: Array<ImageBitmap>)
+
+/** A room's two overlays as images: behind the person, and in front of them. */
+internal class RoomImages(val back: ImageBitmap, val front: ImageBitmap)
 
 /**
  * The scene's pre-rendered art, made once for the whole process the first time it is needed (or, in
@@ -40,6 +48,55 @@ internal object SceneSprites {
         }
     }
 
+    /**
+     * The frames of the people, each made the first time it is drawn: [look] doing [a], frame
+     * [frame].
+     */
+    private val frames =
+        arrayOfNulls<ImageBitmap>(
+            Looks.COUNT * Activity.entries.size * PeopleActivities.ALL.maxOf { it.frames }
+        )
+    private val mostFrames = PeopleActivities.ALL.maxOf { it.frames }
+    private var personBytes = 0
+
+    @Synchronized
+    fun person(look: Int, a: Activity, frame: Int): ImageBitmap {
+        val i = (look * Activity.entries.size + a.ordinal) * mostFrames + frame
+        frames[i]?.let {
+            return it
+        }
+        val sp = PeopleSprites.render(look, a, frame)
+        personBytes += sp.w * sp.h * 4
+        return image(sp.pixels, sp.w, sp.h).also { frames[i] = it }
+    }
+
+    private val rooms = HashMap<Int, RoomImages>()
+    private var roomBytes = 0
+
+    /**
+     * The room [kind] as seen through a window [h] tall (heights are told apart to half a unit).
+     */
+    @Synchronized
+    fun room(kind: RoomKind, h: Float): RoomImages {
+        val key = kind.ordinal * 4096 + (h * 2f).toInt()
+        rooms[key]?.let {
+            return it
+        }
+        val r = RoomSprites.render(kind, (h * 2f).toInt() / 2f)
+        roomBytes += (r.back.w * r.back.h + r.front.w * r.front.h) * 4
+        return RoomImages(
+                image(r.back.pixels, r.back.w, r.back.h),
+                image(r.front.pixels, r.front.w, r.front.h),
+            )
+            .also { rooms[key] = it }
+    }
+
+    /**
+     * What the people and their rooms made so far take, in bytes (they are made as they are first
+     * drawn).
+     */
+    @Synchronized fun peopleBytes(): Int = personBytes + roomBytes
+
     /** The film grain, a tile repeated over the picture. */
     val grain: Brush by lazy {
         ShaderBrush(
@@ -51,15 +108,21 @@ internal object SceneSprites {
         )
     }
 
-    /** Makes both pools now (call off the main thread). */
+    /** Makes the pools now (call off the main thread): the rooms of every window the street has. */
     fun warm() {
         clouds
         trees
         grain
+        for (h in BuildingSpec.HEIGHTS) {
+            val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
+            val wh = (h - BuildingSpec.BAND_TOP - BuildingSpec.PLAQUE_BAND - 6f * (rows - 1)) / rows
+            for (k in RoomKind.entries) room(k, wh)
+        }
     }
 
     /** What the pools hold, in bytes. */
-    fun bytes(): Int = CloudSprites.bytes() + TreeSprites.bytes() + Grain.SIZE * Grain.SIZE * 4
+    fun bytes(): Int =
+        CloudSprites.bytes() + TreeSprites.bytes() + Grain.SIZE * Grain.SIZE * 4 + peopleBytes()
 
     private fun image(pixels: IntArray, w: Int, h: Int): ImageBitmap =
         Bitmap.createBitmap(pixels, w, h, Bitmap.Config.ARGB_8888).asImageBitmap()

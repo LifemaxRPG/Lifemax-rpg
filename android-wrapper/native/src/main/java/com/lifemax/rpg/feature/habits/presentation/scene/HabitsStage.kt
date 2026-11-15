@@ -57,6 +57,7 @@ import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
 import com.lifemax.rpg.feature.habits.domain.SceneWindow
+import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.StreetView
 import com.lifemax.rpg.feature.habits.domain.TOP_FADE
@@ -701,6 +702,7 @@ private fun StageCanvas(
                                 live,
                                 detailed,
                                 sky,
+                                Silhouettes.lod(f.scale),
                             )
                         }
                     }

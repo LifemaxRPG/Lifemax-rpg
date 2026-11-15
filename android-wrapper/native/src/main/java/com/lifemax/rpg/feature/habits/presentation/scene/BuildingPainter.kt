@@ -30,10 +30,15 @@ import com.lifemax.rpg.feature.habits.domain.Dice
 import com.lifemax.rpg.feature.habits.domain.Furniture
 import com.lifemax.rpg.feature.habits.domain.FurnitureKind
 import com.lifemax.rpg.feature.habits.domain.HabitMaterial
+import com.lifemax.rpg.feature.habits.domain.Looks
+import com.lifemax.rpg.feature.habits.domain.PeopleActivities
+import com.lifemax.rpg.feature.habits.domain.PeopleLod
 import com.lifemax.rpg.feature.habits.domain.PieceKind
+import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.RuinWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.Trees
+import com.lifemax.rpg.feature.habits.domain.WindowCast
 import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.min
@@ -80,7 +85,6 @@ internal class BuildingPainter {
     private val dash = PathEffect.dashPathEffect(floatArrayOf(7f, 5f))
     private val thin = Stroke(.8f)
     private val hairline = Stroke(1.2f)
-    private val limb = Stroke(Silhouettes.LIMB, cap = StrokeCap.Round)
     private val glowWide = Stroke(9f, join = StrokeJoin.Round)
     private val glowMid = Stroke(4.5f, join = StrokeJoin.Round)
     private val glowEdge = Stroke(1.8f, join = StrokeJoin.Round)
@@ -90,40 +94,6 @@ internal class BuildingPainter {
     private val ghostLine = Stroke(1.4f, pathEffect = dash)
     private val ring = Stroke(2f)
     private val selection = Stroke(2.6f, join = StrokeJoin.Round)
-
-    /** Each activity's poses as paths, made once: solid shapes, and the limbs to stroke. */
-    private val shapes: Array<Array<Path>> =
-        Array(Activity.entries.size) { a ->
-            val poses = Silhouettes.poses(Activity.entries[a])
-            Array(poses.size) { f ->
-                Path().apply {
-                    for (s in poses[f].shapes) {
-                        moveTo(s[0], s[1])
-                        var i = 2
-                        while (i < s.size) {
-                            lineTo(s[i], s[i + 1])
-                            i += 2
-                        }
-                        close()
-                    }
-                }
-            }
-        }
-    private val limbs: Array<Array<Path>> =
-        Array(Activity.entries.size) { a ->
-            val poses = Silhouettes.poses(Activity.entries[a])
-            Array(poses.size) { f ->
-                Path().apply {
-                    val l = poses[f].limbs
-                    var i = 0
-                    while (i + 3 < l.size) {
-                        moveTo(l[i], l[i + 1])
-                        lineTo(l[i + 2], l[i + 3])
-                        i += 4
-                    }
-                }
-            }
-        }
 
     /** A lamp's light, drawn as a unit circle under a transform so one brush serves them all. */
     private val pool =
@@ -526,13 +496,14 @@ internal class BuildingPainter {
         live: Boolean,
         detailed: Boolean,
         sky: SkyColors,
+        lod: PeopleLod = if (detailed) PeopleLod.FULL else PeopleLod.NONE,
     ) {
         val seconds = motion.seconds
         val half = B.W / 2f
         park(art, selected, accent, seconds, sky)
         // the building's shadow on the pavement
         drawRect(aoGround, Offset(-half + 1f, 0f), Size(B.W + B.DX + 6f, 8f))
-        lobby(art, sky, detailed, seconds)
+        lobby(art, sky, detailed, seconds, lod)
         val lit = lerp(SceneInk.WindowLitDay, SceneInk.WindowLit, sky.dark)
         val glass = lerp(SceneInk.GlassDay, SceneInk.GlassNight, sky.dark)
         val step = Ambient.step(seconds)
@@ -546,7 +517,20 @@ internal class BuildingPainter {
             val squash = if (landing) motion.squash else 0f
             translate(0f, -drop) {
                 scale(1f + .025f * squash, 1f - .06f * squash, Offset(0f, -fa.piece.bottom)) {
-                    floor(art, fa, motion, landing, alpha, live, detailed, lit, glass, step, sky)
+                    floor(
+                        art,
+                        fa,
+                        motion,
+                        landing,
+                        alpha,
+                        live,
+                        detailed,
+                        lit,
+                        glass,
+                        step,
+                        sky,
+                        lod,
+                    )
                     if (selected == b.id && fa.piece.labelled) outline(fa.top, fa.bottom, accent)
                 }
             }
@@ -591,6 +575,7 @@ internal class BuildingPainter {
         sky: SkyColors,
         detailed: Boolean,
         seconds: Float,
+        lod: PeopleLod,
     ) {
         val half = B.W / 2f
         val top = -B.LOBBY_H
@@ -663,19 +648,8 @@ internal class BuildingPainter {
             )
             drawLine(SceneInk.Reflection, Offset(18f, -6f), Offset(30f, w0 + 1f), 3f)
         }
-        // someone in the shop
-        if (detailed)
-            person(
-                Activity.WALKING,
-                Silhouettes.frame(Activity.WALKING, Ambient.step(seconds), art.stack.id.hashCode()),
-                -half + 9f,
-                w0,
-                half - 22f,
-                -4f - w0,
-                art.stack.id.hashCode(),
-                seconds,
-                .8f,
-            )
+        // the lobby: a reception desk with someone at it, a plant, and a visitor who comes and goes
+        lobbyLife(art, -half + 9f, w0, half - 22f, -4f - w0, seconds, sky, lod)
         drawRect(SceneInk.Highlight, Offset(-half, top), Size(B.W, 1f))
     }
 
@@ -691,6 +665,7 @@ internal class BuildingPainter {
         glass: Color,
         step: Int,
         sky: SkyColors,
+        lod: PeopleLod,
     ) {
         val half = B.W / 2f
         val b = fa.block
@@ -780,7 +755,10 @@ internal class BuildingPainter {
                 val h = w[k * 4 + 3]
                 val bright =
                     when {
-                        k < on -> 1f
+                        k < on ->
+                            if (k >= fa.occupancy.people && lod != PeopleLod.NONE && seconds > 0f)
+                                .12f + .88f * Silhouettes.lamp(fa.cast[k].seed, seconds)
+                            else 1f
                         k < failing ->
                             if (seconds <= 0f) (if (k == 0) .55f else 0f)
                             else if (Ambient.flicker(seed + k * 7, seconds, sputter)) .75f else 0f
@@ -809,6 +787,13 @@ internal class BuildingPainter {
                     )
                 } else {
                     drawRect(glass, Offset(x, y), Size(ww, h), alpha = alpha)
+                    if (k == fa.hall && !ruin && lod != PeopleLod.NONE)
+                        drawRect(
+                            SceneInk.WindowLitLow,
+                            Offset(x + ww * .3f, y + h * .1f),
+                            Size(ww * .4f, h * .45f),
+                            alpha = alpha * (.1f + .14f * sky.dark),
+                        )
                     translate(x, y) {
                         scale(ww, h, Offset.Zero) {
                             drawRect(
@@ -823,28 +808,51 @@ internal class BuildingPainter {
             }
             if (on < count)
                 drawPath(fa.reflect, SceneInk.Reflection, alpha = alpha * (1f - .6f * sky.dark))
-            if (detailed && on > 0) {
+            if (on > 0 && lod != PeopleLod.NONE) {
                 val people = min(fa.occupancy.people, on)
-                for (k in 0 until people) {
-                    val a = fa.activities[k]
+                for (k in 0 until on) {
+                    val c = fa.cast[k]
                     val appear =
                         if (landing) ((motion.lights * fa.occupancy.lit - k) * 2f).coerceIn(0f, 1f)
                         else 1f
                     if (appear <= 0f) continue
                     // a little hop as they arrive
                     val hop = if (landing && appear < 1f) (1f - appear) * 3f else 0f
-                    person(
-                        a,
-                        Silhouettes.frame(a, step, fa.seeds[k]),
-                        w[k * 4],
-                        top + w[k * 4 + 1] - hop,
-                        w[k * 4 + 2],
-                        w[k * 4 + 3],
-                        fa.seeds[k],
-                        seconds,
-                        alpha * appear,
-                    )
+                    val x = w[k * 4]
+                    val y = top + w[k * 4 + 1] - hop
+                    val ww = w[k * 4 + 2]
+                    val hh = w[k * 4 + 3]
+                    if (k >= people && Silhouettes.lamp(c.seed, seconds) <= 0f) continue
+                    windowLife(c, x, y, ww, hh, seconds, alpha * appear, lod, sky)
                 }
+                if (lod == PeopleLod.FULL && fa.commuter && seconds > 0f) {
+                    val at = Silhouettes.commuterX(seconds, fa.seed, B.W)
+                    if (!at.isNaN()) {
+                        val dir = Silhouettes.commuterDir(fa.seed)
+                        for (k in 0 until on) {
+                            val rel = -half + at - w[k * 4]
+                            if (rel < -3f || rel > w[k * 4 + 2] + 3f) continue
+                            walkerIn(
+                                w[k * 4],
+                                top + w[k * 4 + 1],
+                                w[k * 4 + 2],
+                                w[k * 4 + 3],
+                                rel,
+                                dir,
+                                fa.seed,
+                                seconds,
+                                alpha,
+                            )
+                        }
+                    }
+                }
+                // a streak of the day's sky across the glass of the lit windows
+                if (sky.dark < .8f && on >= count)
+                    drawPath(
+                        fa.reflect,
+                        SceneInk.Reflection,
+                        alpha = alpha * .32f * (1f - sky.dark),
+                    )
             }
             if (b.material == HabitMaterial.GLASS) {
                 // the frame is still going up: scaffold poles and a brace
@@ -1177,39 +1185,334 @@ internal class BuildingPainter {
         }
     }
 
-    /** Someone in a window, clipped to it: their pose of this moment, facing their own way. */
-    private fun DrawScope.person(
-        a: Activity,
-        frame: Int,
+    private val curtainColors = arrayOf(Color(0xFF8A4B3A), Color(0xFF4E6B6B), Color(0xFF8A7A4A))
+    private val soil = Color(0xFF6B3A24)
+    private val leaf = Color(0xFF3A4A22)
+    private val furniture = Color(0xFF3B2415)
+    private val room = 1f / RoomSprites.PPU
+    private val frame = 1f / PeopleSprites.PPU
+
+    /**
+     * One lit window: at full detail its room (the overlay behind, the person in it, the overlay in
+     * front), curtains and what sits on its sill; smaller, a simple shape of a person; smaller
+     * still, a moving dot. Someone is only in it when the cast says so (an empty room is just a
+     * room), and steps out now and then. The whole room faces one way or the other, so no two
+     * neighbours are alike.
+     */
+    private fun DrawScope.windowLife(
+        c: WindowCast,
         x: Float,
         y: Float,
         w: Float,
         h: Float,
+        seconds: Float,
+        alpha: Float,
+        lod: PeopleLod,
+        sky: SkyColors,
+    ) {
+        val act = c.activity
+        if (lod != PeopleLod.FULL) {
+            if (act == null) return
+            val here = Silhouettes.here(c.seed, seconds)
+            if (here <= 0f) return
+            val bob = if (seconds > 0f) kotlin.math.sin(seconds * 7f + c.seed) * .6f else 0f
+            val cx = x + w / 2f
+            if (lod == PeopleLod.BLOB)
+                clipRect(x, y, x + w, y + h) {
+                    drawCircle(SceneInk.Person, 2.1f, Offset(cx, y + h - 10.5f + bob), alpha * here)
+                    drawRoundRect(
+                        SceneInk.Person,
+                        Offset(cx - 2.8f, y + h - 8.4f + bob),
+                        Size(5.6f, 9f),
+                        CornerRadius(2.6f),
+                        alpha = alpha * here,
+                    )
+                }
+            else
+                drawCircle(SceneInk.Person, 1.5f, Offset(cx, y + h - 3f + bob), alpha * here * .85f)
+            return
+        }
+        val rm = SceneSprites.room(c.room, h)
+        val dir = if (c.flip) -1f else 1f
+        val s = RoomSprites.personScale(h) * PeopleActivities.roomFit(c.room)
+        val overlay = alpha * (.78f + .22f * sky.dark)
+        clipRect(x, y, x + w, y + h) {
+            translate(x, y) {
+                scale(dir, 1f, Offset(w / 2f, 0f)) {
+                    scale(room, room, Offset.Zero) { drawImage(rm.back, Offset.Zero, overlay) }
+                    if (act != null) person(act, c, w, h, s, seconds, alpha, dir)
+                    scale(room, room, Offset.Zero) { drawImage(rm.front, Offset.Zero, overlay) }
+                }
+                if (c.curtain != 0) curtains(c, w, h, alpha)
+                if (c.sill != 0) sillItem(c, w, h, alpha)
+            }
+        }
+    }
+
+    /**
+     * The person of a window at the window's own origin: their frame of this moment, and the next
+     * one blended in.
+     */
+    private fun DrawScope.person(
+        act: Activity,
+        c: WindowCast,
+        w: Float,
+        h: Float,
+        s: Float,
+        seconds: Float,
+        alpha: Float,
+        dir: Float,
+    ) {
+        val here = Silhouettes.here(c.seed, seconds)
+        if (here <= 0f) return
+        val spec = PeopleActivities.of(act)
+        var ax = s * PeopleActivities.shift(spec.room) + w / 2f
+        var face = 1f
+        var size = s * PeopleActivities.fitted(act)
+        if (act == Activity.WALKING) {
+            // walking past: across the window and out of it
+            val at = Silhouettes.walkX(seconds, c.seed, w)
+            if (at.isNaN()) return
+            ax = if (dir > 0f) at else w - at
+            face = Silhouettes.walkDir(c.seed) * dir
+            size = RoomSprites.personScale(h) * PeopleActivities.fitted(act)
+        }
+        val f = Silhouettes.frame(spec, seconds, c.seed)
+        val box = PeopleSprites.box(act)
+        val corner = Offset(box.left.toFloat(), box.top.toFloat())
+        translate(ax, h) {
+            scale(face * size * frame, size * frame, Offset.Zero) {
+                drawImage(SceneSprites.person(c.look, act, f), corner, alpha * here)
+                val mix = Silhouettes.blend(spec, seconds, c.seed)
+                if (mix > .01f)
+                    drawImage(
+                        SceneSprites.person(c.look, act, (f + 1) % spec.frames),
+                        corner,
+                        alpha * here * mix,
+                    )
+            }
+        }
+    }
+
+    /** Someone walking along the floor, seen in the window [x], [y] ([rel] from its left edge). */
+    private fun DrawScope.walkerIn(
+        x: Float,
+        y: Float,
+        w: Float,
+        h: Float,
+        rel: Float,
+        dir: Float,
         seed: Int,
         seconds: Float,
         alpha: Float,
     ) {
-        var cx = x + w / 2f
-        var dir = if (seed and 1 == 0) 1f else -1f
-        if (a == Activity.WALKING) {
-            val at = Silhouettes.walkX(seconds, seed, w)
-            if (at.isNaN()) return
-            cx = x + at
-            dir = Silhouettes.walkDir(seed)
-        }
-        val s = min(1f, (h - 2f) / 23f)
-        val pose = Silhouettes.poses(a)[frame]
+        val spec = PeopleActivities.of(Activity.WALKING)
+        val box = PeopleSprites.box(Activity.WALKING)
+        val size = RoomSprites.personScale(h) * PeopleActivities.fitted(Activity.WALKING)
+        val look = (seed and 0x7fffffff) % Looks.COUNT
         clipRect(x, y, x + w, y + h) {
-            translate(cx, y + h) {
-                scale(dir * s, s, Offset.Zero) {
-                    drawPath(shapes[a.ordinal][frame], SceneInk.Person, alpha = alpha)
-                    drawPath(limbs[a.ordinal][frame], SceneInk.Person, alpha = alpha, style = limb)
-                    drawCircle(
-                        SceneInk.Person,
-                        Silhouettes.HEAD_R,
-                        Offset(pose.headX, pose.headY),
-                        alpha,
+            translate(x + rel, y + h) {
+                scale(dir * size * frame, size * frame, Offset.Zero) {
+                    drawImage(
+                        SceneSprites.person(
+                            look,
+                            Activity.WALKING,
+                            Silhouettes.frame(spec, seconds, seed),
+                        ),
+                        Offset(box.left.toFloat(), box.top.toFloat()),
+                        alpha * .92f,
                     )
+                }
+            }
+        }
+    }
+
+    private fun DrawScope.curtains(c: WindowCast, w: Float, h: Float, alpha: Float) {
+        val col = curtainColors[c.curtainTone]
+        when (c.curtain) {
+            3 -> {
+                drawRect(col, Offset.Zero, Size(w, h * .34f), alpha = alpha * .55f)
+                for (i in 1..3) drawRect(
+                    Color.Black,
+                    Offset(0f, h * .34f * i / 4f),
+                    Size(w, .5f),
+                    alpha = alpha * .2f,
+                )
+                drawRect(col, Offset(0f, h * .34f), Size(w, 1f), alpha = alpha * .7f)
+            }
+            else -> {
+                if (c.curtain == 1 || c.curtain == 4) {
+                    drawRect(col, Offset.Zero, Size(w * .28f, h), alpha = alpha * .62f)
+                    drawRect(Color.Black, Offset(w * .1f, 0f), Size(.8f, h), alpha = alpha * .18f)
+                }
+                if (c.curtain == 2 || c.curtain == 4) {
+                    drawRect(col, Offset(w * .72f, 0f), Size(w * .28f, h), alpha = alpha * .62f)
+                    drawRect(Color.Black, Offset(w * .88f, 0f), Size(.8f, h), alpha = alpha * .18f)
+                }
+            }
+        }
+    }
+
+    /** A pot plant or a cat on the sill of an empty room. */
+    private fun DrawScope.sillItem(c: WindowCast, w: Float, h: Float, alpha: Float) {
+        val left = c.seed and 1 == 0
+        val x = if (left) w * .14f else w * .6f
+        if (c.sill == 1) {
+            drawRect(soil, Offset(x, h - 4.2f), Size(3.4f, 3.4f), alpha = alpha * .9f)
+            drawCircle(leaf, 1.5f, Offset(x + 1.7f, h - 5.2f), alpha * .9f)
+            drawCircle(leaf, 1.3f, Offset(x + .2f, h - 6.2f), alpha * .9f)
+            drawCircle(leaf, 1.3f, Offset(x + 3.2f, h - 6.4f), alpha * .9f)
+        } else {
+            val d = if (left) 1f else -1f
+            val bx = if (left) x else x + 5f
+            drawOval(furniture, Offset(bx - 2.6f, h - 5.2f), Size(5.2f, 3.6f), alpha = alpha * .92f)
+            drawCircle(furniture, 1.6f, Offset(bx + d * 2.6f, h - 5.8f), alpha * .92f)
+            drawLine(
+                furniture,
+                Offset(bx - d * 2.4f, h - 2.6f),
+                Offset(bx - d * 4.4f, h - 5.4f),
+                .9f,
+                alpha = alpha * .9f,
+            )
+        }
+    }
+
+    /**
+     * The ground floor's shopfront as a small scene: both windows warm and lit, in the left one a
+     * reception desk with someone at it, a plant in each corner, and in the right one a bench and a
+     * visitor who walks out from the door, stands looking at the street and goes back in. [x], [y],
+     * [w], [h] are the left window; the right is its mirror.
+     */
+    private fun DrawScope.lobbyLife(
+        art: BuildingArt,
+        x: Float,
+        y: Float,
+        w: Float,
+        h: Float,
+        seconds: Float,
+        sky: SkyColors,
+        lod: PeopleLod,
+    ) {
+        if (lod == PeopleLod.NONE) return
+        val seed = art.stack.id.hashCode()
+        for (side in 0..1) {
+            val ox = if (side == 0) x else 13f
+            clipRect(ox, y, ox + w, y + h) {
+                drawRect(
+                    SceneInk.WindowLit,
+                    Offset(ox, y),
+                    Size(w, h),
+                    alpha = .14f + .4f * sky.dark,
+                )
+                translate(ox + w / 2f, y) {
+                    scale(w * .5f, h * 1.3f, Offset.Zero) {
+                        drawCircle(
+                            bloom,
+                            1f,
+                            Offset.Zero,
+                            alpha = .35f + .35f * sky.dark,
+                            blendMode = BlendMode.Plus,
+                        )
+                    }
+                }
+                if (lod != PeopleLod.FULL) return@clipRect
+                val floor = y + h
+                // a plant in the far corner
+                val px = if (side == 0) ox + 4f else ox + w - 8f
+                drawRect(soil, Offset(px, floor - 3.6f), Size(3.4f, 3.6f), alpha = .92f)
+                for (i in 0 until 5) {
+                    drawCircle(
+                        leaf,
+                        1.7f,
+                        Offset(
+                            px + 1.7f + (i - 2) * 1.5f,
+                            floor - 5.4f - (if (i % 2 == 0) 1.5f else 0f),
+                        ),
+                        .92f,
+                    )
+                }
+                val s = .52f
+                if (side == 0) {
+                    // the receptionist at the desk
+                    val ax = ox + 28f
+                    val shift = PeopleActivities.shift(RoomKind.OFFICE)
+                    val spec = PeopleActivities.of(Activity.TYPING)
+                    val box = PeopleSprites.box(Activity.TYPING)
+                    val look = (seed and 0x7fffffff) % Looks.COUNT
+                    val size = s * PeopleActivities.fitted(Activity.TYPING)
+                    translate(ax + shift * s, floor) {
+                        scale(size * frame, size * frame, Offset.Zero) {
+                            drawImage(
+                                SceneSprites.person(
+                                    look,
+                                    Activity.TYPING,
+                                    Silhouettes.frame(spec, seconds, seed),
+                                ),
+                                Offset(box.left.toFloat(), box.top.toFloat()),
+                                1f,
+                            )
+                        }
+                    }
+                    val dx0 = ax + (shift + 2.2f) * s
+                    drawRect(
+                        furniture,
+                        Offset(dx0, floor - 9.2f * s),
+                        Size(11f * s + 6f, 9.2f * s),
+                        alpha = .96f,
+                    )
+                    drawRect(
+                        SceneInk.WindowLit,
+                        Offset(dx0, floor - 9.2f * s),
+                        Size(11f * s + 6f, .6f),
+                        alpha = .5f,
+                    )
+                } else {
+                    // a bench along the wall and the visitor
+                    drawRect(
+                        furniture,
+                        Offset(ox + w - 30f, floor - 4.6f),
+                        Size(18f, 1.2f),
+                        alpha = .9f,
+                    )
+                    drawRect(
+                        furniture,
+                        Offset(ox + w - 29f, floor - 3.4f),
+                        Size(1f, 3.4f),
+                        alpha = .9f,
+                    )
+                    drawRect(
+                        furniture,
+                        Offset(ox + w - 14f, floor - 3.4f),
+                        Size(1f, 3.4f),
+                        alpha = .9f,
+                    )
+                    val at = Silhouettes.lobbyVisitor(seconds, w - 14f)
+                    if (!at.isNaN()) {
+                        val moving = Silhouettes.lobbyWalking(seconds)
+                        val act = if (moving) Activity.WALKING else Activity.LOOKING_OUT
+                        val spec = PeopleActivities.of(act)
+                        val box = PeopleSprites.box(act)
+                        val look = ((seed and 0x7fffffff) + 3) % Looks.COUNT
+                        val back = seconds > 0f && (seconds / 20f) % 1f >= .62f
+                        val size = s * PeopleActivities.fitted(act)
+                        translate(ox + 4f + at, floor) {
+                            scale(
+                                (if (back) -1f else 1f) * size * frame,
+                                size * frame,
+                                Offset.Zero,
+                            ) {
+                                drawImage(
+                                    SceneSprites.person(
+                                        look,
+                                        act,
+                                        Silhouettes.frame(spec, seconds, seed),
+                                    ),
+                                    Offset(box.left.toFloat(), box.top.toFloat()),
+                                    1f,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
