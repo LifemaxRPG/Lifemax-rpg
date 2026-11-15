@@ -103,7 +103,22 @@ object K {
 
     /** 1 when [X] is where the near ankle stands (feet planted), 0 when it is the pelvis. */
     const val PIN = 13
-    const val SIZE = 14
+
+    /**
+     * The ankles' tilt from square to the shin, toes up positive (a heel strike has the toes up, a
+     * toe-off has them down), near then far.
+     */
+    const val ANN = 14
+    const val ANF = 15
+
+    /**
+     * The counter-rotation of a walk, in units of build: how far the near hip is ahead of the
+     * pelvis's middle (and the far one behind it) beyond what the turn gives, and the same for the
+     * shoulders ([SHX]). A walk has the near hip forward when the near shoulder is back.
+     */
+    const val TWIST = 16
+    const val SHX = 17
+    const val SIZE = 18
 
     val NAMES =
         arrayOf(
@@ -121,6 +136,10 @@ object K {
             "kf",
             "lift",
             "pin",
+            "ann",
+            "anf",
+            "twist",
+            "shx",
         )
 }
 
@@ -143,7 +162,31 @@ fun pose(
     kf: Float = 4f,
     lift: Float = 0f,
     pin: Float = 0f,
-): FloatArray = floatArrayOf(x, turn, lean, head, an, en, af, ef, ln, kn, lf, kf, lift, pin)
+    ann: Float = 0f,
+    anf: Float = 0f,
+    twist: Float = 0f,
+    shx: Float = 0f,
+): FloatArray =
+    floatArrayOf(
+        x,
+        turn,
+        lean,
+        head,
+        an,
+        en,
+        af,
+        ef,
+        ln,
+        kn,
+        lf,
+        kf,
+        lift,
+        pin,
+        ann,
+        anf,
+        twist,
+        shx,
+    )
 
 /** Where a figure's joints ended up, for props and rooms to hang on. */
 class Joints {
@@ -245,7 +288,8 @@ class FigBuilder(val look: Look, val p: FloatArray, val swing: Float) {
         val hood = look.top == Top.HOODIE
         val thick = if (jacket || hood) 1.1f else 1f
 
-        val hw = lerp(1.5f, .4f, turn) * b
+        val twist = p[K.TWIST]
+        val hw = (lerp(1.5f, .4f, turn) + twist) * b
         val px =
             if (p[K.PIN] > .5f)
                 p[K.X] - (hw + sin(rad(p[K.LN])) * th + sin(rad(p[K.LN] - p[K.KN])) * sh)
@@ -263,9 +307,9 @@ class FigBuilder(val look: Look, val p: FloatArray, val swing: Float) {
         joints.shoulderY = sy
 
         // ---- the legs
-        legs(px, py, hw, th, sh, b, hgt, FAR_TONE, Shape.FAR, p[K.LF], p[K.KF], -1f)
+        legs(px, py, hw, th, sh, b, hgt, FAR_TONE, Shape.FAR, p[K.LF], p[K.KF], p[K.ANF], -1f)
         // ---- the far arm
-        val sw = lerp(2.9f, .5f, turn) * b
+        val sw = (lerp(2.9f, .5f, turn) + p[K.SHX]) * b
         arm(
             sx - nx * sw,
             sy - ny * sw,
@@ -369,7 +413,7 @@ class FigBuilder(val look: Look, val p: FloatArray, val swing: Float) {
 
         // ---- the skirt, if there is one, then the near leg over it
         if (look.skirt) skirt(px, py, hw, hipW, th, hgt)
-        legs(px, py, hw, th, sh, b, hgt, NEAR_LEG_TONE, Shape.NEAR, p[K.LN], p[K.KN], 1f)
+        legs(px, py, hw, th, sh, b, hgt, NEAR_LEG_TONE, Shape.NEAR, p[K.LN], p[K.KN], p[K.ANN], 1f)
 
         // ---- the near arm
         arm(
@@ -401,6 +445,7 @@ class FigBuilder(val look: Look, val p: FloatArray, val swing: Float) {
         layer: Int,
         l: Float,
         kn: Float,
+        ankle: Float,
         side: Float,
     ) {
         val hx = px + side * hw
@@ -413,11 +458,12 @@ class FigBuilder(val look: Look, val p: FloatArray, val swing: Float) {
         val r0 = 1.78f * b
         add(layer, capsule(hx, hy, r0, tx, ty, 1.2f * b, 8), tone)
         add(layer, capsule(tx, ty, 1.2f * b, ax, ay, .75f * b, 8), tone)
-        // the foot: heel to toe, flat on the floor when the shin is upright
-        val fx = sin(rad(sa + 90f))
-        val fy = cos(rad(sa + 90f))
-        val dx = sin(rad(sa))
-        val dy = cos(rad(sa))
+        // the foot: heel to toe, flat on the floor when the shin is upright; the ankle turns it
+        // (toes up positive) from square to the shin
+        val fx = sin(rad(sa + 90f + ankle))
+        val fy = cos(rad(sa + 90f + ankle))
+        val dx = sin(rad(sa + ankle))
+        val dy = cos(rad(sa + ankle))
         add(
             layer,
             capsule(

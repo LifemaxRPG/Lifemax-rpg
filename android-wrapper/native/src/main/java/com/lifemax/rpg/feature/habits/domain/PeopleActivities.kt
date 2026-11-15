@@ -72,9 +72,23 @@ class ActivitySpec(
     val energy: Float,
     val glows: List<Glow>,
     val props: PropMaker?,
+    val extra: List<FloatArray> = emptyList(),
+    val smooth: Boolean = false,
 ) {
-    /** The pose [frame] of [frames] shows: the loop sampled evenly. */
-    fun poseAt(frame: Int): FloatArray = Spline.sample(keys, frame / frames.toFloat())
+    /**
+     * The pose [frame] shows: the loop sampled evenly for the first [frames], then the [extra]
+     * poses (a turn, say) that are not part of the loop.
+     */
+    fun poseAt(frame: Int): FloatArray =
+        if (frame >= frames) extra[frame - frames]
+        else Spline.sample(keys, frame / frames.toFloat())
+
+    /** The pose [phase] (0 to 1, wrapping) of the loop shows, between the baked frames too. */
+    fun poseAtPhase(phase: Float): FloatArray = Spline.sample(keys, phase)
+
+    /** Every frame that can be baked: the loop's and the extras. */
+    val totalFrames: Int
+        get() = frames + extra.size
 
     /** A loop's length in seconds. */
     val seconds: Float
@@ -682,65 +696,7 @@ object PeopleActivities {
         )
 
     // ---- running on a treadmill
-    private val JOG_KEYS =
-        loop(
-            pose(
-                turn = .92f,
-                lean = 9f,
-                head = -3f,
-                an = -36f,
-                en = 78f,
-                af = 44f,
-                ef = 66f,
-                ln = 38f,
-                kn = 18f,
-                lf = -30f,
-                kf = 50f,
-                lift = .3f,
-            ),
-            pose(
-                turn = .92f,
-                lean = 9f,
-                head = -3f,
-                an = 4f,
-                en = 84f,
-                af = 8f,
-                ef = 82f,
-                ln = 4f,
-                kn = 100f,
-                lf = -2f,
-                kf = 8f,
-                lift = 1.1f,
-            ),
-            pose(
-                turn = .92f,
-                lean = 9f,
-                head = -3f,
-                an = 44f,
-                en = 66f,
-                af = -36f,
-                ef = 78f,
-                ln = -30f,
-                kn = 50f,
-                lf = 38f,
-                kf = 18f,
-                lift = .3f,
-            ),
-            pose(
-                turn = .92f,
-                lean = 9f,
-                head = -3f,
-                an = 8f,
-                en = 82f,
-                af = 4f,
-                ef = 84f,
-                ln = -2f,
-                kn = 8f,
-                lf = 4f,
-                kf = 100f,
-                lift = 1.1f,
-            ),
-        )
+    // the jog is worked out in Gait
 
     // ---- sitting cross-legged on a mat, breathing
     private val MEDITATE_KEYS =
@@ -1588,64 +1544,7 @@ object PeopleActivities {
             ),
         )
 
-    // ---- walking past
-    private val WALK_KEYS =
-        loop(
-            pose(
-                turn = .94f,
-                lean = 3f,
-                head = -1f,
-                an = -26f,
-                en = 24f,
-                af = 30f,
-                ef = 22f,
-                ln = 28f,
-                kn = 6f,
-                lf = -24f,
-                kf = 20f,
-            ),
-            pose(
-                turn = .94f,
-                lean = 3f,
-                head = -1f,
-                an = 2f,
-                en = 20f,
-                af = 4f,
-                ef = 20f,
-                ln = 2f,
-                kn = 50f,
-                lf = -2f,
-                kf = 6f,
-                lift = .5f,
-            ),
-            pose(
-                turn = .94f,
-                lean = 3f,
-                head = -1f,
-                an = 30f,
-                en = 22f,
-                af = -26f,
-                ef = 24f,
-                ln = -24f,
-                kn = 20f,
-                lf = 28f,
-                kf = 6f,
-            ),
-            pose(
-                turn = .94f,
-                lean = 3f,
-                head = -1f,
-                an = 4f,
-                en = 20f,
-                af = 2f,
-                ef = 20f,
-                ln = -2f,
-                kn = 6f,
-                lf = 2f,
-                kf = 50f,
-                lift = .5f,
-            ),
-        )
+    // ---- walking past: the keys are worked out from the feet in Gait
 
     // ---- standing at the glass, arms folded, looking out at the street
     private val LOOK_KEYS =
@@ -1839,13 +1738,14 @@ object PeopleActivities {
             ActivitySpec(
                 Activity.JOGGING,
                 RoomKind.GYM,
-                JOG_KEYS,
-                6,
-                12f,
+                Gait.JOG_KEYS,
+                Gait.JOG_FRAMES,
+                Gait.JOG_FRAMES / Gait.JOG_CYCLE,
                 false,
                 1f,
                 emptyList(),
                 null,
+                smooth = true,
             ),
             ActivitySpec(
                 Activity.MEDITATING,
@@ -1982,13 +1882,15 @@ object PeopleActivities {
             ActivitySpec(
                 Activity.WALKING,
                 RoomKind.HALL,
-                WALK_KEYS,
-                6,
-                12f,
+                Gait.WALK_KEYS,
+                Gait.FRAMES,
+                Gait.FRAMES / Gait.CYCLE,
                 false,
                 .6f,
                 emptyList(),
                 null,
+                extra = Gait.between(Gait.walkPose(Gait.PASSING), LOOK_KEYS[0], Gait.TURN_FRAMES),
+                smooth = true,
             ),
             ActivitySpec(
                 Activity.LOOKING_OUT,
@@ -2019,8 +1921,17 @@ object PeopleActivities {
     /** The shapes of [look] doing [a], frame [frame]. */
     fun figure(look: Int, a: Activity, frame: Int): FigBuilder {
         val spec = of(a)
-        val phase = frame / spec.frames.toFloat()
-        val swing = spec.energy * 16f * sin(phase * 6.2832f * 2f + 1f)
+        val phase = (frame % spec.frames) / spec.frames.toFloat()
+        var swing = spec.energy * 16f * sin(phase * 6.2832f * 2f + 1f)
+        if (frame >= spec.frames) {
+            // the extra frames (a turn) ease from the passing frame's swing to none
+            val s = (frame - spec.frames + 1f) / spec.extra.size
+            swing =
+                spec.energy *
+                    16f *
+                    sin(Gait.PASSING * 6.2832f * 2f + 1f) *
+                    (1f - s * s * (3f - 2f * s))
+        }
         return FigBuilder(Looks.ALL[look], spec.poseAt(frame), swing).build(spec.props, phase)
     }
 
@@ -2106,7 +2017,7 @@ object PeopleActivities {
         var y0 = 1e9f
         var x1 = -1e9f
         var y1 = -1e9f
-        for (l in 0 until Looks.COUNT) for (f in 0 until spec.frames) {
+        for (l in 0 until Looks.COUNT) for (f in 0 until spec.totalFrames) {
             val b = FigBuilder.bounds(figure(l, a, f).shapes())
             x0 = minOf(x0, b[0])
             y0 = minOf(y0, b[1])
