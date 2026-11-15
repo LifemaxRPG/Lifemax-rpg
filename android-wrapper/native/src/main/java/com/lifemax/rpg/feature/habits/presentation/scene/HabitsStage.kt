@@ -229,6 +229,11 @@ private class Frame(
     val skyTop: Float = window.windowTop * density
 
     /**
+     * The top of the bottom band (the page's controls), raised with the street to clear a sheet.
+     */
+    val band: Float = window.bandTop * density - lift
+
+    /**
      * Nothing of a building is drawn above this: the heading's band, or, as the street rises to
      * clear a floor's dials (the heading is put away then), as far up as the top bar.
      */
@@ -311,6 +316,7 @@ private fun StageCanvas(
     val backdrop = remember(seed) { Backdrop(seed, p.day) }
     val season = remember(p.day) { Season.at(p.day) }
     val seasonFall = remember { SeasonFall() }
+    val foregroundPainter = remember { ForegroundPainter() }
     val sky = remember(p.hour) { skyColors(p.hour) }
     // the day's weather at this hour (or the one a test forces), and the key light under it
     val forced = WeatherOverride.forced
@@ -816,6 +822,25 @@ private fun StageCanvas(
                 blendMode = BlendMode.DstOut,
             )
             drawIntoCanvas { it.restore() }
+        }
+        // the near layer: a few dark, soft things between the camera and the street, sliding
+        // faster than it
+        with(foregroundPainter) {
+            foreground(
+                sky,
+                street,
+                seed,
+                f.middle,
+                f.unit,
+                f.zoom,
+                f.skyTop,
+                f.top,
+                f.ground,
+                f.band,
+                street.centers.getOrNull(focus)?.let { f.screenX(it) } ?: 0f,
+                layouts.isNotEmpty(),
+                seconds,
+            )
         }
         // the finish: a very faint vignette (the corners a little deeper) and fine film grain over
         // the

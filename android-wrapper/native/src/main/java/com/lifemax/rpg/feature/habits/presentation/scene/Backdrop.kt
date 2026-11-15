@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -17,6 +18,8 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.Building
 import com.lifemax.rpg.feature.habits.domain.CloudKind
@@ -32,6 +35,7 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -52,11 +56,7 @@ import kotlin.math.sqrt
 internal class Backdrop(private val seed: Int, day: String = "") {
     private val starField: Array<Star> = Ambient.stars(72, seed).toTypedArray()
     private val rows: Array<Array<Building>> =
-        arrayOf(
-            Ambient.skyline(5, 34, 84, 0f, Ambient.SKYLINE_SPAN).toTypedArray(),
-            Ambient.skyline(23, 22, 58, 0f, Ambient.SKYLINE_SPAN).toTypedArray(),
-            Ambient.skyline(41, 12, 38, 0f, Ambient.SKYLINE_SPAN).toTypedArray(),
-        )
+        Array(SkylineSprites.ROWS.size) { SkylineSprites.buildings(it).toTypedArray() }
     private val clouds = Ambient.clouds(seed).toTypedArray()
 
     /**
@@ -73,51 +73,42 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     private val drift = floatArrayOf(.05f, .1f, .18f)
 
     /**
-     * Each far building's few windows: (across, down) shares of it and a kind, three numbers each.
+     * Each far building's few windows ([SkylineSprites.windows]: across, down, kind), for which of
+     * its baked lights are on at a moment.
      */
     private val windows: Array<Array<FloatArray>> =
-        Array(rows.size) { r ->
-            Array(rows[r].size) { i ->
-                val b = rows[r][i]
-                val n = (b.h / 9f).toInt().coerceIn(1, 7)
-                FloatArray(n * 3) { k ->
-                    val w = k / 3
-                    when (k % 3) {
-                        0 -> .18f + .6f * Ambient.hash(r * 1000 + i, w * 2, 3)
-                        1 -> .12f + .8f * Ambient.hash(r * 1000 + i, w * 2 + 1, 3)
-                        else -> Ambient.hash(r * 1000 + i, w, 5)
-                    }
-                }
-            }
-        }
+        Array(rows.size) { r -> Array(rows[r].size) { i -> SkylineSprites.windows(r, i) } }
 
     /** The tallest of the furthest two rows carry the red lights. */
-    private val warned: Array<BooleanArray> =
-        Array(rows.size) { r ->
-            val sorted =
-                rows[r].indices.sortedByDescending { rows[r][it].h }.take(if (r < 2) 3 else 0)
-            BooleanArray(rows[r].size) { it in sorted }
-        }
+    private val warned: Array<BooleanArray> = Array(rows.size) { SkylineSprites.warned(it) }
 
-    /**
-     * The height of an antenna on a far building (dp), 0 for none: the warned ones, and some more.
-     */
+    /** The height of an antenna on a far building (dp), 0 for none (baked into the row's strip). */
     private val antennas: Array<FloatArray> =
         Array(rows.size) { r ->
-            FloatArray(rows[r].size) { i ->
-                if (r == 2) 0f
-                else if (warned[r][i]) 6f + 4f * Ambient.hash(r, i, 6)
-                else if (Ambient.hash(r, i, 7) < .14f) 4f + 4f * Ambient.hash(r, i, 8) else 0f
-            }
+            FloatArray(rows[r].size) { i -> SkylineSprites.antenna(r, i, warned[r][i]) }
+        }
+
+    /** A building's windows by colour, as the row is drawn: how many, how many on. */
+    private val winCount = IntArray(3)
+    private val winLit = IntArray(3)
+
+    /**
+     * The window strips hold each light in one colour channel; these draw one channel as the light
+     * of that kind (warm, pale, cool).
+     */
+    private val windowTint: Array<ColorFilter> =
+        Array(3) {
+            val c = arrayOf(SceneInk.FarLight, SceneInk.FarLightPale, SceneInk.FarLightCool)[it]
+            val m = FloatArray(20)
+            m[4] = c.red * 255f
+            m[9] = c.green * 255f
+            m[14] = c.blue * 255f
+            m[15 + it] = 1f
+            ColorFilter.colorMatrix(ColorMatrix(m))
         }
 
     private val pass = Pass()
 
-    /**
-     * How much of the horizon's air each skyline row is seen through, at its top and at its foot.
-     */
-    private val HAZE_TOP = floatArrayOf(.34f, .2f, .08f)
-    private val HAZE_FOOT = floatArrayOf(.7f, .58f, .46f)
     private val path = Path()
 
     // ---- shapes made once (in dp, in their own local units)
@@ -200,6 +191,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     private var haloBrush: Brush? = null
     private var haloWide: Brush? = null
     private val rowBrush = arrayOfNulls<Brush>(3)
+    private val farTint = arrayOfNulls<ColorFilter>(3)
     private var brushKey: Any? = null
     private var brushH = 0f
     private var brushOrb = Offset.Zero
@@ -416,17 +408,22 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 radius = (if (sky.phase == SkyPhase.DAY) 230f else 130f) * density,
             )
         for (r in 0 until 3) {
-            // atmospheric perspective: the further the row, the hazier and bluer it is, and every
-            // one fades into the horizon's air at its feet
-            val top = lerp(sky.far[r], sky.sky[2], HAZE_TOP[r])
+            // aerial perspective: the further the row, the more of the horizon's air it is seen
+            // through, and every one thins into it at its feet. The air is the sky behind showing
+            // through (alpha), on the same curve the row's baked strip carries
+            // ([SkylineSprites.haze]); this brush paints the solid feet under the strip
+            val far = sky.far[r]
+            fun at(dp: Float) = far.copy(alpha = 1f - SkylineSprites.haze(r, dp))
+            val span = SkylineSprites.HAZE_SPAN
             rowBrush[r] =
                 Brush.verticalGradient(
-                    0f to top,
-                    .5f to lerp(sky.far[r], sky.sky[2], HAZE_TOP[r] + .22f),
-                    1f to lerp(sky.far[r], sky.sky[2], HAZE_FOOT[r]),
-                    startY = horizon - 90f * density,
+                    0f to at(span),
+                    .5f to at(span / 2f),
+                    1f to at(0f),
+                    startY = horizon - span * density,
                     endY = horizon,
                 )
+            farTint[r] = ColorFilter.tint(far, BlendMode.SrcIn)
         }
         brushKey = sky
         brushH = horizon
@@ -1114,60 +1111,99 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         }
     }
 
+    /**
+     * How clear the air before row [r] is, 0 to 1: thicker on an overcast or a misty day and at
+     * dusk and dawn, the furthest row most; the whole row is drawn that much fainter.
+     */
+    private fun rowAir(r: Int, sky: SkyColors): Float {
+        val dusk = Px.smooth(.15f, .5f, sky.dark) * Px.smooth(.95f, .65f, sky.dark)
+        val thick = (cloudiness * .2f + mist * .45f + dusk * .15f) * (1f - .3f * r)
+        return (1f - thick).coerceIn(.3f, 1f)
+    }
+
+    /**
+     * Far row [r] slid along by [slide] dp: its baked strip ([SkylineSprites], soft with distance,
+     * its roofline broken by tanks, spires, a crane, the antennas) repeated along the street over
+     * the solid feet under it, each building's baked windows drawn by colour with the share of them
+     * that is on now ([Ambient.farWindowLit]), and the aircraft-warning lights, still crisp points,
+     * on the tallest.
+     */
     private fun DrawScope.row(r: Int, sky: SkyColors, base: Float, slide: Float, seconds: Float) {
         val d = density
-        val w = size.width / d
-        val brush = rowBrush[r]!!
+        val w = size.width
+        val images = SceneSprites.skyline[r]
+        val body = images.body
+        val win = images.windows
         val buildings = rows[r]
-        val lights = sky.dark > .3f
+        val lights = win != null && sky.dark > .3f
         val share = if (sky.dark > .8f) .42f else .25f
-        for (i in buildings.indices) {
-            val b = buildings[i]
-            // the row repeats along the street; each building stands where its turn puts it
-            var x = Ambient.wrap(b.x, slide)
-            while (x < w + b.w) {
-                if (x + b.w >= 0f) {
-                    val px = x * d
-                    val top = base - b.h * d
-                    drawRect(brush, Offset(px, top), Size(b.w * d + 1f, b.h * d + 1f))
-                    val antenna = antennas[r][i]
-                    if (antenna > 0f)
-                        drawLine(
-                            sky.far[r],
-                            Offset(px + b.w * d * .6f, top),
-                            Offset(px + b.w * d * .6f, top - antenna * d),
-                            1f * d,
-                        )
-                    if (lights && r > 0) {
-                        val win = windows[r][i]
-                        for (k in 0 until win.size / 3) {
-                            if (!Ambient.farWindowLit(r * 1000 + i, k, seconds, share)) continue
-                            val kind = win[k * 3 + 2]
-                            // warm, pale or cool light; a few wider
-                            val tint =
-                                if (kind < .6f) SceneInk.FarLight
-                                else if (kind < .85f) SceneInk.FarLightPale
-                                else SceneInk.FarLightCool
-                            val wide = if (kind > .45f && kind < .7f) 2.6f else 1.7f
-                            drawRect(
-                                tint,
-                                Offset(px + win[k * 3] * b.w * d, top + win[k * 3 + 1] * b.h * d),
-                                Size(wide * d, 1.7f * d),
-                                alpha = .5f + .3f * sky.dark,
+        val air = rowAir(r, sky)
+        // the seam between the baked band and the solid feet sits on a whole pixel, so neither
+        // shows through at it
+        val seam = (base - body.footDp * d).roundToInt().toFloat()
+        drawRect(rowBrush[r]!!, Offset(0f, seam), Size(w, base - seam + 1f), alpha = air)
+        val s = d / body.ppd
+        val span = Ambient.SKYLINE_SPAN * d
+        var x = Ambient.wrap(0f, slide) * d
+        while (x > 0f) x -= span
+        while (x < w) {
+            withTransform({
+                translate(x, seam - body.h * s)
+                scale(s, s, Offset.Zero)
+            }) {
+                drawImage(body.image, Offset.Zero, alpha = air, colorFilter = farTint[r])
+            }
+            if (lights) {
+                val ws = d / win!!.ppd
+                val bright = (.5f + .3f * sky.dark) * air
+                withTransform({
+                    translate(x, base - win.topDp * d)
+                    scale(ws, ws, Offset.Zero)
+                }) {
+                    for (i in buildings.indices) {
+                        val b = buildings[i]
+                        val px = x + b.x * d
+                        if (px + b.w * d < 0f || px > w) continue
+                        val list = windows[r][i]
+                        winCount.fill(0)
+                        winLit.fill(0)
+                        for (k in 0 until list.size / 3) {
+                            val c = SkylineSprites.channel(list[k * 3 + 2])
+                            winCount[c]++
+                            if (Ambient.farWindowLit(r * 1000 + i, k, seconds, share)) winLit[c]++
+                        }
+                        val x0 = (b.x * win.ppd).roundToInt()
+                        val x1 = (min(b.x + b.w, Ambient.SKYLINE_SPAN) * win.ppd).roundToInt()
+                        if (x1 <= x0) continue
+                        for (c in 0 until 3) {
+                            if (winLit[c] == 0) continue
+                            drawImage(
+                                win.image,
+                                IntOffset(x0, 0),
+                                IntSize(x1 - x0, win.h),
+                                IntOffset(x0, 0),
+                                IntSize(x1 - x0, win.h),
+                                alpha = bright * winLit[c] / winCount[c],
+                                colorFilter = windowTint[c],
                             )
                         }
                     }
-                    if (warned[r][i] && sky.dark > .3f) {
-                        val on = if (seconds > 0f) Ambient.warning(r * 100 + i, seconds) else .7f
-                        if (on > 0f) {
-                            val at = Offset(px + b.w * d * .6f, top - antenna * d - 1.5f * d)
-                            drawCircle(SceneInk.Warning, 4f * d, at, .18f * on)
-                            drawCircle(SceneInk.Warning, 1.4f * d, at, on)
-                        }
-                    }
                 }
-                x += Ambient.SKYLINE_SPAN
             }
+            if (sky.dark > .3f)
+                for (i in buildings.indices) {
+                    if (!warned[r][i]) continue
+                    val b = buildings[i]
+                    val px = x + b.x * d
+                    if (px + b.w * d < 0f || px > w) continue
+                    val on = if (seconds > 0f) Ambient.warning(r * 100 + i, seconds) else .7f
+                    if (on <= 0f) continue
+                    val top = base - b.h * d
+                    val at = Offset(px + b.w * d * .6f, top - antennas[r][i] * d - 1.5f * d)
+                    drawCircle(SceneInk.Warning, 4f * d, at, .18f * on)
+                    drawCircle(SceneInk.Warning, 1.4f * d, at, on)
+                }
+            x += span
         }
     }
 
