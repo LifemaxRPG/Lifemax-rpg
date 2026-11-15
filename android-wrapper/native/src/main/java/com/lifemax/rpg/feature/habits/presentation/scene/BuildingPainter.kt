@@ -50,6 +50,7 @@ import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.Stroll
 import com.lifemax.rpg.feature.habits.domain.Trees
 import com.lifemax.rpg.feature.habits.domain.Visit
+import com.lifemax.rpg.feature.habits.domain.WeatherState
 import com.lifemax.rpg.feature.habits.domain.WindowCast
 import kotlin.math.PI
 import kotlin.math.abs
@@ -584,8 +585,12 @@ internal class BuildingPainter {
      * black under the moon.
      */
     private fun shade(light: KeyLight, sky: SkyColors): Color =
-        if (light.cool > .5f) MoonShade
-        else lerp(SunShade, DuskShade, (sky.dark / .55f).coerceIn(0f, 1f))
+        lerp(
+            if (light.cool > .5f) MoonShade
+            else lerp(SunShade, DuskShade, (sky.dark / .55f).coerceIn(0f, 1f)),
+            FlatShade,
+            light.flat * (1f - light.cool),
+        )
 
     /** The ground projection for a caster at [x] along the street (the one matrix, set again). */
     private fun fallMatrix(light: KeyLight, x: Float): Matrix {
@@ -717,6 +722,630 @@ internal class BuildingPainter {
             }
         }
     }
+
+    // ------------------------------------------------------------------ the weather on the street
+
+    /** The weather of the frame ([WeatherState]), set by the stage with the light. */
+    var weather: WeatherState = WeatherState.CLEAR
+
+    /** The layer the wet street's reflections are drawn in, at the wet's own strength. */
+    private val reflectPaint = Paint()
+
+    /**
+     * How much of the reflection is left down the pavement and the road: all of it at the wall,
+     * most at the kerb, a quarter well out on the road (the lamps' light runs long there), none by
+     * [REFLECT_DEPTH] (a mask, kept in the layer's alpha).
+     */
+    private val reflectMask =
+        Brush.verticalGradient(
+            0f to Color.Black,
+            PAVEMENT / REFLECT_DEPTH to Color.Black.copy(alpha = .6f),
+            .6f to Color.Black.copy(alpha = .25f),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = REFLECT_DEPTH,
+        )
+
+    /** A lamp's light drawn long down the wet road: a unit-tall streak, soft at both ends. */
+    private val lampStreak =
+        Brush.verticalGradient(
+            0f to SceneInk.LampLight.copy(alpha = .15f),
+            .3f to SceneInk.LampLight.copy(alpha = .8f),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = 1f,
+        )
+
+    /** The trees' reflections are a dark shape in the wet, through this. */
+    private val reflectFilter = ColorFilter.tint(TreeReflect, BlendMode.SrcIn)
+    private val ringStroke = Stroke(.55f)
+
+    // the rain's and the puddles' tints follow the sky; made when it changes
+    private var weatherSky: SkyColors? = null
+    private var rainFilter: ColorFilter? = null
+    private var rainLampFilter = ColorFilter.tint(SceneInk.LampLight, BlendMode.SrcIn)
+    private var puddleFilter: ColorFilter? = null
+    private var splashFilter: ColorFilter? = null
+    private var rimFilter: ColorFilter? = null
+
+    private fun weatherTints(sky: SkyColors) {
+        if (weatherSky === sky) return
+        val pale = lerp(sky.sky[2], Color.White, .55f)
+        rainFilter = ColorFilter.tint(lerp(pale, sky.sky[1], .25f * sky.dark), BlendMode.SrcIn)
+        // a puddle holds the sky over it: the zenith's colour, deepened a little
+        puddleFilter =
+            ColorFilter.tint(lerp(sky.sky[1], sky.sky[0], .3f + .3f * sky.dark), BlendMode.SrcIn)
+        splashFilter = ColorFilter.tint(lerp(pale, Color.White, .4f), BlendMode.SrcIn)
+        rimFilter = ColorFilter.tint(lerp(Color.White, sky.sky[2], .3f), BlendMode.SrcIn)
+        weatherSky = sky
+    }
+
+    /**
+     * The weather on the street from [from] to [to] (the view reaches [top] above the pavement line
+     * and [depth] below it, street units): a wet street (darker, glossier, mirroring what stands
+     * over it, with puddles), and rain (streaks at two depths, brighter in the lamps' light,
+     * splashing on the pavement and the awnings, dripping off the awnings' edges). Drawn last, over
+     * everything on the street. Nothing is made per frame.
+     */
+    fun DrawScope.weather(
+        sky: SkyColors,
+        layouts: List<BuildingLayout>,
+        arts: List<BuildingArt>,
+        street: StreetLayout,
+        live: Boolean,
+        from: Float,
+        to: Float,
+        top: Float,
+        depth: Float,
+        seconds: Float,
+    ) {
+        val w = weather
+        if (w.wet < .01f && w.rain < .01f) return
+        weatherTints(sky)
+        if (w.wet >= .01f) {
+            wet(sky, layouts, arts, street, live, from, to, depth, w.wet, w.rain, seconds)
+        }
+        if (w.rain >= .01f) rain(sky, arts, street, from, to, top, depth, w.rain, seconds)
+    }
+
+    /**
+     * The wet street: the pavement and the road darkened and cooled (water in the slabs), a layer
+     * of reflections mirrored about the wall line and squashed, fading down the ground (drawn twice
+     * a little apart, so the mirror is broken as a wet street breaks it), the slab joints over it,
+     * and puddles that hold the sky, ring under the rain and catch the lamps at night.
+     */
+    private fun DrawScope.wet(
+        sky: SkyColors,
+        layouts: List<BuildingLayout>,
+        arts: List<BuildingArt>,
+        street: StreetLayout,
+        live: Boolean,
+        from: Float,
+        to: Float,
+        depth: Float,
+        wet: Float,
+        rain: Float,
+        seconds: Float,
+    ) {
+        val width = to - from
+        val dark = sky.dark
+        val band = PAVEMENT + 2.5f + min(depth, 160f)
+        drawRect(
+            WetTint,
+            Offset(from, 0f),
+            Size(width, band),
+            alpha = .6f * wet,
+            blendMode = BlendMode.Multiply,
+        )
+        // the reflections, in one layer at the wet's strength
+        reflectPaint.alpha = wet * (.5f + .3f * dark)
+        drawIntoCanvas { it.saveLayer(Rect(from, 0f, to, REFLECT_DEPTH), reflectPaint) }
+        // the sky in the wet, everywhere; what stands on the street goes over it
+        drawRect(
+            lerp(sky.sky[2], sky.sky[1], .4f),
+            Offset(from, 0f),
+            Size(width, REFLECT_DEPTH),
+            alpha = .5f,
+        )
+        reflections(sky, layouts, arts, street, live, from, to, -RIPPLE, .55f)
+        reflections(sky, layouts, arts, street, live, from, to, RIPPLE, .55f)
+        drawRect(
+            reflectMask,
+            Offset(from, 0f),
+            Size(width, REFLECT_DEPTH),
+            blendMode = BlendMode.DstIn,
+        )
+        drawIntoCanvas { it.restore() }
+        // the slab joints break the mirror
+        var x = kotlin.math.floor(from / 24f) * 24f
+        while (x < to) {
+            drawLine(sky.line, Offset(x, 0f), Offset(x - 5f, PAVEMENT), .8f, alpha = wet)
+            x += 24f
+        }
+        puddles(sky, from, to, wet, rain, seconds)
+    }
+
+    /** What stands on the street, upside down in the wet, [ox] to the side at [a]. */
+    private fun DrawScope.reflections(
+        sky: SkyColors,
+        layouts: List<BuildingLayout>,
+        arts: List<BuildingArt>,
+        street: StreetLayout,
+        live: Boolean,
+        from: Float,
+        to: Float,
+        ox: Float,
+        a: Float,
+    ) {
+        val dark = sky.dark
+        val half = B.W / 2f
+        val lit = lerp(SceneInk.WindowLitDay, SceneInk.WindowLit, dark)
+        val shop = lerp(SceneInk.Shop, SceneInk.ShopLit, .15f + .8f * dark)
+        val lobbyTop = -B.LOBBY_H
+        for (i in layouts.indices) {
+            val cx = street.centers[i]
+            if (cx + half + B.DX + B.PARK_W < from || cx - half > to) continue
+            val art = arts[i]
+            withTransform({
+                translate(cx + ox, 0f)
+                scale(1f, -SQUASH, Offset.Zero)
+            }) {
+                // the lobby's dark wall, its lit shopfront, the door, the awning, the sign
+                drawRect(
+                    SceneInk.LobbyWallLow,
+                    Offset(-half, lobbyTop),
+                    Size(B.W + B.DX, B.LOBBY_H),
+                    alpha = a * .85f,
+                )
+                val w0 = lobbyTop + 35f
+                drawRect(shop, Offset(-half + 9f, w0), Size(half - 22f, -4f - w0), alpha = a)
+                drawRect(shop, Offset(13f, w0), Size(half - 22f, -4f - w0), alpha = a)
+                drawRect(SceneInk.Door, Offset(-9f, w0 - 2f), Size(18f, -w0 + 2f), alpha = a)
+                drawRect(
+                    art.awning,
+                    Offset(-half + 6f, lobbyTop + 21f),
+                    Size(B.W - 12f, 9f),
+                    alpha = a * .8f,
+                )
+                drawRect(
+                    SignReflect,
+                    Offset(-half + 10f, lobbyTop + 4f),
+                    Size(B.W - 20f, 15f),
+                    alpha = a * .7f,
+                )
+                if (dark > .2f) {
+                    // the sign's glow and the shopfront's light spill into the wet too
+                    translate(0f, lobbyTop + 11.5f) {
+                        scale(B.W * .5f, 16f, Offset.Zero) {
+                            drawCircle(
+                                bloom,
+                                1f,
+                                Offset.Zero,
+                                alpha = a * .6f * dark,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                    }
+                    translate(0f, w0 + 8f) {
+                        scale(half * .9f, 14f, Offset.Zero) {
+                            drawCircle(
+                                bloom,
+                                1f,
+                                Offset.Zero,
+                                alpha = a * .5f * dark,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                    }
+                }
+                // the first storey's lit windows, if it is lit
+                val fa = art.floors.firstOrNull()
+                if (fa != null && isLit(fa, live)) {
+                    val on = if (live) fa.occupancy.lit else fa.windowCount
+                    val win = fa.windows
+                    for (k in 0 until min(on, fa.windowCount)) {
+                        drawRect(
+                            lit,
+                            Offset(win[k * 4], fa.top + win[k * 4 + 1]),
+                            Size(win[k * 4 + 2], win[k * 4 + 3]),
+                            alpha = a * .9f,
+                        )
+                    }
+                }
+            }
+            // the park's trees, dark in the wet
+            for (t in art.layout.trees) treeReflection(cx + t.x + ox, t.id.hashCode(), .8f, a)
+        }
+        for (k in street.furniture.indices) {
+            val f = street.furniture[k]
+            if (f.x < from - 40f || f.x > to + 40f) continue
+            when (f.kind) {
+                FurnitureKind.TREE -> treeReflection(f.x + ox, f.seed, 1f, a)
+                FurnitureKind.LAMP -> {
+                    withTransform({
+                        translate(f.x + ox, 0f)
+                        scale(1f, -SQUASH, Offset.Zero)
+                    }) {
+                        drawPath(lampPole, SceneInk.Lamp, alpha = a * .6f)
+                        if (dark > .2f) {
+                            drawRect(
+                                SceneInk.LampLight,
+                                Offset(6f, -91.8f),
+                                Size(11f, 2.6f),
+                                alpha = a * dark,
+                            )
+                            translate(11.5f, -89.5f) {
+                                scale(26f, 26f, Offset.Zero) {
+                                    drawCircle(
+                                        halo,
+                                        1f,
+                                        Offset.Zero,
+                                        alpha = a * dark,
+                                        blendMode = BlendMode.Plus,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (dark > .2f)
+                    // the lens's light runs long down the road
+                    withTransform({
+                            translate(f.x + 11.5f + ox, 0f)
+                            scale(6f, 91.8f * SQUASH, Offset.Zero)
+                        }) {
+                            drawRect(
+                                lampStreak,
+                                Offset(-1f, 0f),
+                                Size(2f, 1f),
+                                alpha = a * dark * .9f,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                }
+                FurnitureKind.BENCH ->
+                    withTransform({
+                        translate(f.x + ox, 0f)
+                        scale(1f, -SQUASH, Offset.Zero)
+                    }) {
+                        drawRect(
+                            SceneInk.Lamp,
+                            Offset(-14f, -18.6f),
+                            Size(28f, 6.4f),
+                            alpha = a * .5f,
+                        )
+                        drawRect(
+                            SceneInk.Bench,
+                            Offset(-14f, -9.6f),
+                            Size(28f, 4.3f),
+                            alpha = a * .5f,
+                        )
+                    }
+            }
+        }
+    }
+
+    /**
+     * A tree's dark shape in the wet under its foot at [x] (no sway: the water is still enough).
+     */
+    private fun DrawScope.treeReflection(x: Float, seed: Int, size: Float, a: Float) {
+        val images = SceneSprites.trees[Trees.variant(seed)]
+        val sp = images.sprite
+        val u = size / sp.ppu
+        withTransform({
+            translate(x, 0f)
+            scale(u * -lightFrom, -u * SQUASH, Offset.Zero)
+        }) {
+            drawImage(
+                images.looks[0],
+                Offset(-sp.footX, -sp.footY),
+                alpha = a * .55f,
+                colorFilter = reflectFilter,
+            )
+        }
+    }
+
+    /**
+     * The puddles: three to a [PUDDLE_TILE] of the street, where the slabs dip (the same places
+     * every day), each a painted pool holding the sky with a bright rim on its far edge; they come
+     * as the street wets and go as it dries. Under the rain rings spread on them; at night the
+     * lamps shine in them.
+     */
+    private fun DrawScope.puddles(
+        sky: SkyColors,
+        from: Float,
+        to: Float,
+        wet: Float,
+        rain: Float,
+        seconds: Float,
+    ) {
+        val show = Px.smooth(.12f, .6f, wet)
+        if (show <= 0f) return
+        val images = SceneSprites.weather.puddles
+        val dark = sky.dark
+        val px = 1f / WeatherSprites.PX_PER_UNIT
+        var tile = kotlin.math.floor(from / PUDDLE_TILE).toInt()
+        val last = kotlin.math.floor(to / PUDDLE_TILE).toInt()
+        while (tile <= last) {
+            for (k in 0 until 3) {
+                val onRoad = k == 2
+                val x = tile * PUDDLE_TILE + PUDDLE_TILE * Ambient.hash(tile, k, 21)
+                val y =
+                    if (onRoad) PAVEMENT + 7f + 16f * Ambient.hash(tile, k, 22)
+                    else 3.5f + 9f * Ambient.hash(tile, k, 22)
+                val sx = (.55f + .6f * Ambient.hash(tile, k, 23)) * (if (onRoad) 1.3f else 1f)
+                val sy = (.4f + .25f * Ambient.hash(tile, k, 24)) * (if (onRoad) 1.2f else 1f)
+                val variant =
+                    (Ambient.hash(tile, k, 25) * WeatherSprites.PUDDLES)
+                        .toInt()
+                        .coerceIn(0, WeatherSprites.PUDDLES - 1)
+                val img = images[variant]
+                val pw = WeatherSprites.PUDDLE_W * px * sx
+                val ph = WeatherSprites.PUDDLE_H * px * sy
+                val alpha = show * (if (onRoad) .75f else .9f)
+                withTransform({
+                    translate(x, y)
+                    scale(px * sx, px * sy, Offset.Zero)
+                }) {
+                    val at = Offset(-WeatherSprites.PUDDLE_W / 2f, -WeatherSprites.PUDDLE_H / 2f)
+                    drawImage(img.fill, at, alpha = alpha, colorFilter = puddleFilter)
+                    drawImage(
+                        img.rim,
+                        at,
+                        alpha = alpha * (.45f + .3f * (1f - dark)),
+                        colorFilter = rimFilter,
+                    )
+                }
+                // the nearest lamp shines in it at night
+                if (dark > .2f) {
+                    for (i in lamps.indices) {
+                        val f = lamps[i]
+                        if (f.kind != FurnitureKind.LAMP) continue
+                        val dist = abs(f.x + 11.5f - x)
+                        if (dist > 60f) continue
+                        translate(x, y) {
+                            scale(pw * .32f, ph * .45f, Offset.Zero) {
+                                drawCircle(
+                                    halo,
+                                    1f,
+                                    Offset.Zero,
+                                    alpha = alpha * dark * (1f - dist / 60f),
+                                    blendMode = BlendMode.Plus,
+                                )
+                            }
+                        }
+                    }
+                }
+                // the rain's rings
+                if (rain > .02f) {
+                    for (r in 0 until 2) {
+                        val t = frac(seconds * (1.1f + .3f * r) + Ambient.hash(tile, k, 30 + r))
+                        val rx = pw * .5f * t
+                        val ry = ph * .5f * t
+                        drawOval(
+                            Color.White,
+                            Offset(
+                                x - rx + pw * (Ambient.hash(tile, k, 40 + r) - .5f) * .4f,
+                                y - ry,
+                            ),
+                            Size(rx * 2f, ry * 2f),
+                            alpha = (1f - t) * rain * .55f * alpha,
+                            style = ringStroke,
+                        )
+                    }
+                }
+            }
+            tile++
+        }
+    }
+
+    /**
+     * The rain: two tiles of streaks ([WeatherSprites.streaks]) scrolled down the picture, a far
+     * one small and faint and a near one large and bright (the canvas is moved under a repeating
+     * brush, nothing is made); brighter again in the lamps' cones at night; splashes on the
+     * pavement and the awnings, a few at a time; drips off the awnings' edges.
+     */
+    private fun DrawScope.rain(
+        sky: SkyColors,
+        arts: List<BuildingArt>,
+        street: StreetLayout,
+        from: Float,
+        to: Float,
+        top: Float,
+        depth: Float,
+        rain: Float,
+        seconds: Float,
+    ) {
+        val dark = sky.dark
+        val images = SceneSprites.weather
+        val half = B.W / 2f
+        // the awnings: splashes along their tops and drips off their edges
+        val a0 = -B.LOBBY_H + 21f
+        val edge = a0 + 16.4f
+        val px = 1f / WeatherSprites.PX_PER_UNIT
+        val drops = (2 + (rain * 3f).toInt())
+        for (i in arts.indices) {
+            val cx = street.centers[i]
+            if (cx + half < from || cx - half > to) continue
+            val seed = arts[i].stack.id.hashCode()
+            for (k in 0 until drops) {
+                val t =
+                    frac(
+                        seconds * (.9f + .25f * Ambient.hash(seed, k, 50)) +
+                            Ambient.hash(seed, k, 51)
+                    )
+                val x = cx - half + 10f + (B.W - 20f) * Ambient.hash(seed, k, 52)
+                val fall = t * t
+                val y = edge + (0f - edge) * fall
+                drawLine(
+                    Color.White,
+                    Offset(x, y - 1.4f - 2.5f * fall),
+                    Offset(x, y),
+                    .7f,
+                    cap = StrokeCap.Round,
+                    alpha = rain * (.7f - .3f * t),
+                )
+            }
+            splashes(
+                images,
+                seed + 7,
+                cx - half + 8f,
+                cx + half - 8f,
+                a0 + .5f,
+                a0 + 2f,
+                rain,
+                seconds,
+                3,
+                px,
+            )
+        }
+        // splashes on the pavement, by stretch of street
+        var tile = kotlin.math.floor(from / PUDDLE_TILE).toInt()
+        val last = kotlin.math.floor(to / PUDDLE_TILE).toInt()
+        while (tile <= last) {
+            splashes(
+                images,
+                tile * 31 + 5,
+                tile * PUDDLE_TILE,
+                (tile + 1) * PUDDLE_TILE,
+                1.5f,
+                PAVEMENT - 1f,
+                rain,
+                seconds,
+                6,
+                px,
+            )
+            tile++
+        }
+        // the streaks: far, then near, over the whole view
+        streaks(
+            images,
+            from,
+            to,
+            top,
+            depth,
+            .5f,
+            150f,
+            rain * .4f,
+            seconds,
+            rainFilter,
+            BlendMode.SrcOver,
+        )
+        streaks(
+            images,
+            from,
+            to,
+            top,
+            depth,
+            1f,
+            240f,
+            rain * .65f,
+            seconds,
+            rainFilter,
+            BlendMode.SrcOver,
+        )
+        // and brighter where a lamp lights them
+        if (dark > .2f)
+            for (i in lamps.indices) {
+                val f = lamps[i]
+                if (f.kind != FurnitureKind.LAMP || f.x + 40f < from || f.x - 20f > to) continue
+                translate(f.x, 0f) {
+                    clipPath(cone) {
+                        streaks(
+                            images,
+                            -20f,
+                            40f,
+                            -92f,
+                            0f,
+                            1f,
+                            240f,
+                            rain * .8f * dark,
+                            seconds,
+                            rainLampFilter,
+                            BlendMode.Plus,
+                        )
+                    }
+                }
+            }
+    }
+
+    /** One tile of streaks over the view at [scale], falling [speed] units a second. */
+    private fun DrawScope.streaks(
+        images: WeatherImages,
+        from: Float,
+        to: Float,
+        top: Float,
+        depth: Float,
+        scale: Float,
+        speed: Float,
+        alpha: Float,
+        seconds: Float,
+        filter: ColorFilter?,
+        blend: BlendMode,
+    ) {
+        val s = scale / WeatherSprites.PX_PER_UNIT
+        val tileH = WeatherSprites.STREAK_H * s
+        val tileW = WeatherSprites.STREAK_W * s
+        val phase = frac(seconds * speed / tileH) * tileH
+        val x0 = kotlin.math.floor(from / tileW) * tileW
+        withTransform({
+            translate(x0 + phase * WeatherSprites.SLANT, top - tileH + phase)
+            scale(s, s, Offset.Zero)
+        }) {
+            drawRect(
+                images.rain,
+                Offset.Zero,
+                Size((to - x0 + tileW) / s, (depth - top + tileH) / s),
+                alpha = alpha.coerceIn(0f, 1f),
+                colorFilter = filter,
+                blendMode = blend,
+            )
+        }
+    }
+
+    /**
+     * [slots] splashes between [x0] and [x1], [y0] to [y1] (a stretch of pavement, an awning's
+     * top): each slot lives [SPLASH_SECONDS], then lands somewhere else, out of step with the
+     * others; how many of the slots show follows the rain.
+     */
+    private fun DrawScope.splashes(
+        images: WeatherImages,
+        seed: Int,
+        x0: Float,
+        x1: Float,
+        y0: Float,
+        y1: Float,
+        rain: Float,
+        seconds: Float,
+        slots: Int,
+        px: Float,
+    ) {
+        val n = (slots * (.3f + .7f * rain) + .99f).toInt().coerceAtMost(slots)
+        for (k in 0 until n) {
+            val life = seconds / SPLASH_SECONDS + Ambient.hash(seed, k, 60)
+            val turn = kotlin.math.floor(life).toInt()
+            val t = life - turn
+            val x = x0 + (x1 - x0) * Ambient.hash(seed + turn * 13, k, 61)
+            val y = y0 + (y1 - y0) * Ambient.hash(seed + turn * 13, k, 62)
+            val frame =
+                (t * WeatherSprites.SPLASH_FRAMES)
+                    .toInt()
+                    .coerceIn(0, WeatherSprites.SPLASH_FRAMES - 1)
+            val size = px * (.7f + .5f * Ambient.hash(seed, k, 63))
+            withTransform({
+                translate(x, y)
+                scale(size, size, Offset.Zero)
+            }) {
+                drawImage(
+                    images.splashes[frame],
+                    Offset(-WeatherSprites.SPLASH_W / 2f, 3f - WeatherSprites.SPLASH_H),
+                    alpha = rain * .85f,
+                    colorFilter = splashFilter,
+                )
+            }
+        }
+    }
+
+    private fun frac(v: Float): Float = v - kotlin.math.floor(v)
 
     // ------------------------------------------------------------------ a building
 
@@ -2186,6 +2815,29 @@ internal class BuildingPainter {
         private val DuskShade = Color(0xFF2E1F42)
         private val MoonShade = Color(0xFF070B1E)
         private val SpillShade = Color(0xFF14100C)
+
+        /** The shade under an overcast sky: a flat, cool grey (the light comes from everywhere). */
+        private val FlatShade = Color(0xFF3A4254)
+
+        /** How deep the wet street's reflections reach from the wall line, in street units. */
+        const val REFLECT_DEPTH = 64f
+
+        /** A reflection is this much as tall as what it mirrors (the ground is seen at a slant). */
+        const val SQUASH = .55f
+
+        /** The reflections are drawn twice this far apart: the wet's ripple. */
+        const val RIPPLE = .6f
+
+        /** The street's puddles repeat in a tile this long (three to a tile). */
+        const val PUDDLE_TILE = 200f
+
+        /** How long a splash lasts, in seconds. */
+        const val SPLASH_SECONDS = .4f
+
+        /** The wet slabs: what the dry colour is multiplied by (darker, cooler, more saturated). */
+        private val WetTint = Color(0xFF6E7A9A)
+        private val SignReflect = Color(0xFF20263A)
+        private val TreeReflect = Color(0xFF0E1420)
 
         /** The seat and back slats of a bench, from the pavement line up. */
         val BENCH_SLATS = floatArrayOf(-9.6f, -7.2f, -18.6f, -16.1f, -13.6f)

@@ -66,7 +66,9 @@ import com.lifemax.rpg.feature.habits.domain.SceneWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.StreetView
+import com.lifemax.rpg.feature.habits.domain.StreetWeather
 import com.lifemax.rpg.feature.habits.domain.TOP_FADE
+import com.lifemax.rpg.feature.habits.domain.WeatherOverride
 import com.lifemax.rpg.feature.habits.domain.buildingAt
 import com.lifemax.rpg.feature.habits.domain.buildingLayout
 import com.lifemax.rpg.feature.habits.domain.centred
@@ -300,7 +302,10 @@ private fun StageCanvas(
     val seed = remember(p.day) { p.day.hashCode() }
     val backdrop = remember(seed) { Backdrop(seed, p.day) }
     val sky = remember(p.hour) { skyColors(p.hour) }
-    val light = remember(p.hour) { SceneLight.key(p.hour) }
+    // the day's weather at this hour (or the one a test forces), and the key light under it
+    val forced = WeatherOverride.forced
+    val weather = remember(p.day, p.hour, forced) { forced ?: StreetWeather.at(p.day, p.hour) }
+    val light = remember(p.hour, weather) { StreetWeather.light(SceneLight.key(p.hour), weather) }
     val layer = remember { Paint() }
     val vignette = remember { VignetteBrush() }
     val shadePath = remember { Path() }
@@ -684,6 +689,9 @@ private fun StageCanvas(
         painter.lightX = f.streetX(orb.first * d)
         painter.lightSpan = this.size.width / f.unit
         painter.lamps = street.furniture
+        painter.weather = weather
+        backdrop.cloudiness = weather.cloudiness
+        backdrop.mist = weather.mist
         val from = f.streetX(0f) - B.GAP
         val to = f.streetX(this.size.width) + B.GAP
         // the tallest building in view: it decides how high the clouds hang (clear of its roof and
@@ -745,6 +753,18 @@ private fun StageCanvas(
                         furniture(item, sky, seconds)
                     }
                     if (layouts.isEmpty()) emptyLot(sky)
+                    weather(
+                        sky,
+                        layouts,
+                        arts,
+                        street,
+                        live,
+                        from,
+                        to,
+                        (f.top - f.ground) / f.unit,
+                        depth,
+                        seconds,
+                    )
                 }
             }
             cloudShade(light, backdrop, layouts, street, f, horizon, d, shadePath, shadeBrush)
