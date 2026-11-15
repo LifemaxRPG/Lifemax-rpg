@@ -21,6 +21,28 @@ internal class CloudImages(
     val lit: ImageBitmap,
 )
 
+/** The sun's layers as images, with the sprite that says their sizes. */
+internal class SunImages(
+    val sprite: SunSprite,
+    val disc: ImageBitmap,
+    val core: ImageBitmap,
+    val limb: ImageBitmap,
+    val rays: ImageBitmap,
+    val corona: ImageBitmap,
+    val glow: ImageBitmap,
+)
+
+/** The moon's layers as images (its dark side is [SceneSprites.moonShade]). */
+internal class MoonImages(
+    val sprite: MoonSprite,
+    val body: ImageBitmap,
+    val high: ImageBitmap,
+    val halo: ImageBitmap,
+)
+
+/** The dark of the moon at one [step] of its cycle, as an image. */
+internal class MoonShadeImage(val step: Int, val layer: SkyLayer, val image: ImageBitmap)
+
 /** A tree variant's images, one per [TreeLook]. */
 internal class TreeImages(val sprite: TreeSprite, val looks: Array<ImageBitmap>)
 
@@ -37,7 +59,7 @@ internal class PersonImage(val image: ImageBitmap, val dx: Float, val dy: Float)
  * The scene's pre-rendered art, made once for the whole process the first time it is needed (or, in
  * the app, ahead of that on a background thread: [warm]) and shared by every scene after it. The
  * generators are deterministic and know nothing of Compose; this only turns their pixels into
- * images. The pool is about 4 MB: [bytes].
+ * images. The pool is about 4.5 MB: [bytes].
  */
 internal object SceneSprites {
     val clouds: Array<CloudImages> by lazy {
@@ -45,6 +67,37 @@ internal object SceneSprites {
             val s = CloudSprites.generate(it)
             CloudImages(s, image(s.shade, s.w, s.h), image(s.mid, s.w, s.h), image(s.lit, s.w, s.h))
         }
+    }
+
+    val sun: SunImages by lazy {
+        val s = SunMoonSprites.sun()
+        SunImages(
+            s,
+            image(s.disc),
+            image(s.core),
+            image(s.limb),
+            image(s.rays),
+            image(s.corona),
+            image(s.glow),
+        )
+    }
+
+    val moon: MoonImages by lazy {
+        val m = SunMoonSprites.moon()
+        MoonImages(m, image(m.body), image(m.high), image(m.halo))
+    }
+
+    private var shade: MoonShadeImage? = null
+
+    /**
+     * The dark of the moon at [step] of [com.lifemax.rpg.feature.habits.domain.MoonPhase.STEPS]:
+     * only the current one is kept, made the first time a night of that phase is drawn.
+     */
+    @Synchronized
+    fun moonShade(step: Int): MoonShadeImage {
+        shade?.let { if (it.step == step) return it }
+        val l = SunMoonSprites.moonShade(step)
+        return MoonShadeImage(step, l, image(l)).also { shade = it }
     }
 
     val trees: Array<TreeImages> by lazy {
@@ -118,6 +171,8 @@ internal object SceneSprites {
     /** Makes the pools now (call off the main thread): the rooms of every window the street has. */
     fun warm() {
         clouds
+        sun
+        moon
         trees
         grain
         for (h in BuildingSpec.HEIGHTS) {
@@ -129,7 +184,13 @@ internal object SceneSprites {
 
     /** What the pools hold, in bytes. */
     fun bytes(): Int =
-        CloudSprites.bytes() + TreeSprites.bytes() + Grain.SIZE * Grain.SIZE * 4 + peopleBytes()
+        CloudSprites.bytes() +
+            SunMoonSprites.bytes() +
+            TreeSprites.bytes() +
+            Grain.SIZE * Grain.SIZE * 4 +
+            peopleBytes()
+
+    private fun image(l: SkyLayer): ImageBitmap = image(l.pixels, l.size, l.size)
 
     private fun image(pixels: IntArray, w: Int, h: Int): ImageBitmap =
         Bitmap.createBitmap(pixels, w, h, Bitmap.Config.ARGB_8888).asImageBitmap()

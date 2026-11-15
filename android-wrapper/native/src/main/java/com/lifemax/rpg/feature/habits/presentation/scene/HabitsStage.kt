@@ -298,7 +298,7 @@ private fun StageCanvas(
     val text = remember(measurer, density.fontScale) { SceneText(measurer, density.fontScale) }
     val painter = remember { BuildingPainter() }
     val seed = remember(p.day) { p.day.hashCode() }
-    val backdrop = remember(seed) { Backdrop(seed) }
+    val backdrop = remember(seed) { Backdrop(seed, p.day) }
     val sky = remember(p.hour) { skyColors(p.hour) }
     val light = remember(p.hour) { SceneLight.key(p.hour) }
     val layer = remember { Paint() }
