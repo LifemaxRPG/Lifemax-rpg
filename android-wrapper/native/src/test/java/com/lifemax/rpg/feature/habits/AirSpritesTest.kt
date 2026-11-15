@@ -72,7 +72,8 @@ class AirSpritesTest {
 
     @Test
     fun thePlaneIsLitFromTheUpperLeftWithWindowsAlongItsSide() {
-        // the upper half of the picture (the sun's side) catches more light than the lower
+        // in profile: the back of the hull and the fin (above the centre line) catch more light
+        // than the belly, the near wing and the engines under it
         fun litMean(y0: Int, y1: Int): Float {
             var sum = 0f
             var n = 0
@@ -95,7 +96,22 @@ class AirSpritesTest {
         val win = plane.layers[AirSprites.GLOW]
         val lit = win.count { alpha(it) > 120 }
         assertTrue("window pixels $lit", lit in 12..400)
-        // the belly bounce lies low on the hull: more of it below the centre line than above
+        // the fin rises well above the hull, the near wing and engines hang below it
+        val shade = plane.layers[AirSprites.SHADE]
+        fun solidRows(y0: Int, y1: Int) =
+            (y0 until y1).count { y ->
+                (0 until plane.w).any { alpha(shade[y * plane.w + it]) > 200 }
+            }
+        assertTrue(solidRows(0, oy - (2f * plane.ppd).toInt()) > (3f * plane.ppd).toInt())
+        assertTrue(solidRows(oy + (1.5f * plane.ppd).toInt(), plane.h) > (2f * plane.ppd).toInt())
+        // and it is long and thin: far wider than it is tall
+        val cols =
+            (0 until plane.w).count { x ->
+                (0 until plane.h).any { alpha(shade[it * plane.w + x]) > 200 }
+            }
+        val rows = solidRows(0, plane.h)
+        assertTrue("$cols x $rows", cols > rows * 2)
+        // the belly bounce lies low: more of it below the centre line than above
         val bounce = plane.layers[AirSprites.BOUNCE]
         var above = 0L
         var below = 0L
@@ -114,13 +130,21 @@ class AirSpritesTest {
             val x = (trail.ox - dp * trail.ppd).toInt()
             return IntArray(trail.h) { alpha(layer[it * trail.w + x]) }
         }
-        // near the engines: two peaks, one above and one below the centre line, little between
-        val near = column(core, 8f)
+        // right behind the engines (nearly in line, seen from the street): two peaks, one above
+        // and one below the centre line, a dip between; a few dp on they have merged into one
+        val near = column(body, 2.5f)
         val mid = trail.h / 2
         val upper = near.slice(0 until mid).max()
         val lower = near.slice(mid until trail.h).max()
-        assertTrue(upper > 120 && lower > 120)
-        assertTrue(near[mid] < minOf(upper, lower) / 2)
+        assertTrue("cores $upper $lower", upper > 100 && lower > 100)
+        assertTrue(
+            "dip ${near[mid]} between $upper and $lower",
+            near[mid] < minOf(upper, lower) * .75f,
+        )
+        val merged = column(body, 20f)
+        val mergedSides =
+            maxOf(merged.slice(0 until mid).max(), merged.slice(mid until trail.h).max())
+        assertTrue(merged[mid] >= mergedSides * .9f)
         // far back there is one soft body wider than the cores were, and fainter
         val far = column(body, 150f)
         val nearBody = column(body, 8f)

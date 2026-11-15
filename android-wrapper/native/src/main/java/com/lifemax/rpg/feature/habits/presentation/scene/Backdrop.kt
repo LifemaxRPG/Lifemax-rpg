@@ -818,7 +818,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 val trail = SceneSprites.contrail
                 val ts = trail.sprite
                 withTransform({
-                    translate(-2.6f, 0f)
+                    translate(AirSprites.TRAIL_X, AirSprites.TRAIL_Y)
                     scale(1f / ts.ppd, 1f / ts.ppd, Offset.Zero)
                 }) {
                     val at = Offset(-ts.ox, -ts.oy)
@@ -840,35 +840,25 @@ internal class Backdrop(private val seed: Int, day: String = "") {
             val dark = sky.dark
             if (dark > .3f) {
                 val k = (dark - .3f) / .7f
-                // red and green at the wingtips, each with a little glow round it
-                drawCircle(SceneInk.Warning, 2f, Offset(-4.4f, -10.7f), alpha = .3f * k)
-                drawCircle(SceneInk.Warning, .55f, Offset(-4.4f, -10.7f), alpha = k)
-                drawCircle(SceneInk.NavGreen, 2f, Offset(-4.4f, 10.7f), alpha = .26f * k)
-                drawCircle(SceneInk.NavGreen, .55f, Offset(-4.4f, 10.7f), alpha = k)
+                // red at the near wingtip, green where the far one peeks over the back, each
+                // with a little glow round it
+                val near = Offset(AirSprites.TIP_NEAR_X, AirSprites.TIP_NEAR_Y)
+                val far = Offset(AirSprites.TIP_FAR_X, AirSprites.TIP_FAR_Y)
+                drawCircle(SceneInk.Warning, 2f, near, alpha = .3f * k)
+                drawCircle(SceneInk.Warning, .55f, near, alpha = k)
+                drawCircle(SceneInk.NavGreen, 1.6f, far, alpha = .22f * k)
+                drawCircle(SceneInk.NavGreen, .45f, far, alpha = .9f * k)
                 // the beacon under the belly, a slow red pulse with a faint glow
                 val beacon = Ambient.warning(3, seconds * .8f)
-                drawCircle(
-                    SceneInk.Warning,
-                    2.4f,
-                    Offset(-1f, 1.3f),
-                    alpha = (.06f + .16f * beacon) * k,
-                )
-                drawCircle(
-                    SceneInk.Warning,
-                    .45f,
-                    Offset(-1f, 1.3f),
-                    alpha = (.3f + .6f * beacon) * k,
-                )
+                val belly = Offset(AirSprites.BEACON_X, AirSprites.BEACON_Y)
+                drawCircle(SceneInk.Warning, 2.4f, belly, alpha = (.06f + .16f * beacon) * k)
+                drawCircle(SceneInk.Warning, .45f, belly, alpha = (.3f + .6f * beacon) * k)
                 // and the white strobe at the tail
                 val strobe = Ambient.warning(7, seconds * 1.4f)
                 if (strobe > 0f) {
-                    drawCircle(
-                        SceneInk.Strobe,
-                        3.4f,
-                        Offset(-10.2f, -1.1f),
-                        alpha = .2f * strobe * k,
-                    )
-                    drawCircle(SceneInk.Strobe, .65f, Offset(-10.2f, -1.1f), alpha = strobe)
+                    val tail = Offset(AirSprites.TAIL_X, AirSprites.TAIL_Y)
+                    drawCircle(SceneInk.Strobe, 3.4f, tail, alpha = .2f * strobe * k)
+                    drawCircle(SceneInk.Strobe, .65f, tail, alpha = strobe)
                 }
             }
         }

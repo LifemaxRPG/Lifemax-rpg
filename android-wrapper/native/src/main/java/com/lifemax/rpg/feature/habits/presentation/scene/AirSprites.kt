@@ -57,9 +57,31 @@ internal object AirSprites {
     const val TRAIL_HALF_DP = 15f
 
     /**
-     * The plane's engines sit this far out from the fuselage, in dp (the contrail starts there).
+     * Seen from the street the plane's two engines hang under its near wing nearly in line, one a
+     * little lower than the other: the contrail's two cores start this far either side of its
+     * centre line, in dp.
      */
-    const val ENGINE_Y = 4.1f
+    const val ENGINE_Y = .7f
+
+    /**
+     * Where the contrail's origin lies from the plane's origin, in dp: behind and below the
+     * engines.
+     */
+    const val TRAIL_X = -1.8f
+    const val TRAIL_Y = 2.4f
+
+    /**
+     * The engines' and the wingtips' places, for the lights: near wingtip, far wingtip, belly,
+     * tail.
+     */
+    const val TIP_NEAR_X = -6.9f
+    const val TIP_NEAR_Y = 4.1f
+    const val TIP_FAR_X = -5.6f
+    const val TIP_FAR_Y = -2.0f
+    const val BEACON_X = -.4f
+    const val BEACON_Y = 1.15f
+    const val TAIL_X = -11.0f
+    const val TAIL_Y = -.45f
 
     /** Bytes the three sprites hold. */
     fun bytes(): Int = planeBytes() + blimpBytes() + trailBytes()
@@ -70,8 +92,8 @@ internal object AirSprites {
 
     fun trailBytes(): Int = TRAIL_W * TRAIL_H * 4 * TRAIL_LAYERS
 
-    const val PLANE_W = 150
-    const val PLANE_H = 130
+    const val PLANE_W = 130
+    const val PLANE_H = 66
     const val BLIMP_W = 248
     const val BLIMP_H = 136
     const val TRAIL_W = 544
@@ -135,11 +157,17 @@ internal object AirSprites {
     private fun gleam(nx: Float, ny: Float, nz: Float, power: Float): Float =
         max(0f, nx * HX + ny * HY + nz * HZ).pow(power)
 
-    /** Distance to a convex polygon ([xs], [ys]), negative inside. */
+    /** Distance to a convex polygon ([xs], [ys]), wound either way, negative inside. */
     private fun polygon(xs: FloatArray, ys: FloatArray, x: Float, y: Float): Float {
         var d = Float.MAX_VALUE
         var inside = true
         val n = xs.size
+        // which way round it goes: the sign of its area
+        var area = 0f
+        for (i in 0 until n) {
+            val j = (i + 1) % n
+            area += xs[i] * ys[j] - xs[j] * ys[i]
+        }
         for (i in 0 until n) {
             val j = (i + 1) % n
             val ex = xs[j] - xs[i]
@@ -150,7 +178,7 @@ internal object AirSprites {
             val qx = px - ex * t
             val qy = py - ey * t
             d = min(d, sqrt(qx * qx + qy * qy))
-            if (ex * py - ey * px < 0f) inside = false
+            if ((ex * py - ey * px) * area < 0f) inside = false
         }
         return if (inside) -d else d
     }
@@ -203,73 +231,68 @@ internal object AirSprites {
 
     // ---- the plane
 
-    /** The fuselage's radius at [x] (dp, nose to the right), 0 where there is none. */
+    /** The fuselage's half height at [x] (dp, nose to the right), 0 where there is none. */
     private fun hullR(x: Float): Float {
-        if (x > 9.9f || x < -9.9f) return 0f
+        if (x > 11.2f || x < -11.1f) return 0f
         return when {
-            x > 6.1f -> 1.22f * sqrt(max(0f, 1f - ((x - 6.1f) / 3.8f).pow(2f)))
-            x > -4.4f -> 1.22f
+            x > 7.6f -> 1.02f * sqrt(max(0f, 1f - ((x - 7.6f) / 3.6f).pow(2f)))
+            x > -4.2f -> 1.02f
             else -> {
-                val t = (-4.4f - x) / 5.5f
-                1.22f * (1f - .7f * t * t) * (1f - Px.smooth(.85f, 1f, t) * .55f)
+                val t = (-4.2f - x) / 6.9f
+                1.02f * (1f - .62f * t * t) * (1f - Px.smooth(.88f, 1f, t) * .5f)
             }
         }
     }
 
-    /** The fuselage's centre line: the tail cone sweeps up, as an airliner's does. */
+    /**
+     * The fuselage's centre line: the nose droops a little, and the tail cone sweeps up (the belly
+     * rises to the tail while the back stays nearly straight), as an airliner's does.
+     */
     private fun hullC(x: Float): Float {
-        if (x > -4.8f) return 0f
-        val t = (-4.8f - x) / 5.1f
-        return -.95f * t * t
+        if (x > 7.6f) return .16f * ((x - 7.6f) / 3.6f).pow(2f)
+        if (x > -4.2f) return 0f
+        val t = (-4.2f - x) / 6.9f
+        return -.68f * t * t
     }
 
-    // the wing on one side (y positive side; mirrored for the other), a swept plate with a kink in
-    // its trailing edge
-    private val WING_X = floatArrayOf(2.3f, -3.5f, -4.5f, -4.1f, -2.5f)
-    private val WING_Y = floatArrayOf(.9f, 10.8f, 11.0f, 4.4f, .9f)
-    private val TAIL_X = floatArrayOf(-7.0f, -9.5f, -10.2f, -9.9f)
-    private val TAIL_Y = floatArrayOf(.6f, 4.3f, 4.4f, .6f)
-    private val FIN_X = floatArrayOf(-5.6f, -9.4f, -10.5f, -9.2f)
-    private val FIN_Y = floatArrayOf(-1.1f, -7.0f, -7.0f, -.9f)
+    // the near wing, swept back and coming towards the viewer (so it drops below the hull and is
+    // short), the far wing's sliver above the back, the fin, the tailplanes
+    private val WING_X = floatArrayOf(2.7f, -5.9f, -7.4f, -2.9f)
+    private val WING_Y = floatArrayOf(.45f, 4.0f, 4.05f, .6f)
+    private val FAR_WING_X = floatArrayOf(1.6f, -5.0f, -6.3f, -2.9f)
+    private val FAR_WING_Y = floatArrayOf(-.9f, -2.05f, -2.05f, -.9f)
+    private val FIN_X = floatArrayOf(-5.7f, -10.4f, -11.7f, -10.3f)
+    private val FIN_Y = floatArrayOf(-.85f, -6.3f, -6.3f, -.7f)
+    private val TAIL_NEAR_X = floatArrayOf(-7.4f, -9.7f, -10.4f, -11.0f)
+    private val TAIL_NEAR_Y = floatArrayOf(.25f, -.1f, 1.85f, 1.85f)
+    private val TAIL_FAR_X = floatArrayOf(-7.6f, -10.2f, -10.6f, -9.9f)
+    private val TAIL_FAR_Y = floatArrayOf(-.85f, -.75f, -2.0f, -2.0f)
 
     /**
-     * The airliner, seen from below and a little to the side, nose to the right, 20 dp long and 22
-     * across. The light comes from the upper left: the top edge of the fuselage and the engines
-     * catch it, with a gleam along it; the belly and the underside of the wings take the sky's
-     * light instead. The windows are a layer of their own (dark by day, lit at night).
+     * The airliner as the street sees it: in profile from a little below, nose to the right, 22 dp
+     * long. A long thin fuselage with its cockpit glazing and a row of windows, lit from the upper
+     * left along its back with a gleam, its belly taking the sky's light; the fin rising over the
+     * tail with the tailplanes; the near wing swept back towards the viewer, foreshortened and
+     * drooping under the hull with its two engines hanging below it; a sliver of the far wing over
+     * the back. The windows are a layer of their own (dark by day, lit at night).
      */
     fun plane(): AirSprite {
         val w = PLANE_W
         val h = PLANE_H
         val ppd = PLANE_PPD
-        val ox = 72f
-        val oy = 66f
+        val ox = 64f
+        val oy = 37f
         val out = Array(LAYERS) { FloatArray(w * h) }
         val s = Sample()
         val sub = 3
-        val wingXm = FloatArray(WING_X.size)
-        val wingYm = FloatArray(WING_Y.size)
-        val tailXm = FloatArray(TAIL_X.size)
-        val tailYm = FloatArray(TAIL_Y.size)
-        for (i in WING_X.indices) {
-            // the mirrored polygon runs the other way round: reverse it to keep it convex-ordered
-            wingXm[i] = WING_X[WING_X.size - 1 - i]
-            wingYm[i] = -WING_Y[WING_Y.size - 1 - i]
-        }
-        for (i in TAIL_X.indices) {
-            tailXm[i] = TAIL_X[TAIL_X.size - 1 - i]
-            tailYm[i] = -TAIL_Y[TAIL_Y.size - 1 - i]
-        }
         val acc = FloatArray(LAYERS)
         for (py in 0 until h) for (px in 0 until w) {
             acc.fill(0f)
-            var coverSum = 0f
             for (sy in 0 until sub) for (sx in 0 until sub) {
                 val x = (px + (sx + .5f) / sub - ox) / ppd
                 val y = (py + (sy + .5f) / sub - oy) / ppd
                 s.clear()
-                planeSample(x, y, s, wingXm, wingYm, tailXm, tailYm)
-                coverSum += s.cover
+                planeSample(x, y, s)
                 acc[SHADE] += s.cover
                 acc[LIT] += s.cover * s.lit
                 acc[GLINT] += s.cover * s.glint
@@ -284,76 +307,45 @@ internal object AirSprites {
         return AirSprite(w, h, ox, oy, ppd, pack(w, h, out))
     }
 
-    private fun planeSample(
-        x: Float,
-        y: Float,
-        s: Sample,
-        wingXm: FloatArray,
-        wingYm: FloatArray,
-        tailXm: FloatArray,
-        tailYm: FloatArray,
-    ) {
-        // the fin, far behind everything (the far side of the plane): a thin dim blade
+    /** A flat plate of the plane: [c] of it here, facing the viewer, lit [l], its edge gleaming. */
+    private fun plate(s: Sample, d: Float, l: Float, edgeGlint: Float, bounce: Float) {
+        val c = cov(d, .3f)
+        if (c <= 0f) return
+        val rim = Px.smooth(.4f, 0f, abs(d)) * edgeGlint
+        s.put(c, l, rim, bounce, 0f)
+    }
+
+    private fun planeSample(x: Float, y: Float, s: Sample) {
+        // behind everything: the far wing's sliver and the far tailplane (their undersides, dim)
+        plate(s, polygon(FAR_WING_X, FAR_WING_Y, x, y), .3f, .2f, .3f)
+        plate(s, polygon(TAIL_FAR_X, TAIL_FAR_Y, x, y), .32f, .2f, .25f)
+        // the fin: a blade facing us, the light coming round its leading edge
         run {
             val d = polygon(FIN_X, FIN_Y, x, y)
             val c = cov(d, .3f)
             if (c > 0f) {
-                val nx = -.3f
-                val l = .18f + .3f * lambert(nx, -.2f, .93f)
-                val rim = Px.smooth(.25f, -.05f, d) * .35f
-                s.put(c, l * .8f, rim * .5f, .12f, 0f)
+                val up = Px.smooth(-.8f, -6.3f, y)
+                val l = .5f + .12f * up
+                val rim = Px.smooth(.45f, 0f, abs(d)) * .45f
+                s.put(c, l, rim, .08f, 0f)
             }
         }
-        // the wings and the tailplane: flat plates, the belly side towards us, the upper one a
-        // little brighter where the sun comes round its leading edge
-        for (side in 0 until 2) {
-            val sign = if (side == 0) 1f else -1f
-            val wd = if (side == 0) polygon(WING_X, WING_Y, x, y) else polygon(wingXm, wingYm, x, y)
-            val td = if (side == 0) polygon(TAIL_X, TAIL_Y, x, y) else polygon(tailXm, tailYm, x, y)
-            val d = min(wd, td)
+        // the near wing: its underside towards us, in the hull's shade, lit by the sky below
+        run {
+            val d = polygon(WING_X, WING_Y, x, y)
             val c = cov(d, .3f)
             if (c > 0f) {
-                val span = abs(y) / 11f
-                // the sun side (upper wing, y negative) catches more
-                val face = if (sign < 0f) .62f else .46f
-                var l = face - .14f * span
-                // the leading edge: a thin bright line where it faces the light
-                val le = Px.smooth(.5f, 0f, abs(d)) * (if (sign < 0f) .55f else .25f)
-                val onLeading =
-                    if (wd < td) (x > 2.3f - (abs(y) - .9f) * .59f - .5f)
-                    else (x > -7.0f - (abs(y) - .6f) * .67f - .45f)
-                val g = if (onLeading) le else le * .25f
-                l += g * .3f
-                // the belly bounce: the whole underside, stronger inboard
-                val b = .55f - .25f * span
-                s.put(c, l, g, b, 0f)
+                val out = Px.smooth(.5f, 4f, y)
+                val l = .34f - .08f * out
+                val leading = x > 2.7f - (y - .45f) * 2.46f - .55f
+                val rim = Px.smooth(.45f, 0f, abs(d)) * (if (leading) .5f else .15f)
+                s.put(c, l, rim, .6f - .1f * out, 0f)
             }
         }
-        // the engines under the wings: short fat cylinders ahead of the leading edge
-        for (side in 0 until 2) {
-            val sign = if (side == 0) 1f else -1f
-            val ey = sign * ENGINE_Y
-            val d = capsule(2.2f, ey, -1.2f, ey, .82f, x, y)
-            val c = cov(d, .3f)
-            if (c > 0f) {
-                val t = ((y - ey) / .82f).coerceIn(-1f, 1f)
-                val nz = sqrt(max(0f, 1f - t * t))
-                val nx = Px.smooth(1.7f, 2.7f, x) * .9f
-                val l = .22f + .78f * lambert(nx, t, nz)
-                val g = gleam(nx, t, nz, 28f) * .9f
-                // the intake, a dark lip at the front, and its bright rim
-                val lip = Px.smooth(1.8f, 2.25f, x)
-                val b = .4f * Px.smooth(-.2f, 1f, t) * (1f - lip)
-                s.put(
-                    c,
-                    l * (1f - .7f * lip),
-                    g * (1f - lip) + lip * .35f * (1f - lambert(0f, t, nz) * .5f),
-                    b,
-                    0f,
-                )
-            }
-        }
-        // the fuselage: a cylinder with a nose cone and an upswept tail cone
+        // the near tailplane, the same
+        plate(s, polygon(TAIL_NEAR_X, TAIL_NEAR_Y, x, y), .34f, .3f, .5f)
+        // the fuselage: a cylinder side on, its back lit, a gleam below the back, the belly in
+        // shade with the sky's light under it
         run {
             val r = hullR(x)
             if (r > 0f) {
@@ -363,30 +355,54 @@ internal object AirSprites {
                 if (c > 0f) {
                     val t = ((y - cy) / r).coerceIn(-1f, 1f)
                     val nz = sqrt(max(0f, 1f - t * t))
-                    // the nose and the tail turn the normal along the axis
                     val slope = (hullR(x + .1f) - hullR(x - .1f)) / .2f
                     val nx = (slope * .9f).coerceIn(-.95f, .95f)
-                    val nzz = nz * sqrt(max(0f, 1f - nx * nx))
-                    val l = .2f + .8f * lambert(nx, t * sqrt(max(0f, 1f - nx * nx)), nzz)
-                    val g = gleam(nx, t, nzz, 36f) * 1.1f + gleam(nx, t, nzz, 6f) * .18f
-                    // the belly bounce, strongest low on the hull
-                    val b = .62f * Px.smooth(-.3f, .9f, t)
-                    // the windows: a row along the upper side, and the cockpit's at the nose
+                    val k = sqrt(max(0f, 1f - nx * nx))
+                    val ny = t * k
+                    val nzz = nz * k
+                    val l = .22f + .78f * lambert(nx, ny, nzz)
+                    val g = gleam(nx, ny, nzz, 36f) * 1.1f + gleam(nx, ny, nzz, 6f) * .18f
+                    val b = .62f * Px.smooth(-.2f, .95f, t)
+                    // the windows: a row along the upper half; the cockpit's glazing at the nose
                     var win = 0f
-                    if (x > -5.8f && x < 5.6f) {
-                        val k = (x + 5.8f) / .6f
-                        val fx = k - kotlin.math.floor(k) - .5f
-                        val wy = (y - cy) / r + .42f
-                        val dd = sqrt((fx * .62f).pow(2f) + (wy * r).pow(2f))
-                        win = Px.smooth(.2f, .1f, dd)
+                    if (x > -5.4f && x < 6.6f) {
+                        val k2 = (x + 5.4f) / .6f
+                        val fx = k2 - kotlin.math.floor(k2) - .5f
+                        val wy = (y - cy) / r + .28f
+                        val dd = sqrt((fx * .6f).pow(2f) + (wy * r).pow(2f))
+                        win = Px.smooth(.19f, .09f, dd)
                     }
-                    if (x > 7.2f && x < 8.4f) {
-                        val wy = (y - cy) / r + .5f
-                        val wd = max(abs(wy * r) - .2f, min(7.2f - x + .1f, x - 8.4f + .1f) * -1f)
-                        win = max(win, Px.smooth(.12f, 0f, wd) * .9f)
+                    if (x > 8.2f && x < 9.5f) {
+                        // a slanted pane: higher at its front
+                        val wy = (y - cy) / r + .42f + (x - 8.2f) * .25f
+                        val wd = max(abs(wy * r) - .2f, max(8.2f - x, x - 9.5f))
+                        win = max(win, Px.smooth(.12f, 0f, wd) * .95f)
                     }
                     s.put(c, l * (1f - .55f * win), g * (1f - win), b * (1f - win), win)
                 }
+            }
+        }
+        // the engines under the near wing: short fat cylinders, the outer one lower and further
+        // back, each with a dark intake at its front and a bright lip
+        for (e in 0 until 2) {
+            val ex0 = if (e == 0) 2.9f else 1.1f
+            val ey = if (e == 0) 1.7f else 3.1f
+            val er = if (e == 0) .86f else .76f
+            // the pylon up to the wing
+            val pd = capsule(ex0 - 1.6f, ey - er, ex0 - 2.1f, ey - er - 1f, .28f, x, y)
+            plate(s, pd, .3f, 0f, .35f)
+            val d = capsule(ex0, ey, ex0 - 3.4f, ey, er, x, y)
+            val c = cov(d, .3f)
+            if (c > 0f) {
+                val t = ((y - ey) / er).coerceIn(-1f, 1f)
+                val nz = sqrt(max(0f, 1f - t * t))
+                val nx = Px.smooth(ex0 - .6f, ex0 + .4f, x) * .9f
+                val k = sqrt(max(0f, 1f - nx * nx))
+                val l = .22f + .78f * lambert(nx, t * k, nz * k)
+                val g = gleam(nx, t * k, nz * k, 28f) * .9f
+                val lip = Px.smooth(ex0 - .55f, ex0 - .2f, x)
+                val b = .45f * Px.smooth(-.2f, 1f, t) * (1f - lip)
+                s.put(c, l * (1f - .72f * lip), g * (1f - lip) + lip * .3f, b, 0f)
             }
         }
     }
@@ -434,7 +450,7 @@ internal object AirSprites {
                     dens += exp(-.5f * dy * dy)
                 }
                 // the exhaust condenses a little way behind the engine
-                val onset = Px.smooth(.4f, 3.2f, sdp)
+                val onset = Px.smooth(.3f, 2.2f, sdp)
                 // thins out with distance; and the far part breaks into lumps
                 val fade = exp(-sdp / 85f) * Px.smooth(TRAIL_DP, TRAIL_DP - 90f, sdp)
                 val lumpN = Noise.fbm(sdp * .1f, yy * .15f, 403, 4)
