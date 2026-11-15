@@ -1,7 +1,6 @@
 package com.lifemax.rpg.feature.habits.presentation.scene
 
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.TextLayoutResult
@@ -69,8 +68,45 @@ internal class SceneText(private val measurer: TextMeasurer, fontScale: Float) {
 }
 
 /**
- * One storey worked out once, when the habits change, so a frame only draws: its walls' brush and
- * paths, its windows, which of them light and who is in them, its plaque's words, its crack.
+ * The shapes of a [Shapes] as paths, one to fill and one to stroke per [DetailInk], null where the
+ * ink has nothing.
+ */
+internal class InkPaths(val fill: Array<Path?>, val stroke: Array<Path?>) {
+    companion object {
+        fun of(s: Shapes): InkPaths {
+            val n = DetailInk.entries.size
+            val fill = arrayOfNulls<Path>(n)
+            val stroke = arrayOfNulls<Path>(n)
+            for (ink in DetailInk.entries) {
+                val r = s.rects(ink)
+                if (r.size > 0) {
+                    val path = Path()
+                    for (i in 0 until r.size / 4) {
+                        val x = r[i * 4]
+                        val y = r[i * 4 + 1]
+                        path.addRect(Rect(x, y, x + r[i * 4 + 2], y + r[i * 4 + 3]))
+                    }
+                    fill[ink.ordinal] = path
+                }
+                val lines = s.lines(ink)
+                if (lines.isNotEmpty()) {
+                    val path = Path()
+                    for (pts in lines) for (i in 0 until pts.size / 2) {
+                        if (i == 0) path.moveTo(pts[0], pts[1])
+                        else path.lineTo(pts[i * 2], pts[i * 2 + 1])
+                    }
+                    stroke[ink.ordinal] = path
+                }
+            }
+            return InkPaths(fill, stroke)
+        }
+    }
+}
+
+/**
+ * One storey worked out once, when the habits change, so a frame only draws: its wall's material,
+ * its architecture as paths, its windows, which of them light and who is in them, its plaque's
+ * words, its crack.
  */
 internal class FloorArt(
     val piece: Piece,
@@ -79,14 +115,17 @@ internal class FloorArt(
     /** Its front as a rectangle, y down from its top, in building units (top is -piece.top). */
     val top: Float,
     val bottom: Float,
-    val wall: Brush,
+    /** The material its wall is tiled with ([FacadeSprites]). */
+    val material: HabitMaterial,
     /**
-     * The side face as a unit ([sidePath]), and the brick, stone, steel or grime drawn over the
-     * wall.
+     * The side face as a unit ([sidePath]); the steel frame of a glass floor (nothing on the
+     * others); its surrounds, string course and pipe, drawn under the windows ([detail]) and what
+     * stands in front of them ([front]).
      */
     val side: Path,
     val texture: Path,
-    val trim: Path,
+    val detail: InkPaths,
+    val front: InkPaths,
     val reflect: Path,
     /** Its windows as x, y, w, h (y from the front's top), in the order they light up. */
     val windows: FloatArray,
@@ -136,6 +175,11 @@ internal class BuildingArt(
      * Its storeys of a habit being broken that are the top of the building: the crane stands there.
      */
     val craneOn: FloorArt?,
+    /** Which side its drainpipe runs down, what stands on its roof ([BuildingDetail]). */
+    val choices: BuildingChoices,
+    /** The cornice's coping and dentils, the lobby's plinth, pipe foot and awning brackets. */
+    val cornice: InkPaths,
+    val lobbyDetail: InkPaths,
 )
 
 internal fun buildingArt(layout: BuildingLayout, stack: HabitStack, text: SceneText): BuildingArt {
@@ -144,12 +188,14 @@ internal fun buildingArt(layout: BuildingLayout, stack: HabitStack, text: SceneT
     for (p in layout.pieces) if (p.kind == PieceKind.RUIN)
         storeyCount[p.id] = (storeyCount[p.id] ?: 0) + 1
     val seen = HashMap<String, Int>()
+    val choices = BuildingDetail.choices(stack.id.hashCode())
+    val pipeX = if (choices.pipeSide == 0) Float.NaN else choices.pipeX
     for (p in layout.pieces) {
         val b = p.block ?: continue
         if (p.kind != PieceKind.FLOOR && p.kind != PieceKind.RUIN) continue
         val storey = seen[p.id] ?: 0
         seen[p.id] = storey + 1
-        floors += floorArt(p, b, text, storey, storeyCount[p.id] ?: 1)
+        floors += floorArt(p, b, text, storey, storeyCount[p.id] ?: 1, pipeX)
     }
     val lobby = layout.pieces.first { it.kind == PieceKind.LOBBY }
     val sign = layout.pieces.firstOrNull { it.kind == PieceKind.SIGN }
@@ -178,6 +224,18 @@ internal fun buildingArt(layout: BuildingLayout, stack: HabitStack, text: SceneT
         sidePath(-lobby.top, -lobby.bottom),
         top?.block?.material,
         top?.takeIf { it.piece.kind == PieceKind.RUIN },
+        choices,
+        InkPaths.of(
+            Shapes().also {
+                BuildingDetail.cornice(
+                    if (top?.piece?.kind == PieceKind.RUIN) HabitMaterial.FADE
+                    else top?.block?.material ?: HabitMaterial.STONE,
+                    -layout.roof,
+                    it,
+                )
+            }
+        ),
+        InkPaths.of(Shapes().also { BuildingDetail.lobby(-lobby.top, pipeX, it) }),
     )
 }
 
@@ -202,6 +260,7 @@ private fun floorArt(
     text: SceneText,
     storey: Int,
     storeys: Int,
+    pipeX: Float,
 ): FloorArt {
     val ruin = p.kind == PieceKind.RUIN
     val f = facade(if (ruin) HabitMaterial.FADE else b.material)
@@ -256,17 +315,12 @@ private fun floorArt(
     val hall = Silhouettes.hallLight(key, spots.size)
     val ruins = Array(spots.size) { ruinWindow(b.id, storey, storeys, it) }
     val texture = Path()
-    val trim = Path()
     val reflect = Path()
     for (k in 0 until spots.size) {
         val x = windows[k * 4]
         val y = top + windows[k * 4 + 1]
         val w = windows[k * 4 + 2]
         val h = windows[k * 4 + 3]
-        // a sill under every window, and a lintel over it from brick on
-        trim.addRect(Rect(x - 1.5f, y + h, x + w + 1.5f, y + h + 2f))
-        if (b.material != HabitMaterial.GLASS || ruin)
-            trim.addRect(Rect(x - 1f, y - 2f, x + w + 1f, y - .6f))
         // a streak of sky on dark glass
         reflect.moveTo(x + w * .2f, y + h)
         reflect.lineTo(x + w * .75f, y)
@@ -275,63 +329,34 @@ private fun floorArt(
         reflect.lineTo(x + w * .45f, y + h)
         reflect.close()
     }
-    when {
-        ruin -> {
-            // grime running down from the sills
-            val dice = Dice(b.id + "g" + storey)
-            for (i in 0 until 6) {
-                val x = -half + 8f + dice.next() * (B.W - 16f)
-                texture.moveTo(x, top + 2f)
-                texture.lineTo(
-                    x + (dice.next() - .5f) * 3f,
-                    top + 4f + dice.next() * (p.height - 6f),
-                )
-            }
+    if (!ruin && b.material == HabitMaterial.GLASS) {
+        // the steel frame: a column between every window, a beam across the top
+        for (c in 0..B.COLS) {
+            val x = -half + B.MARGIN + c * B.PITCH
+            texture.moveTo(x, top)
+            texture.lineTo(x, bottom)
         }
-        b.material == HabitMaterial.GLASS -> {
-            // the steel frame: a column between every window, a beam across the middle
-            for (c in 0..B.COLS) {
-                val x = -half + B.MARGIN + c * B.PITCH
-                texture.moveTo(x, top)
-                texture.lineTo(x, bottom)
-            }
-            texture.moveTo(-half, top + 2f)
-            texture.lineTo(half, top + 2f)
-        }
-        b.material == HabitMaterial.CLAY -> {
-            var y = top + 7f
-            var row = 0
-            while (y < bottom - 1f) {
-                texture.moveTo(-half, y)
-                texture.lineTo(half, y)
-                var x = -half + if (row % 2 == 0) 14f else 7f
-                while (x < half) {
-                    texture.moveTo(x, y - 7f)
-                    texture.lineTo(x, y)
-                    x += 14f
-                }
-                y += 7f
-                row++
-            }
-        }
-        else -> {
-            // cut stone: long courses, the joints of one over the middle of the stones below
-            var y = top + 14f
-            var row = 0
-            while (y < bottom - 1f) {
-                texture.moveTo(-half, y)
-                texture.lineTo(half, y)
-                var x = -half + if (row % 2 == 0) 30f else 15f
-                while (x < half) {
-                    texture.moveTo(x, y - 14f)
-                    texture.lineTo(x, y)
-                    x += 30f
-                }
-                y += 14f
-                row++
-            }
-        }
+        texture.moveTo(-half, top + 2f)
+        texture.lineTo(half, top + 2f)
     }
+    val wallShapes = Shapes()
+    val frontShapes = Shapes()
+    BuildingDetail.floor(
+        b.material,
+        ruin,
+        top,
+        bottom,
+        windows,
+        spots.size,
+        occ.lit,
+        hall,
+        seed,
+        storey,
+        pipeX,
+        if (ruin) ruins else null,
+        wallShapes,
+        frontShapes,
+    )
     val crack =
         if (!ruin && labelled && (b.miss >= 1 || b.scar))
             Path().apply {
@@ -354,10 +379,11 @@ private fun floorArt(
         f,
         top,
         bottom,
-        Brush.verticalGradient(listOf(f.wallTop, f.wallBottom), top, bottom),
+        if (ruin) HabitMaterial.FADE else b.material,
         sidePath(top, bottom),
         texture,
-        trim,
+        InkPaths.of(wallShapes),
+        InkPaths.of(frontShapes),
         reflect,
         windows,
         occ,

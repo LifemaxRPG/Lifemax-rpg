@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import com.lifemax.rpg.feature.habits.domain.Activity
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec
 import com.lifemax.rpg.feature.habits.domain.DogRig
+import com.lifemax.rpg.feature.habits.domain.HabitMaterial
 import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.RoomKind
@@ -178,6 +179,15 @@ internal class CarImages(
  */
 /** The small life's images: the steam's [puffs] and the [pigeon]'s frames. */
 internal class DuskImages(val puffs: Array<ImageBitmap>, val pigeon: Array<ImageBitmap>)
+
+/**
+ * A material's wall as a repeating brush ([FacadeSprites]): drawn under a transform that scales its
+ * pixels to units, so a floor's front tiles it from its own top-left corner.
+ */
+internal class FacadeImages(val tile: WallTile, val brush: Brush)
+
+/** The awning's cloth as two repeating brushes: its shade and its light. */
+internal class ClothImages(val tile: ClothTile, val shade: Brush, val light: Brush)
 
 internal object SceneSprites {
     val clouds: Array<CloudImages> by lazy {
@@ -548,6 +558,38 @@ internal object SceneSprites {
         )
     }
 
+    private val facades = arrayOfNulls<FacadeImages>(HabitMaterial.entries.size)
+    private var facadeBytes = 0
+
+    /** The wall of a floor of [m], made the first time a floor of it is drawn. */
+    @Synchronized
+    fun facade(m: HabitMaterial): FacadeImages {
+        facades[m.ordinal]?.let {
+            return it
+        }
+        val t = FacadeSprites.tile(m)
+        facadeBytes += t.w * t.h * 4
+        return FacadeImages(
+                t,
+                ShaderBrush(
+                    ImageShader(image(t.pixels, t.w, t.h), TileMode.Repeated, TileMode.Repeated)
+                ),
+            )
+            .also { facades[m.ordinal] = it }
+    }
+
+    /** The awnings' cloth. */
+    val cloth: ClothImages by lazy {
+        val t = FacadeSprites.cloth()
+        facadeBytes += t.w * t.h * 4 * 2
+        fun brush(px: IntArray) =
+            ShaderBrush(ImageShader(image(px, t.w, t.h), TileMode.Repeated, TileMode.Clamp))
+        ClothImages(t, brush(t.shade), brush(t.light))
+    }
+
+    /** What the facades' walls made so far take, in bytes. */
+    @Synchronized fun facadeBytes(): Int = facadeBytes
+
     /** The film grain, a tile repeated over the picture. */
     val grain: Brush by lazy {
         ShaderBrush(
@@ -601,7 +643,8 @@ internal object SceneSprites {
             Grain.SIZE * Grain.SIZE * 4 +
             peopleBytes() +
             seasonBytes() +
-            streetBytes()
+            streetBytes() +
+            facadeBytes()
 
     private fun image(l: SkyLayer): ImageBitmap = image(l.pixels, l.size, l.size)
 

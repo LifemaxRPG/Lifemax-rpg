@@ -119,7 +119,6 @@ private fun isLit(fa: FloorArt, live: Boolean) =
 internal class BuildingPainter {
     private val path = Path()
     private val dash = PathEffect.dashPathEffect(floatArrayOf(7f, 5f))
-    private val thin = Stroke(.8f)
     private val hairline = Stroke(1.2f)
     private val glowWide = Stroke(9f, join = StrokeJoin.Round)
     private val glowMid = Stroke(4.5f, join = StrokeJoin.Round)
@@ -195,19 +194,6 @@ internal class BuildingPainter {
             endY = 15f,
         )
 
-    /**
-     * The awning's cloth: lit at its top, in its own shade where it hangs; drawn over its colour.
-     */
-    private val awningShade =
-        Brush.verticalGradient(
-            0f to Color.White.copy(alpha = .28f),
-            .32f to Color.White.copy(alpha = .05f),
-            .78f to Color.Black.copy(alpha = .1f),
-            1f to Color.Black.copy(alpha = .26f),
-            startY = 0f,
-            endY = 15f,
-        )
-
     /** The shadow the awning throws on the shopfront under it. */
     private val awningDrop =
         Brush.verticalGradient(
@@ -216,6 +202,37 @@ internal class BuildingPainter {
             startY = 0f,
             endY = 10f,
         )
+
+    /**
+     * A wall's grade over its tile: a touch lighter at a floor's top, darker at its foot (a unit
+     * square); the cornice's shadow down the wall under it; the sign's lamps' light down its board.
+     */
+    private val wallGrade =
+        Brush.verticalGradient(
+            0f to Color.White.copy(alpha = .07f),
+            .5f to Color.Transparent,
+            1f to Color.Black.copy(alpha = .09f),
+            startY = 0f,
+            endY = 1f,
+        )
+    private val corniceDrop =
+        Brush.verticalGradient(
+            0f to Color.Black.copy(alpha = .36f),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = 1f,
+        )
+    private val lampWash =
+        Brush.verticalGradient(
+            0f to Color.White.copy(alpha = .26f),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = 1f,
+        )
+
+    /** The ironwork's strokes (a pipe hanging loose, a tag) and a board's frame. */
+    private val inkStroke = Stroke(1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+    private val frameStroke = Stroke(1.2f)
 
     /**
      * The awning's face, made once for the building's width: the hanging cloth and its scalloped
@@ -2152,11 +2169,44 @@ internal class BuildingPainter {
             sideLight(art.lobbySide, 1f)
         }
         if (art.floors.isEmpty()) roofFace(-art.layout.roof, SceneInk.LobbyWall, half)
-        // the sign over the awning: a board with a fine rim, lit at night (and glowing)
+        // the plinth's joints, the pipe's foot, the awning's brackets
+        val lobbyFacade = art.floors.firstOrNull()?.facade ?: facade(HabitMaterial.STONE)
+        inks(art.lobbyDetail, lobbyFacade, 1f, detailed)
+        // the sign over the awning: a board in a raised frame, its tube lit at night (and glowing)
         translate(0f, top + 4f) {
             drawRect(signFace, Offset(-half + 10f, 0f), Size(B.W - 20f, 15f))
             drawRect(Color.White, Offset(-half + 10f, 0f), Size(B.W - 20f, .7f), alpha = .22f)
             drawRect(Color.Black, Offset(-half + 10f, 14.3f), Size(B.W - 20f, .7f), alpha = .3f)
+            drawRect(
+                SceneInk.SignFrame,
+                Offset(-half + 10f, 0f),
+                Size(B.W - 20f, 15f),
+                style = frameStroke,
+            )
+            drawRect(Color.White, Offset(-half + 9.4f, -.6f), Size(B.W - 18.8f, .5f), alpha = .3f)
+            drawRect(Color.Black, Offset(-half + 9.4f, 15.1f), Size(B.W - 18.8f, 1f), alpha = .3f)
+            // the tube along the board's foot: a glass line by day, lit at night
+            drawRect(
+                SceneInk.IronLight,
+                Offset(-half + 13f, 12.6f),
+                Size(B.W - 26f, .8f),
+                alpha = .4f,
+            )
+            val tube = signOn * sky.dark
+            if (tube > 0f) {
+                drawRect(
+                    SceneInk.Tube,
+                    Offset(-half + 13f, 11.8f),
+                    Size(B.W - 26f, 2.4f),
+                    alpha = .3f * tube,
+                )
+                drawRect(
+                    SceneInk.Tube,
+                    Offset(-half + 13f, 12.6f),
+                    Size(B.W - 26f, .8f),
+                    alpha = tube,
+                )
+            }
         }
         if (sky.dark > .2f && signOn > 0f)
             translate(0f, top + 11.5f) {
@@ -2189,7 +2239,15 @@ internal class BuildingPainter {
                     drawRect(Color.White, Offset(x, 0f), Size(6f, 17f), alpha = .17f)
                     x += 12f
                 }
-                drawPath(awningFace, awningShade)
+                // the cloth's folds and its sag ([FacadeSprites.cloth]), the valance's binding
+                val cloth = SceneSprites.cloth
+                val ppu = FacadeSprites.PPU
+                withTransform({ scale(1f / ppu, 1f / ppu, Offset.Zero) }) {
+                    drawRect(cloth.shade, Offset(-half * ppu, 0f), Size(B.W * ppu, 17f * ppu))
+                    drawRect(cloth.light, Offset(-half * ppu, 0f), Size(B.W * ppu, 17f * ppu))
+                }
+                drawRect(Color.White, Offset(-half + 1f, 8.6f), Size(B.W - 2f, .8f), alpha = .28f)
+                drawRect(Color.Black, Offset(-half + 1f, 9.4f), Size(B.W - 2f, .6f), alpha = .18f)
             }
             drawRect(awningDrop, Offset(-half + 2f, 9f), Size(B.W - 4f, 10f))
         }
@@ -2199,15 +2257,25 @@ internal class BuildingPainter {
         val w0 = top + 35f
         drawRect(shop, Offset(-half + 9f, w0), Size(half - 9f - 13f, -4f - w0))
         drawRect(shop, Offset(13f, w0), Size(half - 9f - 13f, -4f - w0))
+        // the shopfront sits back from the wall: a reveal in shade along the top of its glass
+        val shopW = half - 9f - 13f
+        drawRect(Color.Black, Offset(-half + 9f, w0), Size(shopW, 1.5f), alpha = .35f)
+        drawRect(Color.Black, Offset(13f, w0), Size(shopW, 1.5f), alpha = .35f)
+        // the door: two panels, a brass handle, the transom light over it in its frame
         drawRect(SceneInk.Door, Offset(-9f, w0 - 2f), Size(18f, -w0 + 2f))
+        drawRect(Color.Black, Offset(-6.5f, w0 + 9f), Size(5f, 9f), alpha = .3f)
+        drawRect(Color.Black, Offset(1.5f, w0 + 9f), Size(5f, 9f), alpha = .3f)
+        drawRect(Color.White, Offset(-6.5f, w0 + 9f), Size(5f, .5f), alpha = .08f)
+        drawRect(Color.White, Offset(1.5f, w0 + 9f), Size(5f, .5f), alpha = .08f)
+        drawRect(SceneInk.Brass, Offset(5.2f, w0 + 11f), Size(1.4f, 3.2f))
         drawRect(shop, Offset(-6.5f, w0 + 1f), Size(13f, 6f), alpha = .8f)
-        drawLine(
-            SceneInk.LobbyWall,
-            Offset(-half / 2f + 2f, w0),
-            Offset(-half / 2f + 2f, -4f),
-            1.4f,
+        drawRect(
+            SceneInk.IronLight,
+            Offset(-6.5f, w0 + 1f),
+            Size(13f, 6f),
+            alpha = .5f,
+            style = rim,
         )
-        drawLine(SceneInk.LobbyWall, Offset(half / 2f - 2f, w0), Offset(half / 2f - 2f, -4f), 1.4f)
         if (sky.dark < .5f) {
             drawLine(
                 SceneInk.Reflection,
@@ -2219,6 +2287,16 @@ internal class BuildingPainter {
         }
         // the lobby: a reception desk with someone at it, a plant, and a visitor who comes and goes
         lobbyLife(art, -half + 9f, w0, half - 22f, -4f - w0, seconds, sky, lod)
+        // the glazing bars over the glass: two mullions a window and a transom across
+        for (x0 in floatArrayOf(-half + 9f, 13f)) {
+            drawRect(SceneInk.LobbyWall, Offset(x0 + shopW / 3f - .6f, w0), Size(1.2f, -4f - w0))
+            drawRect(
+                SceneInk.LobbyWall,
+                Offset(x0 + shopW * 2f / 3f - .6f, w0),
+                Size(1.2f, -4f - w0),
+            )
+            drawRect(SceneInk.LobbyWall, Offset(x0, w0 + 7f), Size(shopW, 1f))
+        }
         spill(
             -half + 9f,
             half - 22f,
@@ -2317,19 +2395,15 @@ internal class BuildingPainter {
         val ruin = fa.piece.kind == PieceKind.RUIN
         val seconds = motion.seconds
         val top = fa.top
-        drawRect(fa.wall, Offset(-half, top), Size(B.W, fa.bottom - top), alpha = alpha)
+        wall(fa.material, top, fa.bottom, alpha)
         facadeLight(top, fa.bottom, alpha)
         onSide {
             drawPath(fa.side, f.side, alpha = alpha)
             sideLight(fa.side, alpha)
         }
-        drawPath(
-            fa.texture,
-            TEXTURE[if (ruin) 4 else b.material.ordinal],
-            alpha = alpha,
-            style = thin,
-        )
-        drawPath(fa.trim, f.trim, alpha = alpha * .9f)
+        if (fa.material == HabitMaterial.GLASS)
+            drawPath(fa.texture, f.trim, alpha = alpha, style = hairline)
+        inks(fa.detail, f, alpha, detailed)
         blueHour(-half, top, B.W, fa.bottom - top, .42f * alpha)
         if (!ruin && (b.material == HabitMaterial.STONE || b.material == HabitMaterial.CLAY))
             stains(fa, top, alpha)
@@ -2610,14 +2684,8 @@ internal class BuildingPainter {
                 )
             }
         }
-        // the cornice line along the floor's top: gold from 66
-        val gold = b.material == HabitMaterial.GOLD && !ruin
-        drawRect(
-            f.trim,
-            Offset(-half - 1f, top),
-            Size(B.W + 2f, if (gold) 3.2f else 1.6f),
-            alpha = alpha,
-        )
+        // what stands in front of the windows: an air conditioner, a balcony, a tag on the boards
+        if (detailed) inks(fa.front, f, alpha, true)
         drawLine(
             SceneInk.Occlusion,
             Offset(-half, fa.bottom - 1f),
@@ -2648,6 +2716,65 @@ internal class BuildingPainter {
             )
         if (landing && motion.swept && motion.sweep < 1f) sheen(top, fa.bottom, motion.sweep)
         if (ruin && art.craneOn === fa && fa.storey == fa.storeys - 1) crane(top, seconds)
+    }
+
+    /**
+     * A wall of [m] from [top] to [bottom]: its baked tile ([FacadeSprites]) repeated from the
+     * floor's top-left corner, pixels scaled to units, and a faint grade down it. The sun's wash
+     * and the lamps' pools go over it as over a flat wall.
+     */
+    private fun DrawScope.wall(m: HabitMaterial, top: Float, bottom: Float, alpha: Float) {
+        val half = B.W / 2f
+        val h = bottom - top
+        val ppu = FacadeSprites.PPU
+        val tile = SceneSprites.facade(m)
+        withTransform({
+            translate(-half, top)
+            scale(1f / ppu, 1f / ppu, Offset.Zero)
+        }) {
+            drawRect(tile.brush, Offset.Zero, Size(B.W * ppu, h * ppu), alpha = alpha)
+        }
+        withTransform({
+            translate(-half, top)
+            scale(B.W, h, Offset.Zero)
+        }) {
+            drawRect(wallGrade, Offset.Zero, Size(1f, 1f), alpha = alpha)
+        }
+    }
+
+    /**
+     * The architecture's paths in their inks ([DetailInk]): the facade's trim, the sky's light and
+     * the shade's dark at their alphas, the ironwork. Zoomed out ([detailed] false) only the trim,
+     * its shade and the iron are drawn.
+     */
+    private fun DrawScope.inks(p: InkPaths, f: Facade, alpha: Float, detailed: Boolean) {
+        for (i in 0 until INK_COUNT) {
+            val fill = p.fill[i]
+            val stroke = p.stroke[i]
+            if (fill == null && stroke == null) continue
+            val ink = INKS[i]
+            if (
+                !detailed &&
+                    ink != DetailInk.TRIM &&
+                    ink != DetailInk.SHADE &&
+                    ink != DetailInk.IRON
+            )
+                continue
+            val c =
+                when (ink) {
+                    DetailInk.TRIM -> f.trim
+                    DetailInk.LIGHT -> Color.White
+                    DetailInk.SHADE -> Color.Black
+                    DetailInk.IRON -> SceneInk.Iron
+                    DetailInk.IRON_LIGHT -> SceneInk.IronLight
+                    DetailInk.BOX -> SceneInk.Box
+                    DetailInk.BOX_DARK -> SceneInk.BoxDark
+                    DetailInk.SPRAY -> SceneInk.Spray
+                }
+            val a = alpha * INK_ALPHA[i]
+            if (fill != null) drawPath(fill, c, alpha = a)
+            if (stroke != null && detailed) drawPath(stroke, c, alpha = a, style = inkStroke)
+        }
     }
 
     /**
@@ -2772,7 +2899,14 @@ internal class BuildingPainter {
             val gold = art.crown == HabitMaterial.GOLD
             val c = if (gold) f.trim else f.roof
             drawRect(c, Offset(-half - 3f, y - B.CORNICE), Size(B.W + 6f, B.CORNICE))
-            drawRect(SceneInk.Occlusion, Offset(-half - 3f, y - 1.5f), Size(B.W + 6f, 1.5f))
+            // its coping, its dentils or brackets, and its shadow down the wall under it
+            inks(art.cornice, f, 1f, detailed)
+            withTransform({
+                translate(-half, y)
+                scale(B.W, 5f, Offset.Zero)
+            }) {
+                drawRect(corniceDrop, Offset.Zero, Size(1f, 1f))
+            }
             roofFace(y - B.CORNICE, f.roof, half + 3f)
             // the cornice's own side slab, on the edge the shown side hangs from
             val s = sideShift
@@ -2816,6 +2950,7 @@ internal class BuildingPainter {
                 )
                 vent(art.stack.id.hashCode(), tx, base, seconds, sky)
             }
+            if (detailed) clutter(art, y, sky)
             if (season.snow > .01f) snowRoof(sky, y, art.craneOn == null)
             cornicePigeons(art, y, seconds, sky)
         }
@@ -2844,6 +2979,62 @@ internal class BuildingPainter {
                     SceneInk.PlanText,
                     Offset(-words.size.width / 2f, -g.middle - words.size.height / 2f),
                 )
+        }
+    }
+
+    /**
+     * What else stands on the roof ([RoofKit], by the building's seed): a vent stack and a dish on
+     * the right of the roof (clear of the tank and the sign's legs), a skylight in the middle and a
+     * railing along the back edge when no sign stands there.
+     */
+    private fun DrawScope.clutter(art: BuildingArt, y: Float, sky: SkyColors) {
+        val kit = art.choices.roof
+        val half = B.W / 2f
+        val base = y - B.CORNICE - B.DY / 2f
+        val glass = lerp(SceneInk.GlassDay, SceneInk.GlassNight, sky.dark)
+        if (kit.stack) {
+            val x = half - 38f
+            drawRect(SceneInk.Iron, Offset(x - 1.6f, base - 11f), Size(3.2f, 11f))
+            drawRect(SceneInk.IronLight, Offset(x - 1.6f, base - 11f), Size(.8f, 11f), alpha = .5f)
+            drawRect(SceneInk.Iron, Offset(x - 2.8f, base - 12.2f), Size(5.6f, 1.4f))
+            drawRect(SceneInk.Iron, Offset(x - 2.2f, base - 2f), Size(4.4f, 2f))
+        }
+        if (kit.dish) {
+            val x = half - 20f
+            drawRect(SceneInk.Iron, Offset(x - .6f, base - 7f), Size(1.2f, 7f))
+            drawOval(SceneInk.Box, Offset(x - 3.6f, base - 13.5f), Size(7.2f, 8f))
+            drawOval(
+                SceneInk.Shadow,
+                Offset(x - 2.2f, base - 12.2f),
+                Size(4.4f, 5.4f),
+                alpha = .35f,
+            )
+            drawLine(SceneInk.Iron, Offset(x, base - 9.5f), Offset(x + 3.4f, base - 6.5f), 1f)
+        }
+        if (art.sign == null) {
+            if (kit.skylight) {
+                drawRect(SceneInk.Iron, Offset(-10f, base - 4.4f), Size(20f, 4.4f))
+                drawRect(glass, Offset(-9f, base - 3.8f), Size(18f, 2.6f))
+                drawRect(Color.White, Offset(-9f, base - 3.8f), Size(18f, .7f), alpha = .4f)
+            }
+            if (kit.railing) {
+                val s = sideShift
+                val back = y - B.CORNICE - B.DY
+                val x0 = -half - 3f + s + 2f
+                val x1 = half + 3f + s - 2f
+                drawRect(SceneInk.Iron, Offset(x0, back - 5f), Size(x1 - x0, .9f))
+                drawRect(
+                    SceneInk.IronLight,
+                    Offset(x0, back - 5f),
+                    Size(x1 - x0, .35f),
+                    alpha = .6f,
+                )
+                var x = x0
+                while (x <= x1) {
+                    drawRect(SceneInk.Iron, Offset(x - .4f, back - 5f), Size(.8f, 5f))
+                    x += 12f
+                }
+            }
         }
     }
 
@@ -2898,12 +3089,37 @@ internal class BuildingPainter {
             Offset(half - 14f, y + B.SIGN_H),
             2.4f,
         )
+        // the steel frame: the legs cross-braced, a rail along the top carrying three lamps
         drawLine(
             SceneInk.Lamp,
             Offset(-half + 14f, y + panel + 2f),
             Offset(half - 14f, y + B.SIGN_H - 1f),
             1f,
         )
+        drawLine(
+            SceneInk.Lamp,
+            Offset(half - 14f, y + panel + 2f),
+            Offset(-half + 14f, y + B.SIGN_H - 1f),
+            1f,
+        )
+        drawRect(SceneInk.Iron, Offset(-half + 4f, y - 2.6f), Size(width - 8f, 1.2f))
+        for (i in 0..2) {
+            val lx = -half + width * (.2f + .3f * i)
+            drawRect(SceneInk.Iron, Offset(lx - .5f, y - 2.6f), Size(1f, 1.6f))
+            path.rewind()
+            path.moveTo(lx - 3.2f, y - 1.2f)
+            path.lineTo(lx + 3.2f, y - 1.2f)
+            path.lineTo(lx + 2.2f, y + 1.2f)
+            path.lineTo(lx - 2.2f, y + 1.2f)
+            path.close()
+            drawPath(path, SceneInk.Iron)
+            drawRect(
+                if (open) SceneInk.Bulb else SceneInk.IronLight,
+                Offset(lx - 2f, y + .6f),
+                Size(4f, .8f),
+                alpha = if (open) 1f else .5f,
+            )
+        }
         if (open) {
             val pulse = if (st.claimable && seconds > 0f) .65f + .35f * sin(seconds * 3.1f) else 1f
             drawRoundRect(
@@ -2920,6 +3136,14 @@ internal class BuildingPainter {
             Size(width, panel),
         )
         drawRect(SceneInk.Occlusion, Offset(-half, y + panel - 2f), Size(width, 2f))
+        drawRect(SceneInk.SignFrame, Offset(-half, y), Size(width, panel), style = frameStroke)
+        if (open)
+            withTransform({
+                translate(-half, y)
+                scale(width, panel * .7f, Offset.Zero)
+            }) {
+                drawRect(lampWash, Offset.Zero, Size(1f, 1f))
+            }
         if (open) {
             // bulbs round the edge: chasing while it waits to be claimed, steady once it has been
             val chase = Ambient.step(seconds) / 3
@@ -3749,14 +3973,18 @@ internal class BuildingPainter {
         /** The seat and back slats of a bench, from the pavement line up. */
         val BENCH_SLATS = floatArrayOf(-9.6f, -7.2f, -18.6f, -16.1f, -13.6f)
 
-        /** The lines over a wall, by material (the last for a run-down storey). */
-        private val TEXTURE =
-            arrayOf(
-                Color(0xFF2C3850),
-                Color(0x5C3A1A0B),
-                Color(0x40483E2C),
-                Color(0x40483E2C),
-                Color(0x55241A1D),
-            )
+        /** The architecture's inks ([DetailInk]) and the alpha each is drawn at. */
+        private val INKS = DetailInk.entries.toTypedArray()
+        private val INK_COUNT = INKS.size
+        private val INK_ALPHA =
+            FloatArray(INK_COUNT) {
+                when (INKS[it]) {
+                    DetailInk.TRIM -> .95f
+                    DetailInk.LIGHT -> .35f
+                    DetailInk.SHADE -> .32f
+                    DetailInk.SPRAY -> .85f
+                    else -> 1f
+                }
+            }
     }
 }

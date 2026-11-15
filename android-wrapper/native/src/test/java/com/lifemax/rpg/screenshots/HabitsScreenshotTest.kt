@@ -190,6 +190,15 @@ class HabitsScreenshotTest {
     /** Nine habits of every material: the camera stands on the next floor. */
     @Test fun tallBuilding() = snap("tall")
 
+    /**
+     * The facades up close: brick, stone and gold as baked surfaces with their surrounds, string
+     * courses, pipes, cornice and roof clutter by day; the lobby at night with its lit sign tube,
+     * the shopfront's mullions and door, the awning's cloth.
+     */
+    @Test fun facadesDay() = snap("tall", hour = 14, ambientAt = 45f)
+
+    @Test fun lobbyNight() = snap("city", hour = 22, ambientAt = 45f)
+
     @Test fun tallBuildingLight() = snap("tall", light = true)
 
     /** A floor's dials, the street still bright behind them. */

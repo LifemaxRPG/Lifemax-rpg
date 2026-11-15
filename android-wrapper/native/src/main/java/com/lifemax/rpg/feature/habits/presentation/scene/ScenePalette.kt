@@ -308,6 +308,20 @@ internal object SceneInk {
     val FlagPole = Color(0xFFFFF7D6)
     val Tank = Color(0xFF5A4A3E)
 
+    /**
+     * The facades' ironwork (pipes, railings, the sign's frame) and its highlight, an air
+     * conditioner's box and its grille, a spray-can tag, the lobby sign's raised frame and its neon
+     * tube, a door's brass handle.
+     */
+    val Iron = Color(0xFF2A2F3D)
+    val IronLight = Color(0xFF8C94A4)
+    val Box = Color(0xFFA6ABB4)
+    val BoxDark = Color(0xFF3C414C)
+    val Spray = Color(0xFFE05A8A)
+    val SignFrame = Color(0xFF5A6478)
+    val Tube = Color(0xFFFFF1D6)
+    val Brass = Color(0xFFE8B84A)
+
     /** A ghost floor: where the next habit would go. */
     val PlanFill = Color(0x1F8CA8FF)
     val PlanLine = Color(0x99B4C6FF)
