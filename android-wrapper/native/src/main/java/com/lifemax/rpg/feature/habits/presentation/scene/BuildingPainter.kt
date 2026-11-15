@@ -34,6 +34,7 @@ import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.PeopleLod
 import com.lifemax.rpg.feature.habits.domain.PieceKind
+import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.RuinWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
@@ -57,6 +58,10 @@ import kotlin.math.tan
 internal class BuildingMotion {
     var seconds = 0f
     var landing: String? = null
+
+    /** The floor laid a moment ago that people crowd to the windows of, and the seconds since. */
+    var cheer: String? = null
+    var cheerSince = 0f
     var lights = 1f
     var squash = 0f
     var burst = 1f
@@ -70,6 +75,7 @@ internal class BuildingMotion {
     fun still(seconds: Float): BuildingMotion {
         this.seconds = seconds
         landing = null
+        cheer = null
         felled = null
         adding = null
         return this
@@ -80,6 +86,16 @@ internal class BuildingMotion {
  * Draws the street in building units: x along the street (a building's from its middle), y down
  * from the pavement line (0), so what stands is at negative y.
  */
+/**
+ * Where a floor stands in its building's crowd: the building's number, the floor's place among the
+ * lit floors from the bottom (-1 if it is not lit), how many are lit, and whether the building's
+ * walker is on it just now.
+ */
+private class Crowd(val seed: Int, val ordinal: Int, val litFloors: Int, val walker: Boolean)
+
+private fun isLit(fa: FloorArt, live: Boolean) =
+    fa.piece.kind != PieceKind.RUIN && (!live || fa.block.done)
+
 internal class BuildingPainter {
     private val path = Path()
     private val dash = PathEffect.dashPathEffect(floatArrayOf(7f, 5f))
@@ -507,9 +523,24 @@ internal class BuildingPainter {
         val lit = lerp(SceneInk.WindowLitDay, SceneInk.WindowLit, sky.dark)
         val glass = lerp(SceneInk.GlassDay, SceneInk.GlassNight, sky.dark)
         val step = Ambient.step(seconds)
+        // the lit floors take turns being staffed, and one of them has a walker now and then
+        val crowd = art.stack.id.hashCode()
+        var litFloors = 0
+        var walkable = 0
+        for (fa in art.floors) {
+            if (!isLit(fa, live)) continue
+            litFloors++
+            if (fa.cast.size >= 3) walkable++
+        }
+        val walkerAt = Silhouettes.commuterFloor(seconds, crowd, walkable)
+        var ordinal = 0
+        var walkOrdinal = 0
         for (i in art.floors.indices) {
             val fa = art.floors[i]
             val b = fa.block
+            val onToday = isLit(fa, live)
+            val thisOrdinal = if (onToday) ordinal++ else -1
+            val walker = onToday && fa.cast.size >= 3 && walkOrdinal++ == walkerAt
             val landing = motion.landing == b.id && fa.piece.kind == PieceKind.FLOOR
             val adding = motion.adding == b.id
             val drop = if (adding) (1f - motion.drop) * DROP else 0f
@@ -530,6 +561,7 @@ internal class BuildingPainter {
                         step,
                         sky,
                         lod,
+                        Crowd(crowd, thisOrdinal, litFloors, walker),
                     )
                     if (selected == b.id && fa.piece.labelled) outline(fa.top, fa.bottom, accent)
                 }
@@ -666,6 +698,7 @@ internal class BuildingPainter {
         step: Int,
         sky: SkyColors,
         lod: PeopleLod,
+        crowd: Crowd,
     ) {
         val half = B.W / 2f
         val b = fa.block
@@ -748,6 +781,21 @@ internal class BuildingPainter {
                 if (!done && live && b.miss >= 1) (if (b.miss >= 2) min(3, count) else 1) else 0
             val sputter = b.miss >= 2
             val seed = b.id.hashCode()
+            // who is in which lit window now: only a few, taking turns
+            val here = fa.here
+            val cheer = if (motion.cheer == b.id) motion.cheerSince else -1f
+            if (on > 0 && lod != PeopleLod.NONE && crowd.ordinal >= 0)
+                Presence.floorPresence(
+                    here,
+                    fa.cast,
+                    crowd.seed,
+                    fa.seed,
+                    crowd.ordinal,
+                    crowd.litFloors,
+                    seconds,
+                    cheer,
+                )
+            else java.util.Arrays.fill(here, 0f)
             for (k in 0 until count) {
                 val x = w[k * 4]
                 val y = top + w[k * 4 + 1]
@@ -756,7 +804,8 @@ internal class BuildingPainter {
                 val bright =
                     when {
                         k < on ->
-                            if (k >= fa.occupancy.people && lod != PeopleLod.NONE && seconds > 0f)
+                            // an empty room's lamp goes off for a moment now and then (up close)
+                            if (here[k] <= 0f && lod == PeopleLod.FULL && seconds > 0f)
                                 .12f + .88f * Silhouettes.lamp(fa.cast[k].seed, seconds)
                             else 1f
                         k < failing ->
@@ -809,7 +858,8 @@ internal class BuildingPainter {
             if (on < count)
                 drawPath(fa.reflect, SceneInk.Reflection, alpha = alpha * (1f - .6f * sky.dark))
             if (on > 0 && lod != PeopleLod.NONE) {
-                val people = min(fa.occupancy.people, on)
+                // the dot of the zoomed-out street: one person, on every other floor
+                var dots = if (lod == PeopleLod.DOT && (crowd.ordinal and 1) == 1) 0 else 1
                 for (k in 0 until on) {
                     val c = fa.cast[k]
                     val appear =
@@ -822,13 +872,24 @@ internal class BuildingPainter {
                     val y = top + w[k * 4 + 1] - hop
                     val ww = w[k * 4 + 2]
                     val hh = w[k * 4 + 3]
-                    if (k >= people && Silhouettes.lamp(c.seed, seconds) <= 0f) continue
-                    windowLife(c, x, y, ww, hh, seconds, alpha * appear, lod, sky)
+                    val vis = here[k]
+                    if (lod == PeopleLod.DOT) {
+                        if (vis <= 0f || dots == 0) continue
+                        dots--
+                    }
+                    if (
+                        vis <= 0f &&
+                            lod == PeopleLod.FULL &&
+                            seconds > 0f &&
+                            Silhouettes.lamp(c.seed, seconds) <= 0f
+                    )
+                        continue
+                    windowLife(c, x, y, ww, hh, seconds, alpha * appear, lod, sky, vis)
                 }
-                if (lod == PeopleLod.FULL && fa.commuter && seconds > 0f) {
-                    val at = Silhouettes.commuterX(seconds, fa.seed, B.W)
+                if (lod == PeopleLod.FULL && crowd.walker && seconds > 0f) {
+                    val at = Silhouettes.commuterX(seconds, crowd.seed, B.W)
                     if (!at.isNaN()) {
-                        val dir = Silhouettes.commuterDir(fa.seed)
+                        val dir = Silhouettes.commuterDir(seconds, crowd.seed)
                         for (k in 0 until on) {
                             val rel = -half + at - w[k * 4]
                             if (rel < -3f || rel > w[k * 4 + 2] + 3f) continue
@@ -1195,9 +1256,9 @@ internal class BuildingPainter {
     /**
      * One lit window: at full detail its room (the overlay behind, the person in it, the overlay in
      * front), curtains and what sits on its sill; smaller, a simple shape of a person; smaller
-     * still, a moving dot. Someone is only in it when the cast says so (an empty room is just a
-     * room), and steps out now and then. The whole room faces one way or the other, so no two
-     * neighbours are alike.
+     * still, a moving dot. The room is always there; [here] says how much of a person is in it (0
+     * for nobody, 1 settled in, between while they walk in or out). The whole room faces one way or
+     * the other, so no two neighbours are alike.
      */
     private fun DrawScope.windowLife(
         c: WindowCast,
@@ -1209,11 +1270,10 @@ internal class BuildingPainter {
         alpha: Float,
         lod: PeopleLod,
         sky: SkyColors,
+        here: Float,
     ) {
         val act = c.activity
         if (lod != PeopleLod.FULL) {
-            if (act == null) return
-            val here = Silhouettes.here(c.seed, seconds)
             if (here <= 0f) return
             val bob = if (seconds > 0f) kotlin.math.sin(seconds * 7f + c.seed) * .6f else 0f
             val cx = x + w / 2f
@@ -1240,18 +1300,18 @@ internal class BuildingPainter {
             translate(x, y) {
                 scale(dir, 1f, Offset(w / 2f, 0f)) {
                     scale(room, room, Offset.Zero) { drawImage(rm.back, Offset.Zero, overlay) }
-                    if (act != null) person(act, c, w, h, s, seconds, alpha, dir)
+                    if (here > 0f) person(act, c, w, h, s, seconds, alpha, dir, here)
                     scale(room, room, Offset.Zero) { drawImage(rm.front, Offset.Zero, overlay) }
                 }
                 if (c.curtain != 0) curtains(c, w, h, alpha)
-                if (c.sill != 0) sillItem(c, w, h, alpha)
+                if (c.sill != 0 && here < 1f) sillItem(c, w, h, alpha * (1f - here))
             }
         }
     }
 
     /**
      * The person of a window at the window's own origin: their frame of this moment, and the next
-     * one blended in.
+     * one blended in. [here] below 1 is them walking in from (or out to) the side of the window.
      */
     private fun DrawScope.person(
         act: Activity,
@@ -1262,11 +1322,10 @@ internal class BuildingPainter {
         seconds: Float,
         alpha: Float,
         dir: Float,
+        here: Float,
     ) {
-        val here = Silhouettes.here(c.seed, seconds)
-        if (here <= 0f) return
         val spec = PeopleActivities.of(act)
-        var ax = s * PeopleActivities.shift(spec.room) + w / 2f
+        var ax = s * PeopleActivities.shift(spec.room) + w / 2f + (1f - here) * 7f * dir
         var face = 1f
         var size = s * PeopleActivities.fitted(act)
         if (act == Activity.WALKING) {
@@ -1433,26 +1492,28 @@ internal class BuildingPainter {
                 }
                 val s = .52f
                 if (side == 0) {
-                    // the receptionist at the desk
+                    // the receptionist at the desk, about half the time
                     val ax = ox + 28f
+                    val at = Silhouettes.receptionist(seed, seconds)
                     val shift = PeopleActivities.shift(RoomKind.OFFICE)
                     val spec = PeopleActivities.of(Activity.TYPING)
                     val box = PeopleSprites.box(Activity.TYPING)
                     val look = (seed and 0x7fffffff) % Looks.COUNT
                     val size = s * PeopleActivities.fitted(Activity.TYPING)
-                    translate(ax + shift * s, floor) {
-                        scale(size * frame, size * frame, Offset.Zero) {
-                            drawImage(
-                                SceneSprites.person(
-                                    look,
-                                    Activity.TYPING,
-                                    Silhouettes.frame(spec, seconds, seed),
-                                ),
-                                Offset(box.left.toFloat(), box.top.toFloat()),
-                                1f,
-                            )
+                    if (at > 0f)
+                        translate(ax + shift * s, floor) {
+                            scale(size * frame, size * frame, Offset.Zero) {
+                                drawImage(
+                                    SceneSprites.person(
+                                        look,
+                                        Activity.TYPING,
+                                        Silhouettes.frame(spec, seconds, seed),
+                                    ),
+                                    Offset(box.left.toFloat(), box.top.toFloat()),
+                                    at,
+                                )
+                            }
                         }
-                    }
                     val dx0 = ax + (shift + 2.2f) * s
                     drawRect(
                         furniture,
@@ -1486,14 +1547,14 @@ internal class BuildingPainter {
                         Size(1f, 3.4f),
                         alpha = .9f,
                     )
-                    val at = Silhouettes.lobbyVisitor(seconds, w - 14f)
+                    val at = Silhouettes.lobbyVisitor(seconds, w - 14f, seed)
                     if (!at.isNaN()) {
-                        val moving = Silhouettes.lobbyWalking(seconds)
+                        val moving = Silhouettes.lobbyWalking(seconds, seed)
                         val act = if (moving) Activity.WALKING else Activity.LOOKING_OUT
                         val spec = PeopleActivities.of(act)
                         val box = PeopleSprites.box(act)
                         val look = ((seed and 0x7fffffff) + 3) % Looks.COUNT
-                        val back = seconds > 0f && (seconds / 20f) % 1f >= .62f
+                        val back = Silhouettes.lobbyReturning(seconds, seed)
                         val size = s * PeopleActivities.fitted(act)
                         translate(ox + 4f + at, floor) {
                             scale(

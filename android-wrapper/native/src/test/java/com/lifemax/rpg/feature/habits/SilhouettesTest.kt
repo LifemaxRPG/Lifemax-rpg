@@ -6,13 +6,18 @@ import com.lifemax.rpg.feature.habits.domain.HabitsRules
 import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.PeopleLod
+import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.Spline
+import com.lifemax.rpg.feature.habits.domain.WindowCast
+import com.lifemax.rpg.feature.habits.domain.floorWindows
+import com.lifemax.rpg.feature.habits.domain.lightOrder
 import com.lifemax.rpg.feature.habits.domain.occupancy
 import com.lifemax.rpg.feature.habits.presentation.scene.PeopleSprites
 import com.lifemax.rpg.feature.habits.presentation.scene.RoomSprites
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -73,48 +78,303 @@ class SilhouettesTest {
         assertNotEquals(generic, other)
     }
 
+    /**
+     * The checker colour of the first [lit] windows of a floor of [height], in the order they
+     * light.
+     */
+    private fun groupsOf(key: String, height: Float, lit: Int): IntArray {
+        val spots = floorWindows(height)
+        val order = lightOrder(key, spots.size)
+        return IntArray(lit) { (spots[order[it]].col + spots[order[it]].row) and 1 }
+    }
+
+    private fun castOf(key: String, height: Float, lit: Int, title: String = "Read 30 min") =
+        Silhouettes.cast(title, key, lit, groupsOf(key, height, lit))
+
     @Test
-    fun theCastOfAFloorIsDeterministicVariedAndKeepsItsHeadcount() {
-        val a = Silhouettes.cast("Read 30 min", "h1/0", 8, 5)
-        val b = Silhouettes.cast("Read 30 min", "h1/0", 8, 5)
+    fun theCastOfAFloorIsDeterministicAndEveryLitWindowIsAFurnishedRoom() {
+        val a = castOf("h1/0", 84f, 8)
+        val b = castOf("h1/0", 84f, 8)
         assertEquals(8, a.size)
-        assertEquals(5, a.count { it.activity != null })
         assertTrue(
             a.indices.all {
                 a[it].activity == b[it].activity &&
                     a[it].look == b[it].look &&
-                    a[it].curtain == b[it].curtain
+                    a[it].curtain == b[it].curtain &&
+                    a[it].rank == b[it].rank
             }
         )
-        // the first five have someone, the rest an empty room with its lights on
-        assertTrue((0 until 5).all { a[it].activity != null })
-        assertTrue((5 until 8).all { a[it].activity == null })
-        // six people on a floor are six different looks
-        val six = Silhouettes.cast("Read 30 min", "h1/1", 6, 6)
-        assertEquals(6, six.map { it.look }.toSet().size)
-        // every window's room is the room its activity is seen in
-        for (w in a) if (w.activity != null)
-            assertEquals(PeopleActivities.of(w.activity!!).room, w.room)
+        // every lit window has a room (the one its activity is seen in) and someone for its turn
+        for (w in a) assertEquals(PeopleActivities.of(w.activity).room, w.room)
+        // the first window's person does the habit; most of the rest do it too
+        assertEquals(Activity.READING, a[0].activity)
+        assertTrue(a.count { it.activity == Activity.READING } >= 4)
+        // the ranks count each colour's windows from 0 without a gap
+        for (g in 0..1) {
+            val ranks = a.filter { it.group == g }.map { it.rank }.sorted()
+            assertEquals(ranks.indices.toList(), ranks)
+        }
+        // six lit windows on a floor are six different looks
+        assertEquals(6, castOf("h1/1", 60f, 6).map { it.look }.toSet().size)
         // curtains and sill things turn up now and then across a few floors
-        val many = (0 until 12).flatMap { Silhouettes.cast("Walk", "x$it", 8, 3).toList() }
+        val many = (0 until 12).flatMap { castOf("x$it", 84f, 8, "Walk").toList() }
         assertTrue(many.any { it.curtain != 0 })
         assertTrue(many.any { it.sill != 0 })
         assertTrue(many.any { it.flip } && many.any { !it.flip })
     }
 
     @Test
-    fun howManyAreLitAndInThemStillGrowsWithReps() {
+    fun howManyAreLitStillGrowsWithReps() {
         val rules = HabitsRules.RULES
-        assertEquals(1, occupancy(rules.clay - 1, 6).people)
-        assertEquals(2, occupancy(rules.clay, 6).people)
+        assertEquals(1, occupancy(rules.clay - 1, 6).lit)
         assertEquals(2, occupancy(rules.clay, 6).lit)
-        val stone = occupancy(rules.stone, 6)
-        assertEquals(5, stone.lit)
+        assertEquals(5, occupancy(rules.stone, 6).lit)
         val gold = occupancy(rules.gold, 6)
         assertEquals(6, gold.lit)
-        assertTrue(gold.people > stone.people)
-        // the cast follows the occupancy
-        assertEquals(gold.lit, Silhouettes.cast("Walk", "k", gold.lit, gold.people).size)
+        // the cast follows the lights
+        assertEquals(gold.lit, castOf("k", 60f, gold.lit, "Walk").size)
+    }
+
+    // ------------------------------------------------------------------ sparse people
+
+    /** A building of [floors] lit floors of [lit] lit windows each: casts of every floor. */
+    private fun building(
+        seed: String,
+        floors: Int,
+        lit: Int,
+        tall: Float = heightFor(lit),
+    ): List<Array<WindowCast>> = List(floors) { castOf("$seed/$it", tall, lit) }
+
+    /** A floor tall enough for [lit] windows: one row up to six, two above. */
+    private fun heightFor(lit: Int) = if (lit > 6) 84f else 60f
+
+    /** How present each lit window of each floor is at [seconds], one array per floor. */
+    private fun look(
+        seed: String,
+        casts: List<Array<WindowCast>>,
+        seconds: Float,
+        cheer: Int = -1,
+        cheerSince: Float = -1f,
+    ): List<FloatArray> {
+        val out = casts.map { FloatArray(it.size) }
+        for ((o, c) in casts.withIndex()) Presence.floorPresence(
+            out[o],
+            c,
+            seed.hashCode(),
+            "$seed/$o".hashCode(),
+            o,
+            casts.size,
+            seconds,
+            if (o == cheer) cheerSince else -1f,
+        )
+        return out
+    }
+
+    private fun neighbours(a: WindowCast, b: WindowCast) = a.group == b.group
+
+    @Test
+    fun aStillFrameShowsAboutOneLitWindowInFourWithSomeoneAndNeverNeighboursTogether() {
+        var people = 0
+        var windows = 0
+        for (seed in 0 until 60) for (floors in 1..3) for (lit in listOf(3, 4, 6, 8)) {
+            val casts = building("b$seed", floors, lit)
+            val v = look("b$seed", casts, 0f)
+            for ((o, c) in casts.withIndex()) {
+                val n = v[o].count { it > 0f }
+                // never a whole floor, never more than the cap
+                assertTrue("floor of $lit has $n", n <= Presence.floorCap(lit, floors))
+                assertTrue(n < lit || lit <= 1)
+                // everyone is settled in, in the still frame
+                assertTrue(v[o].all { it == 0f || it == 1f })
+                // no two neighbours (side by side, or one above the other) are both occupied
+                val spots = floorWindows(heightFor(lit))
+                val order = lightOrder("b$seed/$o", spots.size)
+                for (i in 0 until lit) for (j in i + 1 until lit) {
+                    val a = spots[order[i]]
+                    val b = spots[order[j]]
+                    val near = kotlin.math.abs(a.col - b.col) + kotlin.math.abs(a.row - b.row) == 1
+                    if (near) assertFalse("neighbours both in", v[o][i] > 0f && v[o][j] > 0f)
+                }
+                for (i in 0 until lit) for (j in i + 1 until lit) if (v[o][i] > 0f && v[o][j] > 0f)
+                    assertTrue(neighbours(c[i], c[j]))
+            }
+            people += v.sumOf { f -> f.count { it > 0f } }
+            windows += casts.sumOf { it.size }
+        }
+        val share = people.toFloat() / windows
+        assertTrue("share $share", share in .15f..0.30f)
+    }
+
+    @Test
+    fun aSmallBuildingAlwaysShowsSomeoneAndATallOneStaysSparse() {
+        for (seed in 0 until 40) {
+            for (floors in 1..2) {
+                val v = look("s$seed", building("s$seed", floors, 5), 0f)
+                val n = v.sumOf { f -> f.count { it > 0f } }
+                assertTrue("small building has $n", n in 1..3)
+            }
+            val tall = look("t$seed", building("t$seed", 10, 6, 84f), 0f)
+            assertTrue(tall.sumOf { f -> f.count { it > 0f } } in 1..8)
+        }
+    }
+
+    @Test
+    fun overTimeFewPeopleAreVisibleAtOnceAndTheyKeepChanging() {
+        for (floors in listOf(1, 2, 3, 6, 10)) {
+            val casts = building("t$floors", floors, 6)
+            var most = 0
+            var sum = 0
+            var samples = 0
+            val seen = HashSet<Int>()
+            var t = .5f
+            while (t < 1200f) {
+                val v = look("t$floors", casts, t)
+                val here = v.sumOf { f -> f.count { it > 0f } }
+                most = maxOf(most, here)
+                sum += here
+                samples++
+                for ((o, f) in v.withIndex()) {
+                    // never more than the cap on a floor, never neighbours together
+                    assertTrue(f.count { it > 0f } <= Presence.floorCap(6, floors))
+                    for (i in f.indices) for (j in i + 1 until f.size) if (f[i] > 0f && f[j] > 0f)
+                        assertTrue(neighbours(casts[o][i], casts[o][j]))
+                    seen += f.indices.filter { f[it] > 0f }.map { o * 100 + it }
+                }
+                t += 1.7f
+            }
+            assertTrue(
+                "$floors floors: most $most",
+                most <= minOf(8, Presence.staffedFloors(floors) * 2),
+            )
+            // sparse: on average well under one lit window in four holds someone
+            val average = sum.toFloat() / samples / (floors * 6)
+            assertTrue("$floors floors: average $average", average < .3f)
+            // but it is never lifeless: someone is there most of the time
+            assertTrue(sum > samples / 2)
+            // and in twenty minutes every lit window has had its turn
+            assertEquals("$floors floors: windows seen", floors * 6, seen.size)
+        }
+    }
+
+    @Test
+    fun everyLitWindowOfASmallBuildingGetsAPersonWithinTenMinutes() {
+        for (seed in 0 until 12) for (floors in 1..3) {
+            val casts = building("c$seed", floors, 6)
+            val seen = HashSet<Int>()
+            var t = .5f
+            while (t < 600f) {
+                for ((o, f) in look("c$seed", casts, t).withIndex()) seen +=
+                    f.indices.filter { f[it] > 0f }.map { o * 100 + it }
+                t += 2f
+            }
+            assertEquals("seed $seed, $floors floors", floors * 6, seen.size)
+        }
+    }
+
+    @Test
+    fun aShiftIsAtLeastFifteenSecondsAndEndsWithinItsBlock() {
+        val casts = building("shift", 1, 6)
+        // presence of the window with the most turns, sampled finely
+        var run = 0f
+        val runs = ArrayList<Float>()
+        var t = .05f
+        var k = -1
+        while (t < 1500f) {
+            val v = look("shift", casts, t)[0]
+            if (k < 0) k = v.indices.firstOrNull { v[it] > 0f } ?: -1
+            if (k >= 0) {
+                if (v[k] > 0f) run += .05f
+                else if (run > 0f) {
+                    runs += run
+                    run = 0f
+                }
+            }
+            t += .05f
+        }
+        assertTrue(runs.size >= 4)
+        assertTrue("shifts $runs", runs.drop(1).all { it in 15f..52f })
+    }
+
+    @Test
+    fun schedulesAreDeterministicAndEachBuildingHasItsOwnPhase() {
+        val casts = building("d", 3, 6)
+        for (t in listOf(0f, 3.3f, 61f, 245.5f)) {
+            val a = look("d", casts, t)
+            val b = look("d", casts, t)
+            assertTrue(a.indices.all { a[it].contentEquals(b[it]) })
+        }
+        val tracks =
+            (0 until 8).map { seed ->
+                (0 until 100).map {
+                    look("p$seed", building("p$seed", 2, 6), it * 7f + 1f)
+                        .flatMap { f -> f.toList() }
+                        .count { v -> v > 0f }
+                }
+            }
+        assertTrue(tracks.toSet().size >= 6)
+    }
+
+    @Test
+    fun theFloorJustLaidCheersWithUpToThreePeopleOneByOneThenSettlesBack() {
+        val casts = building("cheer", 3, 6)
+        val calm = look("cheer", casts, 40f)
+        val out = FloatArray(6)
+        var most = 0
+        var firstAt = HashMap<Int, Float>()
+        var t = 0f
+        while (t <= 8f) {
+            Presence.floorPresence(
+                out,
+                casts[1],
+                "cheer".hashCode(),
+                "cheer/1".hashCode(),
+                1,
+                3,
+                40f + t,
+                t,
+            )
+            val n = out.count { it > 0f }
+            most = maxOf(most, n)
+            for (i in out.indices) if (out[i] > 0f && i !in firstAt) firstAt[i] = t
+            t += .05f
+        }
+        // up to three at a time, appearing at different moments
+        assertTrue("most $most", most in 3..3)
+        assertTrue(firstAt.values.toSet().size >= 3)
+        // after the six seconds it is the sparse arrangement again
+        val after = FloatArray(6)
+        Presence.floorPresence(
+            after,
+            casts[1],
+            "cheer".hashCode(),
+            "cheer/1".hashCode(),
+            1,
+            3,
+            47f,
+            7f,
+        )
+        val plain = FloatArray(6)
+        Presence.floorPresence(plain, casts[1], "cheer".hashCode(), "cheer/1".hashCode(), 1, 3, 47f)
+        assertTrue(after.contentEquals(plain))
+        assertTrue(calm[1].count { it > 0f } <= Presence.FLOOR_CAP)
+        // only the cheering floor
+        val other = FloatArray(6)
+        Presence.floorPresence(other, casts[0], "cheer".hashCode(), "cheer/0".hashCode(), 0, 3, 41f)
+        assertTrue(other.count { it > 0f } <= Presence.FLOOR_CAP)
+    }
+
+    @Test
+    fun theNumbersOfPeopleAreCapped() {
+        for (floors in 1..14) assertTrue(Presence.staffedFloors(floors) * Presence.FLOOR_CAP <= 8)
+        assertEquals(0, Presence.staffedFloors(0))
+        assertEquals(1, Presence.staffedFloors(1))
+        assertEquals(1, Presence.staffedFloors(2))
+        // about one in four lit windows, at least one, at most the cap
+        assertEquals(1, Presence.peoplePerFloor(1, 3))
+        assertEquals(1, Presence.peoplePerFloor(4, 3))
+        assertEquals(2, Presence.peoplePerFloor(6, 3))
+        assertEquals(2, Presence.peoplePerFloor(12, 5))
+        assertEquals(3, Presence.peoplePerFloor(12, 4))
     }
 
     @Test
@@ -224,25 +484,49 @@ class SilhouettesTest {
     }
 
     @Test
-    fun someoneWalksAlongTheWholeFloorNowAndThen() {
-        val xs = (1..2000).map { Silhouettes.commuterX(it / 10f, 7, 184f) }
+    fun oneWalkerPassesAWholeBuildingEveryMinuteOrTwo() {
+        val seed = 7
+        val xs = (1..12000).map { Silhouettes.commuterX(it / 10f, seed, 184f) }
         assertTrue(xs.any { it.isNaN() })
         val inside = xs.filter { !it.isNaN() }
-        assertTrue(inside.size > 50)
         assertTrue(inside.all { it in -10.1f..194.1f })
-        assertTrue(Silhouettes.commuterX(0f, 7, 184f).isNaN())
-        // one person arrives and leaves the lobby too
-        val v = (1..400).map { Silhouettes.lobbyVisitor(it / 10f, 56f) }
-        assertTrue(v.any { it.isNaN() } && v.any { !it.isNaN() })
-        assertTrue(Silhouettes.lobbyVisitor(0f, 56f) > 20f)
+        assertTrue(Silhouettes.commuterX(0f, seed, 184f).isNaN())
+        // crossings: counted by their starts in twenty minutes, one every 60 to 120 seconds
+        val starts = (1..12000).count { !xs[it - 1].isNaN() && (it == 1 || xs[it - 2].isNaN()) }
+        assertTrue("walks $starts", starts in 10..20)
+        // on one floor at a time, and on different floors over time
+        val floors = (1..12000).map { Silhouettes.commuterFloor(it / 10f, seed, 5) }
+        assertTrue(floors.all { it in -1..4 })
+        assertTrue(floors.filter { it >= 0 }.toSet().size >= 3)
+        // exactly while the walker is on the street
+        assertTrue(floors.indices.all { (floors[it] >= 0) == !xs[it].isNaN() })
+        assertEquals(-1, Silhouettes.commuterFloor(0f, seed, 5))
     }
 
     @Test
-    fun peopleStepOutAndLampsGoOffForAMomentOnly() {
-        val here = (1..3000).map { Silhouettes.here(4, it / 10f) }
-        assertTrue(here.any { it == 0f })
-        assertTrue(here.count { it == 1f } > here.size * .8f)
-        assertEquals(1f, Silhouettes.here(4, 0f), 0f)
+    fun theLobbyIsQuietTheReceptionistIsThereAboutHalfTheTimeAndTheVisitorComesEveryNinetySeconds() {
+        val seed = 3
+        val desk = (1..12000).map { Silhouettes.receptionist(seed, it / 10f) }
+        val share = desk.count { it > .5f }.toFloat() / desk.size
+        assertTrue("desk $share", share in .35f..0.65f)
+        assertTrue(desk.any { it == 0f } && desk.any { it == 1f })
+        val v = (1..12000).map { Silhouettes.lobbyVisitor(it / 10f, 56f, seed) }
+        val out = v.count { !it.isNaN() }.toFloat() / v.size
+        assertTrue("visitor out $out", out < .3f)
+        val visits = (1..12000).count { !v[it - 1].isNaN() && (it == 1 || v[it - 2].isNaN()) }
+        assertTrue("visits $visits", visits in 10..20)
+        assertTrue((1..12000).any { Silhouettes.lobbyWalking(it / 10f, seed) })
+        assertTrue((1..12000).any { Silhouettes.lobbyReturning(it / 10f, seed) })
+        // at rest: the receptionist is usually there, the visitor usually not
+        val atRest = (0 until 200).map { Silhouettes.receptionist(it, 0f) }
+        assertTrue(atRest.count { it == 1f } in 100..170)
+        assertTrue(
+            (0 until 200).count { !Silhouettes.lobbyVisitor(0f, 56f, it).isNaN() } in 30..110
+        )
+    }
+
+    @Test
+    fun emptyRoomsLampsGoOffForAMomentOnly() {
         val lamp = (1..3000).map { Silhouettes.lamp(4, it / 10f) }
         assertTrue(lamp.any { it == 0f } && lamp.count { it == 1f } > lamp.size * .7f)
         assertEquals(1f, Silhouettes.lamp(4, 0f), 0f)

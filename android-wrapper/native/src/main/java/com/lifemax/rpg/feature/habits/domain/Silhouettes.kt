@@ -25,14 +25,16 @@ enum class PeopleLod {
 }
 
 /**
- * Who is in one lit window of a floor. [activity] is null for an empty room (its light on, nobody
- * in), [room] what the window looks into, [look] which of the [Looks], [flip] which way they face,
- * [seed] their own number, [curtain] 0 for none, 1 a drape on the left, 2 on the right, 3 blinds
- * half down, 4 both drapes, [sill] 0 for nothing, 1 a pot plant, 2 a cat, and [commuter] whether
- * someone walking along the floor passes this window.
+ * One lit window of a floor: a furnished room that someone may be in now and then (see [Presence]).
+ * [activity] is what the person who takes their turn here does, [room] what the window looks into
+ * (the room that goes with it), [look] which of the [Looks], [flip] which way they face, [seed]
+ * their own number, [curtain] 0 for none, 1 a drape on the left, 2 on the right, 3 blinds half
+ * down, 4 both drapes, [sill] 0 for nothing, 1 a pot plant, 2 a cat. [group] is the window's
+ * checker colour (0 or 1: neighbours differ) and [rank] its place among the lit windows of its
+ * colour.
  */
 class WindowCast(
-    val activity: Activity?,
+    val activity: Activity,
     val room: RoomKind,
     val look: Int,
     val flip: Boolean,
@@ -40,6 +42,8 @@ class WindowCast(
     val curtain: Int,
     val curtainTone: Int,
     val sill: Int,
+    val group: Int,
+    val rank: Int,
 )
 
 object Silhouettes {
@@ -367,51 +371,38 @@ object Silhouettes {
             return OFFICE[((Ambient.hash(seed, nth, 31) * OFFICE.size).toInt() + nth) % OFFICE.size]
         if (nth == 0)
             return own[(Ambient.hash(seed, 0, 32) * own.size).toInt().coerceAtMost(own.size - 1)]
-        return if (Ambient.hash(seed, nth, 33) < .62f)
+        return if (Ambient.hash(seed, nth, 33) < .55f)
             own[(nth + (Ambient.hash(seed, 1, 34) * own.size).toInt()) % own.size]
         else
             OFFICE[
                 (Ambient.hash(seed, nth, 35) * OFFICE.size).toInt().coerceAtMost(OFFICE.size - 1)]
     }
 
-    private val EMPTY_ROOMS =
-        arrayOf(
-            RoomKind.OFFICE,
-            RoomKind.LIVING,
-            RoomKind.HALL,
-            RoomKind.KITCHEN,
-            RoomKind.STUDY,
-            RoomKind.PLANTS,
-            RoomKind.DESK,
-            RoomKind.BEDROOM,
-            RoomKind.BOARD,
-        )
-
     /**
-     * Who is in each of a floor's first [lit] windows (in the order they light): the first [people]
-     * have someone in them doing something, the rest an empty room with its lights on. Every window
-     * of a floor has its own look, room, curtains and sill; all of it is a function of the floor's
-     * [key] and [title] and [lit] alone.
+     * The room of each of a floor's first [lit] windows (in the order they light) and who takes
+     * their turn in it: every lit window is a furnished room of the activity its person does, and
+     * [Presence] says when somebody is in it. [groups] is each window's checker colour (column plus
+     * row, odd or even). Every window of a floor has its own look, curtains and sill; all of it is
+     * a function of the floor's [key] and [title] and [groups] alone.
      */
-    fun cast(title: String, key: String, lit: Int, people: Int): Array<WindowCast> {
+    fun cast(title: String, key: String, lit: Int, groups: IntArray): Array<WindowCast> {
         val seed = key.hashCode()
+        val ranks = IntArray(lit)
+        for (g in 0..1) {
+            val of =
+                (0 until lit).filter { groups[it] == g }.sortedBy { Ambient.hash(seed, it, 48) }
+            for ((r, k) in of.withIndex()) ranks[k] = r
+        }
         return Array(lit) { k ->
             val s = (Ambient.hash(seed, k, 5) * 100000).toInt()
-            val occupant = k < people
-            val act = if (occupant) activityFor(title, k, seed) else null
-            val room =
-                if (act != null) PeopleActivities.of(act).room
-                else
-                    EMPTY_ROOMS[
-                        (Ambient.hash(seed, k, 41) * EMPTY_ROOMS.size)
-                            .toInt()
-                            .coerceAtMost(EMPTY_ROOMS.size - 1)]
+            val act = activityFor(title, k, seed)
+            val room = PeopleActivities.of(act).room
             val look = (((Ambient.hash(seed, 0, 42) * Looks.COUNT).toInt()) + k * 5) % Looks.COUNT
             val c = Ambient.hash(seed, k, 43)
             val curtain =
                 if (c < .3f) 1 + (Ambient.hash(seed, k, 44) * 4).toInt().coerceAtMost(3) else 0
             val sillRoll = Ambient.hash(seed, k, 45)
-            val sill = if (!occupant && sillRoll < .3f) (if (sillRoll < .14f) 1 else 2) else 0
+            val sill = if (sillRoll < .3f) (if (sillRoll < .14f) 1 else 2) else 0
             WindowCast(
                 act,
                 room,
@@ -421,6 +412,8 @@ object Silhouettes {
                 curtain,
                 (Ambient.hash(seed, k, 47) * 3).toInt().coerceAtMost(2),
                 sill,
+                groups[k] and 1,
+                ranks[k],
             )
         }
     }
@@ -458,25 +451,6 @@ object Silhouettes {
     }
 
     /**
-     * How much someone is in their window at [seconds]: they step out for a few seconds now and
-     * then (a cycle of about two minutes, its own for [seed]) and come back; 1 while time stands
-     * still.
-     */
-    fun here(seed: Int, seconds: Float): Float {
-        if (seconds <= 0f) return 1f
-        val cycle = 70f + Ambient.hash(seed, 0, 71) * 70f
-        val t = (seconds + Ambient.hash(seed, 0, 72) * cycle) % cycle
-        val away = 7f
-        val edge = 1f
-        return when {
-            t >= cycle - away -> 0f
-            t >= cycle - away - edge -> (cycle - away - t) / edge
-            t < edge -> t / edge
-            else -> 1f
-        }.coerceIn(0f, 1f)
-    }
-
-    /**
      * How lit an empty room's lamp is at [seconds]: off for a few seconds every minute or so, then
      * on again.
      */
@@ -505,33 +479,80 @@ object Silhouettes {
     /** Which way someone walking past faces: 1 right, -1 left. */
     fun walkDir(seed: Int): Float = if (Ambient.hash(seed, 0, 91) < .5f) 1f else -1f
 
+    /** How long one walker takes to cross a whole floor, in seconds. */
+    private const val CROSSING = 11f
+
+    private fun commuterCycle(seed: Int) = 60f + Ambient.hash(seed, 0, 81) * 60f
+
+    private fun commuterPhase(seconds: Float, seed: Int) =
+        seconds / commuterCycle(seed) + Ambient.hash(seed, 0, 82)
+
     /**
-     * Where someone walking along a whole floor [width] wide is at [seconds], from its left edge,
-     * or NaN while no one is: they cross in about eleven seconds, every half minute or so; each
-     * floor has its own pace. They pass behind the wall between the windows.
+     * Which of a building's [eligible] floors (counted from the bottom) has someone walking along
+     * it at [seconds], or -1: the building has one walker at a time, every minute or two (its own
+     * pace for [seed]), and they cross in about eleven seconds, each time on another floor.
+     */
+    fun commuterFloor(seconds: Float, seed: Int, eligible: Int): Int {
+        if (seconds <= 0f || eligible <= 0) return -1
+        val p = commuterPhase(seconds, seed)
+        val e = floor(p).toInt()
+        if (p - e >= CROSSING / commuterCycle(seed)) return -1
+        return (Ambient.hash(seed, e, 85) * eligible).toInt().coerceAtMost(eligible - 1)
+    }
+
+    /**
+     * Where the building's walker is across a floor [width] wide at [seconds], from its left edge,
+     * or NaN while there is none.
      */
     fun commuterX(seconds: Float, seed: Int, width: Float): Float {
         if (seconds <= 0f) return Float.NaN
-        val cycle = 26f + Ambient.hash(seed, 0, 81) * 20f
-        val t = ((seconds / cycle + Ambient.hash(seed, 0, 82)) % 1f + 1f) % 1f
-        val span = 11f / cycle
-        if (t >= span) return Float.NaN
-        val u = t / span
+        val p = commuterPhase(seconds, seed)
+        val e = floor(p).toInt()
+        val u = (p - e) * commuterCycle(seed) / CROSSING
+        if (u >= 1f) return Float.NaN
         val x = -10f + (width + 20f) * u
-        return if (Ambient.hash(seed, 0, 83) < .5f) x else width - x
+        return if (Ambient.hash(seed, e, 83) < .5f) x else width - x
     }
 
-    fun commuterDir(seed: Int): Float = if (Ambient.hash(seed, 0, 83) < .5f) 1f else -1f
+    /** Which way the walker faces now: 1 right, -1 left. */
+    fun commuterDir(seconds: Float, seed: Int): Float =
+        if (Ambient.hash(seed, floor(commuterPhase(seconds, seed)).toInt(), 83) < .5f) 1f else -1f
+
+    /**
+     * How much the receptionist is at the desk at [seconds]: about half the time, out for a few
+     * minutes and back. At rest, there in about two buildings of three.
+     */
+    fun receptionist(seed: Int, seconds: Float): Float {
+        if (seconds <= 0f) return if (Ambient.hash(seed, 0, 95) < .65f) 1f else 0f
+        val cycle = 100f + Ambient.hash(seed, 0, 97) * 50f
+        val t = (seconds + Ambient.hash(seed, 0, 98) * cycle) % cycle
+        val on = cycle * .52f
+        return minOf((t / 1f).coerceIn(0f, 1f), ((on - t) / 1f).coerceIn(0f, 1f))
+    }
+
+    /**
+     * Where in a visit (0 to 1) the lobby's visitor is at [seconds], or -1 while they are inside.
+     */
+    private fun visitT(seconds: Float, seed: Int): Float {
+        val cycle = 70f + Ambient.hash(seed, 0, 99) * 40f
+        val t = (seconds + Ambient.hash(seed, 0, 100) * cycle) % cycle
+        return if (t < VISIT) t / VISIT else -1f
+    }
+
+    /** How long a visitor stays out, in seconds. */
+    private const val VISIT = 20f
 
     /**
      * The visitor in the lobby: how far from the door's side of the window [width] wide they are at
-     * [seconds], or NaN while they are inside. They walk out, stand and look at the street for a
-     * while, and walk back in. Standing still (0 seconds), they stand at the far end.
+     * [seconds], or NaN while they are inside. Every minute and a half or so they walk out, stand
+     * and look at the street for a while, and walk back in. At rest, one building in three has them
+     * standing at the far end.
      */
-    fun lobbyVisitor(seconds: Float, width: Float): Float {
+    fun lobbyVisitor(seconds: Float, width: Float, seed: Int = 0): Float {
         val far = width * .55f
-        if (seconds <= 0f) return far
-        val t = (seconds / 20f) % 1f
+        if (seconds <= 0f) return if (Ambient.hash(seed, 0, 96) < .35f) far else Float.NaN
+        val t = visitT(seconds, seed)
+        if (t < 0f) return Float.NaN
         return when {
             t < .3f -> far * t / .3f
             t < .62f -> far
@@ -541,12 +562,13 @@ object Silhouettes {
     }
 
     /** Whether the lobby's visitor is on the move at [seconds]. */
-    fun lobbyWalking(seconds: Float): Boolean {
+    fun lobbyWalking(seconds: Float, seed: Int = 0): Boolean {
         if (seconds <= 0f) return false
-        val t = (seconds / 20f) % 1f
-        return t < .3f || (t >= .62f && t < .92f)
+        val t = visitT(seconds, seed)
+        return (t >= 0f && t < .3f) || (t >= .62f && t < .92f)
     }
 
-    /** Whether the floor with [seed] has someone who walks along it. */
-    fun hasCommuter(seed: Int, lit: Int): Boolean = lit >= 3 && Ambient.hash(seed, 0, 84) < .75f
+    /** Whether the lobby's visitor is on the way back in. */
+    fun lobbyReturning(seconds: Float, seed: Int = 0): Boolean =
+        seconds > 0f && visitT(seconds, seed) >= .62f
 }

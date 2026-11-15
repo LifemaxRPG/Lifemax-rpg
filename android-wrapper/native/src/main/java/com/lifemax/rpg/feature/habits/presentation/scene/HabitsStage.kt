@@ -56,6 +56,7 @@ import com.lifemax.rpg.feature.habits.domain.HabitStack
 import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
+import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.SceneWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
@@ -131,6 +132,14 @@ private class PlayMotion {
     var adding by mutableStateOf<String?>(null)
     var swept by mutableStateOf(false)
 
+    /**
+     * The floor laid a moment ago, which people crowd to the windows of for
+     * [Presence.CHEER_SECONDS], and when that began.
+     */
+    private var cheering: String? = null
+    private var cheerAt = 0f
+    private var wasLanding = false
+
     /** The play these parts are running, so one that ends late does not stop the next. */
     var playing = 0L
 
@@ -146,6 +155,14 @@ private class PlayMotion {
     fun now(seconds: Float, into: BuildingMotion): BuildingMotion {
         into.seconds = seconds
         into.landing = landing
+        if (landing != null && !wasLanding) {
+            cheering = landing
+            cheerAt = seconds
+        }
+        wasLanding = landing != null
+        if (cheering != null && seconds - cheerAt >= Presence.CHEER_SECONDS) cheering = null
+        into.cheer = cheering
+        into.cheerSince = seconds - cheerAt
         into.felled = felled
         into.adding = adding
         into.lights = lights.value

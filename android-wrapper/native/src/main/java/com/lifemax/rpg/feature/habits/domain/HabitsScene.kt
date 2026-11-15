@@ -608,31 +608,31 @@ fun floorWindows(height: Float, ruin: Boolean = false): List<WindowSpot> {
     return out
 }
 
-/** How lived-in a floor is: [lit] of its windows have their lights on, [people] someone in them. */
-data class Occupancy(val lit: Int, val people: Int)
+/**
+ * How lived-in a floor is: [lit] of its windows have their lights on (people take turns in them).
+ */
+data class Occupancy(val lit: Int)
 
 /**
- * The lights and people of a floor with [windows] windows, done today, after [reps] repetitions:
- * one window and one person while it is new (under [HabitRules.clay]), two from then, most of them
- * from [HabitRules.stone], every window and more people from [HabitRules.gold].
+ * The lights of a floor with [windows] windows, done today, after [reps] repetitions: one window
+ * while it is new (under [HabitRules.clay]), two from then, most of them from [HabitRules.stone],
+ * every window from [HabitRules.gold]. Who is in them, and when, is [Presence].
  */
 fun occupancy(reps: Int, windows: Int, rules: HabitRules = HabitsRules.RULES): Occupancy {
-    if (windows <= 0) return Occupancy(0, 0)
-    val (lit, people) =
+    if (windows <= 0) return Occupancy(0)
+    val lit =
         when {
-            reps >= rules.gold -> windows to ceil(windows * .75f).toInt()
-            reps >= rules.stone ->
-                ceil(windows * .7f).toInt() to max(2, ceil(windows * .4f).toInt())
-            reps >= rules.clay -> 2 to 2
-            else -> 1 to 1
+            reps >= rules.gold -> windows
+            reps >= rules.stone -> ceil(windows * .7f).toInt()
+            reps >= rules.clay -> 2
+            else -> 1
         }
-    val l = lit.coerceIn(1, windows)
-    return Occupancy(l, people.coerceIn(1, l))
+    return Occupancy(lit.coerceIn(1, windows))
 }
 
 /**
  * The order a floor's [count] windows light up in, its own for [key]: the first [Occupancy.lit] of
- * it are lit, and someone is in the first [Occupancy.people].
+ * it are lit.
  */
 fun lightOrder(key: String, count: Int): IntArray {
     val order = IntArray(count) { it }

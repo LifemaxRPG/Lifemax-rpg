@@ -88,15 +88,11 @@ internal class FloorArt(
     /** Its windows as x, y, w, h (y from the front's top), in the order they light up. */
     val windows: FloatArray,
     val occupancy: Occupancy,
-    /** Who is in each lit window (in the order they light), and what room it looks into. */
+    /** Each lit window (in the order they light): its room and who takes their turn in it. */
     val cast: Array<WindowCast>,
-    /**
-     * The floor's own number, which of its dark windows has a hallway light (-1 none), whether
-     * someone walks along it.
-     */
+    /** The floor's own number, and which of its dark windows has a hallway light (-1 none). */
     val seed: Int,
     val hall: Int,
-    val commuter: Boolean,
     /** A run-down storey's windows, in window order. */
     val ruin: Array<RuinWindow>,
     val name: TextLayoutResult?,
@@ -110,6 +106,11 @@ internal class FloorArt(
 ) {
     val windowCount: Int
         get() = windows.size / 4
+
+    /**
+     * How much of a person is in each lit window right now (scratch the painter fills per frame).
+     */
+    val here = FloatArray(cast.size)
 }
 
 /** A building worked out once: its storeys and the words on its lobby and its roof. */
@@ -231,10 +232,10 @@ private fun floorArt(
     }
     val occ = occupancy(b.reps, spots.size)
     val key = b.id + "/" + storey
-    val cast = Silhouettes.cast(b.title, key, occ.lit, occ.people)
+    val groups = IntArray(occ.lit) { k -> (spots[order[k]].col + spots[order[k]].row) and 1 }
+    val cast = Silhouettes.cast(b.title, key, occ.lit, groups)
     val seed = key.hashCode()
     val hall = Silhouettes.hallLight(key, spots.size)
-    val commuter = Silhouettes.hasCommuter(seed, occ.lit)
     val ruins = Array(spots.size) { ruinWindow(b.id, storey, storeys, it) }
     val texture = Path()
     val trim = Path()
@@ -345,7 +346,6 @@ private fun floorArt(
         cast,
         seed,
         hall,
-        commuter,
         ruins,
         name,
         count,

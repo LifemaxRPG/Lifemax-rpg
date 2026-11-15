@@ -326,22 +326,20 @@ class HabitsSceneTest {
     }
 
     @Test
-    fun lightsAndPeopleGrowWithTheReps() {
-        assertEquals(Occupancy(1, 1), occupancy(0, 8))
-        assertEquals(Occupancy(1, 1), occupancy(9, 8))
-        assertEquals(Occupancy(2, 2), occupancy(10, 8))
-        assertEquals(Occupancy(2, 2), occupancy(29, 8))
-        // most windows from 30, every one and more people from 66
+    fun lightsGrowWithTheReps() {
+        assertEquals(Occupancy(1), occupancy(0, 8))
+        assertEquals(Occupancy(1), occupancy(9, 8))
+        assertEquals(Occupancy(2), occupancy(10, 8))
+        assertEquals(Occupancy(2), occupancy(29, 8))
+        // most windows from 30, every one from 66
         val most = occupancy(30, 8)
-        assertTrue(most.lit in 5..7 && most.people in 2..most.lit)
+        assertTrue(most.lit in 5..7)
         assertEquals(occupancy(65, 8), most)
-        val all = occupancy(66, 8)
-        assertEquals(8, all.lit)
-        assertTrue(all.people > most.people)
+        assertEquals(8, occupancy(66, 8).lit)
         // never more than the windows there are, and never none
-        assertEquals(Occupancy(1, 1), occupancy(100, 1))
-        assertEquals(Occupancy(0, 0), occupancy(100, 0))
-        assertTrue((0..200).all { r -> occupancy(r, 4).let { it.people <= it.lit && it.lit <= 4 } })
+        assertEquals(Occupancy(1), occupancy(100, 1))
+        assertEquals(Occupancy(0), occupancy(100, 0))
+        assertTrue((0..200).all { r -> occupancy(r, 4).lit <= 4 })
         // the order the windows light up in is the floor's own, and every window once
         val order = lightOrder("h1/0", 10)
         assertEquals((0 until 10).toList(), order.sorted())
