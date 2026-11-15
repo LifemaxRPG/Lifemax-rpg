@@ -512,7 +512,7 @@ class SilhouettesTest {
         assertTrue(desk.any { it == 0f } && desk.any { it == 1f })
         val v = (1..12000).map { Silhouettes.lobbyVisitor(it / 10f, 56f, seed) }
         val out = v.count { !it.isNaN() }.toFloat() / v.size
-        assertTrue("visitor out $out", out < .3f)
+        assertTrue("visitor out $out", out < .32f)
         val visits = (1..12000).count { !v[it - 1].isNaN() && (it == 1 || v[it - 2].isNaN()) }
         assertTrue("visits $visits", visits in 10..20)
         assertTrue((1..12000).any { Silhouettes.lobbyWalking(it / 10f, seed) })

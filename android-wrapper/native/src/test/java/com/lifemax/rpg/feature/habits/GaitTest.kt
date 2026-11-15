@@ -35,8 +35,19 @@ class GaitTest {
         assertEquals(2f * Gait.STEP, Gait.STRIDE, 1e-4f)
         // the loop plays at the rate that makes its frames last one cycle
         assertEquals(Gait.CYCLE, walk.seconds, 1e-3f)
-        // the turn has four frames on the way and the standing one
-        assertEquals(Gait.TURN_FRAMES, walk.extra.size)
+        // the turn has four frames on the way and the standing one, then the look at the watch
+        assertEquals(Gait.TURN_FRAMES + Gait.WATCH_FRAMES, walk.extra.size)
+        for (l in 0 until Looks.COUNT) {
+            // every look has its own walk, the same length, and its own turn
+            assertEquals(walk.keys.size, walk.keysFor(l).size)
+            assertTrue(
+                FigBuilder.same(
+                    walk.poseAt(walk.totalFrames - 1, l),
+                    walk.poseAt(walk.totalFrames - 1),
+                    0f,
+                )
+            )
+        }
         assertEquals(walk.frames + walk.extra.size, walk.totalFrames)
         val jog = PeopleActivities.of(Activity.JOGGING)
         assertEquals(16, jog.frames)
@@ -149,9 +160,17 @@ class GaitTest {
         }
     }
 
-    /** The planted foot's reference point in the world: where it does not move. */
-    private fun contactWorldX(phase: Float, near: Boolean, look: Int): Float? {
-        val p = walk.poseAtPhase(phase)
+    /**
+     * The planted foot's reference point in the world: where it does not move. [styled] walks in
+     * the look's own style (its own stride), else the neutral walk.
+     */
+    private fun contactWorldX(
+        phase: Float,
+        near: Boolean,
+        look: Int,
+        styled: Boolean = false,
+    ): Float? {
+        val p = walk.poseAtPhase(phase, if (styled) look else -1)
         val fb = FigBuilder(Looks.ALL[look], p, 0f).build(null, 0f)
         val sa = if (near) p[K.LN] - p[K.KN] else p[K.LF] - p[K.KF]
         val ank = if (near) p[K.ANN] else p[K.ANF]
@@ -173,12 +192,16 @@ class GaitTest {
                 else -> ax.toDouble()
             }
         // the body goes at the gait's pace for its own height: a shorter person has a shorter
-        // stride
-        return (x + Gait.STRIDE * Looks.ALL[look].body.height * phase).toFloat()
+        // stride, and a look its own
+        val stride = if (styled) Gait.stride(look) else Gait.STRIDE
+        return (x + stride * Looks.ALL[look].body.height * phase).toFloat()
     }
 
-    @Test
-    fun thePlantedFootStaysWhereItLandsWhileTheBodyMovesOverIt() {
+    @Test fun thePlantedFootStaysWhereItLandsWhileTheBodyMovesOverIt() = plantedFoot(false)
+
+    @Test fun thePlantedFootStaysPutInEveryLooksOwnStyleToo() = plantedFoot(true)
+
+    private fun plantedFoot(styled: Boolean) {
         // a figure drawn at the gait's own speed: pelvis at STRIDE * phase; in each stretch of the
         // stance (heel down, foot flat, heel up) the point on the ground does not move
         for (look in 0 until Looks.COUNT) {
@@ -187,8 +210,8 @@ class GaitTest {
             var prevKind = -1
             for (s in 0 until 64) {
                 val phase = s / 64f
-                val x = contactWorldX(phase, true, look)
-                val p = walk.poseAtPhase(phase)
+                val x = contactWorldX(phase, true, look, styled)
+                val p = walk.poseAtPhase(phase, if (styled) look else -1)
                 val t = (p[K.LN] - p[K.KN] + p[K.ANN]).toDouble()
                 val kind = if (x == null) -1 else if (t > 3.0) 0 else if (t < -3.0) 2 else 1
                 if (kind != prevKind || kind == -1) {
@@ -210,8 +233,220 @@ class GaitTest {
                 assertTrue("look $look slide $slide over ${g.size} samples", slide < tol)
             }
             // and in all the foot is on the ground for a bit over half the cycle (60 per cent)
-            val onGround = (0 until 64).count { contactWorldX(it / 64f, true, look) != null }
+            val onGround =
+                (0 until 64).count { contactWorldX(it / 64f, true, look, styled) != null }
             assertTrue("look $look on the ground $onGround of 64", onGround in 32..44)
+        }
+    }
+
+    // ------------------------------------------------------------------ the irregularities
+
+    @Test
+    fun everyLookHasItsOwnStyleWithinBoundsAndNoTwoAlike() {
+        for (l in 0 until Looks.COUNT) {
+            val st = Gait.style(l)
+            assertTrue("stride ${st.stride}", st.stride in .88f..1.12f)
+            assertTrue(st.armNear in 10f..34f && st.armFar in 10f..34f)
+            assertTrue(st.bob in .6f..1.4f)
+            assertTrue(st.lean in 1.5f..5.5f)
+            assertTrue(abs(st.split) <= .03f)
+            assertTrue(st.roll in .6f..1.4f && st.hip in .7f..1.3f)
+            assertEquals(Gait.STRIDE * st.stride, Gait.stride(l), 1e-5f)
+            assertEquals(.7f * Looks.ALL[l].body.height * st.stride, Gait.pace(.7f, l), 1e-5f)
+            // the same every time
+            assertTrue(st === Gait.style(l))
+            for (m in 0 until l) assertTrue(
+                "looks $l and $m walk alike",
+                abs(st.stride - Gait.style(m).stride) > .005f ||
+                    abs(st.armNear - Gait.style(m).armNear) > 1f,
+            )
+            // the look's walk is still a proper walk: a closed loop, the second step the first
+            // with the other leg to within the asymmetry allowed (not identical, not wild)
+            val keys = walk.keysFor(l)
+            assertTrue(Spline.closed(keys, .001f))
+            var worst = 0f
+            for (k in 0 until walk.frames / 2) {
+                val a = walk.poseAt(k, l)
+                val b = walk.poseAt(k + walk.frames / 2, l)
+                worst = maxOf(worst, abs(a[K.LN] - b[K.LF]), abs(a[K.KN] - b[K.KF]))
+                assertTrue("look $l $k legs", abs(a[K.LN] - b[K.LF]) < 7f)
+                assertTrue("look $l $k knees", abs(a[K.KN] - b[K.KF]) < 9f)
+                assertTrue("look $l $k arms", abs(a[K.AN] - b[K.AF]) < 9f)
+            }
+            assertTrue("look $l worst $worst", worst < 9f)
+            // and the frames do not jump
+            for (k in 0 until walk.frames) {
+                val a = walk.poseAt(k, l)
+                val b = walk.poseAt((k + 1) % walk.frames, l)
+                for (i in 0 until K.SIZE) assertTrue(
+                    "look $l ${K.NAMES[i]} $k: ${abs(a[i] - b[i])}",
+                    abs(a[i] - b[i]) <=
+                        if (i == K.KN || i == K.KF || i == K.ANN || i == K.ANF) 34f else 16f,
+                )
+            }
+        }
+        // the neutral walk is symmetric; some look's is not quite
+        var asym = 0f
+        for (l in 0 until Looks.COUNT) for (k in 0 until walk.frames / 2) {
+            val a = walk.poseAt(k, l)
+            val b = walk.poseAt(k + walk.frames / 2, l)
+            asym = maxOf(asym, abs(a[K.AN] - b[K.AF]))
+        }
+        assertTrue("asymmetry $asym", asym > .5f)
+        // the head still bobs about as much as before, give or take the look's own
+        for (l in 0 until Looks.COUNT) {
+            val figs =
+                (0 until walk.frames).map {
+                    FigBuilder(Looks.ALL[l], walk.poseAt(it, l), 0f).build(null, 0f)
+                }
+            val ys = figs.map { it.joints.headY }
+            val b = FigBuilder.bounds(figs[0].shapes())
+            val bob = (ys.max() - ys.min()) / (b[3] - b[1])
+            assertTrue("look $l bob $bob", bob in .01f..0.045f)
+        }
+    }
+
+    @Test
+    fun aPersonsSignatureIsWithinBoundsDeterministicAndDiffersBetweenSeeds() {
+        var limpers = 0
+        var distinct = 0
+        for (seed in 0 until 500) {
+            val sg = Gait.signature(seed)
+            assertTrue(sg.tempo in .92f..1.08f)
+            assertTrue(sg.lean in -1f..2.5f)
+            assertTrue(sg.bob in .6f..1.4f)
+            assertTrue(sg.limp == 0f || sg.limp in .6f..1f)
+            assertTrue(sg.hitch in 0f..0.2f)
+            if (sg.limp > 0f) {
+                limpers++
+                assertEquals(0f, sg.hitch, 0f)
+            } else assertTrue(sg.hitch >= .08f)
+            assertEquals(sg.tempo, Gait.tempo(seed), 0f)
+            assertEquals(sg.lean, Gait.lean(seed), 0f)
+            val again = Gait.signature(seed)
+            assertEquals(sg.tempo, again.tempo, 0f)
+            assertEquals(sg.limp, again.limp, 0f)
+            if (seed > 0 && abs(sg.tempo - Gait.signature(seed - 1).tempo) > .005f) distinct++
+        }
+        assertTrue("limpers $limpers of 500", limpers in 10..60)
+        assertTrue("distinct $distinct", distinct > 400)
+        assertTrue(Gait.swayPeriod(7) in 3f..5.2f)
+    }
+
+    @Test
+    fun theLiveWalkOnlyGoesForwardStaysNearTheSteadyOneAndNoTwoStridesAreAlike() {
+        val pace = .7f
+        val stride = Gait.STRIDE * pace
+        for (seed in listOf(1, 2, 11, 15, 23, 40, 77)) {
+            var prev = Gait.liveTravel(0f, pace, seed)
+            var prevPhase = Gait.livePhase(0f, pace, seed)
+            var hitches = 0
+            var slowest = 1f
+            var quickest = 1f
+            var worst = 0f
+            val n = 6000 // a minute at a hundred a second, at the gait's pace
+            val dd = Gait.SPEED * pace / 100f
+            for (i in 1..n) {
+                val d = i * dd
+                val live = Gait.liveTravel(d, pace, seed)
+                // monotonic: never a step backwards, never stopped
+                assertTrue("seed $seed back at $i", live > prev)
+                val rate = (live - prev) / dd
+                slowest = minOf(slowest, rate)
+                quickest = maxOf(quickest, rate)
+                if (rate < .75f) hitches++
+                // within the bound of the steady walk
+                worst = maxOf(worst, abs(live - d))
+                assertTrue("seed $seed off ${live - d}", abs(live - d) <= Gait.LIVE_BOUND * stride)
+                // the phase follows it: wraps once a stride and otherwise creeps
+                val ph = Gait.livePhase(d, pace, seed)
+                val dp = ph - prevPhase
+                assertTrue("seed $seed phase $dp", dp > 0f || dp < -.9f)
+                assertTrue(dp < .03f)
+                prevPhase = ph
+                prev = live
+            }
+            // slower now and then, but a walk, never a crawl; a touch quicker to catch up
+            assertTrue("seed $seed slowest $slowest", slowest in .3f..0.97f)
+            assertTrue("seed $seed quickest $quickest", quickest in 1.02f..1.25f)
+            // within a few per cent of the steady phase over the minute: never a step out
+            assertTrue("seed $seed worst $worst", worst < .2f * stride)
+            if (Gait.limp(seed) == 0f) assertTrue("seed $seed hitches $hitches", hitches > 0)
+            // a stride's phases at the display's own moments differ from the one before: a
+            // little, not a lot
+            val dt = Gait.CYCLE / 16f
+            var diff = 0f
+            for (i in 0 until 16) {
+                val a = Gait.livePhase(Gait.SPEED * pace * i * dt, pace, seed)
+                val b = Gait.livePhase(Gait.SPEED * pace * (i + 16) * dt, pace, seed)
+                var d = abs(a - b)
+                if (d > .5f) d = 1f - d
+                diff = maxOf(diff, d)
+            }
+            assertTrue("seed $seed strides differ by $diff", diff > .003f && diff < .2f)
+        }
+        // and two people walk differently
+        val a = Gait.liveTravel(50f, pace, 1)
+        val b = Gait.liveTravel(50f, pace, 2)
+        assertTrue(abs(a - b) > .05f)
+        // the walker in the window: the live distance drifts, but the window still holds them
+        for (seed in 0 until 40) {
+            val w = 17f
+            var t = .01f
+            while (t < 7f) {
+                val steady = Silhouettes.walkTravel(t, seed, w, pace, Gait.tempo(seed))
+                if (!steady.isNaN()) {
+                    val live = Gait.liveTravel(steady, pace, seed)
+                    assertTrue(live > -2f && live < w + 12f + 2f)
+                }
+                t += .05f
+            }
+        }
+    }
+
+    @Test
+    fun theBobVariesFromStepToStepAndIsSmallAndContinuous() {
+        for (seed in listOf(3, 15, 29)) {
+            var prev = Gait.bob(0f, seed)
+            var amp = 0f
+            val perStep = FloatArray(8)
+            for (i in 1..800) {
+                val s = i / 100f // eight strides
+                val b = Gait.bob(s, seed)
+                assertTrue("bob $b", abs(b) < .5f)
+                assertTrue("jump ${b - prev}", abs(b - prev) < .05f)
+                perStep[(i - 1) / 100] = maxOf(perStep[(i - 1) / 100], abs(b))
+                amp = maxOf(amp, abs(b))
+                prev = b
+            }
+            assertTrue("seed $seed amp $amp", amp > .03f)
+            // no two strides bob alike
+            assertTrue(perStep.toSet().size > 4)
+        }
+    }
+
+    @Test
+    fun standingTheWeightShiftsFromFootToFootEveryFewSecondsAndNotFar() {
+        for (seed in listOf(0, 8, 21)) {
+            val period = Gait.swayPeriod(seed)
+            assertTrue(period in 3f..5.2f)
+            var crossings = 0
+            var prev = Gait.sway(0f, seed)
+            assertEquals(0f, prev, 1e-5f)
+            var i = 1
+            while (i <= 2000) {
+                val t = i / 100f // twenty seconds
+                val x = Gait.sway(t, seed)
+                assertTrue(abs(x) <= Gait.SWAY + 1e-5f)
+                assertTrue(abs(x - prev) < .02f)
+                if ((x > 0f) != (prev > 0f)) crossings++
+                assertTrue(Gait.settle(t, seed) in 0f..0.07f)
+                assertEquals(x, Gait.sway(t + period, seed), 1e-3f)
+                prev = x
+                i++
+            }
+            // to and fro: two crossings a period
+            assertTrue("crossings $crossings", abs((20f / period * 2f).toInt() - crossings) <= 1)
         }
     }
 
@@ -302,7 +537,7 @@ class GaitTest {
         val size = .52f
         val w = 56f
         val s = Stroll()
-        val total = Visit.length(w, size)
+        val total = Visit.length(w, size, seed)
         assertTrue("visit $total", total in 15f..35f)
         val dt = 1f / 60f
         var t = .02f
@@ -313,8 +548,8 @@ class GaitTest {
         assertEquals(1f, s.dir, 0f)
         assertTrue("starts out of sight ${s.x}", s.x <= Visit.DOOR + .01f)
         // speeds along the way
-        val out = Visit.walkOut(w, size)
-        val v = size * Gait.SPEED
+        val out = Visit.walkOut(w, size, seed)
+        val v = size * Gait.SPEED * Gait.tempo(seed)
         var maxStep = 0f
         var prev = s.x
         var stopAt = -1f
@@ -331,9 +566,15 @@ class GaitTest {
         val early = speeds.first { it.first > .09f }.second
         val atPace = speeds.first { it.first > Visit.START + .05f }.second
         assertTrue("start speed $early of $v", early < v * .35f)
-        assertEquals(v, atPace, v * .05f)
-        // never faster than the gait's pace (no step is longer than it)
-        assertTrue(maxStep <= v * dt * 1.02f)
+        assertEquals(v, atPace, v * .3f)
+        // on average at the pace of the gait through the cruise, the live walk wandering about it
+        val cruise = speeds.filter { it.first > Visit.START && it.first < out - Visit.STOP }
+        assertEquals(v, cruise.map { it.second }.average().toFloat(), v * .04f)
+        assertTrue(cruise.any { abs(it.second - v) > v * .02f })
+        // never much faster than the gait's pace (a catch-up after a hitch at most)
+        assertTrue(maxStep <= v * dt * 1.25f)
+        // and never a step backwards
+        for (i in 1 until speeds.size) assertTrue(speeds[i].second >= 0f)
         // a gentle stop: the last tenth of a second is nearly still
         val last = speeds.last().second
         assertTrue("stop speed $last", last < v * .12f)
@@ -359,8 +600,27 @@ class GaitTest {
         assertEquals(0, s.frame)
         assertEquals(stopAt, s.x, 1e-3f)
         visitAt(out + Visit.TURN + Visit.STAND - .05f, seed, size, w, s)
-        assertEquals(Stroll.STAND, s.mode)
+        // most look at their watch near the end of the stand (frames of the walk's extras)
+        if (Visit.watches(seed)) {
+            assertEquals(Stroll.TURN, s.mode)
+            assertTrue(s.frame >= Gait.FRAMES + Gait.TURN_FRAMES - 1)
+        } else assertEquals(Stroll.STAND, s.mode)
         assertEquals(1f, s.dir, 0f)
+        // the weight shifts while they stand, within bounds, and not at either end
+        var swayed = 0f
+        var tt2 = out + Visit.TURN + .02f
+        while (tt2 < out + Visit.TURN + Visit.STAND) {
+            visitAt(tt2, seed, size, w, s)
+            assertTrue(abs(s.sway) <= Gait.SWAY)
+            assertTrue(s.lift <= 0f && s.lift >= -.07f)
+            swayed = maxOf(swayed, abs(s.sway))
+            tt2 += dt
+        }
+        assertTrue("swayed $swayed", swayed > .2f)
+        visitAt(out + Visit.TURN + .02f, seed, size, w, s)
+        assertEquals(0f, s.sway, .02f)
+        visitAt(out + Visit.TURN + Visit.STAND - .02f, seed, size, w, s)
+        assertEquals(0f, s.sway, .02f)
         // the turn back faces the other way and runs the frames in reverse
         val back = ArrayList<Int>()
         tt = out + Visit.TURN + Visit.STAND + .001f
@@ -395,6 +655,45 @@ class GaitTest {
     }
 
     @Test
+    fun someVisitorsLookAtTheirWatchAndTheArmComesUpAndGoesDownAgain() {
+        val size = .5f
+        val w = 56f
+        val s = Stroll()
+        val watcher = (0 until 50).first { Visit.watches(it) }
+        val other = (0 until 50).first { !Visit.watches(it) }
+        val out = Visit.walkOut(w, size, watcher)
+        val seen = ArrayList<Int>()
+        var t = out + Visit.TURN + Visit.WATCH_AT - .2f
+        while (t < out + Visit.TURN + Visit.STAND + .2f) {
+            visitAt(t, watcher, size, w, s)
+            val key = s.mode * 100 + s.frame
+            if (seen.lastOrNull() != key) seen += key
+            t += 1f / 60f
+        }
+        val stand = Gait.FRAMES + Gait.TURN_FRAMES - 1
+        assertEquals(
+            listOf(
+                203,
+                100 + stand,
+                100 + stand + 1,
+                100 + stand + 2,
+                100 + stand + 3,
+                100 + stand + 2,
+                100 + stand + 1,
+                100 + stand,
+            ),
+            seen.take(8),
+        )
+        // the turn back follows, from the standing frame
+        assertEquals(100 + stand, seen[7])
+        assertTrue(seen.size >= 9)
+        // the other just stands
+        val out2 = Visit.walkOut(w, size, other)
+        visitAt(out2 + Visit.TURN + Visit.WATCH_AT + 1f, other, size, w, s)
+        assertEquals(Stroll.STAND, s.mode)
+    }
+
+    @Test
     fun theVisitorsFramesAdvanceWithTheGroundTheyCover() {
         val seed = 5
         val size = .5f
@@ -403,7 +702,7 @@ class GaitTest {
         var prevX = Float.NaN
         var prevPhase = Float.NaN
         var checked = 0
-        val out = Visit.walkOut(w, size)
+        val out = Visit.walkOut(w, size, seed)
         var t = Visit.START + .3f
         while (t < out - Visit.STOP - .3f) {
             visitAt(t, seed, size, w, s)

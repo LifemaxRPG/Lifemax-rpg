@@ -20,6 +20,17 @@ import kotlin.math.sqrt
  * Everything in a walk is a function of the DISTANCE walked: the phase of the cycle is distance over [Gait.STRIDE],
  * so a walker that starts, stops or is drawn smaller takes shorter or quicker steps and still never skates. Pure
  * arithmetic with no Compose and no Android.
+ *
+ * Nobody walks like a machine, so a walk is irregular on three timescales:
+ *  - each LOOK has its own [Gait.Style], baked into its frames: a longer or shorter stride, how far each arm swings
+ *    (one may swing less than the other), how much the body bobs, how far forward they lean, how much the shoulders
+ *    roll, and a little asymmetry between the two steps;
+ *  - each PERSON (a seed) has a [Gait.Signature] applied as they are drawn, costing no memory: their tempo, a tiny
+ *    forward or backward lean (a skew), how much their bob varies, and for a rare few a hint of a limp;
+ *  - and no two STEPS are alike: the distance walked wanders a few per cent either side of the steady pace
+ *    ([Gait.liveTravel]), a step now and then lands a fraction late (a hitch), and each step bobs a little more or
+ *    less ([Gait.bob]). All of it is a function of the distance walked, so the planted foot still never slides: a
+ *    caller uses the SAME live distance for where the walker is and for which frame shows.
  */
 
 object Gait {
@@ -56,6 +67,12 @@ object Gait {
      * activity that takes over (looking out) begins on exactly the picture the turn ends on.
      */
     const val TURN_FRAMES = 5
+
+    /**
+     * The extra frames after the turn's that take the standing visitor from looking out to looking
+     * at their watch: the last is the watch pose itself.
+     */
+    const val WATCH_FRAMES = 3
 
     /**
      * The poses between [from] and [to] (not including [from]), [count] of them, the last being
@@ -145,20 +162,21 @@ object Gait {
     /** The heel's world x at the heel strike: where it lands, ahead of the pelvis. */
     private const val LAND = 4.2
 
-    private val FLAT = LAND - heelX(0.0)
-
     /**
-     * The ankle's x in the world from the heel strike on (the pelvis is at STRIDE * u), stance
-     * only.
+     * The ankle's x in the world from the heel strike on (the pelvis is at the stride times u),
+     * stance only, for a heel that lands [land] ahead.
      */
-    private fun ankleWorld(u: Double): Double =
-        when {
-            u < U_FLAT -> LAND - heelX(rad(tilt(u)))
-            u < U_HEEL_OFF -> FLAT
-            else -> FLAT + toeX(0.0) - toeX(rad(tilt(u)))
+    private fun ankleWorld(u: Double, land: Double): Double {
+        val flat = land - heelX(0.0)
+        return when {
+            u < U_FLAT -> land - heelX(rad(tilt(u)))
+            u < U_HEEL_OFF -> flat
+            else -> flat + toeX(0.0) - toeX(rad(tilt(u)))
         }
+    }
 
-    private fun stance(u: Double) = ankleWorld(u) - Gait.STRIDE * u
+    private fun stance(u: Double, st: Style) =
+        ankleWorld(u, LAND * st.stride) - Gait.STRIDE * st.stride * u
 
     /** The clearance of the swinging foot over the floor, at [s] (0 to 1) of the swing. */
     private fun lift(s: Double): Double {
@@ -167,14 +185,14 @@ object Gait {
     }
 
     /** The ankle's x, from the pelvis, in the foot's own cycle [u]. */
-    private fun ankleX(u: Double): Double {
-        if (u < U_TOE_OFF) return stance(u)
+    private fun ankleX(u: Double, st: Style): Double {
+        if (u < U_TOE_OFF) return stance(u, st)
         val d = 1.0 - U_TOE_OFF
         val e = 1e-4
-        val x0 = stance(U_TOE_OFF)
-        val m0 = (stance(U_TOE_OFF) - stance(U_TOE_OFF - e)) / e * d
-        val x1 = stance(0.0)
-        val m1 = (stance(e) - stance(0.0)) / e * d
+        val x0 = stance(U_TOE_OFF, st)
+        val m0 = (stance(U_TOE_OFF, st) - stance(U_TOE_OFF - e, st)) / e * d
+        val x1 = stance(0.0, st)
+        val m1 = (stance(e, st) - stance(0.0, st)) / e * d
         val s = (u - U_TOE_OFF) / d
         val s2 = s * s
         val s3 = s2 * s
@@ -196,25 +214,25 @@ object Gait {
      * as straight as the walk wants it (a little bent, more so on the down pose), so that it is
      * lowest at the contacts and the down poses, and highest on the way up.
      */
-    private fun pelvisHeight(phi: Double): Double {
+    private fun pelvisHeight(phi: Double, st: Style): Double {
         val dip = .5 + .5 * cos(4 * PI * (phi - .125))
-        val flex = rad(KNEE_STRAIGHT + KNEE_DOWN * dip * dip)
+        val flex = rad(KNEE_STRAIGHT + KNEE_DOWN * st.bob * dip * dip)
         val d = LEG * cos(flex / 2)
         val un = phi
-        val uf = (phi + .5) % 1.0
-        val hip = hipX(phi)
-        return min(reach(un, hip, d), reach(uf, -hip, d))
+        val uf = (phi + .5 + st.split) % 1.0
+        val hip = hipX(phi, st)
+        return min(reach(un, hip, d, st), reach(uf, -hip, d, st))
     }
 
     /**
      * How high a hip at [hip] from the pelvis's middle sits over an ankle in the cycle [u], the leg
      * [d] long.
      */
-    private fun reach(u: Double, hip: Double, d: Double): Double =
-        ankleHeight(u) + sqrt(max(0.0, d * d - sq(ankleX(u) - hip)))
+    private fun reach(u: Double, hip: Double, d: Double, st: Style): Double =
+        ankleHeight(u) + sqrt(max(0.0, d * d - sq(ankleX(u, st) - hip)))
 
     /** The near hip's x from the pelvis's middle: the pelvis turns a little with each step. */
-    private fun hipX(phi: Double): Double = HIP_SWING * cos(2 * PI * phi)
+    private fun hipX(phi: Double, st: Style): Double = HIP_SWING * st.hip * cos(2 * PI * phi)
 
     private const val HIP_SWING = .5
     private const val SHOULDER_SWING = .7
@@ -247,26 +265,29 @@ object Gait {
         out[2] = (thigh - knee) * 180 / PI
     }
 
-    /** The walk's pose at [phi] of the cycle (0 = the near heel strikes). */
-    fun walkPose(phi: Float): FloatArray {
+    /**
+     * The walk's pose at [phi] of the cycle (0 = the near heel strikes), walked in [style] (the
+     * neutral walk when none is given).
+     */
+    fun walkPose(phi: Float, style: Style = NEUTRAL): FloatArray {
+        val st = style
         val f = phi.toDouble() - floor(phi.toDouble())
-        val h = pelvisHeight(f)
+        val h = pelvisHeight(f, st)
         val un = f
-        val uf = (f + .5) % 1.0
+        val uf = (f + .5 + st.split) % 1.0
         val ln = DoubleArray(3)
         val lf = DoubleArray(3)
-        val hip = hipX(f)
-        leg(ankleX(un) - hip, h - ankleHeight(un), ln)
-        leg(ankleX(uf) + hip, h - ankleHeight(uf), lf)
+        val hip = hipX(f, st)
+        leg(ankleX(un, st) - hip, h - ankleHeight(un), ln)
+        leg(ankleX(uf, st) + hip, h - ankleHeight(uf), lf)
         val ann = tilt(un) - ln[2]
         val anf = tilt(uf) - lf[2]
         val c = cos(2 * PI * (f + .02))
-        val arm = 25.0
-        val an = -arm * c
-        val af = arm * c
-        val en = 13.0 + 17.0 * (an + arm) / (2 * arm)
-        val ef = 13.0 + 17.0 * (af + arm) / (2 * arm)
-        val lean = 3.5 + .8 * cos(4 * PI * (f - .125))
+        val an = -st.armNear * c
+        val af = st.armFar * c
+        val en = 13.0 + 17.0 * (an + st.armNear) / (2 * st.armNear)
+        val ef = 13.0 + 17.0 * (af + st.armFar) / (2 * st.armFar)
+        val lean = st.lean + .8 * cos(4 * PI * (f - .125))
         return pose(
             turn = .94f,
             lean = lean.toFloat(),
@@ -282,8 +303,236 @@ object Gait {
             ann = ann.toFloat(),
             anf = anf.toFloat(),
             twist = (hip - BASE_HIP).toFloat(),
-            shx = (-SHOULDER_SWING * cos(2 * PI * f) - BASE_SHOULDER).toFloat(),
+            shx = (-SHOULDER_SWING * st.roll * cos(2 * PI * f) - BASE_SHOULDER).toFloat(),
         )
+    }
+
+    // ------------------------------------------------------------------------ the signature
+
+    /**
+     * How one look walks: what is baked into its frames. [stride] scales the step (1 is the
+     * standard [STEP]: the stride, and so the pace at a given cadence, scales with it); [armNear]
+     * and [armFar] are how far each arm swings, in degrees; [bob] scales how much the body rises
+     * and falls; [lean] is the posture's forward lean in degrees; [split] moves the far foot's
+     * landing from exactly half way round the cycle (one step a little longer than the other);
+     * [roll] scales the shoulders' counter-swing and [hip] the pelvis's.
+     */
+    class Style(
+        val stride: Float,
+        val armNear: Float,
+        val armFar: Float,
+        val bob: Float,
+        val lean: Float,
+        val split: Float,
+        val roll: Float,
+        val hip: Float,
+    )
+
+    /** The standard walk: what the tests of the gait's mechanics are written against. */
+    val NEUTRAL = Style(1f, 25f, 25f, 1f, 3.5f, 0f, 1f, 1f)
+
+    private fun spread(look: Int, salt: Int, lo: Float, hi: Float): Float =
+        lo + (hi - lo) * Ambient.hash(look + 1, 50, salt)
+
+    private val STYLES: Array<Style> =
+        Array(Looks.COUNT) { look ->
+            val arm = spread(look, 1, 15f, 33f)
+            val less = spread(look, 2, .72f, 1f)
+            val nearLess = Ambient.hash(look + 1, 50, 3) < .5f
+            Style(
+                stride = spread(look, 4, .88f, 1.12f),
+                armNear = if (nearLess) arm * less else arm,
+                armFar = if (nearLess) arm else arm * less,
+                bob = spread(look, 5, .65f, 1.4f),
+                lean = spread(look, 6, 1.8f, 5.4f),
+                split = spread(look, 7, -.03f, .03f),
+                roll = spread(look, 8, .6f, 1.35f),
+                hip = spread(look, 9, .75f, 1.25f),
+            )
+        }
+
+    /** The [Style] look [look] (one of [Looks.ALL]) walks in: the same every time. */
+    fun style(look: Int): Style = STYLES[look]
+
+    /** How far look [look]'s cycle goes, at the rig's own size: its own stride. */
+    fun stride(look: Int): Float = STRIDE * style(look).stride
+
+    /**
+     * The size [phase] and [liveTravel] want for look [look] drawn [size] times the rig: their legs
+     * are as long as they are tall, and their stride is their own.
+     */
+    fun pace(size: Float, look: Int): Float =
+        size * Looks.ALL[look].body.height * style(look).stride
+
+    /**
+     * How one person walks, beyond their look: applied as they are drawn, so it costs nothing
+     * baked. [tempo] scales the cadence (and so the speed: the stride stays); [lean] is a tiny
+     * forward (positive) or backward lean of the whole figure in degrees, drawn as a skew; [bob]
+     * scales how much the bob varies from step to step; [limp] is 0 for most, else how marked the
+     * limp is (one step quicker and a little lower every cycle); [hitch] is how often a step lands
+     * late (0 to 1, a share of the strides).
+     */
+    class Signature(
+        val tempo: Float,
+        val lean: Float,
+        val bob: Float,
+        val limp: Float,
+        val hitch: Float,
+    )
+
+    /** The share of people who walk with a hint of a limp. */
+    const val LIMPERS = .06f
+
+    /** The cadence scale of [seed]'s walk, .92 to 1.08. */
+    fun tempo(seed: Int): Float = .92f + .16f * Ambient.hash(seed, 51, 1)
+
+    /** The whole-figure lean of [seed]'s walk, -1 to 2.5 degrees, forward positive. */
+    fun lean(seed: Int): Float = -1f + 3.5f * Ambient.hash(seed, 51, 2)
+
+    /** How much [seed]'s bob varies from step to step, .6 to 1.4. */
+    fun bobScale(seed: Int): Float = .6f + .8f * Ambient.hash(seed, 51, 3)
+
+    /** How marked [seed]'s limp is: 0 for all but [LIMPERS] of people, else .6 to 1. */
+    fun limp(seed: Int): Float =
+        if (Ambient.hash(seed, 51, 4) < LIMPERS) .6f + .4f * Ambient.hash(seed, 51, 5) else 0f
+
+    /** How often one of [seed]'s steps lands late: none for someone with a limp. */
+    fun hitchRate(seed: Int): Float =
+        if (limp(seed) > 0f) 0f else .08f + .12f * Ambient.hash(seed, 51, 6)
+
+    /** The [Signature] of [seed]: the same every time. Not for every frame: hold on to it. */
+    fun signature(seed: Int): Signature =
+        Signature(tempo(seed), lean(seed), bobScale(seed), limp(seed), hitchRate(seed))
+
+    // ------------------------------------------------------------------------ the live walk
+
+    /**
+     * The strides (cycles, unwrapped) [distance] along a walk is at, for a walker drawn [size]
+     * times the rig, starting [from]: [phase] is its fraction.
+     */
+    fun strides(distance: Float, size: Float, from: Float = PASSING): Float =
+        from + distance / (STRIDE * size)
+
+    private fun smoothF(x: Float): Float {
+        val c = x.coerceIn(0f, 1f)
+        return c * c * (3f - 2f * c)
+    }
+
+    /** A delay of one step: a slow dip over [rise] strides and a slower catch-up over [fall]. */
+    private fun delay(u: Float, rise: Float, fall: Float): Float =
+        when {
+            u <= 0f -> 0f
+            u < rise -> smoothF(u / rise)
+            u < rise + fall -> 1f - smoothF((u - rise) / fall)
+            else -> 0f
+        }
+
+    private const val WANDER = .03f
+    private const val WANDER_F1 = .37f
+    private const val WANDER_F2 = .23f
+    private const val HITCH = .07f
+    private const val HITCH_RISE = .3f
+    private const val HITCH_FALL = 1f
+    private const val LIMP = .045f
+    private const val LIMP_RISE = .22f
+    private const val LIMP_FALL = .45f
+
+    /** Where in each stride [seed]'s limp has its bad step land. */
+    private fun limpAt(seed: Int): Float = Ambient.hash(seed, 51, 7)
+
+    /**
+     * How far, in strides, [seed]'s walk is ahead (positive) or behind the steady one at [s]
+     * strides: a slow wander of a few per cent, the occasional step that lands late, and a limp for
+     * those who have one. Always more than -1 a stride in slope, so the walk never stops or goes
+     * backwards, and never further than [LIVE_BOUND] strides from steady.
+     */
+    fun liveOffset(s: Float, seed: Int): Float {
+        val p1 = Ambient.hash(seed, 51, 8) * 2f * PI.toFloat()
+        val p2 = Ambient.hash(seed, 51, 9) * 2f * PI.toFloat()
+        var off =
+            WANDER *
+                .5f *
+                (sin(2f * PI.toFloat() * WANDER_F1 * s + p1) +
+                    sin(2f * PI.toFloat() * WANDER_F2 * s + p2))
+        val k0 = floor(s).toInt()
+        val limp = limp(seed)
+        if (limp > 0f) {
+            val at = limpAt(seed)
+            for (k in k0 - 1..k0) off -= LIMP * limp * delay(s - (k + at), LIMP_RISE, LIMP_FALL)
+        } else {
+            val rate = hitchRate(seed)
+            for (k in k0 - 2..k0) {
+                if (Ambient.hash(seed, k, 70) >= rate) continue
+                val c = k + Ambient.hash(seed, k, 71)
+                off -= HITCH * delay(s - c, HITCH_RISE, HITCH_FALL)
+            }
+        }
+        return off
+    }
+
+    /** The furthest [liveOffset] goes from steady, in strides. */
+    const val LIVE_BOUND = WANDER + 2f * HITCH
+
+    /**
+     * The distance [seed] has really walked when a steady walk would have gone [travel], drawn at
+     * [pace] (see [pace]): steady plus [liveOffset]. Use it BOTH for where the walker is and for
+     * the frame ([phase] of it), and the feet never slide. Monotonic in [travel].
+     */
+    fun liveTravel(travel: Float, pace: Float, seed: Int): Float {
+        val stride = STRIDE * pace
+        return travel + liveOffset(travel / stride, seed) * stride
+    }
+
+    /** [phase] of [liveTravel]: for a walker placed at that live distance. */
+    fun livePhase(travel: Float, pace: Float, seed: Int, from: Float = PASSING): Float =
+        phase(liveTravel(travel, pace, seed), pace, from)
+
+    /**
+     * The extra rise (positive up) of the whole figure, in the rig's units, at [s] strides (as
+     * [strides] counts them: the baked bob is lowest at each contact): each step bobs a little more
+     * or less than the frames show, and a limp dips on its bad step. Scale by the size drawn.
+     */
+    fun bob(s: Float, seed: Int): Float {
+        val k = floor(2f * s).toInt()
+        val a = .18f * bobScale(seed) * (2f * Ambient.hash(seed, k, 75) - 1f)
+        var up = a * (.5f - .5f * cos(4f * PI.toFloat() * s))
+        val limp = limp(seed)
+        if (limp > 0f) {
+            val u = s - limpAt(seed)
+            val f = u - floor(u)
+            if (f < .5f) {
+                val d = sin(2f * PI.toFloat() * f)
+                up -= .3f * limp * d * d
+            }
+        }
+        return up
+    }
+
+    // ------------------------------------------------------------------------ standing
+
+    /** How long one shift of the weight from foot to foot takes, in seconds, for [seed]. */
+    fun swayPeriod(seed: Int): Float = 3.2f + 1.8f * Ambient.hash(seed, 51, 10)
+
+    /** How far the weight shift moves the whole figure sideways, at most, in the rig's units. */
+    const val SWAY = .32f
+
+    /**
+     * Where someone standing has their weight at [seconds]: the whole figure drifts this far
+     * sideways (the rig's units, scale by the size drawn), to and fro every [swayPeriod], resting a
+     * moment on each foot. Starts at 0 at [seconds] 0.
+     */
+    fun sway(seconds: Float, seed: Int): Float {
+        val s = sin(2f * PI.toFloat() * seconds / swayPeriod(seed))
+        return SWAY * s * (3f - s * s) / 2f
+    }
+
+    /**
+     * How far the figure settles (down, as a positive number in the rig's units) while the weight
+     * is between the feet: 0 when it rests on one.
+     */
+    fun settle(seconds: Float, seed: Int): Float {
+        val s = sin(2f * PI.toFloat() * seconds / swayPeriod(seed))
+        return .07f * (1f - s * s)
     }
 
     // ------------------------------------------------------------------------------ the jog
@@ -398,5 +647,11 @@ object Gait {
      * The eight key poses of a walk (contact, down, passing, up, and again on the other leg) and
      * back to the first.
      */
-    val WALK_KEYS: List<FloatArray> = List(9) { walkPose((it % 8) / 8f) }
+    val WALK_KEYS: List<FloatArray> = walkKeys(NEUTRAL)
+
+    /** [WALK_KEYS] walked in [style]. */
+    fun walkKeys(style: Style): List<FloatArray> = List(9) { walkPose((it % 8) / 8f, style) }
+
+    /** The key poses of each look's own walk. */
+    val LOOK_WALK_KEYS: List<List<FloatArray>> = List(Looks.COUNT) { walkKeys(style(it)) }
 }

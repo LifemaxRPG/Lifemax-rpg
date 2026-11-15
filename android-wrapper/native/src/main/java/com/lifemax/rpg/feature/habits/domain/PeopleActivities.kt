@@ -74,17 +74,27 @@ class ActivitySpec(
     val props: PropMaker?,
     val extra: List<FloatArray> = emptyList(),
     val smooth: Boolean = false,
+    val lookKeys: List<List<FloatArray>>? = null,
+    val lookExtra: List<List<FloatArray>>? = null,
 ) {
     /**
      * The pose [frame] shows: the loop sampled evenly for the first [frames], then the [extra]
-     * poses (a turn, say) that are not part of the loop.
+     * poses (a turn, say) that are not part of the loop. With [look], that look's own keys and
+     * extras ([lookKeys], [lookExtra]: a walk's gait style) where the activity has them.
      */
-    fun poseAt(frame: Int): FloatArray =
-        if (frame >= frames) extra[frame - frames]
-        else Spline.sample(keys, frame / frames.toFloat())
+    fun poseAt(frame: Int, look: Int = -1): FloatArray =
+        if (frame >= frames) extrasFor(look)[frame - frames]
+        else Spline.sample(keysFor(look), frame / frames.toFloat())
 
     /** The pose [phase] (0 to 1, wrapping) of the loop shows, between the baked frames too. */
-    fun poseAtPhase(phase: Float): FloatArray = Spline.sample(keys, phase)
+    fun poseAtPhase(phase: Float, look: Int = -1): FloatArray = Spline.sample(keysFor(look), phase)
+
+    /** The loop's keys for [look]: its own when it has them, else the shared ones. */
+    fun keysFor(look: Int): List<FloatArray> =
+        if (look >= 0 && lookKeys != null) lookKeys[look] else keys
+
+    private fun extrasFor(look: Int): List<FloatArray> =
+        if (look >= 0 && lookExtra != null) lookExtra[look] else extra
 
     /** Every frame that can be baked: the loop's and the extras. */
     val totalFrames: Int
@@ -1601,6 +1611,22 @@ object PeopleActivities {
             ),
         )
 
+    /** Standing, looking at a watch: the near forearm raised across the chest, the head down. */
+    private val WATCH =
+        pose(
+            turn = .08f,
+            head = 7f,
+            lean = 3f,
+            an = 52f,
+            en = -128f,
+            af = 5f,
+            ef = 74f,
+            ln = 2f,
+            kn = 3f,
+            lf = -2f,
+            kf = 3f,
+        )
+
     // ---- waving
     private val WAVE_KEYS =
         loop(
@@ -1889,8 +1915,11 @@ object PeopleActivities {
                 .6f,
                 emptyList(),
                 null,
-                extra = Gait.between(Gait.walkPose(Gait.PASSING), LOOK_KEYS[0], Gait.TURN_FRAMES),
+                extra = walkExtra(Gait.NEUTRAL),
                 smooth = true,
+                // every look walks in its own style: its own frames
+                lookKeys = Gait.LOOK_WALK_KEYS,
+                lookExtra = List(Looks.COUNT) { walkExtra(Gait.style(it)) },
             ),
             ActivitySpec(
                 Activity.LOOKING_OUT,
@@ -1918,6 +1947,14 @@ object PeopleActivities {
 
     fun of(a: Activity): ActivitySpec = ALL[a.ordinal]
 
+    /**
+     * The walk's extra frames: the turn from the passing pose (in [style]) round to standing, then
+     * the look at the watch.
+     */
+    private fun walkExtra(style: Gait.Style): List<FloatArray> =
+        Gait.between(Gait.walkPose(Gait.PASSING, style), LOOK_KEYS[0], Gait.TURN_FRAMES) +
+            Gait.between(LOOK_KEYS[0], WATCH, Gait.WATCH_FRAMES)
+
     /** The shapes of [look] doing [a], frame [frame]. */
     fun figure(look: Int, a: Activity, frame: Int): FigBuilder {
         val spec = of(a)
@@ -1932,7 +1969,7 @@ object PeopleActivities {
                     sin(Gait.PASSING * 6.2832f * 2f + 1f) *
                     (1f - s * s * (3f - 2f * s))
         }
-        return FigBuilder(Looks.ALL[look], spec.poseAt(frame), swing).build(spec.props, phase)
+        return FigBuilder(Looks.ALL[look], spec.poseAt(frame, look), swing).build(spec.props, phase)
     }
 
     /** The activities that are seen in [room]. */

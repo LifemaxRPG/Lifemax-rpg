@@ -478,11 +478,17 @@ object Silhouettes {
      * a person drawn [size] times the rig (so their feet keep up with the ground), cross, and the
      * window is empty for a while. Standing still (0 seconds), they stand in the middle.
      */
-    fun walkTravel(seconds: Float, seed: Int, width: Float, size: Float = .8f): Float {
+    fun walkTravel(
+        seconds: Float,
+        seed: Int,
+        width: Float,
+        size: Float = .8f,
+        tempo: Float = 1f,
+    ): Float {
         if (seconds <= 0f) return width / 2f + 6f
         val cycle = 6.5f
         val u = ((seconds / cycle + Ambient.hash(seed, 0, 90)) % 1f + 1f) % 1f
-        val d = u * cycle * Gait.SPEED * size
+        val d = u * cycle * Gait.SPEED * size * tempo
         return if (d > width + 12f) Float.NaN else d
     }
 
@@ -494,7 +500,15 @@ object Silhouettes {
         if (seconds <= 0f) return width / 2f
         val d = walkTravel(seconds, seed, width, size)
         if (d.isNaN()) return d
-        val x = -6f + d
+        return walkAt(d, seed, width)
+    }
+
+    /**
+     * Where someone who has walked [travel] across a window [width] wide stands, from its left
+     * edge: they come in six units out from one side or the other.
+     */
+    fun walkAt(travel: Float, seed: Int, width: Float): Float {
+        val x = -6f + travel
         return if (Ambient.hash(seed, 0, 91) < .5f) x else width - x
     }
 
