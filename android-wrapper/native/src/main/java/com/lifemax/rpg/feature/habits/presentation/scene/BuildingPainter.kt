@@ -44,6 +44,7 @@ import com.lifemax.rpg.feature.habits.domain.PieceKind
 import com.lifemax.rpg.feature.habits.domain.Presence
 import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.RuinWindow
+import com.lifemax.rpg.feature.habits.domain.SceneLight
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.Stroll
@@ -302,7 +303,44 @@ internal class BuildingPainter {
      * pavement and leaning away from the light. One matrix, remade when the light changes.
      */
     private val fall = Matrix()
-    private var fallFor: KeyLight? = null
+
+    /**
+     * Where the key light stands along the street (street units) and how wide the view is in them:
+     * a caster's shadow leans by how far to the side of the light it stands ([SceneLight.lean]), so
+     * shadows swing as the street scrolls under the sun. Set by the stage each frame, with the
+     * light itself and the street's lamps.
+     */
+    var lightX = 0f
+    var lightSpan = 1000f
+    var light: KeyLight? = null
+    var lamps: List<Furniture> = emptyList()
+
+    /**
+     * The side of the building being drawn that the light finds, -1 left to 1 right, times the
+     * light's strength (0 face on or in the dark): set per building, read by its parts.
+     */
+    private var sunSide = 0f
+
+    /** Where along the street the building being drawn stands (its front's middle). */
+    private var buildingX = 0f
+
+    /** A facade's light and shade across it, unit brushes drawn under a transform. */
+    private val litWash =
+        Brush.horizontalGradient(
+            0f to Color.White.copy(alpha = .2f),
+            .55f to Color.White.copy(alpha = .06f),
+            1f to Color.Transparent,
+            startX = 0f,
+            endX = 1f,
+        )
+    private val shadeWash =
+        Brush.horizontalGradient(
+            0f to Color(0xFF0A1024).copy(alpha = .22f),
+            .6f to Color(0xFF0A1024).copy(alpha = .05f),
+            1f to Color.Transparent,
+            startX = 0f,
+            endX = 1f,
+        )
 
     /** The layer a frame's shadows are drawn in, so two shadows over each other are no deeper. */
     private val shadowPaint = Paint()
@@ -548,17 +586,18 @@ internal class BuildingPainter {
         if (light.cool > .5f) MoonShade
         else lerp(SunShade, DuskShade, (sky.dark / .55f).coerceIn(0f, 1f))
 
-    private fun fallMatrix(light: KeyLight): Matrix {
-        if (fallFor !== light) {
-            fall.reset()
-            // x' = x - lean * y and y' = -reach * y: a point up a caster (y under 0) lands down the
-            // pavement, to the side the light leans to
-            fall[1, 0] = -light.lean
-            fall[1, 1] = -light.reach
-            fallFor = light
-        }
+    /** The ground projection for a caster at [x] along the street (the one matrix, set again). */
+    private fun fallMatrix(light: KeyLight, x: Float): Matrix {
+        fall.reset()
+        // x' = x - lean * y and y' = -reach * y: a point up a caster (y under 0) lands down the
+        // pavement, to the side the light leans to for a caster standing where this one does
+        fall[1, 0] = -SceneLight.lean(light, (x - lightX) / lightSpan)
+        fall[1, 1] = -light.reach
         return fall
     }
+
+    /** How far to the side of the light the building at [x] stands, in view widths. */
+    private fun offset(x: Float): Float = (x - lightX) / lightSpan
 
     private fun shadeFilter(c: Color): ColorFilter {
         val f = shadeFilter
@@ -587,10 +626,9 @@ internal class BuildingPainter {
         val tint = shade(light, sky)
         shadowPaint.alpha = (if (light.cool > .5f) MOON_SHADE else SUN_SHADE) * light.strength
         drawIntoCanvas { it.saveLayer(Rect(from, 0f, to, depth), shadowPaint) }
-        val m = fallMatrix(light)
         val half = B.W / 2f
         // how far a shadow leans from what throws it (per unit of height), to know what is in view
-        val lean = abs(light.lean)
+        val lean = abs(light.lean) + SceneLight.SPLAY * 1.5f
         for (i in layouts.indices) {
             val l = layouts[i]
             val left = street.lefts[i]
@@ -604,22 +642,22 @@ internal class BuildingPainter {
             val cx = street.centers[i]
             withTransform({
                 translate(cx, 0f)
-                transform(m)
+                transform(fallMatrix(light, cx))
             }) {
                 drawRect(tint, Offset(-half, -h), Size(B.W + B.DX, h))
             }
-            for (t in l.trees) treeSilhouette(cx + t.x, t.id.hashCode(), seconds, .8f, tint, m)
+            for (t in l.trees) treeSilhouette(cx + t.x, t.id.hashCode(), seconds, .8f, tint, light)
         }
         val near = lean * 100f + 60f
         for (k in street.furniture.indices) {
             val f = street.furniture[k]
             if (f.x + near < from || f.x - near > to) continue
             when (f.kind) {
-                FurnitureKind.TREE -> treeSilhouette(f.x, f.seed, seconds, 1f, tint, m)
+                FurnitureKind.TREE -> treeSilhouette(f.x, f.seed, seconds, 1f, tint, light)
                 FurnitureKind.LAMP ->
                     withTransform({
                         translate(f.x, 0f)
-                        transform(m)
+                        transform(fallMatrix(light, f.x))
                     }) {
                         drawPath(lampPole, tint)
                         drawPath(lampArm, tint, style = armStroke)
@@ -629,7 +667,7 @@ internal class BuildingPainter {
                 FurnitureKind.BENCH ->
                     withTransform({
                         translate(f.x, 0f)
-                        transform(m)
+                        transform(fallMatrix(light, f.x))
                     }) {
                         drawRect(tint, Offset(-12.6f, -9f), Size(1.9f, 9f))
                         drawRect(tint, Offset(10.7f, -9f), Size(1.9f, 9f))
@@ -642,8 +680,10 @@ internal class BuildingPainter {
     }
 
     /**
-     * A tree's shape in the shade, fallen along [m] from its foot at [x]: the same sprite under the
-     * same lean, so the shadow sways with the tree.
+     * A tree's shape in the shade, fallen along the light from its foot at [x]: the same sprite
+     * under the same lean, so the shadow sways with the tree. Drawn three times, each a little
+     * larger about the foot and fainter, so the shadow is sharp at the trunk and soft at the crown,
+     * as a shadow is further from what throws it (the penumbra).
      */
     private fun DrawScope.treeSilhouette(
         x: Float,
@@ -651,7 +691,7 @@ internal class BuildingPainter {
         seconds: Float,
         size: Float,
         tint: Color,
-        m: Matrix,
+        light: KeyLight,
     ) {
         val images = SceneSprites.trees[Trees.variant(seed)]
         val sp = images.sprite
@@ -660,13 +700,20 @@ internal class BuildingPainter {
         shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
         val u = size / sp.ppu
         val filter = shadeFilter(tint)
+        val at = Offset(-sp.footX, -sp.footY)
         withTransform({
             translate(x, 0f)
-            transform(m)
+            transform(fallMatrix(light, x))
             scale(u * -lightFrom, u, Offset.Zero)
             transform(shear)
         }) {
-            drawImage(images.looks[0], Offset(-sp.footX, -sp.footY), colorFilter = filter)
+            drawImage(images.looks[0], at, alpha = PENUMBRA[0], colorFilter = filter)
+            scale(1.045f, 1.045f, Offset.Zero) {
+                drawImage(images.looks[0], at, alpha = PENUMBRA[1], colorFilter = filter)
+            }
+            scale(1.09f, 1.09f, Offset.Zero) {
+                drawImage(images.looks[0], at, alpha = PENUMBRA[2], colorFilter = filter)
+            }
         }
     }
 
@@ -686,9 +733,16 @@ internal class BuildingPainter {
         detailed: Boolean,
         sky: SkyColors,
         lod: PeopleLod = if (detailed) PeopleLod.FULL else PeopleLod.NONE,
+        x: Float = 0f,
     ) {
         val seconds = motion.seconds
         val half = B.W / 2f
+        // which side of it the light finds, and how hard (the moon lights a little, the sun a lot)
+        val key = light
+        buildingX = x
+        sunSide =
+            if (key == null) 0f
+            else SceneLight.sunSide(offset(x)) * key.strength * (1f - .6f * key.cool)
         park(art, selected, accent, seconds, sky)
         // the building's shadow on the pavement
         drawRect(aoGround, Offset(-half + 1f, 0f), Size(B.W + B.DX + 6f, 8f))
@@ -742,11 +796,102 @@ internal class BuildingPainter {
             if (adding && motion.drop >= .8f) dust(fa.piece.bottom, (motion.drop - .8f) / .2f)
         }
         roof(art, live, detailed, sky, seconds)
+        lampLight(art, sky, x)
         val gone = motion.felled
         if (gone != null && motion.fell < 1f) {
             val top = art.layout.labelled(gone)?.top ?: art.layout.roof
             fallen(top, gone, motion.fell)
         }
+    }
+
+    /**
+     * At night the street lamps near a building throw their warm light on its walls: a soft pool
+     * round each lamp's lens, over the building's front and side only.
+     */
+    private fun DrawScope.lampLight(art: BuildingArt, sky: SkyColors, x: Float) {
+        val dark = sky.dark
+        if (dark <= .2f) return
+        val half = B.W / 2f
+        val height = art.layout.height
+        for (i in lamps.indices) {
+            val f = lamps[i]
+            if (f.kind != FurnitureKind.LAMP) continue
+            val lx = f.x + 11.5f - x
+            if (lx < -half - LAMP_REACH || lx > half + B.DX + LAMP_REACH) continue
+            clipRect(-half, -height, half + B.DX, 0f) {
+                translate(lx, -89.5f) {
+                    scale(LAMP_REACH, LAMP_REACH * .8f, Offset.Zero) {
+                        drawCircle(
+                            halo,
+                            1f,
+                            Offset.Zero,
+                            alpha = .34f * dark,
+                            blendMode = BlendMode.Plus,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * The light and the shade across a face of the building from [top] to [bottom] (the light finds
+     * [sunSide] of it): a wash of light from the lit edge, a wash of shade from the other, over the
+     * wall only (windows and trim are drawn after it).
+     */
+    private fun DrawScope.facadeLight(top: Float, bottom: Float, alpha: Float) {
+        val s = sunSide
+        if (abs(s) < .02f) return
+        val half = B.W / 2f
+        val h = bottom - top
+        val a = abs(s) * alpha
+        // from the lit edge inward, and from the far edge inward
+        val lit = if (s < 0f) -half else half
+        val sign = if (s < 0f) 1f else -1f
+        withTransform({
+            translate(lit, top)
+            scale(sign * B.W * .7f, h, Offset.Zero)
+        }) {
+            drawRect(litWash, Offset.Zero, Size(1f, 1f), alpha = a)
+        }
+        withTransform({
+            translate(-lit, top)
+            scale(-sign * B.W * .6f, h, Offset.Zero)
+        }) {
+            drawRect(shadeWash, Offset.Zero, Size(1f, 1f), alpha = a * .9f)
+        }
+    }
+
+    /**
+     * The building's right-hand side face: lit when the light is on that side, deeper in shade
+     * otherwise.
+     */
+    private fun DrawScope.sideLight(side: Path, alpha: Float) {
+        val s = sunSide
+        if (s > .02f) drawPath(side, Color.White, alpha = .26f * s * alpha)
+        else if (s < -.02f) drawPath(side, Color.Black, alpha = .18f * -s * alpha)
+    }
+
+    /**
+     * The sun's glint on a pane of glass at ([x], [y]), [w] by [h]: a soft diagonal streak that
+     * stands where the reflection falls for a pane this far to the side of the light, so it travels
+     * across the glass as the street scrolls. By day only.
+     */
+    private fun DrawScope.glint(x: Float, y: Float, w: Float, h: Float, alpha: Float) {
+        val key = light ?: return
+        val a = alpha * key.strength * (1f - key.cool)
+        if (a < .03f) return
+        val rise = h * .25f
+        val u = (.5f - offset(buildingX + x) * 1.8f).coerceIn(.08f, .92f)
+        val gx = x + 1f + u * (w - 2f - rise)
+        drawLine(
+            Color.White,
+            Offset(gx, y + h * .9f),
+            Offset(gx + rise, y + h * .1f),
+            w * .16f,
+            cap = StrokeCap.Round,
+            alpha = a,
+        )
     }
 
     private fun DrawScope.park(
@@ -785,9 +930,11 @@ internal class BuildingPainter {
         val half = B.W / 2f
         val top = -B.LOBBY_H
         drawRect(SceneInk.LobbyWall, Offset(-half, top), Size(B.W, B.LOBBY_H))
+        facadeLight(top, 0f, 1f)
         drawRect(SceneInk.LobbyWallLow, Offset(-half, -10f), Size(B.W, 10f))
         drawRect(aoWall, Offset(-half, -14f), Size(B.W, 14f))
         drawPath(art.lobbySide, SceneInk.LobbySide)
+        sideLight(art.lobbySide, 1f)
         if (art.floors.isEmpty()) roofFace(-art.layout.roof, SceneInk.LobbyWall, half)
         // the sign over the awning: a board with a fine rim, lit at night (and glowing)
         translate(0f, top + 4f) {
@@ -945,7 +1092,9 @@ internal class BuildingPainter {
         val seconds = motion.seconds
         val top = fa.top
         drawRect(fa.wall, Offset(-half, top), Size(B.W, fa.bottom - top), alpha = alpha)
+        facadeLight(top, fa.bottom, alpha)
         drawPath(fa.side, f.side, alpha = alpha)
+        sideLight(fa.side, alpha)
         drawPath(
             fa.texture,
             TEXTURE[if (ruin) 4 else b.material.ordinal],
@@ -1072,8 +1221,10 @@ internal class BuildingPainter {
                         Size(ww, h * .45f),
                         alpha = alpha * bright * .45f,
                     )
+                    glint(x, y, ww, h, alpha * .22f * (1f - sky.dark))
                 } else {
                     drawRect(glass, Offset(x, y), Size(ww, h), alpha = alpha)
+                    glint(x, y, ww, h, alpha * .34f * (1f - sky.dark))
                     if (k == fa.hall && !ruin && lod != PeopleLod.NONE)
                         drawRect(
                             SceneInk.WindowLitLow,
@@ -1344,6 +1495,7 @@ internal class BuildingPainter {
             path.lineTo(half + 3f, y)
             path.close()
             drawPath(path, f.side)
+            sideLight(path, 1f)
             if (gold) {
                 // gold finials along the cornice
                 var x = -half
@@ -1970,8 +2122,14 @@ internal class BuildingPainter {
         const val SPILL = 26f
 
         /** How deep the sun's shadows are at full strength, and the moon's. */
-        const val SUN_SHADE = .4f
-        const val MOON_SHADE = .26f
+        const val SUN_SHADE = .46f
+        const val MOON_SHADE = .28f
+
+        /** A tree's shadow in three copies, trunk-sharp to crown-soft: each copy's share. */
+        private val PENUMBRA = floatArrayOf(.55f, .4f, .35f)
+
+        /** How far a street lamp's light reaches over a wall at night, in street units. */
+        const val LAMP_REACH = 64f
 
         /**
          * The shade's colours: the sun's (the sky's blue), dusk's violet, the moon's, a window's.

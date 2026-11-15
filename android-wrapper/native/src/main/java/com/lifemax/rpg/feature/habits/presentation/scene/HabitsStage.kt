@@ -677,8 +677,13 @@ private fun StageCanvas(
         val column = (B.W / 2f + B.DX) * f.camera.scale + 14f
         val orb =
             orbSpot(p.hour, this.size.width / d, window.windowTop, horizon / d, column, f.zoom)
-        // the trees are lit from the side the sun or the moon stands on
+        // the trees are lit from the side the sun or the moon stands on; the light stands where the
+        // orb is drawn, so shadows swing and facades turn to it as the street scrolls under it
         painter.lightFrom = if (orb.first * d < this.size.width / 2f) -1f else 1f
+        painter.light = light
+        painter.lightX = f.streetX(orb.first * d)
+        painter.lightSpan = this.size.width / f.unit
+        painter.lamps = street.furniture
         val from = f.streetX(0f) - B.GAP
         val to = f.streetX(this.size.width) + B.GAP
         // the tallest building in view: it decides how high the clouds hang (clear of its roof and
@@ -730,6 +735,7 @@ private fun StageCanvas(
                                 detailed,
                                 sky,
                                 Silhouettes.lod(f.scale),
+                                street.centers[i],
                             )
                         }
                     }

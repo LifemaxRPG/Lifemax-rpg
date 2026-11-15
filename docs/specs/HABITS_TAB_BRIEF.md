@@ -218,6 +218,23 @@ Not done: no developer hour slider for Habits (the projection has no developer f
 clock; lamp-cast shadows at night (the lamps are far from the trees and benches, the effect would be faint); facade shading
 by the sun's side.
 
+### Lighting v2: a near light (NativeApi 180)
+
+The owner: "the shadows should move when you scroll... it should feel like real AAA stuff." A light infinitely far away
+changes nothing when the camera moves, so the key light is now treated as standing where the sky draws it. The stage hands
+the painter the orb's street x and the view's width in street units each frame; every caster's lean is
+`SceneLight.lean(light, offset)` = the hour's lean plus `SPLAY` (0.9) per view-width the caster stands to the side of the
+light (clamped at 1.5 widths), so shadows fan out from the sun and swing as the street scrolls under it (one matrix, set
+per caster; `NearLightTest` checks the fan, the clamp and continuity through the light). Per building, `sunSide(offset)`
+(-1 lit from its left .. 1 from its right, times strength, the moon at 0.4) drives: a wash of light from the lit edge and
+shade from the far edge over each wall (`facadeLight`, unit brushes under a transform, drawn before windows and trim), the
+right-hand side faces lit white or deepened (`sideLight`, floors, lobby and roof), and the sun's glint on every pane
+(`glint`: a soft diagonal streak whose position across the pane follows the pane's offset from the light, so it travels
+across the glass as you pan; day only). Tree shadows are drawn three times, each a little larger about the foot and
+fainter (`PENUMBRA`), so they are sharp at the trunk and soft at the crown. At night each street lamp within `LAMP_REACH`
+(64) of a building throws a warm additive pool on its walls (`lampLight`, clipped to the front and side). Shade depth
+went to sun 0.46 / moon 0.28 to keep the tree cores dark under the penumbra split.
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The

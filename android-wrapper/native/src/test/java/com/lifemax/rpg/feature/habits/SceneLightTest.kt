@@ -66,3 +66,36 @@ class SceneLightTest {
         assertTrue(SceneLight.cloudDrop(SceneLight.key(17f)) < -20f)
     }
 }
+
+class NearLightTest {
+    @Test
+    fun shadowsFanOutFromTheLightAndSwingAsTheStreetScrollsUnderIt() {
+        val noon = SceneLight.key(13f)
+        assertEquals(noon.lean, SceneLight.lean(noon, 0f), 1e-6f)
+        // a caster to the right of the light leans right, further the further it stands
+        assertTrue(SceneLight.lean(noon, .5f) > SceneLight.lean(noon, .2f))
+        assertTrue(SceneLight.lean(noon, .2f) > 0f)
+        assertTrue(SceneLight.lean(noon, -.2f) < 0f)
+        // and never without end: a caster far off the view leans no more than one at its edge
+        assertEquals(SceneLight.lean(noon, 1.5f), SceneLight.lean(noon, 4f), 1e-6f)
+        // continuous through the light itself: no jump as a building passes under the sun
+        var last = SceneLight.lean(noon, -1f)
+        var o = -1f
+        while (o <= 1f) {
+            o += .01f
+            val l = SceneLight.lean(noon, o)
+            assertTrue(abs(l - last) < .02f)
+            last = l
+        }
+    }
+
+    @Test
+    fun aFacadeIsLitFromTheSideTheLightStandsOn() {
+        assertEquals(0f, SceneLight.sunSide(0f), 0f)
+        // a building to the right of the light is lit from its left
+        assertTrue(SceneLight.sunSide(.3f) < 0f)
+        assertTrue(SceneLight.sunSide(-.3f) > 0f)
+        assertEquals(-1f, SceneLight.sunSide(2f), 0f)
+        assertEquals(1f, SceneLight.sunSide(-2f), 0f)
+    }
+}

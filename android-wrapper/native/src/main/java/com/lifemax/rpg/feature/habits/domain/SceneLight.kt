@@ -74,6 +74,27 @@ object SceneLight {
         return KeyLight(across, down, out, strength, if (night) 1f else 0f)
     }
 
+    /**
+     * The light is near, not infinitely far: it stands where the sky draws it, so shadows fan out
+     * from it and swing as the street scrolls under it. A caster a whole view's width to the side
+     * of the light leans this much further.
+     */
+    const val SPLAY = .9f
+
+    /**
+     * How far a shadow leans per unit of height for a caster standing [offset] view-widths to the
+     * right of the light (negative: to the left).
+     */
+    fun lean(light: KeyLight, offset: Float): Float =
+        light.lean + SPLAY * offset.coerceIn(-1.5f, 1.5f)
+
+    /**
+     * Which side of a facade the light finds, for a building [offset] view-widths to the right of
+     * the light: -1 lit from its left, 1 from its right, 0 face on, between for a little to one
+     * side.
+     */
+    fun sunSide(offset: Float): Float = (-offset * 1.6f).coerceIn(-1f, 1f)
+
     /** How dark a cloud's shadow is at [light]: only the sun's clouds shade the street. */
     fun cloudShade(light: KeyLight): Float = CLOUD_SHADE * light.strength * (1f - light.cool)
 
