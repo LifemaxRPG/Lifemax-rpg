@@ -16,7 +16,7 @@ class SceneLightTest {
             val l = SceneLight.key(h)
             val n = sqrt(l.across * l.across + l.down * l.down + l.out * l.out)
             assertEquals("length at $h", 1f, n, 1e-3f)
-            assertTrue("down at $h", l.down > .2f)
+            assertTrue("down at $h", l.down > .15f)
             assertTrue("out at $h", l.out >= 0f)
             assertTrue("strength at $h", l.strength in 0f..1f)
             h += .25f

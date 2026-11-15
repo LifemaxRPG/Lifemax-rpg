@@ -42,11 +42,11 @@ class KeyLight(
 
 object SceneLight {
     /** The ground's foreshortening: a unit of depth along the pavement is this much on screen. */
-    const val FLAT = .34f
+    const val FLAT = .5f
 
     /** The sun's (or moon's) elevation at the ends of its arc and at the top of it, in degrees. */
-    const val LOW = 13f
-    const val HIGH = 66f
+    const val LOW = 10f
+    const val HIGH = 52f
 
     /** How hard the moon's light is next to the sun's. */
     const val MOON = .3f
@@ -81,7 +81,7 @@ object SceneLight {
     fun cloudDrop(light: KeyLight): Float = light.lean * CLOUD_HEIGHT
 
     /** The deepest a cloud's shadow is. */
-    const val CLOUD_SHADE = .11f
+    const val CLOUD_SHADE = .2f
 
     /** How high the clouds hang over the street, for where their shadows fall, in dp. */
     const val CLOUD_HEIGHT = 90f

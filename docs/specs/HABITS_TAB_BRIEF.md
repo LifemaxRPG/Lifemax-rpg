@@ -189,22 +189,22 @@ that speak of towers, blocks and the city describe the scene this replaced.
 The owner asked for "a real lighting system with shadows that move". One key light at a time (`domain/SceneLight.kt`, pure
 Kotlin, `SceneLightTest`): the sun by day, the moon by night, standing where the sky draws it (`orbAt`), behind the
 buildings. Light travels sideways (away from the side it stands on), down, and out of the facades towards the viewer, as a
-unit vector; elevation 13° at the ends of the arc to 66° at the top. Its strength rises smoothly from 0 at the horizon, so
+unit vector; elevation 10° at the ends of the arc to 52° at the top (kept low so shadows stay long enough to read on the thin pavement). Its strength rises smoothly from 0 at the horizon, so
 the sun sets to nothing before the moon (strength 0.3 of the sun) rises from nothing: no shadow pops at the 20:30 / 05:30
 hand-over. A low dusk sun is 0.45 of noon.
 
 Every shadow is a true projection along that light (`BuildingPainter.shadows`, drawn after the pavement and before anything
 that stands on it): one matrix per light (`x' = x - lean·y`, `y' = -reach·y`, the ground foreshortened by
-`SceneLight.FLAT` 0.34) turns what stands up into its shadow down the pavement, leaning away from the light. Casters: each
+`SceneLight.FLAT` 0.5) turns what stands up into its shadow down the pavement, leaning away from the light. Casters: each
 building's block (a parallelogram from its foot, so sunlight falls through the gaps between buildings), the park trees and
 the pavement trees (the same sprite, tinted the shade's colour with `ColorFilter.tint(SrcIn)` under the same wind shear, so
 the shadow sways with the tree), the lamp posts (their own paths) and the benches. All of a frame's shadows go into one
-`saveLayer` at the shade's depth (sun 0.30, moon 0.22, times strength), so overlapping shadows are no deeper. The shade's
+`saveLayer` at the shade's depth (sun 0.40, moon 0.26, times strength), so overlapping shadows are no deeper. The shade's
 colour is the sky's blue by day, violet at dusk, near black under the moon.
 
 What moves within seconds: tree shadows (wind); cloud shadows by day (`Backdrop` records each frame's cloud x, width and
 solidity; `HabitsStage.cloudShade` draws a soft band of shade under each, offset sideways by the light's lean times a 90 dp
-cloud height, clipped to the ground and the buildings' rectangles, 0.11 deep at full sun); at night each lobby window
+cloud height, clipped to the ground and the buildings' rectangles, 0.2 deep at full sun); at night each lobby window
 throws a warm trapezoid of light 26 units down the pavement (`BuildingPainter.spill`) and the visitor's shadow is drawn
 inside it from the same frames as the visitor (feet at the glass, stretched 1.15×, spreading from the window's middle),
 sliding and stopping as they do. The visitor's silhouette uses the painter's `personFilter`, set only while the shadow is

@@ -320,8 +320,8 @@ internal class BuildingPainter {
     private val spillFall = Matrix()
     private val spillBrush =
         Brush.verticalGradient(
-            0f to SceneInk.WindowLit.copy(alpha = .3f),
-            .55f to SceneInk.WindowLit.copy(alpha = .1f),
+            0f to SceneInk.WindowLit.copy(alpha = .42f),
+            .55f to SceneInk.WindowLit.copy(alpha = .16f),
             1f to Color.Transparent,
             startY = 0f,
             endY = SPILL,
@@ -900,7 +900,7 @@ internal class BuildingPainter {
                 spillFall[1, 1] = -1.15f
                 val act =
                     if (stroll.mode == Stroll.STAND) Activity.LOOKING_OUT else Activity.WALKING
-                val a = .55f * dark
+                val a = .8f * dark
                 personFilter = spillFilter
                 clipPath(spillPath) {
                     withTransform({
@@ -1970,8 +1970,8 @@ internal class BuildingPainter {
         const val SPILL = 26f
 
         /** How deep the sun's shadows are at full strength, and the moon's. */
-        const val SUN_SHADE = .3f
-        const val MOON_SHADE = .22f
+        const val SUN_SHADE = .4f
+        const val MOON_SHADE = .26f
 
         /**
          * The shade's colours: the sun's (the sky's blue), dusk's violet, the moon's, a window's.

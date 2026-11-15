@@ -823,8 +823,8 @@ private fun cloudShadeBrush(): Brush {
     val shade = Color(0xFF0E1428)
     return Brush.horizontalGradient(
         0f to Color.Transparent,
-        .35f to shade,
-        .65f to shade,
+        .3f to shade,
+        .7f to shade,
         1f to Color.Transparent,
         startX = -1f,
         endX = 1f,
