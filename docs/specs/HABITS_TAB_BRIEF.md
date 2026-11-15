@@ -287,6 +287,25 @@ masked to fade by the kerb), `puddles()` (3 per 200 units, sky-filled with a far
 `overcastDay`, `wetAfterRainDay`, `mistMorning`. Not verified in Compose before CI: the reflection layer's masks and
 the lamp streak strength are the knobs if the wet street reads wrong. 232 KB of sprites.
 
+## As built: the seasons and a lens flare (NativeApi 184)
+
+`domain/Season.kt` (`SeasonTest`): `SeasonState(leaf, mature, autumn, blossom, snow, snowfall, dayOfYear)` from the date
+with smoothstep curves (leaf up days 75–135 and down 288–335; autumn 255–295 up, 305–340 down; blossom 94–114 / 126–148;
+snow 335–356, thaw 44–70; snowfall on 45 % of winter days, seeded per year); `Season.override` for tests (the screenshot
+helper forces SUMMER so the 2026-03-02 references keep their green trees). `TreeSprites` grew `TreeSeason` looks
+(SUMMER unchanged byte-for-byte, TURNING, AUTUMN in amber or red by variant, SPRING, BLOSSOM for variants 2 and 7, BARE as
+a recursive branch skeleton kept inside the leafy clumps) plus a snow overlay per variant; `TreeDress.plan()` blends at
+most two canopy looks over the bare skeleton per frame; baked lazily per season (`SceneSprites.tree(variant, season)`,
+~1.1 MB per extra look, 484 KB of snow). `BuildingPainter.tree()` draws the dress; `treeSilhouette()` casts the skeleton
+plus the canopy at the leaf alpha, so a bare tree casts a bare shadow. `SeasonFall.kt`: leaves and petals from each crown
+(tumble, flutter, drift, land, slide, fade) and snowfall at two depths leaning with the wind; still scatter at 0 s; off on
+the zoomed-out street. Snow caps: `snowGround/snowLamp/snowBench/snowPark/snowLobby/snowFloor/snowRoof`, one hook each,
+white by day and the moon's blue at night. `domain/LensFlare.kt` + `FlareSprites.kt`: six additive ghosts on the far side
+of the picture centre from the sun, wandering ≤7 dp with the scroll, strength 1 by day / .35 at dusk / 0 at night and
+faded where a building covers the sun (`Backdrop.sunClear`); drawn in `backdrop()` right after the orb, so a ghost over a
+building is behind it. New screenshot tests `autumnAfternoon`, `winterSnowDay`, `springBlossom`, `dayFlare`; every daytime
+reference with the sun in frame changes (the flare).
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The
