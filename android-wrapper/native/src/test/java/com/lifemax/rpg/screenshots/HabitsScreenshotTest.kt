@@ -370,6 +370,23 @@ class HabitsScreenshotTest {
     @Test fun lobbySpillNight() = snap("tall", hour = 23, ambientAt = 9.6f)
 
     /**
+     * The scene's depth. At dusk on the park street the far city reads as distant: its three rows
+     * baked soft (the furthest softest), thinned into the horizon's air, rooflines broken by tanks,
+     * a spire, a crane and antennas, the windows soft spots of warm, pale and cool light, the
+     * warning lights crisp; and the near layer in front of the street: a railing's top along the
+     * bottom edge of the street band, a branch hanging into a top corner.
+     */
+    @Test fun farCityDusk() = snap("park", hour = 19, ambientAt = 45f)
+
+    /**
+     * The near layer by day on the busy street: dark, soft things between the camera and the street
+     * (the railing or bollards at the band's bottom edge, a post at a side), none over the front
+     * building's plaques or lobby, none under the page's controls.
+     */
+    @Test
+    fun foregroundDay() = snap("city", ambientAt = 45f) { focus(projection.value!!.stacks[1].id) }
+
+    /**
      * The page's header band (the status bar, the picture, the name, the buttons are the page's,
      * drawn over this screen) is filled with the app's own surface and the sky starts under it:
      * dark, light, and with the keyboard sheet open.
