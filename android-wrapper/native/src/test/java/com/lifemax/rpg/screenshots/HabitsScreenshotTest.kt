@@ -255,6 +255,23 @@ class HabitsScreenshotTest {
     /** Zoomed out: the whole street, today, each building named under it. */
     @Test fun streetView() = snap("city") { city(true) }
 
+    /**
+     * The street's perspective: the buildings' side faces follow the camera. With the first
+     * building in front the second stands right of the middle and shows its LEFT side (and none of
+     * its right); with the second in front the first stands left of the middle and shows its RIGHT
+     * side. The same two buildings, opposite faces; the one in front, near the middle, shows a thin
+     * side.
+     */
+    @Test
+    fun perspectiveStreetLeft() = snap("city", hour = 10) { focus(projection.value!!.stacks[0].id) }
+
+    @Test
+    fun perspectiveStreetRight() =
+        snap("city", hour = 10) { focus(projection.value!!.stacks[1].id) }
+
+    /** Zoomed out, the side faces come round more gently along the row. */
+    @Test fun perspectiveCity() = snap("city", hour = 10) { city(true) }
+
     /** The time-lapse six weeks back: shorter buildings of younger materials. */
     @Test
     fun streetViewSixWeeksAgo() =
