@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -17,6 +18,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.Building
+import com.lifemax.rpg.feature.habits.domain.MoonPhase
 import com.lifemax.rpg.feature.habits.domain.Pass
 import com.lifemax.rpg.feature.habits.domain.SkyPhase
 import com.lifemax.rpg.feature.habits.domain.Star
@@ -32,18 +34,19 @@ import kotlin.math.sqrt
 
 /**
  * Everything behind the street, and alive: the sky of the hour with its twinkling stars (the bright
- * ones with cross-shaped glints, and now and then a shooting one), its sun (a corona and slow rays)
- * or cratered moon, its soft volumetric clouds (lit tops, shaded undersides, graded by the hour);
- * an airplane with a contrail, birds, a blimp; three rows of far city, hazier at their feet, that
- * slide at their own speeds as the street scrolls (depth), with windows of several kinds going on
- * and off at night, antennas, and red warning lights on the tallest; the glow over the horizon; a
- * car on the far road (a painted vehicle with its lights). Every moving thing is a function of
- * [seconds] and the [seed] ([Ambient]); at 0 seconds (motion reduced, or the tab hidden) it is a
- * still picture with nothing passing. Nothing is made per frame: the passes, paths, strokes and
- * brushes are kept here, drawn under transforms (shapes are in dp, brushes in the shape's own
- * units).
+ * ones with cross-shaped glints, and now and then a shooting one), its sun (a painted disc, a
+ * corona of streamers, slow rays, a wide glow) or moon (its seas and ray craters, in the phase of
+ * the [day], with earthshine on the dark side), its soft volumetric clouds (lit tops, shaded
+ * undersides, graded by the hour); an airplane with a contrail, birds, a blimp; three rows of far
+ * city, hazier at their feet, that slide at their own speeds as the street scrolls (depth), with
+ * windows of several kinds going on and off at night, antennas, and red warning lights on the
+ * tallest; the glow over the horizon; a car on the far road (a painted vehicle with its lights).
+ * Every moving thing is a function of [seconds] and the [seed] ([Ambient]); at 0 seconds (motion
+ * reduced, or the tab hidden) it is a still picture with nothing passing. Nothing is made per
+ * frame: the passes, paths, strokes and brushes are kept here, drawn under transforms (shapes are
+ * in dp, brushes in the shape's own units).
  */
-internal class Backdrop(private val seed: Int) {
+internal class Backdrop(private val seed: Int, day: String = "") {
     private val starField: Array<Star> = Ambient.stars(72, seed).toTypedArray()
     private val rows: Array<Array<Building>> =
         arrayOf(
@@ -116,20 +119,6 @@ internal class Backdrop(private val seed: Int) {
 
     // ---- shapes made once (in dp, in their own local units)
 
-    /** The sun's rays: twelve thin wedges round a disc of radius 1, from 1.3 out to 2.7. */
-    private val rays =
-        Path().apply {
-            for (k in 0 until 12) {
-                val a = k * (2f * PI.toFloat() / 12f)
-                val w = .085f
-                val len = if (k % 2 == 0) 2.7f else 2.1f
-                moveTo(cos(a - w) * 1.3f, sin(a - w) * 1.3f)
-                lineTo(cos(a) * len, sin(a) * len)
-                lineTo(cos(a + w) * 1.3f, sin(a + w) * 1.3f)
-                close()
-            }
-        }
-
     /**
      * The blimp's advertising panel, in dp on the envelope's side (curved with the hull), to clip
      * the light that sweeps along it at night.
@@ -173,8 +162,6 @@ internal class Backdrop(private val seed: Int) {
     private val tintShade = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
     private val tintMid = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
     private val tintLit = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
-    private var discSun: Brush? = null
-    private var discMoon: Brush? = null
     private var airGlow: Brush? = null
 
     // the tints of the hour for the plane's, the contrail's and the blimp's layers, and how
@@ -190,6 +177,19 @@ internal class Backdrop(private val seed: Int) {
     private val birdInk = Array(3) { SceneInk.Bird }
     private var birdRim = Color.Transparent
     private var birdRimAlpha = 0f
+
+    // ---- the sun and the moon: sprites ([SceneSprites]), tinted once per sky
+    private val moonStep = MoonPhase.step(MoonPhase.fraction(day))
+    private val moonLight = sqrt(MoonPhase.illumination(MoonPhase.fraction(day)))
+    private var orbKey: Any? = null
+    private var tintHalo: ColorFilter? = null
+    private var tintRays: ColorFilter? = null
+    private var tintRim: ColorFilter? = null
+    private var tintCore: ColorFilter? = null
+    private var tintLimb: ColorFilter? = null
+    private var tintMaria: ColorFilter? = null
+    private var tintHigh: ColorFilter? = null
+    private var tintNight: ColorFilter? = null
 
     // ---- brushes that follow the horizon, the orb and the density
     private var skyBrush: Brush? = null
@@ -347,22 +347,6 @@ internal class Backdrop(private val seed: Int) {
             tintMid[i] = tint(sky.cloudBody, .8f)
             tintLit[i] = tint(sky.cloudLit, .55f)
         }
-        discSun =
-            Brush.radialGradient(
-                0f to Color.White,
-                .6f to sky.orb,
-                1f to lerp(sky.orb, Color(0xFFFFB347), .45f),
-                center = Offset(-.15f, -.15f),
-                radius = 1.15f,
-            )
-        discMoon =
-            Brush.radialGradient(
-                0f to Color.White,
-                .65f to sky.orb,
-                1f to lerp(sky.orb, Color(0xFF8C9BD0), .5f),
-                center = Offset(-.3f, -.3f),
-                radius = 1.4f,
-            )
         airTints(sky)
         airGlow =
             Brush.radialGradient(
@@ -440,39 +424,131 @@ internal class Backdrop(private val seed: Int) {
         birdRimAlpha = Px.smooth(.15f, .5f, dark) * Px.smooth(.95f, .6f, dark)
     }
 
-    /** The sun (a corona, slow rays, a lit disc) or the moon (a cratered disc, a crescent). */
+    /**
+     * The sun or the moon, from sprites painted once ([SunMoonSprites]) and tinted with the hour's
+     * colours. The sun: its wide glow and corona, soft rays turning slowly (still in a still
+     * picture), the disc with its limb darkening and thin bright limb; at dusk larger, deeper
+     * orange and flatter, in a warmer, wider halo. The moon: its halo (as strong as the phase is
+     * bright), its seas and highlands, and the dark of the [moonStep] over them, with earthshine
+     * through it.
+     */
     private fun DrawScope.heavenlyBody(sky: SkyColors, orb: Offset, seconds: Float) {
+        orbTints(sky)
         val d = density
-        drawCircle(haloWide!!, (if (sky.phase == SkyPhase.DAY) 230f else 130f) * d, orb)
-        drawCircle(haloBrush!!, (if (sky.phase == SkyPhase.DAY) 74f else 52f) * d, orb)
+        val haloA = sky.halo.alpha
         if (sky.phase == SkyPhase.NIGHT) {
+            val m = SceneSprites.moon
+            val shade = SceneSprites.moonShade(moonStep)
             translate(orb.x, orb.y) {
-                scale(11f * d, 11f * d, Offset.Zero) {
-                    drawCircle(discMoon!!, 1f, Offset.Zero)
-                    // maria and craters
-                    drawCircle(SceneInk.Crater, .3f, Offset(-.28f, -.2f), alpha = .3f)
-                    drawCircle(SceneInk.Crater, .2f, Offset(.25f, .1f), alpha = .26f)
-                    drawCircle(SceneInk.Crater, .13f, Offset(-.1f, .45f), alpha = .3f)
-                    drawCircle(SceneInk.Crater, .1f, Offset(.4f, -.35f), alpha = .24f)
-                }
+                orbLayer(m.body, m.sprite.body, d, 1f, 1f, tintMaria, BlendMode.SrcOver)
+                orbLayer(m.high, m.sprite.high, d, 1f, 1f, tintHigh, BlendMode.SrcOver)
+                orbLayer(shade.image, shade.layer, d, 1f, .92f, tintNight, BlendMode.SrcOver)
+                // the halo last, added over the sky round the disc (it is clear of the disc)
+                orbLayer(
+                    m.halo,
+                    m.sprite.halo,
+                    d,
+                    1f,
+                    haloA * 1.6f * moonLight,
+                    tintHalo,
+                    BlendMode.Plus,
+                )
             }
-            // the dark of the moon: a disc of sky over one side, a little of it showing through
-            drawCircle(sky.sky[1], 9.6f * d, orb + Offset(5.2f * d, -3f * d), alpha = .93f)
         } else {
+            val day = sky.phase == SkyPhase.DAY
+            val s = SceneSprites.sun
+            val grow = if (day) 1f else 1.16f
             translate(orb.x, orb.y) {
-                // rays turn slowly (still in a still picture), then the disc
+                orbLayer(
+                    s.glow,
+                    s.sprite.glow,
+                    d,
+                    1f,
+                    haloA * (if (day) .8f else 1.1f),
+                    tintHalo,
+                    BlendMode.Plus,
+                )
+                orbLayer(
+                    s.corona,
+                    s.sprite.corona,
+                    d,
+                    grow,
+                    haloA * 2.2f,
+                    tintHalo,
+                    BlendMode.SrcOver,
+                )
                 rotate(seconds * 2.5f, Offset.Zero) {
-                    scale(13f * d, 13f * d, Offset.Zero) {
-                        drawPath(
-                            rays,
-                            SceneInk.Rays,
-                            alpha = if (sky.phase == SkyPhase.DAY) .2f else .14f,
-                        )
-                    }
+                    orbLayer(
+                        s.rays,
+                        s.sprite.rays,
+                        d,
+                        grow,
+                        if (day) .55f else .5f,
+                        tintRays,
+                        BlendMode.SrcOver,
+                    )
                 }
-                scale(13f * d, 13f * d, Offset.Zero) { drawCircle(discSun!!, 1f, Offset.Zero) }
+                orbLayer(s.disc, s.sprite.disc, d, grow, 1f, tintRim, BlendMode.SrcOver)
+                orbLayer(
+                    s.core,
+                    s.sprite.core,
+                    d,
+                    grow,
+                    if (day) 1f else .55f,
+                    tintCore,
+                    BlendMode.SrcOver,
+                )
+                orbLayer(
+                    s.limb,
+                    s.sprite.limb,
+                    d,
+                    grow,
+                    if (day) .8f else .3f,
+                    tintLimb,
+                    BlendMode.SrcOver,
+                )
             }
         }
+    }
+
+    /** One layer of the sun or the moon, centred on the origin, [grow] times its size in dp. */
+    private inline fun DrawScope.orbLayer(
+        image: ImageBitmap,
+        l: SkyLayer,
+        d: Float,
+        grow: Float,
+        alpha: Float,
+        tint: ColorFilter?,
+        blend: BlendMode,
+    ) {
+        val s = d / l.pxPerDp * grow
+        scale(s, s, Offset.Zero) {
+            drawImage(
+                image,
+                Offset(-l.size / 2f, -l.size / 2f),
+                alpha = alpha.coerceIn(0f, 1f),
+                colorFilter = tint,
+                blendMode = blend,
+            )
+        }
+    }
+
+    /** The tints of the sun's and the moon's layers for this sky (kept until the sky changes). */
+    private fun orbTints(sky: SkyColors) {
+        if (orbKey === sky) return
+        val day = sky.phase == SkyPhase.DAY
+        fun tint(c: Color) = ColorFilter.tint(c.copy(alpha = 1f), BlendMode.SrcIn)
+        tintHalo = tint(sky.halo)
+        tintRays = tint(lerp(sky.halo, Color.White, .3f))
+        // the disc: white-gold by day, deep orange at dusk, brighter in the middle than at the rim
+        tintRim = tint(lerp(sky.orb, Color(0xFFFF8A2A), if (day) .35f else .8f))
+        tintCore = tint(lerp(sky.orb, Color.White, if (day) .85f else .3f))
+        tintLimb = tint(if (day) Color.White else Color(0xFFFFF0C8))
+        // the moon: bluish-grey seas under pale highlands; the night side the sky's own colour
+        tintMaria = tint(lerp(sky.orb, Color(0xFF3E4A74), .72f))
+        tintHigh = tint(lerp(sky.orb, Color.White, .55f))
+        tintNight = tint(lerp(sky.sky[1], sky.sky[0], .5f))
+        orbKey = sky
     }
 
     // ---- the meteor and the far road: tints for their baked sprites ([RoadSkySprites]), made once
