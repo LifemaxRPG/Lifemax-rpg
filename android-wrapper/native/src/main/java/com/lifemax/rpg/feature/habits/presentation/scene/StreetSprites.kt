@@ -57,8 +57,14 @@ internal object StreetSprites {
     fun part(look: Int, part: Int): Sprite {
         val shapes =
             when (part) {
-                Part.UPPER_N -> StreetRig.upperArm(look, true)
-                Part.UPPER_F -> StreetRig.upperArm(look, false)
+                // shaded as if the limb ran on into the shoulder, then cut back to its round, so
+                // its top lies over the body with no dark rim
+                Part.UPPER_N,
+                Part.UPPER_F ->
+                    return cut(
+                        bake(StreetRig.upperArm(look, part == Part.UPPER_N), StreetLife.SIZE, PPU),
+                        StreetRig.shoulderR(look) * StreetLife.SIZE * PPU,
+                    )
                 Part.HEAD -> StreetRig.head(look, false)
                 Part.HEAD_GLANCE -> StreetRig.head(look, true)
                 Part.HEAD_AWAY -> StreetRig.head(look, -1f)
