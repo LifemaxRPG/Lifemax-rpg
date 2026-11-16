@@ -1821,7 +1821,9 @@ internal class BuildingPainter {
         // which side of it the light finds, and how hard (the moon lights a little, the sun a lot)
         val key = light
         buildingX = x
-        dayMix = (1f - sky.dark * 1.6f).coerceIn(0f, 1f)
+        // the people seen through the windows are flat dark figures at every hour; only the lobby's
+        // keep the warm, back-lit look of a lit shopfront at night ([lobbyLife])
+        dayMix = 1f
         sunSide =
             if (key == null) 0f
             else SceneLight.sunSide(offset(x)) * key.strength * (1f - .6f * key.cool)
@@ -4236,6 +4238,23 @@ internal class BuildingPainter {
     ) {
         if (lod == PeopleLod.NONE) return
         val seed = art.stack.id.hashCode()
+        val kept = dayMix
+        dayMix = (1f - sky.dark * 1.6f).coerceIn(0f, 1f)
+        lobbyRooms(art, x, y, w, h, seconds, sky, lod, seed)
+        dayMix = kept
+    }
+
+    private fun DrawScope.lobbyRooms(
+        art: BuildingArt,
+        x: Float,
+        y: Float,
+        w: Float,
+        h: Float,
+        seconds: Float,
+        sky: SkyColors,
+        lod: PeopleLod,
+        seed: Int,
+    ) {
         for (side in 0..1) {
             val ox = if (side == 0) x else 13f
             clipRect(ox, y, ox + w, y + h) {
