@@ -1,6 +1,6 @@
 # Cat room: continuous 3D furniture (spike and plan)
 
-Status: spike done, one prototype route built behind a developer switch (NativeApi 164), default OFF.
+Status: superseded: the prototype became the room's only route (CAT_ROOM_CONTINUOUS_DEPTH.md); the switch is gone.
 Nothing changes for users. Background: `PET_ENGINE_PLAN.md` sections 5.1 and 5.2 (solid furniture,
 camera steps, the cross-fade of build 510), `CAT_TAB_PLAN.md` CT9.
 

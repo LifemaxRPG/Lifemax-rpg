@@ -14,8 +14,9 @@ package com.lifemax.rpg.feature.pet.room
  *   room has the furniture removed). Everything below needs it.
  * @property parallax move everything with the camera sway by its depth: the wall a little, the
  *   floor more the nearer its row, each piece and cat by the depth it stands at.
- * @property volume render each standing piece as a small solid ([VolumeRaster]): the sway shows its
- *   sides and top, shaded from its own colours. Off, the pieces stay their flat painted sprites.
+ * @property volume draw each standing piece as a small solid ([SolidFaces]): the sway shows its
+ *   sides and top, shaded from its own colours, continuously. Off, the pieces stay their flat
+ *   painted sprites.
  * @property softShadows soft elliptical contact shadows under the cats and the furniture.
  * @property floorLight the windows' light lying on the floor, and the dark seam where wall meets
  *   floor.
@@ -32,7 +33,7 @@ package com.lifemax.rpg.feature.pet.room
  *   on. 0 is the old rest picture. Ignored with [reducedMotion].
  * @property level how strong the depth is ([DepthLevel]): every effect scales with it.
  * @property reducedMotion no sway at all: the room stays at rest (the owner's "reduce motion"
- *   setting), and only the rest picture of each piece is ever rendered.
+ *   setting), and each piece is only ever its painted sprite.
  */
 internal data class RoomStyle(
     val layers: Boolean = false,

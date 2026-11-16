@@ -36,7 +36,8 @@ internal class SoftCanvas(private val art: RoomArt, private val topExtra: Int = 
         clipY1 = height
     }
 
-    private fun put(x: Int, y: Int, argb: Int) {
+    private fun put(xAsked: Int, y: Int, argb: Int) {
+        val x = xAsked + nudged
         val py = y + topExtra
         if (x < clipX0 || x >= clipX1 || py < clipY0 || py >= clipY1) return
         pixels[py * width + x] = over(argb, pixels[py * width + x])
@@ -137,7 +138,7 @@ internal class SoftCanvas(private val art: RoomArt, private val topExtra: Int = 
         for (j in 0 until mask.height) for (i in 0 until mask.width) put(x + i, y + j, mask[i, j])
     }
 
-    override fun sheet(
+    override fun stack(
         image: ArgbImage,
         slot: Int,
         version: Int,
@@ -145,19 +146,19 @@ internal class SoftCanvas(private val art: RoomArt, private val topExtra: Int = 
         sy: Int,
         sw: Int,
         sh: Int,
-        dx: Int,
-        dy: Int,
-        alpha: Float,
+        dx: Float,
+        dy: Float,
     ) {
-        if (alpha >= 1f) {
-            for (j in 0 until sh) for (i in 0 until sw) put(dx + i, dy + j, image[sx + i, sy + j])
-            return
-        }
-        for (j in 0 until sh) for (i in 0 until sw) {
-            val p = image[sx + i, sy + j]
-            val a = Math.round((p ushr 24) * alpha)
-            if (a > 0) put(dx + i, dy + j, (a shl 24) or (p and 0xFFFFFF))
-        }
+        val x = Math.round(dx)
+        val y = Math.round(dy)
+        for (j in 0 until sh) for (i in 0 until sw) put(x + i, y + j, image[sx + i, sy + j])
+    }
+
+    /** The nudge, rounded half up to a whole house pixel. */
+    private var nudged = 0
+
+    override fun nudge(dx: Float) {
+        nudged = Math.floor(dx + 0.5).toInt()
     }
 
     /** The product of two 8-bit values as the page's canvas rounds it: `(a * b + 255) / 256`. */

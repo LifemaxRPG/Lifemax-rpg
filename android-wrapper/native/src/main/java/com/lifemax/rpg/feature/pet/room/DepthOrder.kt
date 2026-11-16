@@ -2,7 +2,7 @@ package com.lifemax.rpg.feature.pet.room
 
 /**
  * The order the 2.5D room draws its things in for one frame, back to front: the bands of the solid
- * pieces and the atlas furniture (a [VolumeStep]'s own order) with the cats put between them.
+ * pieces and the atlas furniture ([SolidBands]' own order) with the cats put between them.
  * Everything stands on a floor row (its key; nearer is larger), so this is a z-buffer at the
  * resolution of a floor row between flat cats and solid furniture:
  * - a cat is drawn after everything whose key is not more than its own and before everything nearer
@@ -21,8 +21,8 @@ package com.lifemax.rpg.feature.pet.room
  *   both are on pieces (the cat on the middle platform, the top platform's front, the cat on top),
  *   else by the row of their feet; a cat is never drawn before the one ordered ahead of it.
  *
- * The answer is [order] (codes: a band number, [VolumeStep.FURNITURE] plus an index, or [CAT] plus
- * a cat) for its first [size] entries; the arrays are reused, so a frame allocates nothing.
+ * The answer is [order] (codes: a band number, [FURNITURE] plus an index, or [CAT] plus a cat) for
+ * its first [size] entries; the arrays are reused, so a frame allocates nothing.
  */
 internal class DepthOrder(capacity: Int) {
     /** The codes in drawing order. */
@@ -70,9 +70,7 @@ internal class DepthOrder(capacity: Int) {
         size = 0
         for (o in 0 until step.orderSize) {
             val code = step.order[o]
-            val key =
-                if (code >= VolumeStep.FURNITURE) furnitureKey[code - VolumeStep.FURNITURE]
-                else step.key[code]
+            val key = if (code >= FURNITURE) furnitureKey[code - FURNITURE] else step.key[code]
             for (k in
                 0 until n) { // in the cats' order: a cat never goes before the one ahead of it
                 val cat = catOrder[k]
@@ -80,7 +78,7 @@ internal class DepthOrder(capacity: Int) {
                 if (key <= catKey[cat] + CAT_AFTER) break
                 emitCat(step, cat, catKey, catAnchor)
             }
-            if (code < VolumeStep.FURNITURE) {
+            if (code < FURNITURE) {
                 if (drawn[code] || waitsFor(step.piece[code], n)) continue
                 drawn[code] = true
             }
@@ -161,6 +159,9 @@ internal class DepthOrder(capacity: Int) {
     private val reach = FloatArray(MAX_CATS)
 
     companion object {
+        /** The code of atlas furniture `k` is `FURNITURE + k`. */
+        const val FURNITURE = 100_000
+
         /** The code of cat `i` is `CAT + i`. */
         const val CAT = 200_000
 

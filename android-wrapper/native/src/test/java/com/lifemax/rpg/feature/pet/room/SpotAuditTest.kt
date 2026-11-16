@@ -59,11 +59,11 @@ class SpotAuditTest {
 
         override fun surface(i: Int) = surface
 
-        override fun draw(i: Int) = draw(i, 0, RoomStyle.CLASSIC, canvas)
+        override fun draw(i: Int) = draw(i, 0f, RoomStyle.CLASSIC, canvas)
 
-        override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
+        override fun draw(i: Int, shift: Float, style: RoomStyle, canvas: RoomCanvas) {
             val r = box()
-            canvas.fill(r[0] + shift, r[1], r[2], r[3], CAT)
+            canvas.fill(r[0] + Math.round(shift), r[1], r[2], r[3], CAT)
         }
 
         fun box(): IntArray {

@@ -32,10 +32,10 @@ class DepthSceneTest {
 
         override fun surface(i: Int) = surface[i]
 
-        override fun draw(i: Int) = draw(i, 0, RoomStyle.CLASSIC, canvas)
+        override fun draw(i: Int) = draw(i, 0f, RoomStyle.CLASSIC, canvas)
 
-        override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
-            canvas.fill(x[i] - 6 + shift, feet[i] - 20, 12, 20, CAT)
+        override fun draw(i: Int, shift: Float, style: RoomStyle, canvas: RoomCanvas) {
+            canvas.fill(x[i] - 6 + Math.round(shift), feet[i] - 20, 12, 20, CAT)
         }
     }
 
@@ -174,7 +174,7 @@ class DepthSceneTest {
 
                 override fun draw(i: Int) = Unit
 
-                override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
+                override fun draw(i: Int, shift: Float, style: RoomStyle, canvas: RoomCanvas) {
                     canvas.fill(tall[0] - 8, 70, 16, 30, CAT) // 30 tall: rows 70..99
                 }
             }

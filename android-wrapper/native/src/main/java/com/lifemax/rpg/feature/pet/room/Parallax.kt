@@ -14,7 +14,9 @@ import kotlin.math.floor
  * cats, so a cat standing at a piece's depth moves exactly as the piece does. The sky does not
  * move.
  *
- * Everything is rounded half up to whole pixels, so the art never shimmers between pixels.
+ * The room is drawn with the shifts as they are ([offsetAtRow]); each canvas rounds them half up to
+ * its own whole pixels (the phone's to device pixels, so the layers slide continuously while the
+ * art's own pixels stay whole and never shimmer). [shift] is the rounding at house pixels.
  */
 internal object Parallax {
     /** The row where the back wall meets the floor (`World.floorY(0)`, 116.7, rounded up). */
@@ -37,6 +39,21 @@ internal object Parallax {
     /** Whole pixels of shift of a floor object (a cat, a prop) at depth [z] for [sway]. */
     fun shiftAtZ(sway: Float, z: Float, level: DepthLevel): Int =
         shiftAtRow(sway, World.floorY(z), level)
+
+    /**
+     * The shift of a point standing on floor row [row] for [sway], not rounded: what the room is
+     * drawn with. A canvas places it at its own nearest pixel ([RoomCanvas.nudge]), the phone's at
+     * a device pixel, so the layers slide continuously; at house pixels it is [shiftAtRow].
+     */
+    fun offsetAtRow(sway: Float, row: Float, level: DepthLevel): Float =
+        sway * gainAtRow(row, level)
+
+    /** [offsetAtRow] of a floor object at depth [z]. */
+    fun offsetAtZ(sway: Float, z: Float, level: DepthLevel): Float =
+        offsetAtRow(sway, World.floorY(z), level)
+
+    /** The wall's shift for [sway], not rounded. */
+    fun wallOffset(sway: Float, level: DepthLevel): Float = sway * level.wallGain
 
     /** The most the wall can shift, in pixels: the margin the sky behind the glass keeps. */
     val maxWallShift: Int

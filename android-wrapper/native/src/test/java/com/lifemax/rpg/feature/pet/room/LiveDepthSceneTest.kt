@@ -3,14 +3,15 @@ package com.lifemax.rpg.feature.pet.room
 import com.lifemax.rpg.feature.pet.art.PetArtResources
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * The live room's camera-follow parallax on the painted room: the pan shifts the near rows against
- * the far wall, each piece takes the camera step of its own yaw (a piece left of the middle of the
- * screen shows its right side), the style without the follow is untouched, and the camera steps can
- * be made by another thread, let go of and made again without the picture changing.
+ * the far wall, each piece turns by its own yaw (a piece left of the middle of the screen shows its
+ * right side), the style without the follow is untouched, and the faces can be baked by another
+ * thread while the frames draw, once for every room of the art.
  */
 class LiveDepthSceneTest {
     private val art = PetArtResources.loadRoom()
@@ -63,36 +64,54 @@ class LiveDepthSceneTest {
         val s = scene()
         s.pan(150f)
         s.paint()
-        val rest = s.depth!!.sheets.rest
-        assertTrue("sofa step ${s.depth!!.stepOf("sofa")}", s.depth!!.stepOf("sofa") < rest)
-        assertTrue("fridge step ${s.depth!!.stepOf("fridge")}", s.depth!!.stepOf("fridge") > rest)
+        assertTrue("sofa yaw ${s.depth!!.yawOf("sofa")}", s.depth!!.yawOf("sofa") < -0.1f)
+        assertTrue("fridge yaw ${s.depth!!.yawOf("fridge")}", s.depth!!.yawOf("fridge") > 0.1f)
         // a piece at the middle of the screen shows its front
         val mid = scene()
         mid.pan(-96f)
         mid.paint()
-        assertEquals(mid.depth!!.sheets.rest, mid.depth!!.stepOf("sofa"))
+        assertEquals(0f, mid.depth!!.yawOf("sofa"), 0.1f)
+    }
+
+    /** A canvas that only records how far right and left the strips of one slot reach. */
+    private class Reach(val slot: Int) : RoomCanvas by CountingCanvas() {
+        var lo = Float.MAX_VALUE
+        var hi = -Float.MAX_VALUE
+
+        override fun stack(
+            image: com.lifemax.rpg.feature.pet.art.ArgbImage,
+            slot: Int,
+            version: Int,
+            sx: Int,
+            sy: Int,
+            sw: Int,
+            sh: Int,
+            dx: Float,
+            dy: Float,
+        ) {
+            if (slot != this.slot) return
+            lo = minOf(lo, dx)
+            hi = maxOf(hi, dx + sw)
+        }
     }
 
     @Test
-    fun theStepsShowTheSideTheYawSays() {
+    fun theFacesShowTheSideTheYawSays() {
         // a negative yaw (a piece left of the middle) shows the right side: the piece reaches
         // farther right than at rest and not farther left; the reverse for a positive one
         val d = scene().depth!!
-        val sheets = d.sheets
         val sofa = d.pieces.indexOfFirst { it.name == "sofa" }
-        fun extent(step: Int): IntArray {
-            val st = sheets.step(step)
-            var lo = Int.MAX_VALUE
-            var hi = Int.MIN_VALUE
-            for (b in st.first[sofa] until st.end[sofa]) {
-                lo = minOf(lo, st.dx[b])
-                hi = maxOf(hi, st.dx[b] + st.w[b] - 1)
-            }
-            return intArrayOf(lo, hi)
+        val faces = d.facesOf("sofa")
+        fun extent(yaw: Float): FloatArray {
+            val c = Reach(sofa)
+            val vx = FaceView.vx(yaw, DepthLevel.MEDIUM)
+            val vy = FaceView.vy(yaw, DepthLevel.MEDIUM)
+            for (k in faces.bands - 1 downTo 0) faces.paintBand(c, sofa, k, 0f, 0f, vx, vy)
+            return floatArrayOf(c.lo, c.hi)
         }
-        val rest = extent(sheets.rest)
-        val toRight = extent(sheets.rest - 2) // a yaw of -0.5
-        val toLeft = extent(sheets.rest + 2) // +0.5
+        val rest = extent(0f)
+        val toRight = extent(-0.5f)
+        val toLeft = extent(0.5f)
         assertTrue("right side shows", toRight[1] > rest[1] && toRight[0] >= rest[0])
         assertTrue("left side shows", toLeft[0] < rest[0] && toLeft[1] <= rest[1])
     }
@@ -134,68 +153,55 @@ class LiveDepthSceneTest {
     // ------------------------------------------------------------------ memory and threads
 
     @Test
-    fun releasingTheStepsKeepsTheRestPictureAndWarmingMakesThemAgain() {
+    fun theFacesAreBakedOnceAndSharedByEveryRoomOfTheArt() {
         val s = scene()
         val d = s.depth!!
         d.warm()
-        assertEquals(d.sheets.count, d.sheets.made)
-        s.pan(200f)
-        d.release()
-        assertEquals(1, d.sheets.made)
         assertTrue(d.ready)
-        d.warm()
-        assertEquals(d.sheets.count, d.sheets.made)
-        val warmed = s.paint().pixels.toList()
-        // let go again; with a background warmer a frame draws the nearest made step (the rest
-        // one) and never makes one itself; once the steps are back the picture is the same
-        d.release()
-        d.asyncWarm = true
-        val resting = s.paint()
-        assertEquals(1, d.sheets.made)
-        assertTrue(resting.pixels.count { it == SOFA_OUTLINE } > 100)
-        d.warm()
-        // the steps made since fade in over a few frames (never a jump), then the picture is the
-        // same
-        repeat(120) {
-            d.step(DT)
-            s.paint()
-        }
-        assertEquals(warmed, s.paint().pixels.toList())
+        val sofa = d.facesOf("sofa")
+        // another room of the same art, at another level, draws from the same faces
+        val other = RoomScene(art, RoomStyle.live(DepthLevel.SUBTLE)).depth!!
+        assertTrue(other.ready)
+        assertSame(sofa, other.facesOf("sofa"))
     }
 
     @Test
-    fun aBackgroundThreadCanWarmWhileTheFramesDraw() {
-        val s = scene()
+    fun aBackgroundThreadCanBakeWhileTheFramesDraw() {
+        // a fresh art, so nothing is baked yet: the frames draw the flat sprites until it is
+        val fresh = PetArtResources.loadRoom()
+        val s = RoomScene(fresh, live)
         val d = s.depth!!
         d.asyncWarm = true
-        d.prepare()
+        assertTrue(!d.ready)
+        val flat = SoftCanvas(fresh)
+        s.paintBackdrop(flat, 12.0, 0.0, 0)
+        s.paintScene(flat, NoCats)
+        assertTrue("never blank", flat.pixels.count { it == SOFA_OUTLINE } > 100)
         val warmer = Thread { d.warm() }
         warmer.start()
         repeat(120) {
             d.follow(if (it % 2 == 0) -80f else 280f)
             d.step(DT)
-            s.paint()
+            val c = SoftCanvas(fresh)
+            s.paintBackdrop(c, 12.0, 0.0, 0)
+            s.paintScene(c, NoCats)
         }
         warmer.join()
-        assertEquals(d.sheets.count, d.sheets.made)
+        assertTrue(d.ready)
         s.pan(200f)
-        d.release()
-        d.warm()
-        val after = s.paint().pixels.toList()
+        val after =
+            SoftCanvas(fresh).also {
+                s.paintBackdrop(it, 12.0, 0.0, 0)
+                s.paintScene(it, NoCats)
+            }
         val sync = scene()
         sync.depth!!.warm()
         sync.pan(200f)
-        sync.depth!!.release()
-        sync.depth!!.warm()
-        assertEquals(sync.paint().pixels.toList(), after)
+        assertEquals(sync.paint().pixels.toList(), after.pixels.toList())
     }
 
     @Test
-    fun aRoomThatNeverSwaysKeepsOnlyItsRestPicture() {
-        val s = scene(RoomStyle.DEPTH25_STILL)
-        s.depth!!.prepare()
-        s.depth!!.release()
-        assertEquals(1, s.depth!!.sheets.made)
+    fun theClassicRoomHasNoDepth() {
         assertNull(RoomScene(art, RoomStyle.CLASSIC).depth)
     }
 

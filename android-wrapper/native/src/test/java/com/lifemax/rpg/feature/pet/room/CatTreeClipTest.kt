@@ -40,15 +40,15 @@ class CatTreeClipTest {
 
         override fun surface(i: Int) = surface[i]
 
-        override fun draw(i: Int) = draw(i, 0, RoomStyle.CLASSIC, canvas)
+        override fun draw(i: Int) = draw(i, 0f, RoomStyle.CLASSIC, canvas)
 
-        override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
+        override fun draw(i: Int, shift: Float, style: RoomStyle, canvas: RoomCanvas) {
             val k = World.depthScale(z[i])
             val bw = Math.round(w * k)
             val bh = Math.round(h * k)
             val house = Math.round(x[i] - RoomLayout.HOUSE_X0)
             val feet = Math.round(feetRow[i])
-            canvas.fill(house - bw / 2 + shift, feet - bh, bw, bh, colour(i))
+            canvas.fill(house - bw / 2 + Math.round(shift), feet - bh, bw, bh, colour(i))
         }
 
         fun colour(i: Int) = if (i == 0) CAT else OTHER
@@ -88,7 +88,7 @@ class CatTreeClipTest {
         val p = pieces.indexOf(solid(name))
         return (0 until order.size).last {
             val c = order.order[it]
-            c < VolumeStep.FURNITURE && bandPiece(c) == p
+            c < DepthOrder.FURNITURE && bandPiece(c) == p
         }
     }
 

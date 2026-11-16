@@ -189,10 +189,10 @@ class RoomAllocationTest {
 
     /**
      * The live room as the screens draw it: the 2.5D room at MEDIUM with the camera-follow
-     * parallax, its camera steps made by another thread (so a frame never makes one), one cat
-     * walking the length of the house so the camera pans across it and the pieces change step under
-     * it, the other waiting. Stepping, the pan, choosing each piece's step, remaking the mix when
-     * one changes and drawing cost nothing per frame.
+     * parallax, its faces baked by another thread (so a frame never bakes), one cat walking the
+     * length of the house so the camera pans across it and the pieces turn under it, the other
+     * waiting. Stepping, the pan, aiming each piece, ordering and drawing its faces cost nothing
+     * per frame.
      */
     @Test
     fun aFrameOfTheLiveRoomWithDepthAndAPanningCameraAllocatesNothing() {
@@ -217,7 +217,7 @@ class RoomAllocationTest {
         house.bodies[1].placeAt(90f, World.ART_Z, SurfaceId.FLOOR, 1)
         val dt = 1f / 60f
         var changes = 0
-        var last = depth.stepOf("sofa")
+        var last = depth.yawOf("sofa")
         fun frame() {
             house.step(dt)
             director.update(house.bodies[0], house.bodies[1], dt)
@@ -226,9 +226,9 @@ class RoomAllocationTest {
             scene.paintBackdrop(canvas, 20.0, 12.0, 6)
             scene.paintScene(canvas, cats)
             scene.paintOverlay(canvas, 20.0, 6)
-            if (depth.stepOf("sofa") != last) {
+            if (depth.yawOf("sofa") != last) {
                 changes++
-                last = depth.stepOf("sofa")
+                last = depth.yawOf("sofa")
             }
         }
         repeat(2_000) { frame() }
@@ -237,7 +237,7 @@ class RoomAllocationTest {
         val used = allocatedBytes() - before
         assertTrue("allocated $used bytes over 20000 frames", used <= TOLERANCE_BYTES)
         assertTrue("nothing was drawn", canvas.calls > 20_000 && cats.drawn >= 40_000)
-        assertTrue("the pieces changed step while panning ($changes)", changes > 2)
+        assertTrue("the pieces turned while panning ($changes)", changes > 2)
     }
 
     /**

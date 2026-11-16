@@ -12,11 +12,11 @@ import org.junit.Test
 /**
  * What a frame of the live room costs on the JVM test harness, for the performance guard's
  * thresholds. The painter's own work is measured (stepping the cats, the camera and the sway,
- * choosing each piece's step, ordering about two hundred strips with the cats between them and
- * asking a canvas to draw each) against a canvas that only counts: the phone's cost is that plus
- * what the canvas does with each strip, which only the phone can say. Printed (one line per level)
- * so a run's numbers can be read from the test report; the asserts are generous bounds that catch
- * an accident, not a regression of a tenth of a millisecond.
+ * aiming each piece, ordering its bands with the cats between them and asking a canvas to draw
+ * each) against a canvas that only counts: the phone's cost is that plus what the canvas does with
+ * each strip, which only the phone can say. Printed (one line per level) so a run's numbers can be
+ * read from the test report; the asserts are generous bounds that catch an accident, not a
+ * regression of a tenth of a millisecond.
  */
 class DepthFrameCostTest {
     private val art = PetArtResources.loadRoom()
@@ -94,25 +94,31 @@ class DepthFrameCostTest {
     }
 
     @Test
-    fun makingACameraStepCostsAFewMillisecondsOnce() {
-        val sheets = scene(DepthLevel.MEDIUM).sheets
+    fun bakingTheFacesCostsAFewMillisecondsOnce() {
+        val fresh = PetArtResources.loadRoom() // nothing baked yet
+        val depth = RoomScene(fresh, RoomStyle.live(DepthLevel.RICH)).depth!!
         val started = System.nanoTime()
-        sheets.warmAll()
+        depth.warm()
         val ms = (System.nanoTime() - started) / 1e6
+        val bytes = depth.pieces.sumOf { it.volume!!.faces.bytes }
+        val runs = depth.pieces.sumOf { it.volume!!.faces.runs }
         println(
-            "STEPCOST (ms, all %d camera steps of MEDIUM) total=%.1f each=%.1f"
-                .format(sheets.count, ms, ms / sheets.count)
+            "FACEBAKE (all %d pieces, once for every level) %.1f ms, %.2f MB of bitmaps, %d runs"
+                .format(depth.pieces.size, ms, bytes / 1e6, runs)
         )
-        val bytes = (0 until sheets.count).sumOf { sheets.step(it).image.pixels.size * 4L }
+        // what a frame of the live room at RICH asks the canvas for
+        val canvas = CountingCanvas()
+        val scene = RoomScene(fresh, RoomStyle.live(DepthLevel.RICH))
+        scene.depth!!.sway.restAt(0.6f)
+        scene.paintBackdrop(canvas, 12.0, 0.0, 6)
+        scene.paintScene(canvas, NoCats)
         println(
-            "STEPMEM (all %d camera steps of MEDIUM, as bitmaps) %.2f MB, %d strips in the rest step"
-                .format(sheets.count, bytes / 1e6, sheets.step(sheets.rest).count)
+            "FACEFRAME (RICH, the whole house) %d draw calls, %d of them strips blitting %d art px"
+                .format(canvas.calls, canvas.strips, canvas.stripPixels)
         )
-        assertTrue("all steps in $ms ms", ms < STEPS_BOUND_MS)
-        assertTrue("the steps' bitmaps stay under 8 MB: $bytes", bytes < STEPS_BYTES_BOUND)
+        assertTrue("baked in $ms ms", ms < BAKE_BOUND_MS)
+        assertTrue("the faces' bitmaps stay under 4 MB: $bytes", bytes < FACE_BYTES_BOUND)
     }
-
-    private fun scene(level: DepthLevel) = RoomScene(art, RoomStyle.live(level)).depth!!
 
     private companion object {
         const val WARM = 600
@@ -120,9 +126,9 @@ class DepthFrameCostTest {
 
         /** A frame of the painter alone must be far below the 16.7 ms of a 60 Hz budget. */
         const val BOUND_MS = 8.0
-        const val STEPS_BOUND_MS = 20_000.0
+        const val BAKE_BOUND_MS = 20_000.0
 
-        /** The cap on the bitmaps of the camera steps of one room (the level's steps, all made). */
-        const val STEPS_BYTES_BOUND = 8_000_000L
+        /** The cap on the bitmaps of the faces of the whole house. */
+        const val FACE_BYTES_BOUND = 4_000_000L
     }
 }

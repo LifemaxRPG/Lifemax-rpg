@@ -9,7 +9,7 @@ import kotlin.math.atan2
  * of solid running from [front] to [back], in floor rows behind the piece's front plane
  * (`tools/pet_room_volume.js` writes the depth maps from measured profiles). Seen straight on, as
  * the camera at rest sees it, only the fronts show and the solid is the sprite exactly; the sway
- * shows the sides and tops between columns of different depth ([VolumeRaster]).
+ * shows the sides and tops between columns of different depth ([SolidFaces]).
  *
  * @property colours the painted sprite, `0xAARRGGBB`; a clear pixel has no column.
  * @property front where each column starts, in floor rows behind the front plane.

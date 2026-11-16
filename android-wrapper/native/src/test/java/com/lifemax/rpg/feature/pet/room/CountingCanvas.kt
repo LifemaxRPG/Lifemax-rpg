@@ -54,7 +54,11 @@ internal class CountingCanvas : RoomCanvas {
         calls++
     }
 
-    override fun sheet(
+    /** How many of [calls] were depth strips of the furniture, and how many pixels they blit. */
+    var strips = 0
+    var stripPixels = 0L
+
+    override fun stack(
         image: ArgbImage,
         slot: Int,
         version: Int,
@@ -62,10 +66,13 @@ internal class CountingCanvas : RoomCanvas {
         sy: Int,
         sw: Int,
         sh: Int,
-        dx: Int,
-        dy: Int,
-        alpha: Float,
+        dx: Float,
+        dy: Float,
     ) {
         calls++
+        strips++
+        stripPixels += sw.toLong() * sh
     }
+
+    override fun nudge(dx: Float) = Unit
 }
