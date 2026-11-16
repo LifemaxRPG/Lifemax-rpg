@@ -224,11 +224,22 @@ internal class RoofKit(
     val railing: Boolean,
 )
 
+/**
+ * A brick floor's share of the building's fire escape ([BuildingDetail.fireEscape]): its place in
+ * the building's run of floors ([index], which sets the way its stair climbs), the height of the
+ * floor under it when that one carries the escape too (NaN when this is the escape's lowest
+ * platform, which has the drop ladder), and whether the floor over it carries it (the stair climbs
+ * to it).
+ */
+internal class Escape(val index: Int, val below: Float, val above: Boolean)
+
 /** The choices a whole building makes once, from its seed. */
 internal class BuildingChoices(
     /** The drainpipe: down the left (-1), the right (1), or none (0). */
     val pipeSide: Int,
     val roof: RoofKit,
+    /** Whether its brick floors carry a fire escape up their right-hand bays. */
+    val fireEscape: Boolean = false,
 ) {
     val pipeX: Float
         get() = pipeSide * (B.W / 2f - PIPE_IN)
@@ -267,6 +278,18 @@ internal object BuildingDetail {
     /** A curtain wall's mullion. */
     const val MULLION = 1.1f
 
+    /** The quoins up a brick floor's corners: a block's height, a long one's width, a short's. */
+    const val QUOIN_H = 7f
+    const val QUOIN_LONG = 7f
+    const val QUOIN_SHORT = 4.5f
+
+    /** How many buildings carry a fire escape up their brick floors. */
+    const val FIRE_ESCAPE_SHARE = .5f
+
+    /** The fire escape's railing height, and how far its platform hangs under the sills. */
+    const val ESCAPE_RAIL = 9f
+    const val ESCAPE_DROP = 2.4f
+
     fun choices(seed: Int): BuildingChoices {
         val pipe = Ambient.hash(seed, 0, 500)
         val side = if (pipe < .15f) 0 else if (pipe < .55f) -1 else 1
@@ -278,6 +301,7 @@ internal object BuildingDetail {
                 dish = Ambient.hash(seed, 3, 500) < .45f,
                 railing = Ambient.hash(seed, 4, 500) < .5f,
             ),
+            fireEscape = Ambient.hash(seed, 5, 500) < FIRE_ESCAPE_SHARE,
         )
     }
 
@@ -326,6 +350,7 @@ internal object BuildingDetail {
         wall: Shapes,
         front: Shapes,
         over: Shapes = Shapes(),
+        escape: Escape? = null,
     ) {
         val half = B.W / 2f
         val gold = material == HabitMaterial.GOLD && !ruin
@@ -343,6 +368,7 @@ internal object BuildingDetail {
         if (glass)
             for (c in 0..B.COLS) mullion(-half + B.MARGIN + c * B.PITCH, top + course, bottom, wall)
         else if (stone) pilasters(top + course, bottom, gold, wall)
+        else if (material == HabitMaterial.CLAY && !ruin) quoins(top + course, bottom, wall)
         val firstRow = if (count > 0) windows[1] else 0f
         for (k in 0 until count) {
             val x = windows[k * 4]
@@ -382,6 +408,10 @@ internal object BuildingDetail {
                         front,
                     )
                 }
+            return
+        }
+        if (escape != null && material == HabitMaterial.CLAY && count > 0) {
+            fireEscape(top, bottom, windows, count, escape, wall, front)
             return
         }
         when (extra(seed, material, lit, count)) {
@@ -563,6 +593,169 @@ internal object BuildingDetail {
                 s.rect(DetailInk.TRIM, x + .55f, top + 1.4f, .35f, h - 1.4f)
                 s.rect(DetailInk.TRIM, x + p - .9f, top + 1.4f, .35f, h - 1.4f)
             }
+        }
+    }
+
+    /**
+     * Quoins up both corners of a brick floor, from under its string course ([top]) to its foot:
+     * dressed stone blocks in the trim's colour, long and short in turn, each standing proud of the
+     * brick (its top catching the sky, its underside and the joint under it in shade, its inner
+     * edge turned to the light or away, the shadow it throws on the brick beside it).
+     */
+    private fun quoins(top: Float, bottom: Float, s: Shapes) {
+        val half = B.W / 2f
+        val j = .35f
+        var y = top
+        var k = 0
+        while (y < bottom - 1.5f) {
+            val h = minOf(QUOIN_H, bottom - y)
+            val w = if (k % 2 == 0) QUOIN_LONG else QUOIN_SHORT
+            for (side in 0..1) {
+                val x = if (side == 0) -half else half - w
+                s.rect(DetailInk.TRIM, x, y + j, w, h - 2f * j)
+                s.rect(DetailInk.LIGHT, x, y + j, w, .45f)
+                s.rect(DetailInk.SOFFIT, x, y + h - j - .5f, w, .5f)
+                s.rect(DetailInk.SHADE, x, y + h - j, w, j)
+                if (side == 0) {
+                    s.rect(DetailInk.FACE_R, x + w - .5f, y + j, .5f, h - 2f * j)
+                    s.rect(
+                        DetailInk.CAST_FROM_LEFT,
+                        x + w,
+                        y + j + .5f,
+                        CAST_DX * .7f,
+                        h - 2f * j - .5f,
+                    )
+                } else {
+                    s.rect(DetailInk.FACE_L, x, y + j, .5f, h - 2f * j)
+                    s.rect(
+                        DetailInk.CAST_FROM_RIGHT,
+                        x - CAST_DX * .7f,
+                        y + j + .5f,
+                        CAST_DX * .7f,
+                        h - 2f * j - .5f,
+                    )
+                }
+            }
+            y += QUOIN_H
+            k++
+        }
+    }
+
+    /**
+     * A brick floor's part of the fire escape up the building's two right-hand bays: a slatted iron
+     * platform hung just under the sills on two braces, its railing of balusters with a top and a
+     * middle rail, the shadow it throws on the brick; the stair climbing from it towards the floor
+     * above (the part inside this floor; the floor above lays down the rest), the last part of the
+     * stair from the floor below arriving on it, and under the escape's lowest platform the drop
+     * ladder. Each flight runs the other way from the one under it, so the stairs zigzag up the
+     * building. All of it inside the floor's front.
+     */
+    fun fireEscape(
+        top: Float,
+        bottom: Float,
+        windows: FloatArray,
+        count: Int,
+        e: Escape,
+        wall: Shapes,
+        front: Shapes,
+    ) {
+        val half = B.W / 2f
+        var sill = top
+        for (k in 0 until count) sill = maxOf(sill, top + windows[k * 4 + 1] + windows[k * 4 + 3])
+        val x0 = -half + B.MARGIN + 4 * B.PITCH + (B.PITCH - B.WIN_W) / 2f - REVEAL - 4f
+        val x1 = -half + B.MARGIN + 5 * B.PITCH + (B.PITCH + B.WIN_W) / 2f + REVEAL + 4f
+        val pw = x1 - x0
+        val p = sill + ESCAPE_DROP
+        // how far the platform stands above the floor's foot (the same on every brick floor)
+        val lift = bottom - p
+        if (lift < 6f) return
+        // the platform: a slab of slats, its lit edge, its shadow on the wall
+        front.rect(DetailInk.IRON, x0, p, pw, 1.1f)
+        front.rect(DetailInk.IRON_LIGHT, x0, p, pw, .35f)
+        wall.rect(DetailInk.AO, x0, p + 1.1f, pw, 1.6f)
+        wall.rect(DetailInk.CAST_FROM_LEFT, x0 + CAST_DX, p + 1.1f, pw - CAST_DX, 2.4f)
+        wall.rect(DetailInk.CAST_FROM_RIGHT, x0, p + 1.1f, pw - CAST_DX, 2.4f)
+        // the braces under it, back to the wall
+        val brace = minOf(6f, lift - 1f)
+        front.line(DetailInk.IRON, floatArrayOf(x0 + 1.5f, p + brace, x0 + 6f, p + 1.1f))
+        front.line(DetailInk.IRON, floatArrayOf(x1 - 1.5f, p + brace, x1 - 6f, p + 1.1f))
+        // the railing
+        val rt = p - ESCAPE_RAIL
+        front.rect(DetailInk.IRON, x0, rt, pw, .7f)
+        front.rect(DetailInk.IRON_LIGHT, x0, rt, pw, .3f)
+        front.rect(DetailInk.IRON, x0, p - ESCAPE_RAIL / 2f, pw, .45f)
+        front.rect(DetailInk.IRON, x0, rt, .8f, ESCAPE_RAIL)
+        front.rect(DetailInk.IRON, x1 - .8f, rt, .8f, ESCAPE_RAIL)
+        var bx = x0 + 2.4f
+        while (bx < x1 - 1.5f) {
+            front.rect(DetailInk.IRON, bx, rt, .45f, ESCAPE_RAIL)
+            bx += 2.4f
+        }
+        // the stair up from this platform, to where it passes into the floor above
+        if (e.above) flight(e.index, x0, x1, p, p - (bottom - top), top, p, front)
+        // the stair from the floor below arriving here
+        if (!e.below.isNaN()) flight(e.index - 1, x0, x1, p + e.below, p, p, bottom - .5f, front)
+        else {
+            // the drop ladder hanging under the lowest platform, ready to slide down
+            val lx = if (e.index % 2 == 0) x0 + 4f else x1 - 8.6f
+            val foot = minOf(p + 13f, bottom - .5f)
+            front.rect(DetailInk.IRON, lx, p + 1.1f, .6f, foot - p - 1.1f)
+            front.rect(DetailInk.IRON, lx + 4f, p + 1.1f, .6f, foot - p - 1.1f)
+            var ry = p + 3f
+            while (ry < foot - .4f) {
+                front.rect(DetailInk.IRON, lx, ry, 4.6f, .4f)
+                ry += 2.2f
+            }
+        }
+    }
+
+    /**
+     * A flight of the fire escape from a platform at [from] to the next one up at [to] (y down),
+     * run left to right on an even [index] and right to left on an odd one, between the platforms'
+     * ends [x0] and [x1]; only its part between [y0] and [y1] is laid down: the stringer, the
+     * handrail over it, a tread every few units.
+     */
+    private fun flight(
+        index: Int,
+        x0: Float,
+        x1: Float,
+        from: Float,
+        to: Float,
+        y0: Float,
+        y1: Float,
+        s: Shapes,
+    ) {
+        val rise = from - to
+        if (rise <= 1f) return
+        val xa = if (index % 2 == 0) x0 + 4f else x1 - 4f
+        val xb = if (index % 2 == 0) x1 - 4f else x0 + 4f
+        val run = xb - xa
+        val lo = minOf(y1, from)
+        val hi = maxOf(y0, to)
+        if (lo - hi > .5f)
+            s.line(
+                DetailInk.IRON,
+                floatArrayOf(xa + run * (from - lo) / rise, lo, xa + run * (from - hi) / rise, hi),
+            )
+        // the handrail, a rail's height over the stringer
+        val r = ESCAPE_RAIL * .8f
+        val rlo = minOf(y1, from - r)
+        val rhi = maxOf(y0 + .8f, to - r)
+        if (rlo - rhi > .5f)
+            s.line(
+                DetailInk.IRON,
+                floatArrayOf(
+                    xa + run * (from - rlo - r) / rise,
+                    rlo,
+                    xa + run * (from - rhi - r) / rise,
+                    rhi,
+                ),
+            )
+        var y = from - 2.5f
+        while (y > to + 1f) {
+            if (y >= y0 + .3f && y + .5f <= y1)
+                s.rect(DetailInk.IRON, xa + run * (from - y) / rise - 1.8f, y, 3.6f, .5f)
+            y -= 2.5f
         }
     }
 

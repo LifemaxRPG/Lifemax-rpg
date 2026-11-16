@@ -128,11 +128,15 @@ class FacadeTest {
         val bytes = tiles.values.sumOf { it.pixels.size * 4 }
         val lobby = FacadeSprites.lobbyTile()
         val mirror = FacadeSprites.mirror()
+        val grime = FacadeSprites.grime()
+        val drip = FacadeSprites.drip()
         assertEquals(
             bytes +
                 2 * FacadeSprites.cloth().let { it.w * it.h * 4 } +
                 lobby.pixels.size * 4 +
-                mirror.w * mirror.h * 4,
+                mirror.w * mirror.h * 4 +
+                grime.w * grime.h * 4 +
+                drip.w * drip.h * 4,
             FacadeSprites.bytes(),
         )
         assertTrue("${FacadeSprites.bytes()}", FacadeSprites.bytes() < 1_000_000)
@@ -436,6 +440,128 @@ class FacadeTest {
                 assertTrue(b[2] <= win[k * 4] + win[k * 4 + 2] + 3f + 1e-3f)
             }
         }
+    }
+
+    @Test
+    fun theWeatheringAndTheDripsAreBakedOnceSoftAndClampable() {
+        val g = FacadeSprites.grime()
+        assertArrayEquals(g.light, FacadeSprites.grime().light)
+        assertEquals((FacadeSprites.GRIME_W * FacadeSprites.GRIME_PPU).toInt(), g.w)
+        assertEquals((FacadeSprites.GRIME_H * FacadeSprites.GRIME_PPU).toInt(), g.h)
+        // one dark colour at an alpha, never more than a veil
+        val rgb = g.light[0] and 0xFFFFFF
+        assertTrue(g.light.all { (it and 0xFFFFFF) == rgb })
+        assertTrue(channel(rgb, 16) < 60 && channel(rgb, 8) < 60 && channel(rgb, 0) < 60)
+        assertTrue(g.light.all { (it ushr 24) <= 160 })
+        // clear on its last row (it is clamped below the strip), the soot heaviest under the ledge
+        assertTrue((0 until g.w).all { (g.light[(g.h - 1) * g.w + it] ushr 24) == 0 })
+        fun row(y: Int) = (0 until g.w).sumOf { g.light[y * g.w + it] ushr 24 } / g.w
+        assertTrue("${row(0)} vs ${row(g.h / 2)}", row(0) > row(g.h / 2) * 2)
+        // streaks: some columns run dark well down the strip, most are clear there
+        val y = g.h / 2
+        val streaked = (0 until g.w).count { (g.light[y * g.w + it] ushr 24) > 10 }
+        assertTrue("$streaked", streaked in 4..g.w / 2)
+        // seamless across
+        var step = 0
+        var wrap = 0
+        for (yy in 0 until g.h) {
+            wrap += abs((g.light[yy * g.w + g.w - 1] ushr 24) - (g.light[yy * g.w] ushr 24))
+            step =
+                maxOf(
+                    step,
+                    (0 until g.w - 1).maxOf {
+                        abs((g.light[yy * g.w + it] ushr 24) - (g.light[yy * g.w + it + 1] ushr 24))
+                    },
+                )
+        }
+        assertTrue("grime seam $wrap", wrap <= step * g.h / 4 + g.h)
+        val d = FacadeSprites.drip()
+        assertArrayEquals(d.light, FacadeSprites.drip().light)
+        assertTrue((0 until d.w).all { (d.light[(d.h - 1) * d.w + it] ushr 24) == 0 })
+        assertTrue((0 until d.h).all { (d.light[it * d.w] ushr 24) == 0 })
+        // darkest at the sill, fading down
+        fun drow(yy: Int) = (0 until d.w).sumOf { d.light[yy * d.w + it] ushr 24 }
+        assertTrue(drow(2) > drow(d.h * 3 / 4) * 2)
+    }
+
+    @Test
+    fun brickFloorsHaveQuoinsAndAFireEscapeThatClimbsTheBuilding() {
+        val half = BuildingSpec.W / 2f
+        for (h in BuildingSpec.HEIGHTS) {
+            val win = windows(h, false)
+            val count = win.size / 4
+            val top = -400f
+            val bottom = top + h
+            // the quoins: trim blocks at both corners, inside the front
+            val plain = Shapes()
+            BuildingDetail.floor(
+                HabitMaterial.CLAY,
+                false,
+                top,
+                bottom,
+                win,
+                count,
+                2,
+                -1,
+                5,
+                0,
+                Float.NaN,
+                null,
+                plain,
+                Shapes(),
+            )
+            val trim = plain.rects(DetailInk.TRIM)
+            var left = 0
+            var right = 0
+            for (i in 0 until trim.size / 4) {
+                if (trim[i * 4 + 3] < 3f) continue
+                if (abs(trim[i * 4] + half) < 1e-3f) left++
+                if (abs(trim[i * 4] + trim[i * 4 + 2] - half) < 1e-3f) right++
+            }
+            assertTrue("$h quoins $left $right", left >= 4 && left == right)
+            // the escape: a platform and railing in front, a stair up and one arriving, the drop
+            // ladder only under the lowest platform; all inside the floor
+            for ((below, above) in
+                listOf(Float.NaN to true, 60f to true, 84f to false, Float.NaN to false)) {
+                val wall = Shapes()
+                val front = Shapes()
+                BuildingDetail.floor(
+                    HabitMaterial.CLAY,
+                    false,
+                    top,
+                    bottom,
+                    win,
+                    count,
+                    2,
+                    -1,
+                    5,
+                    0,
+                    Float.NaN,
+                    null,
+                    wall,
+                    front,
+                    escape =
+                        com.lifemax.rpg.feature.habits.presentation.scene.Escape(3, below, above),
+                )
+                val b = front.bounds()!!
+                assertTrue(b[0] >= -half - 1e-3f && b[2] <= half + 1e-3f)
+                assertTrue("$h ${b[1]} ${b[3]}", b[1] >= top - 1e-3f && b[3] <= bottom + 1e-3f)
+                val lines = front.lines(DetailInk.IRON).size
+                // the braces, and a stringer and handrail for each flight drawn
+                val flights = (if (above) 1 else 0) + (if (below.isNaN()) 0 else 1)
+                assertEquals("$h $below $above", 2 + 2 * flights, lines)
+                // the escape stands on the right, clear of the plaque
+                assertTrue(b[0] > -half + BuildingSpec.PLAQUE_X + 100f)
+            }
+        }
+        // half the buildings or so have one, the same every time
+        var with = 0
+        for (seed in 0 until 400) {
+            val c = BuildingDetail.choices(seed * 7919 + 13)
+            assertEquals(c.fireEscape, BuildingDetail.choices(seed * 7919 + 13).fireEscape)
+            if (c.fireEscape) with++
+        }
+        assertTrue("$with", with in 120..280)
     }
 
     @Test
