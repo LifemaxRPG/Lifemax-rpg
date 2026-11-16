@@ -70,7 +70,7 @@ internal class StreetLifePainter {
 
     /** The shade a walker throws under a street lamp, and the warmth the lamp lends them. */
     private val lampShadeFilter = ColorFilter.tint(Color(0xFF0A0806), BlendMode.SrcIn)
-    private val warmFilter = ColorFilter.tint(Color(0xFFFFB866), BlendMode.SrcIn)
+    private val warmFilter = ColorFilter.tint(Color(0xFFFFD9B0), BlendMode.SrcIn)
     private val dayRimFilter = ColorFilter.tint(Color(0xFFF2F5FA), BlendMode.SrcIn)
 
     /**
@@ -78,6 +78,39 @@ internal class StreetLifePainter {
      * person in the street is a cool, flat, dark shape with only a little modelling, so their tones
      * are taken to cool greys by brightness and the baked glow round them is cut away.
      */
+    /**
+     * A walker at night: the same flattening as by day, darker and a touch bluer (a figure out of
+     * the lamp's pool is a dark shape against the lit street), so nobody glows orange; the lamps
+     * only lend a faint warm edge and a little warmth over them.
+     */
+    private val nightFigure =
+        ColorFilter.colorMatrix(
+            ColorMatrix(
+                floatArrayOf(
+                    .07f,
+                    .14f,
+                    .027f,
+                    0f,
+                    10f,
+                    .075f,
+                    .15f,
+                    .03f,
+                    0f,
+                    12f,
+                    .09f,
+                    .18f,
+                    .035f,
+                    0f,
+                    20f,
+                    0f,
+                    0f,
+                    0f,
+                    1.7f,
+                    -178f,
+                )
+            )
+        )
+
     private val dayFigure =
         ColorFilter.colorMatrix(
             ColorMatrix(
@@ -462,14 +495,14 @@ internal class StreetLifePainter {
                     else if (key != null && key.cool > .5f) moonRimFilter else dayRimFilter
                 nudgeX = side * .5f
                 nudgeY = -.15f
-                party(p, persp, max(rim, lamp) * .7f, filter, PLAIN)
+                party(p, persp, max(rim, lamp * .6f) * .55f, filter, PLAIN)
                 nudgeX = 0f
                 nudgeY = 0f
             }
-            if (day < .99f) party(p, persp, 1f - day, null, PLAIN)
+            if (day < .99f) party(p, persp, 1f - day, nightFigure, PLAIN)
             if (day > .01f) party(p, persp, day, dayFigure, PLAIN)
             // the lamp's warmth over them, added
-            if (lamp > .03f) party(p, persp, lamp * .38f, warmFilter, PLAIN)
+            if (lamp > .03f) party(p, persp, lamp * .12f, warmFilter, PLAIN)
             if (p.kind == Stroller.DOG_WALKER) lead(p, persp)
         }
     }
