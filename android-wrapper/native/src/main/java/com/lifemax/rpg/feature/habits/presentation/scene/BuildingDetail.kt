@@ -40,6 +40,106 @@ internal enum class DetailInk {
 
     /** A spray-can tag. */
     SPRAY,
+
+    /** The faces of a reveal (the jambs and the head of an opening): the wall seen in its depth. */
+    REVEAL,
+
+    /** A raised surface (a pilaster, a pier) a touch lighter for the sky it catches. */
+    RAISED,
+
+    /**
+     * Faces turned to the left (a right-hand jamb, a pilaster's left edge): lit when the light
+     * comes from the left, in shade when it comes from the right ([FacadeLook]).
+     */
+    FACE_L,
+
+    /** Faces turned to the right: lit from the right, in shade from the left. */
+    FACE_R,
+
+    /** The shadows things cast with the light from the left: lying a little to their right. */
+    CAST_FROM_LEFT,
+
+    /** The shadows things cast with the light from the right: lying a little to their left. */
+    CAST_FROM_RIGHT,
+
+    /** Soft occlusion at an inside corner (the sky's light blocked), whatever the light. */
+    AO,
+
+    /** Faces turned down (an opening's head, a slab's underside): in shade under the sun. */
+    SOFFIT,
+
+    /** The head's shadow on the glass set back in an opening. */
+    GLASS_TOP,
+
+    /**
+     * A jamb's shadow on the glass: the left jamb's with the light from the left, and the right's.
+     */
+    GLASS_FROM_LEFT,
+    GLASS_FROM_RIGHT,
+
+    /** Glazing bars across a pane, and their lit edge. */
+    BAR,
+    BAR_LIGHT,
+}
+
+/**
+ * How the facade's inks are drawn for a light: pure, so the painter and the harness that looks at
+ * the facades agree. [side] is the light's side times its strength (-1 from the left .. 1 from the
+ * right, [com.lifemax.rpg.feature.habits.domain.SceneLight.sunSide]), [direct] how hard and sharp
+ * it is (0 under a full overcast or in the dark, about 1 under a high sun), [dark] the sky's dark.
+ * A light-dependent ink's value is signed: positive is white at that alpha (lit), negative black at
+ * minus that alpha (shade); the others are their own colour at the alpha.
+ */
+internal object FacadeLook {
+    /** Whether [ink] is drawn white or black by the sign of [alpha]. */
+    fun signed(ink: DetailInk): Boolean =
+        when (ink) {
+            DetailInk.FACE_L,
+            DetailInk.FACE_R,
+            DetailInk.CAST_FROM_LEFT,
+            DetailInk.CAST_FROM_RIGHT,
+            DetailInk.AO,
+            DetailInk.SOFFIT,
+            DetailInk.GLASS_TOP,
+            DetailInk.GLASS_FROM_LEFT,
+            DetailInk.GLASS_FROM_RIGHT,
+            DetailInk.BAR_LIGHT -> true
+            else -> false
+        }
+
+    fun alpha(ink: DetailInk, side: Float, direct: Float, dark: Float): Float =
+        when (ink) {
+            DetailInk.TRIM -> .95f
+            DetailInk.LIGHT -> .35f * (1f - .45f * dark)
+            DetailInk.SHADE -> .32f
+            DetailInk.SPRAY -> .85f
+            DetailInk.RAISED -> .1f * (1f - .5f * dark)
+            DetailInk.REVEAL -> 1f
+            DetailInk.FACE_L -> face(-side)
+            DetailInk.FACE_R -> face(side)
+            DetailInk.CAST_FROM_LEFT -> -CAST * maxOf(0f, -side) * (.35f + .65f * direct)
+            DetailInk.CAST_FROM_RIGHT -> -CAST * maxOf(0f, side) * (.35f + .65f * direct)
+            DetailInk.AO -> -.15f - .05f * dark
+            DetailInk.SOFFIT -> -(.12f + .26f * direct) * (1f - .4f * dark)
+            DetailInk.GLASS_TOP -> -(.2f + .3f * direct) * (1f - .55f * dark)
+            DetailInk.GLASS_FROM_LEFT -> -.34f * maxOf(0f, -side) * (.4f + .6f * direct)
+            DetailInk.GLASS_FROM_RIGHT -> -.34f * maxOf(0f, side) * (.4f + .6f * direct)
+            DetailInk.BAR -> 1f
+            DetailInk.BAR_LIGHT -> .34f * (1f - .6f * dark)
+            else -> 1f
+        }
+
+    /** A face turned [v] towards the light (-1 away .. 1 into it): lit white, or shade. */
+    private fun face(v: Float): Float = if (v >= 0f) .38f * v else .36f * v
+
+    /** The deepest a cast shadow is. */
+    const val CAST = .4f
+
+    /**
+     * The glass's reflection is this strong (of the sky behind the viewer) on a dark pane by day,
+     * fading as the room behind it is lit ([lamp] 0..1, the sky's [dark]).
+     */
+    fun reflection(lamp: Float, dark: Float): Float = (.92f - .25f * dark) * (1f - .82f * lamp)
 }
 
 /** Rectangles and polylines by ink, in building units. Filled once, read every frame. */
@@ -143,9 +243,29 @@ internal object BuildingDetail {
     const val AIR_CON_SHARE = .22f
     const val BALCONY_SHARE = .14f
 
-    /** The lintel's, the sill's and the frame's measures, in units. */
+    /**
+     * The sill's height, the painted frame round a pane, and the reveal: how far the opening in the
+     * wall reaches past the pane (its jambs and head, seen in their depth, then the frame), in
+     * units. A cast shadow lies [CAST_DX] to the side of what casts it and [CAST_LEN] down.
+     */
     const val SILL_H = 2f
-    const val FRAME = 1f
+    const val FRAME = .8f
+    const val REVEAL = 2f
+    const val CAST_DX = 1.1f
+    const val CAST_LEN = 1.7f
+
+    /** How far a sill reaches past its opening each side. */
+    const val SILL_REACH = 1.5f
+
+    /** A pilaster's width (stone and gold, between the window bays). */
+    const val PILASTER = 3f
+
+    /** A pane taller than this has a transom near its top (a fanlight over the people's heads). */
+    const val TRANSOM_FROM = 30f
+    const val TRANSOM_AT = .19f
+
+    /** A curtain wall's mullion. */
+    const val MULLION = 1.1f
 
     fun choices(seed: Int): BuildingChoices {
         val pipe = Ambient.hash(seed, 0, 500)
@@ -185,7 +305,9 @@ internal object BuildingDetail {
      * The shapes of one floor of [material] (a run-down storey when [ruin]), its front from [top]
      * to [bottom] (building units, y down), its [windows] as x, y (from the top), w, h in their
      * lighting order, [count] of them, [lit] the most that light. [wall] is drawn before the
-     * windows (surrounds, the string course, the pipe), [front] over them (an air conditioner, a
+     * windows (surrounds and their reveals, the shadows they cast, pilasters or a curtain wall's
+     * mullions, the string course, the pipe), [over] over the panes and the rooms behind them (the
+     * shadows on the glass, the glazing bars), [front] over everything (an air conditioner, a
      * balcony, a tag on a boarded window). [pipeX] is the drainpipe's x, NaN for none.
      */
     fun floor(
@@ -203,22 +325,33 @@ internal object BuildingDetail {
         ruins: Array<RuinWindow>?,
         wall: Shapes,
         front: Shapes,
+        over: Shapes = Shapes(),
     ) {
         val half = B.W / 2f
         val gold = material == HabitMaterial.GOLD && !ruin
         val stone = (material == HabitMaterial.STONE || gold) && !ruin
         val glass = material == HabitMaterial.GLASS && !ruin
-        // the string course along the floor's top: a band, the sky on its top, shade under it
+        // the string course along the floor's top: a band, the sky on its top, its shadow under it
         val course = if (gold) 3.2f else if (stone) 2.4f else 1.6f
         wall.rect(DetailInk.TRIM, -half - 1f, top, B.W + 2f, course)
         wall.rect(DetailInk.LIGHT, -half - 1f, top, B.W + 2f, .5f)
+        wall.rect(DetailInk.SOFFIT, -half - 1f, top + course - .5f, B.W + 2f, .5f)
         wall.rect(DetailInk.SHADE, -half, top + course, B.W, if (stone) 1.4f else 1f)
+        wall.rect(DetailInk.AO, -half, top + course, B.W, 2.6f)
+        wall.rect(DetailInk.CAST_FROM_LEFT, -half + CAST_DX, top + course, B.W - CAST_DX, CAST_LEN)
+        wall.rect(DetailInk.CAST_FROM_RIGHT, -half, top + course, B.W - CAST_DX, CAST_LEN)
+        if (glass)
+            for (c in 0..B.COLS) mullion(-half + B.MARGIN + c * B.PITCH, top + course, bottom, wall)
+        else if (stone) pilasters(top + course, bottom, gold, wall)
+        val firstRow = if (count > 0) windows[1] else 0f
         for (k in 0 until count) {
             val x = windows[k * 4]
             val y = top + windows[k * 4 + 1]
             val w = windows[k * 4 + 2]
             val h = windows[k * 4 + 3]
-            surround(material, ruin, x, y, w, h, wall)
+            if (glass) mullioned(x, y, w, h, wall)
+            else surround(material, ruin, x, y, w, h, windows[k * 4 + 1] <= firstRow + .01f, wall)
+            if (!ruin) pane(x, y, w, h, glass, over)
         }
         // the drainpipe, with a bracket near each end; a run-down storey has lost some of it
         if (!pipeX.isNaN() && !glass) {
@@ -279,7 +412,16 @@ internal object BuildingDetail {
         }
     }
 
-    /** A window's frame, lintel and sill, by the material. */
+    /** Where the snow lies on a window's sill: the sill's top, at the pane's foot. */
+    fun sillTop(y: Float, h: Float): Float = y + h
+
+    /**
+     * A window's opening, frame, lintel and sill, by the material: the opening reaches [REVEAL]
+     * past the pane, its jambs and head seen in depth ([DetailInk.REVEAL], the jambs turned to the
+     * light or away from it, the head in shade), the frame round the pane, the sill under it with
+     * its lit top and the shadows it throws down the wall, and the lintel over the opening on the
+     * top row of a floor ([firstRow]; on a lower row the sill above stands in for it).
+     */
     private fun surround(
         material: HabitMaterial,
         ruin: Boolean,
@@ -287,51 +429,168 @@ internal object BuildingDetail {
         y: Float,
         w: Float,
         h: Float,
+        firstRow: Boolean,
         s: Shapes,
     ) {
         val gold = material == HabitMaterial.GOLD && !ruin
         val stone = (material == HabitMaterial.STONE || gold) && !ruin
-        val glass = material == HabitMaterial.GLASS && !ruin
-        val f = if (glass) .7f else FRAME
-        // the frame round the pane
-        s.rect(DetailInk.TRIM, x - f, y - f, f, h + 2f * f)
-        s.rect(DetailInk.TRIM, x + w, y - f, f, h + 2f * f)
+        val r = REVEAL
+        val f = FRAME
+        val depth = r - f
+        // the reveal: the head across the top, a jamb each side down to the sill
+        s.rect(DetailInk.REVEAL, x - r, y - r, w + 2f * r, depth)
+        s.rect(DetailInk.REVEAL, x - r, y - f, depth, h + f)
+        s.rect(DetailInk.REVEAL, x + w + f, y - f, depth, h + f)
+        s.rect(DetailInk.SOFFIT, x - r, y - r, w + 2f * r, depth)
+        s.rect(DetailInk.FACE_R, x - r, y - f, depth, h + f)
+        s.rect(DetailInk.FACE_L, x + w + f, y - f, depth, h + f)
+        // the inside corners where the reveal meets the frame
+        s.rect(DetailInk.AO, x - f - .5f, y - f, .5f, h + f)
+        s.rect(DetailInk.AO, x + w + f, y - f, .5f, h + f)
+        s.rect(DetailInk.AO, x - r, y - f - .5f, w + 2f * r, .5f)
+        // the painted frame round the pane (its foot is the sill)
+        s.rect(DetailInk.TRIM, x - f, y - f, f, h + f)
+        s.rect(DetailInk.TRIM, x + w, y - f, f, h + f)
         s.rect(DetailInk.TRIM, x, y - f, w, f)
-        s.rect(DetailInk.TRIM, x, y + h, w, f)
-        // the reveal: the pane sits back from the wall, a shade along its top and lit side
-        s.rect(DetailInk.SHADE, x, y, w, .8f)
-        s.rect(DetailInk.SHADE, x, y, .6f, h)
-        // the sill: a shelf under the frame, the sky on it, its shadow on the wall under it
+        // the sill: a shelf under the opening, the sky on its top, its shadows on the wall under it
         val sill = if (stone) SILL_H + .4f else SILL_H
-        val reach = if (glass) 1f else 1.5f
-        s.rect(DetailInk.TRIM, x - reach, y + h, w + 2f * reach, sill)
-        s.rect(DetailInk.LIGHT, x - reach, y + h, w + 2f * reach, .5f)
-        s.rect(DetailInk.SHADE, x - reach, y + h + sill, w + 2f * reach, if (stone) 1f else .8f)
-        if (glass) return
-        // the lintel over it: a flat arch with a keystone in stone, a soldier course in brick, a
-        // plain beam on a run-down storey
+        val sx = x - r - SILL_REACH
+        val sw = w + 2f * (r + SILL_REACH)
+        val foot = sillTop(y, h)
+        s.rect(DetailInk.TRIM, sx, foot, sw, sill)
+        s.rect(DetailInk.LIGHT, sx, foot, sw, .5f)
+        s.rect(DetailInk.SOFFIT, sx, foot + sill - .5f, sw, .5f)
+        s.rect(DetailInk.FACE_R, sx, foot, .5f, sill)
+        s.rect(DetailInk.FACE_L, sx + sw - .5f, foot, .5f, sill)
+        s.rect(DetailInk.SHADE, sx, foot + sill, sw, if (stone) 1f else .8f)
+        s.rect(DetailInk.CAST_FROM_LEFT, sx + CAST_DX, foot + sill, sw, CAST_LEN)
+        s.rect(DetailInk.CAST_FROM_RIGHT, sx - CAST_DX, foot + sill, sw, CAST_LEN)
+        if (!firstRow && !ruin) return
+        // the lintel over the opening: a flat arch with a keystone in stone, a soldier course in
+        // brick, a plain beam on a run-down storey
+        val head = y - r
         when {
             stone -> {
-                s.rect(DetailInk.TRIM, x - 2.4f, y - 3.2f, w + 4.8f, 2.6f)
-                s.rect(DetailInk.LIGHT, x - 2.4f, y - 3.2f, w + 4.8f, .5f)
-                s.rect(DetailInk.SHADE, x - 2.4f, y - .6f, w + 4.8f, .6f)
-                s.rect(DetailInk.TRIM, x + w / 2f - 1.6f, y - 4f, 3.2f, 3.6f)
-                s.rect(DetailInk.LIGHT, x + w / 2f - 1.6f, y - 4f, 3.2f, 1.1f)
+                val lx = x - r - 2f
+                val lw = w + 2f * r + 4f
+                s.rect(DetailInk.TRIM, lx, head - 2.4f, lw, 2.4f)
+                s.rect(DetailInk.LIGHT, lx, head - 2.4f, lw, .5f)
+                s.rect(DetailInk.FACE_R, lx, head - 2.4f, .5f, 2.4f)
+                s.rect(DetailInk.FACE_L, lx + lw - .5f, head - 2.4f, .5f, 2.4f)
+                s.rect(DetailInk.CAST_FROM_LEFT, lx + lw, head - 1.8f, CAST_DX * .8f, 2.2f)
+                s.rect(
+                    DetailInk.CAST_FROM_RIGHT,
+                    lx - CAST_DX * .8f,
+                    head - 1.8f,
+                    CAST_DX * .8f,
+                    2.2f,
+                )
+                // the keystone stands proud of the arch
+                val kx = x + w / 2f - 1.6f
+                s.rect(DetailInk.TRIM, kx, head - 3.2f, 3.2f, 3.6f)
+                s.rect(DetailInk.LIGHT, kx, head - 3.2f, 3.2f, .9f)
+                s.rect(DetailInk.FACE_R, kx, head - 3.2f, .6f, 3.6f)
+                s.rect(DetailInk.FACE_L, kx + 2.6f, head - 3.2f, .6f, 3.6f)
+                s.rect(DetailInk.CAST_FROM_LEFT, kx + 3.2f, head - 2.4f, CAST_DX * .7f, 2.8f)
+                s.rect(
+                    DetailInk.CAST_FROM_RIGHT,
+                    kx - CAST_DX * .7f,
+                    head - 2.4f,
+                    CAST_DX * .7f,
+                    2.8f,
+                )
+                s.rect(DetailInk.CAST_FROM_LEFT, kx + CAST_DX * .7f, head + .4f, 3.2f, 1f)
+                s.rect(DetailInk.CAST_FROM_RIGHT, kx - CAST_DX * .7f, head + .4f, 3.2f, 1f)
             }
             ruin -> {
-                s.rect(DetailInk.TRIM, x - 1f, y - 2.4f, w + 2f, 1.6f)
-                s.rect(DetailInk.SHADE, x - 1f, y - .8f, w + 2f, .8f)
+                s.rect(DetailInk.TRIM, x - r - .6f, head - 1.6f, w + 2f * r + 1.2f, 1.6f)
+                s.rect(DetailInk.SHADE, x - r - .6f, head, w + 2f * r + 1.2f, .6f)
             }
             else -> {
-                // brick: a course of bricks on end over the window, the joints between them
-                s.rect(DetailInk.TRIM, x - 2f, y - 3f, w + 4f, 2.4f)
-                var bx = x - 2f + 2.6f
-                while (bx < x + w + 2f - .6f) {
-                    s.rect(DetailInk.SHADE, bx, y - 3f, .5f, 2.4f)
+                // brick: a course of bricks on end over the opening, the joints between them
+                val lx = x - r - .8f
+                val lw = w + 2f * r + 1.6f
+                s.rect(DetailInk.TRIM, lx, head - 2.6f, lw, 2.6f)
+                s.rect(DetailInk.LIGHT, lx, head - 2.6f, lw, .4f)
+                var bx = lx + 2.6f
+                while (bx < lx + lw - .6f) {
+                    s.rect(DetailInk.SHADE, bx, head - 2.6f, .5f, 2.6f)
                     bx += 2.6f
                 }
-                s.rect(DetailInk.SHADE, x - 2f, y - .6f, w + 4f, .6f)
             }
+        }
+    }
+
+    /**
+     * The glass of a pane, over the room behind it: the head's shadow along its top, the jamb's on
+     * the side the light comes from, a fine shade at its foot, and a transom near the top of a tall
+     * pane ([TRANSOM_FROM]), clear of the people's heads. A curtain wall's vision glass has no
+     * transom (its mullions are the wall's).
+     */
+    private fun pane(x: Float, y: Float, w: Float, h: Float, glass: Boolean, s: Shapes) {
+        val jamb = if (glass) .9f else 1.4f
+        s.rect(DetailInk.GLASS_TOP, x, y, w, if (glass) 1.1f else 1.6f)
+        s.rect(DetailInk.GLASS_FROM_LEFT, x, y, jamb, h)
+        s.rect(DetailInk.GLASS_FROM_RIGHT, x + w - jamb, y, jamb, h)
+        s.rect(DetailInk.AO, x, y + h - .6f, w, .6f)
+        if (glass || h < TRANSOM_FROM) return
+        val ty = y + h * TRANSOM_AT
+        s.rect(DetailInk.BAR, x, ty, w, .8f)
+        s.rect(DetailInk.BAR_LIGHT, x, ty, w, .3f)
+        s.rect(DetailInk.GLASS_TOP, x, ty + .8f, w, .7f)
+    }
+
+    /**
+     * Pilasters between a stone or gold floor's window bays, from under its string course ([top])
+     * to its foot: a raised strip catching a little more sky, its edges turned to the light or
+     * away, the shadow it casts beside it, a small capital; gold ones edged in gold.
+     */
+    private fun pilasters(top: Float, bottom: Float, gold: Boolean, s: Shapes) {
+        val half = B.W / 2f
+        val p = PILASTER
+        val h = bottom - top
+        for (c in 1 until B.COLS) {
+            val x = -half + B.MARGIN + c * B.PITCH - p / 2f
+            s.rect(DetailInk.RAISED, x, top, p, h)
+            s.rect(DetailInk.FACE_L, x, top, .55f, h)
+            s.rect(DetailInk.FACE_R, x + p - .55f, top, .55f, h)
+            s.rect(DetailInk.CAST_FROM_LEFT, x + p, top + 1.2f, CAST_DX, h - 1.2f)
+            s.rect(DetailInk.CAST_FROM_RIGHT, x - CAST_DX, top + 1.2f, CAST_DX, h - 1.2f)
+            s.rect(DetailInk.TRIM, x - .6f, top, p + 1.2f, 1.4f)
+            s.rect(DetailInk.LIGHT, x - .6f, top, p + 1.2f, .4f)
+            s.rect(DetailInk.SHADE, x - .6f, top + 1.4f, p + 1.2f, .6f)
+            if (gold) {
+                s.rect(DetailInk.TRIM, x + .55f, top + 1.4f, .35f, h - 1.4f)
+                s.rect(DetailInk.TRIM, x + p - .9f, top + 1.4f, .35f, h - 1.4f)
+            }
+        }
+    }
+
+    /**
+     * A curtain wall's mullion at [cx] from [top] to [bottom]: steel standing proud of the glass,
+     * an edge turned to each side of the light, the thin shadow it throws beside it.
+     */
+    private fun mullion(cx: Float, top: Float, bottom: Float, s: Shapes) {
+        val m = MULLION
+        val x = cx - m / 2f
+        s.rect(DetailInk.TRIM, x, top, m, bottom - top)
+        s.rect(DetailInk.FACE_L, x, top, .35f, bottom - top)
+        s.rect(DetailInk.FACE_R, x + m - .35f, top, .35f, bottom - top)
+        s.rect(DetailInk.CAST_FROM_LEFT, x + m, top, .8f, bottom - top)
+        s.rect(DetailInk.CAST_FROM_RIGHT, x - .8f, top, .8f, bottom - top)
+    }
+
+    /** A curtain wall's vision pane: mullions at its edges, transoms over and under it. */
+    private fun mullioned(x: Float, y: Float, w: Float, h: Float, s: Shapes) {
+        val m = MULLION
+        mullion(x - m / 2f, y - m, y + h + m, s)
+        mullion(x + w + m / 2f, y - m, y + h + m, s)
+        for (ty in floatArrayOf(y - m, y + h)) {
+            s.rect(DetailInk.TRIM, x - m, ty, w + 2f * m, m)
+            s.rect(DetailInk.LIGHT, x - m, ty, w + 2f * m, .35f)
+            s.rect(DetailInk.SOFFIT, x - m, ty + m - .3f, w + 2f * m, .3f)
+            s.rect(DetailInk.CAST_FROM_LEFT, x - m + .8f, ty + m, w + 2f * m, .9f)
+            s.rect(DetailInk.CAST_FROM_RIGHT, x - m - .8f, ty + m, w + 2f * m, .9f)
         }
     }
 
@@ -385,22 +644,33 @@ internal object BuildingDetail {
     }
 
     /**
-     * The cornice of a building whose top storey is [crown]: its coping, the dentils or brackets
-     * under it, in a band [B.CORNICE] tall over [y] (the roof line), [half] + 3 each side.
+     * The cornice of a building whose top storey is [crown]: its coping (a lit arris, the drip's
+     * underside in shade, its ends turned to the light or away), the dentils or brackets under it
+     * with their lit edges and the shadows they cast, in a band [B.CORNICE] tall over [y] (the roof
+     * line), [half] + 3 each side.
      */
     fun cornice(crown: HabitMaterial, y: Float, s: Shapes) {
         val half = B.W / 2f + 3f
         val top = y - B.CORNICE
         val stone = crown == HabitMaterial.STONE || crown == HabitMaterial.GOLD
         s.rect(DetailInk.LIGHT, -half, top, 2f * half, 1.4f)
+        s.rect(DetailInk.LIGHT, -half, top, 2f * half, .45f)
+        s.rect(DetailInk.SOFFIT, -half, top + 1.4f, 2f * half, .6f)
         s.rect(DetailInk.SHADE, -half, top + 1.4f, 2f * half, .6f)
+        s.rect(DetailInk.FACE_L, -half, top, .8f, B.CORNICE)
+        s.rect(DetailInk.FACE_R, half - .8f, top, .8f, B.CORNICE)
         if (stone) {
             // brackets under the slab, the shade between them
             s.rect(DetailInk.SHADE, -half, y - 3.2f, 2f * half, 2.6f)
+            s.rect(DetailInk.AO, -half, y - 3.6f, 2f * half, 1f)
             var x = -half + 4f
             while (x <= half - 4f) {
                 s.rect(DetailInk.TRIM, x - 1.6f, y - 3.6f, 3.2f, 3.2f)
                 s.rect(DetailInk.LIGHT, x - 1.6f, y - 3.6f, 3.2f, .6f)
+                s.rect(DetailInk.FACE_L, x - 1.6f, y - 3.6f, .55f, 3.2f)
+                s.rect(DetailInk.FACE_R, x + 1.05f, y - 3.6f, .55f, 3.2f)
+                s.rect(DetailInk.CAST_FROM_LEFT, x + 1.6f, y - 3f, CAST_DX, 2.6f)
+                s.rect(DetailInk.CAST_FROM_RIGHT, x - 1.6f - CAST_DX, y - 3f, CAST_DX, 2.6f)
                 x += 11.5f
             }
         } else {
@@ -409,22 +679,44 @@ internal object BuildingDetail {
             var x = -half + 2f
             while (x <= half - 3f) {
                 s.rect(DetailInk.TRIM, x, y - 2.6f, 2.2f, 2f)
+                s.rect(DetailInk.FACE_L, x, y - 2.6f, .4f, 2f)
+                s.rect(DetailInk.FACE_R, x + 1.8f, y - 2.6f, .4f, 2f)
+                s.rect(DetailInk.CAST_FROM_LEFT, x + 2.2f, y - 2.2f, .7f, 1.8f)
+                s.rect(DetailInk.CAST_FROM_RIGHT, x - .7f, y - 2.2f, .7f, 1.8f)
                 x += 4.4f
             }
         }
+        s.rect(DetailInk.AO, -half, y - .6f, 2f * half, .6f)
     }
 
     /**
-     * The lobby's shapes: the plinth's joints, the pipe's foot, the shopfront's reveals and the
-     * awning's brackets; its wall runs from [top] (negative) to 0. [pipeX] NaN for no pipe.
+     * The lobby's shopfront: two windows [SHOP_W] wide from [SHOP_X] (and its mirror), the door.
+     */
+    const val SHOP_X = 13f
+    const val DOOR = 9f
+    const val SHOP_TOP = 35f
+    const val SHOP_FOOT = -4f
+    val SHOP_W: Float
+        get() = B.W / 2f - 9f - SHOP_X
+
+    /** Where the lobby's wall lamps hang, either side of the door, and how high (from its top). */
+    const val LAMP_X = 11f
+    const val LAMP_Y = 39f
+
+    /**
+     * The lobby's shapes on its wall: the plinth's joints, the pipe's foot, the awning's brackets,
+     * the door's reveals and the wall lamps' brackets; its wall runs from [top] (negative)
+     * to 0. [pipeX] NaN for no pipe.
      */
     fun lobby(top: Float, pipeX: Float, s: Shapes) {
         val half = B.W / 2f
         // the plinth: a stone base with its joints, a chamfer catching the sky
         s.rect(DetailInk.LIGHT, -half, -10f, B.W, .7f)
+        s.rect(DetailInk.AO, -half, -9.3f, B.W, 1f)
         var x = -half + 11.5f
         while (x < half) {
             s.rect(DetailInk.SHADE, x, -9.3f, .7f, 9.3f)
+            s.rect(DetailInk.LIGHT, x + .7f, -9.3f, .35f, 9.3f)
             x += 23f
         }
         s.rect(DetailInk.SHADE, -half, -5.2f, B.W, .6f)
@@ -440,6 +732,59 @@ internal object BuildingDetail {
         for (side in intArrayOf(-1, 1)) {
             val bx = side * (half - 10f)
             s.line(DetailInk.IRON, floatArrayOf(bx, a0 + 13f, bx - side * 1f, a0 + 1.5f))
+        }
+        // the door stands back in its opening: jambs turned to the light or away, a head in shade
+        val d0 = top + SHOP_TOP - 2f
+        val dh = -d0
+        s.rect(DetailInk.REVEAL, -DOOR, d0, 1.3f, dh)
+        s.rect(DetailInk.REVEAL, DOOR - 1.3f, d0, 1.3f, dh)
+        s.rect(DetailInk.REVEAL, -DOOR, d0, 2f * DOOR, 1.3f)
+        s.rect(DetailInk.FACE_R, -DOOR, d0, 1.3f, dh)
+        s.rect(DetailInk.FACE_L, DOOR - 1.3f, d0, 1.3f, dh)
+        s.rect(DetailInk.SOFFIT, -DOOR, d0, 2f * DOOR, 1.3f)
+        // the lamps' brackets and back plates
+        for (side in intArrayOf(-1, 1)) {
+            val lx = side * LAMP_X
+            s.rect(DetailInk.IRON, lx - .9f, top + LAMP_Y - 3.4f, 1.8f, 1.1f)
+            s.rect(DetailInk.IRON, lx - .35f, top + LAMP_Y - 2.4f, .7f, 1.8f)
+        }
+    }
+
+    /**
+     * What goes over the lobby's glass, after what is behind it: each shop window's reveal (inside
+     * its opening, the jambs and the head), the shadows on its glass, its glazing bars (two
+     * mullions and a transom) with their lit edges; [top] as for [lobby].
+     */
+    fun lobbyOver(top: Float, s: Shapes) {
+        val half = B.W / 2f
+        val w0 = top + SHOP_TOP
+        val h = SHOP_FOOT - w0
+        val w = SHOP_W
+        val r = 2f
+        for (x0 in floatArrayOf(-half + 9f, SHOP_X)) {
+            s.rect(DetailInk.REVEAL, x0, w0, r, h)
+            s.rect(DetailInk.REVEAL, x0 + w - r, w0, r, h)
+            s.rect(DetailInk.REVEAL, x0, w0, w, r)
+            s.rect(DetailInk.FACE_R, x0, w0, r, h)
+            s.rect(DetailInk.FACE_L, x0 + w - r, w0, r, h)
+            s.rect(DetailInk.SOFFIT, x0, w0, w, r)
+            s.rect(DetailInk.AO, x0 + r, w0 + r, .6f, h - r)
+            s.rect(DetailInk.AO, x0 + w - r - .6f, w0 + r, .6f, h - r)
+            s.rect(DetailInk.AO, x0 + r, w0 + r, w - 2f * r, .6f)
+            s.rect(DetailInk.GLASS_TOP, x0 + r, w0 + r, w - 2f * r, 1.5f)
+            s.rect(DetailInk.GLASS_FROM_LEFT, x0 + r, w0 + r, 1.8f, h - r)
+            s.rect(DetailInk.GLASS_FROM_RIGHT, x0 + w - r - 1.8f, w0 + r, 1.8f, h - r)
+            val inner = w - 2f * r
+            for (m in 1..2) {
+                val mx = x0 + r + inner * m / 3f - .6f
+                s.rect(DetailInk.BAR, mx, w0 + r, 1.2f, h - r)
+                s.rect(DetailInk.BAR_LIGHT, mx, w0 + r, .35f, h - r)
+                s.rect(DetailInk.GLASS_FROM_LEFT, mx + 1.2f, w0 + r, .8f, h - r)
+                s.rect(DetailInk.GLASS_FROM_RIGHT, mx - .8f, w0 + r, .8f, h - r)
+            }
+            s.rect(DetailInk.BAR, x0 + r, w0 + 7f, inner, 1f)
+            s.rect(DetailInk.BAR_LIGHT, x0 + r, w0 + 7f, inner, .3f)
+            s.rect(DetailInk.GLASS_TOP, x0 + r, w0 + 8f, inner, .7f)
         }
     }
 }

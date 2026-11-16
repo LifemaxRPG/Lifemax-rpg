@@ -274,6 +274,14 @@ internal object SceneInk {
     val ShopLit = Color(0xFFFFD48A)
     val Door = Color(0xFF151925)
 
+    /**
+     * The lobby's reveals (its granite seen in depth), the shopfront's dark bronze frame and
+     * glazing bars, the pale stone step at its door.
+     */
+    val LobbyReveal = Color(0xFF262A38)
+    val ShopFrame = Color(0xFF2E2B2A)
+    val Step = Color(0xFF777B88)
+
     /** Windows: lit (warm), and dark glass at night and by day. */
     val WindowLit = Color(0xFFFFD27A)
     val WindowLitLow = Color(0xFFFFB45A)

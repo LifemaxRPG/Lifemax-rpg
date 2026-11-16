@@ -57,12 +57,23 @@ internal object FacadeSprites {
             HabitMaterial.FADE -> 64f to 52f
         }
 
-    /** Bytes all five tiles and the cloth take once made. */
+    /** The lobby's granite tile, in units: two slabs across, two courses down. */
+    const val LOBBY_W = 46f
+    const val LOBBY_H = 27f
+
+    /** The far city mirrored in the glass: a strip of roofs this long and this tall, in units. */
+    const val MIRROR_W = 96f
+    const val MIRROR_H = 14f
+
+    /** Bytes all five tiles, the lobby's, the cloth and the mirrored city take once made. */
     fun bytes(): Int =
         HabitMaterial.entries.sumOf {
             val (uw, uh) = tileUnits(it)
             (uw * PPU).toInt() * (uh * PPU).toInt() * 4
-        } + (FOLD * PPU).toInt() * (CLOTH_H * PPU).toInt() * 4 * 2
+        } +
+            (FOLD * PPU).toInt() * (CLOTH_H * PPU).toInt() * 4 * 2 +
+            (LOBBY_W * PPU).toInt() * (LOBBY_H * PPU).toInt() * 4 +
+            (MIRROR_W * PPU).toInt() * (MIRROR_H * PPU).toInt() * 4
 
     fun tile(m: HabitMaterial): WallTile {
         val (uw, uh) = tileUnits(m)
@@ -85,6 +96,82 @@ internal object FacadeSprites {
             px[y * w + x] = Px.argbF(1f, c[0], c[1], c[2])
         }
         return WallTile(w, h, px)
+    }
+
+    /**
+     * The lobby's wall: polished dark granite slabs, two across and two courses down a tile, each
+     * its own tone with a fine speckle of feldspar and mica, a soft sheen down its face, a hairline
+     * joint between them. Seamless, opaque, its mean close to the old flat lobby wall's colour.
+     */
+    fun lobbyTile(): WallTile {
+        val w = (LOBBY_W * PPU).toInt()
+        val h = (LOBBY_H * PPU).toInt()
+        val px = IntArray(w * h)
+        val c = SceneInk.LobbyWall
+        val base = floatArrayOf(c.red, c.green, c.blue)
+        val sw = LOBBY_W / 2f
+        val sh = LOBBY_H / 2f
+        for (y in 0 until h) for (x in 0 until w) {
+            val u = (x + .5f) / PPU
+            val v = (y + .5f) / PPU
+            val row = floor(v / sh).toInt()
+            val bu = wrap(u + if (row % 2 == 0) 0f else sw / 2f, LOBBY_W)
+            val col = floor(bu / sw).toInt()
+            val fx = bu - col * sw
+            val fy = v - row * sh
+            val out: FloatArray
+            if (fx < .55f || fy < .55f) {
+                out = scaled(base, .62f)
+            } else {
+                val tone = .95f + .1f * hash(col, row, 201)
+                val cool = (hash(col, row, 203) - .5f) * .06f
+                val speck = Noise.value(x * .9f, y * .9f, 207)
+                val fine = seamless(u * 3f, v * 3f, LOBBY_W * 3f, LOBBY_H * 3f, 209, 1f, 2)
+                var k = tone * (.95f + .1f * fine)
+                if (speck > .86f) k *= 1.22f else if (speck < .1f) k *= .82f
+                // the polish: the sky's light down the slab's face, its top edge catching it
+                k *= 1.05f - .08f * (fy / sh)
+                if (fy < 1.1f) k *= 1.06f
+                out =
+                    floatArrayOf(
+                        minOf(1f, base[0] * k * (1f - cool)),
+                        minOf(1f, base[1] * k),
+                        minOf(1f, base[2] * k * (1f + cool)),
+                    )
+            }
+            px[y * w + x] = Px.argbF(1f, out[0], out[1], out[2])
+        }
+        return WallTile(w, h, px)
+    }
+
+    /**
+     * The far city as the glass mirrors it: a strip of roofs, white with their alpha (tinted when
+     * drawn), [MIRROR_W] long and seamless across, solid at its foot, the roofs' tops soft. Both
+     * layers of the [ClothTile] are the same picture.
+     */
+    fun mirror(): ClothTile {
+        val w = (MIRROR_W * PPU).toInt()
+        val h = (MIRROR_H * PPU).toInt()
+        val px = IntArray(w * h)
+        // the roofs: a run of blocks of their own widths and heights round the strip
+        val tops = FloatArray(w)
+        var x0 = 0
+        var i = 0
+        while (x0 < w) {
+            val bw = ((5f + 9f * hash(i, 0, 301)) * PPU).toInt().coerceAtMost(w - x0)
+            val top = MIRROR_H * (.15f + .6f * hash(i, 1, 301))
+            for (x in x0 until x0 + bw) tops[x] = top
+            // a mast on a few
+            if (hash(i, 2, 301) < .25f && bw > 4) tops[x0 + bw / 2] = maxOf(0f, top - 3f)
+            x0 += bw
+            i++
+        }
+        for (y in 0 until h) for (x in 0 until w) {
+            val v = (y + .5f) / PPU
+            val a = Px.smooth(tops[x] - .2f, tops[x] + .6f, v) * (.55f + .45f * v / MIRROR_H)
+            px[y * w + x] = Px.argbF(a, 1f, 1f, 1f)
+        }
+        return ClothTile(w, h, px, px)
     }
 
     /** The awning's cloth: a fold a tile, its ridge lit, its hollow in shade, the hem deeper. */
@@ -201,8 +288,10 @@ internal object FacadeSprites {
         // a tooled margin round each block, slightly lighter, the middle a touch rougher
         val margin = minOf(fx - JOINT, fy - JOINT, STONE_W - fx, STONE_H - fy)
         if (margin in 1.2f..2.4f) k *= 1.025f
-        if (warm) k *= 1f
-        return scaled(base, k)
+        // each block a little warmer or cooler than the next, as cut stone is
+        val hue = (hash(col, row, 43) - .5f) * if (warm) .07f else .045f
+        val c = scaled(base, k)
+        return floatArrayOf(minOf(1f, c[0] * (1f + hue)), c[1], minOf(1f, c[2] * (1f - hue)))
     }
 
     private fun gold(u: Float, v: Float, tw: Float, th: Float, base: FloatArray): FloatArray {

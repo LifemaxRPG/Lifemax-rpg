@@ -118,13 +118,13 @@ internal class FloorArt(
     /** The material its wall is tiled with ([FacadeSprites]). */
     val material: HabitMaterial,
     /**
-     * The side face as a unit ([sidePath]); the steel frame of a glass floor (nothing on the
-     * others); its surrounds, string course and pipe, drawn under the windows ([detail]) and what
-     * stands in front of them ([front]).
+     * The side face as a unit ([sidePath]); its surrounds, string course, pilasters or mullions and
+     * pipe, drawn under the windows ([detail]), the shadows on the glass and the glazing bars drawn
+     * over the rooms ([over]), and what stands in front of them ([front]).
      */
     val side: Path,
-    val texture: Path,
     val detail: InkPaths,
+    val over: InkPaths,
     val front: InkPaths,
     val reflect: Path,
     /** Its windows as x, y, w, h (y from the front's top), in the order they light up. */
@@ -153,6 +153,9 @@ internal class FloorArt(
      * How much of a person is in each lit window right now (scratch the painter fills per frame).
      */
     val here = FloatArray(cast.size)
+
+    /** How lit each window's room is right now, 0 to 1 (scratch the painter fills per frame). */
+    val glow = FloatArray(windows.size / 4)
 }
 
 /** A building worked out once: its storeys and the words on its lobby and its roof. */
@@ -180,6 +183,8 @@ internal class BuildingArt(
     /** The cornice's coping and dentils, the lobby's plinth, pipe foot and awning brackets. */
     val cornice: InkPaths,
     val lobbyDetail: InkPaths,
+    /** What goes over the lobby's glass: its reveals, the shadows on it, its glazing bars. */
+    val lobbyOver: InkPaths,
 )
 
 internal fun buildingArt(layout: BuildingLayout, stack: HabitStack, text: SceneText): BuildingArt {
@@ -236,6 +241,7 @@ internal fun buildingArt(layout: BuildingLayout, stack: HabitStack, text: SceneT
             }
         ),
         InkPaths.of(Shapes().also { BuildingDetail.lobby(-lobby.top, pipeX, it) }),
+        InkPaths.of(Shapes().also { BuildingDetail.lobbyOver(-lobby.top, it) }),
     )
 }
 
@@ -314,7 +320,6 @@ private fun floorArt(
     val seed = key.hashCode()
     val hall = Silhouettes.hallLight(key, spots.size)
     val ruins = Array(spots.size) { ruinWindow(b.id, storey, storeys, it) }
-    val texture = Path()
     val reflect = Path()
     for (k in 0 until spots.size) {
         val x = windows[k * 4]
@@ -329,18 +334,9 @@ private fun floorArt(
         reflect.lineTo(x + w * .45f, y + h)
         reflect.close()
     }
-    if (!ruin && b.material == HabitMaterial.GLASS) {
-        // the steel frame: a column between every window, a beam across the top
-        for (c in 0..B.COLS) {
-            val x = -half + B.MARGIN + c * B.PITCH
-            texture.moveTo(x, top)
-            texture.lineTo(x, bottom)
-        }
-        texture.moveTo(-half, top + 2f)
-        texture.lineTo(half, top + 2f)
-    }
     val wallShapes = Shapes()
     val frontShapes = Shapes()
+    val overShapes = Shapes()
     BuildingDetail.floor(
         b.material,
         ruin,
@@ -356,6 +352,7 @@ private fun floorArt(
         if (ruin) ruins else null,
         wallShapes,
         frontShapes,
+        overShapes,
     )
     val crack =
         if (!ruin && labelled && (b.miss >= 1 || b.scar))
@@ -381,8 +378,8 @@ private fun floorArt(
         bottom,
         if (ruin) HabitMaterial.FADE else b.material,
         sidePath(top, bottom),
-        texture,
         InkPaths.of(wallShapes),
+        InkPaths.of(overShapes),
         InkPaths.of(frontShapes),
         reflect,
         windows,

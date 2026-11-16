@@ -585,6 +585,25 @@ internal object SceneSprites {
         ClothImages(t, brush(t.shade), brush(t.light))
     }
 
+    /** The lobby's granite wall, a repeating brush like a floor's. */
+    val lobbyWall: FacadeImages by lazy {
+        val t = FacadeSprites.lobbyTile()
+        synchronized(this) { facadeBytes += t.w * t.h * 4 }
+        FacadeImages(
+            t,
+            ShaderBrush(
+                ImageShader(image(t.pixels, t.w, t.h), TileMode.Repeated, TileMode.Repeated)
+            ),
+        )
+    }
+
+    /** The far city the glass mirrors by day: a strip repeated across, clamped down. */
+    val mirror: Brush by lazy {
+        val t = FacadeSprites.mirror()
+        synchronized(this) { facadeBytes += t.w * t.h * 4 }
+        ShaderBrush(ImageShader(image(t.light, t.w, t.h), TileMode.Repeated, TileMode.Clamp))
+    }
+
     /** What the facades' walls made so far take, in bytes. */
     @Synchronized fun facadeBytes(): Int = facadeBytes
 

@@ -7,8 +7,10 @@ import com.lifemax.rpg.feature.habits.domain.floorWindows
 import com.lifemax.rpg.feature.habits.domain.ruinWindow
 import com.lifemax.rpg.feature.habits.presentation.scene.BuildingDetail
 import com.lifemax.rpg.feature.habits.presentation.scene.DetailInk
+import com.lifemax.rpg.feature.habits.presentation.scene.FacadeLook
 import com.lifemax.rpg.feature.habits.presentation.scene.FacadeSprites
 import com.lifemax.rpg.feature.habits.presentation.scene.FloorExtra
+import com.lifemax.rpg.feature.habits.presentation.scene.SceneInk
 import com.lifemax.rpg.feature.habits.presentation.scene.Shapes
 import com.lifemax.rpg.feature.habits.presentation.scene.WallTile
 import com.lifemax.rpg.feature.habits.presentation.scene.facade
@@ -124,15 +126,176 @@ class FacadeTest {
     @Test
     fun theWholePoolIsInsideItsBudget() {
         val bytes = tiles.values.sumOf { it.pixels.size * 4 }
+        val lobby = FacadeSprites.lobbyTile()
+        val mirror = FacadeSprites.mirror()
         assertEquals(
-            bytes + 2 * FacadeSprites.cloth().let { it.w * it.h * 4 },
+            bytes +
+                2 * FacadeSprites.cloth().let { it.w * it.h * 4 } +
+                lobby.pixels.size * 4 +
+                mirror.w * mirror.h * 4,
             FacadeSprites.bytes(),
         )
-        assertTrue("$bytes", FacadeSprites.bytes() < 1_500_000)
+        assertTrue("${FacadeSprites.bytes()}", FacadeSprites.bytes() < 1_000_000)
         val cloth = FacadeSprites.cloth()
         assertTrue(cloth.shade.all { (it and 0xFFFFFF) == 0 })
         assertTrue(cloth.light.all { (it and 0xFFFFFF) == 0xFFFFFF })
         assertTrue(cloth.shade.any { (it ushr 24) > 20 } && cloth.light.any { (it ushr 24) > 20 })
+    }
+
+    @Test
+    fun theLobbysGraniteAndTheMirroredCityAreBakedOnceTheSameAndInTone() {
+        val a = FacadeSprites.lobbyTile()
+        assertArrayEquals(a.pixels, FacadeSprites.lobbyTile().pixels)
+        assertTrue(a.pixels.all { (it ushr 24) == 255 })
+        // the old flat lobby wall's colour on average
+        val wall = SceneInk.LobbyWall
+        val n = a.pixels.size.toFloat()
+        val mean =
+            floatArrayOf(
+                a.pixels.sumOf { channel(it, 16) } / n / 255f,
+                a.pixels.sumOf { channel(it, 8) } / n / 255f,
+                a.pixels.sumOf { channel(it, 0) } / n / 255f,
+            )
+        val old = floatArrayOf(wall.red, wall.green, wall.blue)
+        for (i in 0..2) assertTrue("lobby $i ${mean[i]}", abs(mean[i] - old[i]) < .06f)
+        // seamless across: the step from the last column to the first no bigger than the steps
+        // inside (a joint is a hard edge by design)
+        fun step(x0: Int, x1: Int) =
+            (0 until a.h).sumOf { y ->
+                (0 until 3).sumOf {
+                    abs(
+                        channel(a.pixels[y * a.w + x0], it * 8) -
+                            channel(a.pixels[y * a.w + x1], it * 8)
+                    )
+                }
+            }
+        val inside = (0 until a.w - 1).maxOf { step(it, it + 1) }
+        val wrap = step(a.w - 1, 0)
+        assertTrue("granite seam $wrap vs $inside", wrap <= inside * 1.05f + 2 * a.h)
+        val m = FacadeSprites.mirror()
+        assertArrayEquals(m.light, FacadeSprites.mirror().light)
+        assertTrue(m.light.all { (it and 0xFFFFFF) == 0xFFFFFF })
+        // the roofs: solid at the strip's foot, sky over some of its top
+        assertTrue((0 until m.w).all { (m.light[(m.h - 1) * m.w + it] ushr 24) > 100 })
+        assertTrue((0 until m.w).count { (m.light[it] ushr 24) < 20 } > m.w / 3)
+    }
+
+    @Test
+    fun theRevealsAndTheCastShadowsFlipWithTheLightsSide() {
+        val fromLeft = -.8f
+        val fromRight = .8f
+        // a face turned left is lit by a light from the left and in shade under one from the right
+        assertTrue(FacadeLook.alpha(DetailInk.FACE_L, fromLeft, 1f, 0f) > .1f)
+        assertTrue(FacadeLook.alpha(DetailInk.FACE_L, fromRight, 1f, 0f) < -.1f)
+        assertTrue(FacadeLook.alpha(DetailInk.FACE_R, fromRight, 1f, 0f) > .1f)
+        assertTrue(FacadeLook.alpha(DetailInk.FACE_R, fromLeft, 1f, 0f) < -.1f)
+        // each side's cast shadows and the jambs' shadows on the glass only under their own light
+        for ((ink, side) in
+            listOf(
+                DetailInk.CAST_FROM_LEFT to fromLeft,
+                DetailInk.CAST_FROM_RIGHT to fromRight,
+                DetailInk.GLASS_FROM_LEFT to fromLeft,
+                DetailInk.GLASS_FROM_RIGHT to fromRight,
+            )) {
+            assertTrue("$ink", FacadeLook.alpha(ink, side, 1f, 0f) < -.1f)
+            assertEquals("$ink", 0f, FacadeLook.alpha(ink, -side, 1f, 0f), 1e-6f)
+            // softer under an overcast sky (a weak light with no direct sun) than in the sun
+            assertTrue(
+                abs(FacadeLook.alpha(ink, side * .2f, 0f, 0f)) <
+                    abs(FacadeLook.alpha(ink, side, 1f, 0f)) * .3f
+            )
+        }
+        // face on, nothing is cast to a side; the heads are in shade, deeper in the sun
+        assertEquals(0f, FacadeLook.alpha(DetailInk.CAST_FROM_LEFT, 0f, 1f, 0f), 1e-6f)
+        assertTrue(
+            FacadeLook.alpha(DetailInk.SOFFIT, 0f, 1f, 0f) <
+                FacadeLook.alpha(DetailInk.SOFFIT, 0f, 0f, 0f)
+        )
+        // and the shapes: each shadow with the light from the left lies to the right of its twin
+        // with the light from the right; the left jamb faces right
+        val win = windows(60f, false)
+        val wall = Shapes()
+        BuildingDetail.floor(
+            HabitMaterial.STONE,
+            false,
+            -100f,
+            -40f,
+            win,
+            win.size / 4,
+            2,
+            -1,
+            7,
+            0,
+            Float.NaN,
+            null,
+            wall,
+            Shapes(),
+        )
+        val l = wall.rects(DetailInk.CAST_FROM_LEFT)
+        val r = wall.rects(DetailInk.CAST_FROM_RIGHT)
+        assertEquals(l.size, r.size)
+        for (i in 0 until l.size / 4) assertTrue(l[i * 4] > r[i * 4])
+        val faceR = wall.rects(DetailInk.FACE_R)
+        val x0 = win[0]
+        var leftJamb = false
+        for (i in 0 until faceR.size / 4) if (
+            faceR[i * 4] < x0 && faceR[i * 4] + faceR[i * 4 + 2] <= x0 + 1e-3f
+        )
+            leftJamb = true
+        assertTrue(leftJamb)
+    }
+
+    @Test
+    fun theSnowStillLandsOnTheSillsAndTheCornice() {
+        for (m in HabitMaterial.entries) for (h in BuildingSpec.HEIGHTS) {
+            val ruin = m == HabitMaterial.FADE
+            val height = if (ruin) BuildingSpec.RUIN else h
+            val win = windows(height, ruin)
+            val top = -300f
+            val wall = Shapes()
+            BuildingDetail.floor(
+                m,
+                ruin,
+                top,
+                top + height,
+                win,
+                win.size / 4,
+                2,
+                -1,
+                3,
+                0,
+                Float.NaN,
+                null,
+                wall,
+                Shapes(),
+            )
+            val trim = wall.rects(DetailInk.TRIM)
+            for (k in 0 until win.size / 4) {
+                // the painter's snow cap: from x - .7, w + 1.4 wide, at the sill's top
+                val y = BuildingDetail.sillTop(top + win[k * 4 + 1], win[k * 4 + 3])
+                assertEquals(top + win[k * 4 + 1] + win[k * 4 + 3], y, 1e-4f)
+                var under = false
+                for (i in 0 until trim.size / 4) if (
+                    abs(trim[i * 4 + 1] - y) < 1e-3f &&
+                        trim[i * 4] <= win[k * 4] - .7f &&
+                        trim[i * 4] + trim[i * 4 + 2] >= win[k * 4] + win[k * 4 + 2] + .7f
+                )
+                    under = true
+                assertTrue("$m $h sill $k", under)
+            }
+        }
+        // the cornice's coping at the top of its band, where the roof's snow lies
+        for (m in HabitMaterial.entries) {
+            val s = Shapes()
+            BuildingDetail.cornice(m, -200f, s)
+            val light = s.rects(DetailInk.LIGHT)
+            assertTrue(
+                (0 until light.size / 4).any {
+                    abs(light[it * 4 + 1] - (-200f - BuildingSpec.CORNICE)) < 1e-3f &&
+                        light[it * 4 + 2] >= BuildingSpec.W + 6f - 1e-3f
+                }
+            )
+        }
     }
 
     @Test
@@ -194,6 +357,7 @@ class FacadeTest {
             val bottom = top + height
             val wall = Shapes()
             val front = Shapes()
+            val over = Shapes()
             val ruins = Array(count) { ruinWindow("k$seed", seed % 3, 3, it) }
             BuildingDetail.floor(
                 m,
@@ -210,7 +374,18 @@ class FacadeTest {
                 ruins = if (ruin) ruins else null,
                 wall = wall,
                 front = front,
+                over = over,
             )
+            // what goes over the glass stays on the glass
+            val ob = over.bounds()
+            if (ob != null) {
+                val minX = (0 until count).minOf { win[it * 4] }
+                val maxX = (0 until count).maxOf { win[it * 4] + win[it * 4 + 2] }
+                val minY = (0 until count).minOf { top + win[it * 4 + 1] }
+                val maxY = (0 until count).maxOf { top + win[it * 4 + 1] + win[it * 4 + 3] }
+                assertTrue(ob[0] >= minX - 1e-3f && ob[2] <= maxX + 1e-3f)
+                assertTrue(ob[1] >= minY - 1e-3f && ob[3] <= maxY + 1e-3f)
+            }
             for (s in listOf(wall, front)) {
                 val b = s.bounds() ?: continue
                 // the string course reaches a unit past each edge, nothing more; nothing above the
@@ -274,13 +449,16 @@ class FacadeTest {
             assertTrue(b!![0] >= -half - 3f - 1e-3f && b[2] <= half + 3f + 1e-3f)
             assertTrue(b[1] >= -300f - BuildingSpec.CORNICE - 1e-3f && b[3] <= -300f + 1e-3f)
         }
+        val iron = HashMap<Boolean, Int>()
         for (pipe in floatArrayOf(Float.NaN, half - 4.5f)) {
             val s = Shapes()
             BuildingDetail.lobby(-BuildingSpec.LOBBY_H, pipe, s)
             val b = s.bounds()!!
             assertTrue(b[0] >= -half - 1e-3f && b[2] <= half + 1e-3f)
             assertTrue(b[1] >= -BuildingSpec.LOBBY_H - 1e-3f && b[3] <= 1e-3f)
-            assertEquals(!pipe.isNaN(), s.rects(DetailInk.IRON).size > 4)
+            iron[pipe.isNaN()] = s.rects(DetailInk.IRON).size
         }
+        // the pipe adds its length and brackets to the lamps' brackets
+        assertTrue(iron.getValue(false) > iron.getValue(true))
     }
 }

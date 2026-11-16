@@ -381,6 +381,30 @@ drop shadow and `clutter()`; the reward sign's steel frame and lamps. Untouched:
 lighting passes, `Perspective`, `crackLine`, snow caps (same sill/cornice geometry). Screenshot tests `facadesDay`,
 `lobbyNight`; every Habits reference changes.
 
+### Facades v2: depth, glass and night (after NativeApi 197)
+
+The owner: "bring the building exteriors up to the standard of everything else, AAA quality". The architecture gained
+light-dependent inks (`DetailInk` REVEAL, RAISED, FACE_L/R, CAST_FROM_LEFT/RIGHT, AO, SOFFIT, GLASS_TOP,
+GLASS_FROM_LEFT/RIGHT, BAR, BAR_LIGHT) whose alpha comes from one pure function, `FacadeLook.alpha(ink, sunSide, direct,
+dark)` (signed: positive white, negative the sky's shade), so a frame only draws the floor's prebuilt paths at alphas; the
+shadows flip with `sunSide` and soften under overcast (`direct` = strength × (1 − flat)). Every opening now reaches
+`REVEAL` (2) past its pane: jambs and head in depth, the jamb facing the light lit, the head in shade, the frame inside it,
+the sill (its top still at the pane's foot, `sillTop`, where the snow lands) with its cast shadow, lintels over the top
+row only. Stone and gold floors have pilasters between the bays; glass floors are a curtain wall (mullions proud of the
+glass with lit edges, spandrels mirroring the sky). A third path set per floor, `FloorArt.over`, is drawn over the rooms:
+the head's and the lit jamb's shadow on the glass and a transom over tall panes. Every pane mirrors the hour's sky
+(`paneBrush` from `SkyColors`, kept per sky) with the far city faint in its lower part by day (`FacadeSprites.mirror`,
+slid with the street), fading as the room is lit; lit rooms light their reveals at night. The walls take the night's
+ambient light (a cool Multiply, `NIGHT_DEPTH`), a darkening towards the pavement, a wet darkening and a faint haze up tall
+buildings; the side faces carry their wall tile skewed to the face with two slit windows; gold and glass catch a
+travelling polish band. The lobby: granite slabs (`FacadeSprites.lobbyTile`), a recessed shopfront (reveals and glass
+shadows in `BuildingArt.lobbyOver`), sky-mirroring glass, a door with glass panels, pulls, kick plates and a transom that
+glows at night, a step, two wall lamps with a warm halo, the sign with depth and raised letters (shadow by day, backlit
+at night; `lobbyName` drawn as before), the awning's scalloped shadow leaning from the light and its cloth lit across.
+The cornice's shadow follows the light, its arris catches it; rooftop things are shaded by side and rimmed at dusk.
+New bakes ~93 KB. `FacadeTest` covers the bakes, the flip, the snow anchors and the over paths staying on the glass;
+screenshot tests `facadesSunLeft/Right`, `glassTowerDay/Night` (scenario `glass`).
+
 ## As built: the sun and moon redesign (NativeApi 196)
 
 `SunMoonSprites.kt` rewritten (`SunMoonSpritesTest`): the sun as six white layers (core, bloom, sky, rays, disc, disc light,

@@ -199,6 +199,23 @@ class HabitsScreenshotTest {
 
     @Test fun lobbyNight() = snap("city", hour = 22, ambientAt = 45f)
 
+    /**
+     * The facades lit from each side: the sun on the left in the morning, on the right in the
+     * afternoon, so the reveals' shade, the jambs' light, the sills', pilasters' and cornice's cast
+     * shadows and the awning's shadow all flip with it.
+     */
+    @Test fun facadesSunLeft() = snap("tall", hour = 10, ambientAt = 45f)
+
+    @Test fun facadesSunRight() = snap("tall", hour = 16, ambientAt = 45f)
+
+    /**
+     * A young building of glass floors: the curtain wall's mullions and spandrels, the panes
+     * mirroring the day's sky and the far city; at night dark glass with the rooms behind it.
+     */
+    @Test fun glassTowerDay() = snap("glass", hour = 14, ambientAt = 45f)
+
+    @Test fun glassTowerNight() = snap("glass", hour = 22, ambientAt = 45f)
+
     @Test fun tallBuildingLight() = snap("tall", light = true)
 
     /** A floor's dials, the street still bright behind them. */
