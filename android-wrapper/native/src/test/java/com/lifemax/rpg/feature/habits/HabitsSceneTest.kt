@@ -4,9 +4,6 @@ import com.lifemax.rpg.feature.habits.domain.AIM_AIR
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec as B
 import com.lifemax.rpg.feature.habits.domain.CAMERA_MAX
 import com.lifemax.rpg.feature.habits.domain.CAMERA_MIN
-import com.lifemax.rpg.feature.habits.domain.CRACK_DEPTH
-import com.lifemax.rpg.feature.habits.domain.CRACK_LEFT
-import com.lifemax.rpg.feature.habits.domain.CRACK_RIGHT
 import com.lifemax.rpg.feature.habits.domain.Camera
 import com.lifemax.rpg.feature.habits.domain.Dice
 import com.lifemax.rpg.feature.habits.domain.FurnitureKind
@@ -25,7 +22,6 @@ import com.lifemax.rpg.feature.habits.domain.buildingAt
 import com.lifemax.rpg.feature.habits.domain.buildingLayout
 import com.lifemax.rpg.feature.habits.domain.centred
 import com.lifemax.rpg.feature.habits.domain.coast
-import com.lifemax.rpg.feature.habits.domain.crackLine
 import com.lifemax.rpg.feature.habits.domain.floorWindows
 import com.lifemax.rpg.feature.habits.domain.focusCamera
 import com.lifemax.rpg.feature.habits.domain.hit
@@ -48,7 +44,6 @@ import com.lifemax.rpg.feature.habits.domain.towards
 import com.lifemax.rpg.feature.habits.domain.xAt
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -452,21 +447,11 @@ class HabitsSceneTest {
     }
 
     @Test
-    fun aCrackBelongsToItsOwnFloor() {
+    fun aKeysDiceAlwaysRollTheSame() {
         val a = Dice("s1h4")
         val b = Dice("s1h4")
         val first = List(6) { a.next() }
         assertEquals(first, List(6) { b.next() })
         assertTrue(first.all { it >= 0f && it < 1f })
-        val keys = List(300) { "s${it % 7}h$it" }
-        for (key in keys) for (tall in listOf(false, true)) {
-            val crack = crackLine(key, tall)
-            assertEquals(0f, crack.first().second, 0f)
-            assertTrue(crack.zipWithNext().all { (p, q) -> q.second > p.second })
-            // in the right-hand half, clear of the plaque, and it stops inside the floor
-            assertTrue(crack.all { it.first in CRACK_LEFT..CRACK_RIGHT })
-            assertTrue(crack.last().second <= CRACK_DEPTH)
-        }
-        assertFalse(keys.map { crackLine(it, false).first().first }.toSet().size < 200)
     }
 }

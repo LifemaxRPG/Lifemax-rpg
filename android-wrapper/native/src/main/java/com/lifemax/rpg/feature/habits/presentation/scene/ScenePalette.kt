@@ -300,12 +300,6 @@ internal object SceneInk {
     /** The next floor's glow, and the light that floods a floor as it is finished. */
     val Glow = Color(0xFFFFE2A0)
 
-    val Crack = Color(0xCC1A0D0D)
-    val Seam = Color(0xFFF6D679)
-    val SeamGlow = Color(0x66FFE9A6)
-    val Attention = Color(0xFFFFB648)
-    val AttentionInk = Color(0xFF3A2400)
-
     /** The rooftop sign: dark until the building is done, then lit. */
     val SignOff = Color(0xFF2B2F3D)
     val SignOffText = Color(0xFF8D93A8)
