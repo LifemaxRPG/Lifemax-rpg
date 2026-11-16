@@ -127,7 +127,7 @@ internal class Backlight {
                 gap,
                 zoom,
                 Backlit.inView(orb.x, orb.y, r, w, h),
-            )
+            ) * STRENGTH
         if (amount < .005f) {
             amount = 0f
             openSet = false
@@ -448,5 +448,11 @@ internal class Backlight {
 
         /** How much of the way to the measured value the eased values move each frame. */
         const val EASE = .3f
+
+        /**
+         * The whole look's strength at its fullest: the dark, the haze, the shafts and the glare's
+         * boost all scale with it. Held under full so the sky round the sun still has colour.
+         */
+        const val STRENGTH = .65f
     }
 }
