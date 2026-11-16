@@ -315,9 +315,17 @@ class CatWorld(
         keptPair = state.pair
         social.restore(state.pair)
         social.restoring(minds.map { state.cats[it.profile.id]?.act })
-        // each takes up what is left of it: the time since it began (actAt) is already spent
+        // each takes up what is left of it: the time since it began (actAt) is already spent. A
+        // cat that was lying asleep takes up its rest first, so it keeps the bed it lies on; the
+        // others choose where to go around it (a roaming cat resumed first could claim that bed
+        // as its destination and turn the sleeper out of it)
         val now = clock.epochMs()
-        for (m in back) {
+        val order =
+            back.sortedBy {
+                val act = MindState.activityOf(state.cats.getValue(it.profile.id).act)
+                if (registry.find(act)?.asleep == true) 0 else 1
+            }
+        for (m in order) {
             val saved = state.cats.getValue(m.profile.id)
             val sinceS = (now - saved.actAt).coerceAtLeast(0L) / MS_PER_S
             m.resume(MindState.activityOf(saved.act), sinceS)
