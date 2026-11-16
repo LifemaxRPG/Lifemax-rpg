@@ -48,11 +48,13 @@ bitmap moved by its depth times the live view; nothing is stretched, so the art'
   (`PanFollow`), as before but never snapped to a step. `vx = -yaw * depthGain`, `vy = -pitch * yaw^2`.
 - Strip `j` of a piece is drawn at `front + (j / 2) * (vx, vy)`. A side face of a piece `D` rows deep is
   therefore exactly `D * |vx|` wide: continuous and monotonic in the camera, 0 at rest. On the phone each
-  strip is placed at its nearest device pixel, so a side grows a device pixel at a time.
+  strip is placed at its nearest device pixel, so a side grows a device pixel at a time (the piece's
+  parallax and the strip's offset are rounded separately: section 9).
 - Parallax is continuous too: the canvas takes a sub-pixel `nudge` for the layer being drawn (wall,
   each floor row, rugs, seam, window light, props, each piece's front plane, each cat and its shadow,
   toys), rounded to device pixels on the phone and to house pixels in the JVM canvas (where it is the old
   whole-pixel picture exactly). A cat and the floor under it take the same value, so feet do not slide.
+  A piece's strips are drawn under its front's one nudge, rounded once for the whole piece (section 9).
 - Draws: 1,126 strip runs for the whole house (only about a third is on screen; the phone's canvas
   skips the rest), all `drawImage` with integer device offsets, no allocation (tested over 20,000
   frames of a panning camera).
@@ -164,3 +166,49 @@ Tests: `SolidFacesTest` (the sprite at rest exactly, the palette, the rims again
 cross-sections, the ray cast's shape, the order at both extremes, the cost) still holds; new ones check
 the bookcase's side boards are wood and its books' tops pages, the fridge's door split stops at the
 door, and that no texture changes strip by strip along a side (beyond where the shape itself does).
+
+## 9. Smooth motion (strips rounded with their piece)
+
+Owner, after the authored faces: "the 3D effect is still looking janky compared to the habits tab".
+
+Measured (JVM harness drawing the strips as the phone's canvas places them, 7 device px per house px,
+the S25 Ultra's card; 13 pieces):
+
+- **Cause: each strip rounded on its own.** The phone's canvas placed a strip at
+  `round(originX + (x + nudge) * scale)`, the nudge (the piece's parallax) and the strip's depth offset
+  rounded together. As the camera pans, the nudge changes far faster than the angle, so the strips of one
+  piece crossed pixel edges at different moments: the side's width flickered a pixel wider and narrower
+  many times a second, and the one-pixel slivers of each strip appeared and vanished, so the side's
+  texture and the silhouette boiled. Now the canvas rounds the nudge once for the piece and the strip's
+  offset on its own (`RoomCanvas.stripX`: `originX + round(nudge * scale) + round(dx * scale)`, as the
+  JVM canvas already did at house pixels). The whole piece moves by one whole device pixel, and only the
+  angle spreads its strips.
+- **Cause: the camera's settle.** `RoomCamera` ended every pan by snapping to the nearest whole world
+  pixel from 0.6 px away: a jump of up to 1.1 world px (7.7 device px) of the whole room as the cat
+  stopped. It now eases all the way in, the last of the way at no less than 2 world px/s (a device
+  pixel every few frames), and lands on its aim exactly, never past it; a pan settles as soon as before.
+- Not a cause: the room is drawn every frame (`withFrameNanos`), the sway spring and pan follower are
+  stepped in fixed 1/240 s slices, continuous. The rest hold (`DepthSway.shown`) moves the drawn sway in
+  steps of at most 0.01 (under a device pixel on the nearest row) only while the camera is almost at rest.
+  The guard and the cost are unchanged (below).
+
+| per 13 pieces | before | after |
+|---|---|---|
+| sweep -1 to 1 in 240 frames: frames a piece's width steps the wrong way | 448 | 50 (0 for the sofa, bookcase, counter, platforms; the rest where the widest strip changes or the side turns) |
+| same: piece-local pixels returning to an earlier colour | 75% of changes (3.5 M) | 35% (0.53 M) |
+| same: one-or-two-frame flickers (a pixel changes and changes back) | 2.81 M | 0.06 M |
+| pan at 40 px/s (1,607 frames at 120 Hz): wrong-way width steps | 89 | 17 |
+| same: one-or-two-frame flickers | 48,419 | 5,468 (two whole-piece events where a piece enters the screen) |
+| pan at 12 px/s (4,240 frames): wrong-way width steps | 86 | 17 |
+| camera's last step as a cat stops (worst of 50) | 1.10 world px (7.7 device px) | 0.017 world px (0.12 device px) |
+| strip calls a frame (whole house / on screen avg / max) | 1,126 / 389 / 743 | the same |
+| painter (JVM, strips) median / p99 | 0.018 / 0.035 ms | 0.017 / 0.051 ms |
+
+What stays: the room at rest (the strips' offsets are whole there), the faces, the order with the cats,
+hit-testing, the guard's levels and reduced motion. The silhouette's edge can now step back a device pixel
+when the angle narrows a side while the piece slides the other way (156 frames in the fast sweep, 1 to 27
+in the pans); it is the side's true motion, against the flicker it replaces. A cat on a seat is still
+placed at its own nearest pixel, so it can sit a device pixel either way against the seat as the camera
+pans. Tests: `SmoothMotionTest` (a piece's strips land the same against it under any nudge; no wrong-way
+width steps for the sofa, bookcase, counter and a platform over the sweep, where the old rounding has
+more than 50; a pan ends without a jump).

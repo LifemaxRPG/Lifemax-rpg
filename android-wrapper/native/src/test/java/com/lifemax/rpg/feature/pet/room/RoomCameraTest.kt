@@ -64,7 +64,7 @@ class RoomCameraTest {
         val camera = RoomCamera(50f)
         run(camera, 60f, false, 5f) // 10 px off: inside the dead zone
         assertEquals(50f, camera.cx, 0f)
-        run(camera, 70f, false, 5f) // 20 px off: the camera goes, then settles on a whole pixel
+        run(camera, 70f, false, 5f) // 20 px off: the camera goes, then stops on its aim
         assertEquals(70f, camera.cx, 0f)
     }
 

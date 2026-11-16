@@ -65,6 +65,13 @@ internal interface RoomCanvas {
      * depth strip of a solid piece ([SolidFaces]). A canvas places it at its own nearest pixel (the
      * screen's canvas at a device pixel, so a piece's sides grow a device pixel at a time), keeping
      * a bitmap of [image] per [slot] (0 until [MAX_STACKS]) while [version] stays the same.
+     *
+     * The [nudge] and the position are rounded each on its own ([stripX]), never their sum: every
+     * strip of a piece is drawn under its front's one nudge, so the whole piece moves by the same
+     * whole pixel and its strips never disagree as it slides; only the angle (the position) changes
+     * how far apart they are. Rounded together, the strips crossed a pixel's edge at different
+     * moments and a side flickered a pixel wider and narrower many times a second while the camera
+     * panned (docs/specs/CAT_ROOM_CONTINUOUS_DEPTH.md, section 9).
      */
     fun stack(
         image: ArgbImage,
@@ -90,6 +97,15 @@ internal interface RoomCanvas {
     companion object {
         /** How many [stack] pictures a canvas keeps at once: one per solid piece. */
         const val MAX_STACKS = DepthOrder.MAX_PIECES
+
+        /**
+         * The pixel a [stack] at house x [dx] lands on, under a [nudge] of house pixels, on a
+         * canvas of [scale] pixels per house pixel whose house starts at pixel [originX]: the nudge
+         * and the position rounded each on its own (half up, as [Math.round]), so the strips of one
+         * piece share the nudge's pixel.
+         */
+        fun stripX(originX: Int, scale: Int, nudge: Float, dx: Float): Int =
+            originX + Math.round(nudge * scale) + Math.round(dx * scale)
     }
 }
 

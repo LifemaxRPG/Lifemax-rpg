@@ -3,7 +3,6 @@ package com.lifemax.rpg.feature.pet.room
 import com.lifemax.rpg.feature.pet.body.CatBody
 import kotlin.math.abs
 import kotlin.math.exp
-import kotlin.math.roundToInt
 
 /**
  * The room's camera: a horizontal pan that eases after a point of interest, as the web room's does
@@ -13,11 +12,13 @@ import kotlin.math.roundToInt
  *   walking, faster still when running; the pan is an exponential ease, so it is independent of the
  *   frame rate.
  * - A cat that rests never makes the room drift: while nothing travels, offsets under [DEAD_ZONE]
- *   are left alone, and once the camera has started it settles on a whole pixel.
+ *   are left alone, and once the camera has started it eases all the way in: while the cat rests it
+ *   never comes in slower than [SETTLE_SPEED], and it stops on its aim exactly (never past it), so
+ *   a pan ends without a jump and without a long creep.
  * - A jump of more than [CUT] px (a cat put somewhere new) is a cut, not a pan.
  * - A glide ([glideTo], the owner chose the other cat) is a pan however far the cat is: no cut, a
  *   steady ease at [TRANSIT_RATE] until the camera is within [TRANSIT_END] px, then the ordinary
- *   follow takes over (its dead zone and whole-pixel settle).
+ *   follow takes over (its dead zone and settle).
  * - [left] keeps the view inside the house.
  *
  * Plain arithmetic on a few floats: nothing here allocates.
@@ -68,11 +69,18 @@ internal class RoomCamera(startX: Float = 0f) {
         if (!moving && !going && abs(d) < DEAD_ZONE) return
         going = true
         val rate = if (running) RUN_RATE else if (moving) WALK_RATE else REST_RATE
-        cx += d * (1f - exp(-rate * dt))
-        if (!moving && abs(target - cx) < SETTLE) {
-            cx = target.roundToInt().toFloat()
-            going = false
+        var step = d * (1f - exp(-rate * dt))
+        if (!moving) {
+            // the last of the way at a gentle steady pace, landing on the aim itself
+            val least = SETTLE_SPEED * dt
+            if (abs(step) < least) step = if (d > 0f) least else -least
+            if (abs(step) >= abs(d)) {
+                cx = target
+                going = false
+                return
+            }
         }
+        cx += step
     }
 
     /** Left edge of a view [viewWidth] world pixels wide, kept inside the house. */
@@ -87,7 +95,12 @@ internal class RoomCamera(startX: Float = 0f) {
         const val RUN_LEAD = 26f
         const val CUT = 260f
         const val DEAD_ZONE = 14f
-        const val SETTLE = 0.6f
+        /**
+         * The slowest the camera comes in once the cat rests, world px/s (a device pixel every few
+         * frames on a phone). It used to snap to the nearest whole pixel from 0.6 px away: a jump
+         * of up to 1.1 world px (8 device pixels) as every pan ended.
+         */
+        const val SETTLE_SPEED = 2f
         const val REST_RATE = 1.6f
         const val WALK_RATE = 2.6f
         const val RUN_RATE = 4.2f
