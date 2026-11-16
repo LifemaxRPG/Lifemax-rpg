@@ -264,10 +264,17 @@ internal class StreetLifePainter {
         val deg = -p.wheel * 180f / Math.PI.toFloat()
         cycleWheel(-half, r, deg, alpha, filter)
         cycleWheel(half, r, deg, alpha, filter)
-        val f =
-            (p.crank / (2f * Math.PI.toFloat()) * StreetGait.CRANK_FRAMES + .5f).toInt() %
-                StreetGait.CRANK_FRAMES
-        val a = SceneSprites.cycle(f)
+        // the crank's turn between two baked frames: the nearer one drawn whole, the next mixed in
+        // by how far the turn has gone, so the pedalling flows instead of stepping
+        val n = StreetGait.CRANK_FRAMES
+        val turn = (p.crank / (2f * Math.PI.toFloat())).let { it - kotlin.math.floor(it) } * n
+        val f0 = turn.toInt() % n
+        val f1 = (f0 + 1) % n
+        val t = turn - turn.toInt()
+        val a = SceneSprites.cycle(if (t < .5f) f0 else f1)
+        val b = SceneSprites.cycle(if (t < .5f) f1 else f0)
+        val mix = if (t < .5f) t else 1f - t
+        if (mix > .03f) drawImage(b.image, Offset(b.dx, b.dy), alpha * mix, colorFilter = filter)
         drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter)
     }
 
@@ -280,7 +287,8 @@ internal class StreetLifePainter {
     ) {
         val wheel = SceneSprites.cycleWheel
         withTransform({
-            translate(dx * unit * StreetSprites.PPU, -r * unit * StreetSprites.PPU)
+            // the figure is drawn in its sprite's own pixels: units times the pixels per unit
+            translate(dx * StreetSprites.PPU, -r * StreetSprites.PPU)
             rotate(deg, Offset.Zero)
         }) {
             drawImage(

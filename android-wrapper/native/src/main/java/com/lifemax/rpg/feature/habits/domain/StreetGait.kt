@@ -92,7 +92,7 @@ object StreetGait {
     // ------------------------------------------------------------------------------ the bicycle
 
     /** Frames baked for one turn of the cranks. */
-    const val CRANK_FRAMES = 8
+    const val CRANK_FRAMES = 16
 
     /** The wheel's radius in units, and how far the bicycle goes for one turn of the cranks. */
     const val WHEEL_R = 4.6f
