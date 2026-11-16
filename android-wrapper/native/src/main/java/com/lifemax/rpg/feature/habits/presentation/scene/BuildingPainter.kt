@@ -3049,10 +3049,10 @@ internal class BuildingPainter {
                     landing -> ceil(fa.occupancy.lit * motion.lights).toInt()
                     else -> fa.occupancy.lit
                 }
-            // a missed floor's failing lights: one flickers, or, missed twice, a few sputter
-            val failing =
-                if (!done && live && b.miss >= 1) (if (b.miss >= 2) min(3, count) else 1) else 0
-            val sputter = b.miss >= 2
+            // a missed floor's windows stay dark (its crack and its sign say it was missed): a
+            // light that flickers on and off reads as a fault in the picture, not in the habit
+            val failing = 0
+            val sputter = false
             val seed = b.id.hashCode()
             // who is in which lit window now: only a few, taking turns
             val here = fa.here

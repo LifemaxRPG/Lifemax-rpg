@@ -260,6 +260,10 @@ internal class Backdrop(private val seed: Int, day: String = "") {
             if (starAlpha > .6f && Ambient.shootingStar(seconds, seed, pass))
                 shootingStar(pass, w, top, band, starAlpha)
         }
+        moonCover =
+            if (sky.phase == SkyPhase.NIGHT)
+                cover(sky, orb, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds, density)
+            else 0f
         heavenlyBody(sky, hour, orb, horizon, seconds)
         lensFlare(sky, orb, top, shift)
         clouds(sky, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds)
@@ -555,14 +559,20 @@ internal class Backdrop(private val seed: Int, day: String = "") {
             val m = SceneSprites.moon
             val l = moonLook
             l.alphas(moonLit, MoonLook.up(sky.dark), cloudiness, mist)
-            if (l.body < .004f) return
+            // behind a cloud the moon is hidden as thick as the cloud is: its disc first, its
+            // halo less (the cloud's edge glows a little where the moon is behind it)
+            val clear = 1f - moonCover
+            val body = l.body * clear * clear
+            if (body < .004f && l.halo * clear < .004f) return
             val pic = SceneSprites.moonPicture(moonStep)
             translate(orb.x, orb.y) {
-                orbLayer(pic.image, pic.layer, d, 1f, 1f, l.body, moonFilter, BlendMode.SrcOver)
+                if (body >= .004f)
+                    orbLayer(pic.image, pic.layer, d, 1f, 1f, body, moonFilter, BlendMode.SrcOver)
                 // the air in front of it, over its dark side too
-                orbLayer(m.halo, m.sprite.halo, d, 1f, 1f, l.halo, moonHalo, BlendMode.Plus)
-                if (l.haze > .004f)
-                    orbLayer(m.halo, m.sprite.halo, d, 2.4f, 2.4f, l.haze, moonHalo, BlendMode.Plus)
+                orbLayer(m.halo, m.sprite.halo, d, 1f, 1f, l.halo * clear, moonHalo, BlendMode.Plus)
+                val haze = l.haze * (.35f + .65f * clear)
+                if (haze > .004f)
+                    orbLayer(m.halo, m.sprite.halo, d, 2.4f, 2.4f, haze, moonHalo, BlendMode.Plus)
             }
             return
         }
@@ -922,12 +932,11 @@ internal class Backdrop(private val seed: Int, day: String = "") {
             val c = clouds[i]
             val images = pool[CloudSprites.of(c.kind)[c.variant]]
             val sp = images.sprite
-            val s = d * c.scale / CloudSprites.PX_PER_DP
-            val x = Ambient.cloudAt(c, seconds) * w - shift * .03f * c.depth * d
-            val base = CloudLayout.base(c.y, top, horizon, ceiling, d)
-            // breathing: the sky never quite stands still, a few percent over half a minute
-            val breathe = 1f + .04f * sin(seconds * .21f + i * 2.1f)
-            val a = (strength * breathe * room * (1f - .28f * c.haze)).coerceIn(0f, 1f)
+            place(i, w, top, horizon, ceiling, shift, seconds, strength, room, d)
+            val s = placeS
+            val x = placeX
+            val base = placeBase
+            val a = placeA
             shadeX[i] = x
             shadeW[i] = sp.w * s
             shadeA[i] = a * c.depth
@@ -943,6 +952,92 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 drawImage(images.lit, at, a, colorFilter = tintLit[i])
             }
         }
+    }
+
+    /** Where [place] put cloud i: its middle, its foot, its scale and its alpha. */
+    private var placeX = 0f
+    private var placeBase = 0f
+    private var placeS = 0f
+    private var placeA = 0f
+
+    /** Places cloud [i] as [clouds] draws it, into [placeX], [placeBase], [placeS], [placeA]. */
+    private fun place(
+        i: Int,
+        w: Float,
+        top: Float,
+        horizon: Float,
+        ceiling: Float,
+        shift: Float,
+        seconds: Float,
+        strength: Float,
+        room: Float,
+        d: Float,
+    ) {
+        val c = clouds[i]
+        placeS = d * c.scale / CloudSprites.PX_PER_DP
+        placeX = Ambient.cloudAt(c, seconds) * w - shift * .03f * c.depth * d
+        placeBase = CloudLayout.base(c.y, top, horizon, ceiling, d)
+        // breathing: the sky never quite stands still, a few percent over half a minute
+        val breathe = 1f + .04f * sin(seconds * .21f + i * 2.1f)
+        placeA = (strength * breathe * room * (1f - .28f * c.haze)).coerceIn(0f, 1f)
+    }
+
+    /** How much of the moon the clouds in front of it hide this frame, 0 to 1 ([cover]). */
+    private var moonCover = 0f
+
+    /**
+     * How much of a disc at [orb] the clouds hide, 0 (clear) to 1: each cloud's own opacity where
+     * the disc is (its sprite sampled at the middle and four points round the rim), times the alpha
+     * it is drawn at, stacked as layers of cloud stack.
+     */
+    private fun cover(
+        sky: SkyColors,
+        orb: Offset,
+        w: Float,
+        top: Float,
+        horizon: Float,
+        ceiling: Float,
+        mirror: Boolean,
+        shift: Float,
+        seconds: Float,
+        d: Float,
+    ): Float {
+        val night = sky.dark > .8f
+        val count = if (night) 3 else if (sky.dark > .3f) 4 else Ambient.CLOUDS
+        val strength = if (sky.phase == SkyPhase.DAY) 1f else if (night) .8f else .94f
+        val room = CloudLayout.room(top, horizon, ceiling, d)
+        if (room <= 0f) return 0f
+        val pool = SceneSprites.clouds
+        val r = SunMoonSprites.MOON_R * d * .7f
+        var through = 1f
+        for (i in 0 until count) {
+            val c = clouds[i]
+            val sp = pool[CloudSprites.of(c.kind)[c.variant]].sprite
+            place(i, w, top, horizon, ceiling, shift, seconds, strength, room, d)
+            val sx = if (mirror) -placeS else placeS
+            var sum = 0f
+            for (k in 0 until 5) {
+                val ox = if (k == 1) r else if (k == 2) -r else 0f
+                val oy = if (k == 3) r else if (k == 4) -r else 0f
+                val px = ((orb.x + ox - placeX) / sx + sp.w / 2f).toInt()
+                val py = ((orb.y + oy - placeBase) / placeS + sp.h * .86f).toInt()
+                sum += cloudAlpha(sp, px, py)
+            }
+            // a cloud's body is thicker than its sprite's alpha looks against the dark sky
+            val a = (sum / 5f * placeA * 1.25f).coerceIn(0f, 1f)
+            through *= 1f - a
+        }
+        return 1f - through
+    }
+
+    /** The opacity of cloud sprite [sp] at pixel ([x], [y]): its three layers over each other. */
+    private fun cloudAlpha(sp: CloudSprite, x: Int, y: Int): Float {
+        if (x < 0 || y < 0 || x >= sp.w || y >= sp.h) return 0f
+        val i = y * sp.w + x
+        val a = (sp.shade[i] ushr 24) / 255f
+        val b = (sp.mid[i] ushr 24) / 255f
+        val c = (sp.lit[i] ushr 24) / 255f
+        return 1f - (1f - a) * (1f - b) * (1f - c)
     }
 
     /**
