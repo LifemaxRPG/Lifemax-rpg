@@ -706,3 +706,21 @@ upper arm layer is now shaded as if it ran on into the shoulder and cut back to 
 as the forearm already was at the elbow). Memory: walkers 6.18 MB (from 6.17), street set 9.78 MB. Tuned from contact
 sheets with the day and night grades and an approximate lamp, not on a phone; every Habits reference with walkers
 changes.
+
+### As built: the blimp, redone
+
+The owner found the blimp (a flat white lozenge with a pink stripe) poor, so it was redrawn. `AirSprites.blimp()` bakes a
+modern airship seen side on from a little below (`VIEW_UP`, .13 rad), 50 dp long: a body-of-revolution hull (blunt nose,
+fullest a third back, long taper; `envelopeR`) with a wrapped key light, a soft terminator, cool sky bounce under the belly
+and an air rim, a sheen and a tight gleam, gores and nose battens and a mooring cap; four fins in a cross (upper and lower in
+profile, the near tailplane over the axis, the far one dipping under it), each with a hinged control surface; a streamlined
+cabin faired into the belly with a window row, raked windscreen, a wheel, and two engine pods on outriggers. A sixth layer,
+`LIVERY`, holds the paint (a rounded flank panel with an invented mark: a disc with a chevron and two bars; a cheatline
+sweeping up to the tail; the control surfaces; a cabin stripe), drawn over the light and under the gleam (`BLIMP_ORDER`).
+216 x 104 px at 4 px/dp, 6 layers: 539,136 bytes (was 248 x 136 x 5 = 674,560). `Backdrop.blimp` draws it at .82 of its dp
+(`BLIMP_SIZE`, about 41 dp long), every tint leaning into the air for distance; it flies between the heading's band and the
+clouds' floor (`CloudLayout.floor`, the roofs and the "add a floor" ghost; `Pass.y` is now 0 high to 1 low there) and stays
+away when a tall building leaves no room. Its propellers turn (a blurred disc and three blades, drawn per frame). It now also
+flies at dusk and night: the panel and windows glow with the light sweeping along the panel, a soft glow under it, a
+green (flying right) or red (flying left) navigation light at the near tailplane tip, white at the tail, a strobe under the
+cabin. Screenshots: `blimpAndCloudsDay` now focuses a foundation so the sky has room; `blimpNight` added.

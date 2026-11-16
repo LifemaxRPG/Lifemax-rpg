@@ -376,11 +376,14 @@ object Ambient {
         .7f * sin(seconds * (1.1f + .25f * hash(i, 0, 97)) + i * 2.1f) +
             .3f * sin(seconds * 2.7f + i * .9f)
 
-    /** A blimp drifting across on a bright day, rarely. */
+    /**
+     * A blimp drifting across, rarely, by day or (its panel lit) by night. [Pass.y] is where in the
+     * open sky above the roofs it flies: 0 as high as it goes, 1 as low.
+     */
     fun blimp(seconds: Float, seed: Int, out: Pass): Boolean {
         if (!pass(seconds, seed, 50, BLIMP_PERIOD, BLIMP_SECONDS, .4f, out)) return false
         out.x = across(out.t, out.dir)
-        out.y = .3f + .2f * hash(seed, out.pass, 53)
+        out.y = hash(seed, out.pass, 53)
         return true
     }
 

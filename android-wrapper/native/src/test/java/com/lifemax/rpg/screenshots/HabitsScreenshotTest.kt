@@ -355,10 +355,20 @@ class HabitsScreenshotTest {
     }
 
     /**
-     * The blimp at its best, by day: smooth gradient envelope with its soft specular and seams,
-     * fins, the gondola and its window, painted clouds (a heap, a streak, puffs) round it.
+     * The blimp at its best, by day, in the open sky over a low building (a foundation in focus):
+     * the shaded envelope with its sheen, the fins in a cross, the cabin and its engines, the
+     * livery panel, painted clouds round it.
      */
-    @Test fun blimpAndCloudsDay() = snap("city", ambientAt = blimpMoment())
+    @Test
+    fun blimpAndCloudsDay() =
+        snap("city", ambientAt = blimpMoment()) { focus(projection.value!!.stacks[2].id) }
+
+    /** The same blimp at night: its panel and windows lit, its navigation lights, a soft glow. */
+    @Test
+    fun blimpNight() =
+        snap("city", hour = 22, ambientAt = blimpMoment()) {
+            focus(projection.value!!.stacks[2].id)
+        }
 
     /** Dusk: clouds with warm rosy undersides, the sun's corona, trees lit warm. */
     @Test fun cloudsAndTreesDusk() = snap("park", hour = 19)
