@@ -456,3 +456,14 @@ the lamp's colour (its edge facing the lens brighter) in a layer added over them
 `LightSprites.point` centred on the lens (an inverse square, `POINT_CORE` soft), so the light is
 strongest on the head and the near side and fades down the body and with distance. It replaces the
 flat warm overlay and the lamp-side rim.
+
+### As built: walk, smoother pass
+
+The swing foot's lift peaks before half the swing (`lift` warps its phase, no infinite slope at
+toe-off) and higher (1.75), so the knee folds early (about 73 degrees) and the leg reaches long to
+the heel. The arms swing as pendulums (`pendulum`: lingering at the ends, quicker through the middle),
+a touch ahead of the legs (`ARM_LAG`), the forearms trailing them by 10 degrees on the street; the
+head takes back 95% of the body's rocking. Each street look walks in its own `StreetGait.style`
+(arm swing, one arm often less, bob, lean, roll, hips; the stride kept standard so the feet do not
+slide), its settle frames starting from its own passing pose. Sprite memory is at its budget, so no
+more frames were added.

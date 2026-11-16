@@ -108,7 +108,7 @@ object StreetRig {
 
     /** The figure of [look] at [phi] of its walk. */
     fun figure(look: Int, phi: Float): StreetFigure =
-        build(StreetLooks.ALL[look], StreetGait.pose(phi), phi)
+        build(StreetLooks.ALL[look], StreetGait.pose(phi, look), phi)
 
     /** The figure of [look] in the pose [p], with what hangs loose as at [phi] of a walk. */
     fun figure(look: Int, p: FloatArray, phi: Float): StreetFigure =
@@ -134,14 +134,21 @@ object StreetRig {
         )
 
     /** The settle's poses: from the passing pose, eased, to [STAND] (the last one). */
-    val SETTLE: List<FloatArray> by lazy {
-        Gait.between(StreetGait.pose(Gait.PASSING), STAND, SETTLE_FRAMES)
-    }
+    val SETTLE: List<FloatArray> by lazy { settle(-1) }
+
+    /** [SETTLE] from look [look]'s own passing pose. */
+    fun settle(look: Int): List<FloatArray> =
+        Gait.between(StreetGait.pose(Gait.PASSING, look), STAND, SETTLE_FRAMES)
+
+    private val SETTLES: Array<List<FloatArray>?> = arrayOfNulls(StreetLooks.COUNT)
+
+    private fun settleOf(look: Int): List<FloatArray> =
+        SETTLES[look] ?: settle(look).also { SETTLES[look] = it }
 
     /** Frame [frame] of [look]: the walk's [StreetGait.FRAMES], then the settle's. */
     fun frame(look: Int, frame: Int): StreetFigure =
         if (frame < StreetGait.FRAMES) figure(look, frame / StreetGait.FRAMES.toFloat())
-        else figure(look, SETTLE[frame - StreetGait.FRAMES], Gait.PASSING)
+        else figure(look, settleOf(look)[frame - StreetGait.FRAMES], Gait.PASSING)
 
     /** Every frame a look has. */
     const val TOTAL_FRAMES = StreetGait.FRAMES + SETTLE_FRAMES

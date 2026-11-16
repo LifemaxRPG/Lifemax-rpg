@@ -32,15 +32,43 @@ object StreetGait {
      * The walk's pose at [phi] with the street's refinements: the forearms trail the upper arms a
      * little and the head nods against the body's lean.
      */
-    fun pose(phi: Float): FloatArray {
-        val p = Gait.walkPose(phi)
+    fun pose(phi: Float, look: Int = -1): FloatArray {
+        val p = Gait.walkPose(phi, if (look < 0) Gait.NEUTRAL else style(look))
         val f = phi - floor(phi)
         val lag = sin(2f * PI.toFloat() * (f - WRIST_LAG)) - sin(2f * PI.toFloat() * f)
-        p[K.EN] += 7f * lag
-        p[K.EF] -= 7f * lag
+        p[K.EN] += 10f * lag
+        p[K.EF] -= 10f * lag
         p[K.HEAD] += 1.4f * nod(f)
         return p
     }
+
+    /**
+     * How street look [look] walks: its own arm swing (one arm often swinging less), bob, posture,
+     * shoulder roll and hips, so that no two walkers on the street move alike. The stride stays the
+     * standard one: the walk's phase comes from the distance at that stride, and the feet must not
+     * slide.
+     */
+    fun style(look: Int): Gait.Style = STYLES[look]
+
+    private fun spread(look: Int, salt: Int, lo: Float, hi: Float): Float =
+        lo + (hi - lo) * Ambient.hash(look + 1, 52, salt)
+
+    private val STYLES: Array<Gait.Style> =
+        Array(StreetLooks.COUNT) { look ->
+            val arm = spread(look, 1, 17f, 30f)
+            val less = spread(look, 2, .78f, 1f)
+            val nearLess = Ambient.hash(look + 1, 52, 3) < .5f
+            Gait.Style(
+                stride = 1f,
+                armNear = if (nearLess) arm * less else arm,
+                armFar = if (nearLess) arm else arm * less,
+                bob = spread(look, 5, .75f, 1.3f),
+                lean = spread(look, 6, 2.2f, 5f),
+                split = spread(look, 7, -.02f, .02f),
+                roll = spread(look, 8, .7f, 1.3f),
+                hip = spread(look, 9, .8f, 1.25f),
+            )
+        }
 
     /** The head's own nod, -1 to 1: twice a cycle, behind the pelvis's rise and fall. */
     fun nod(f: Float): Float = cos(4f * PI.toFloat() * (f - .125f - HEAD_LAG))

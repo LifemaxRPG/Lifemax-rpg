@@ -180,8 +180,10 @@ object Gait {
 
     /** The clearance of the swinging foot over the floor, at [s] (0 to 1) of the swing. */
     private fun lift(s: Double): Double {
-        val a = sin(PI * s)
-        return 1.45 * a * a * (1.0 - .35 * s)
+        // the knee folds early in the swing (the foot snatched up off the toe) and the leg then
+        // reaches out long and low to the heel: the peak comes before half way
+        val a = sin(PI * (s + .35 * s * (1.0 - s)))
+        return 1.75 * a * a * (1.0 - .3 * s)
     }
 
     /** The ankle's x, from the pelvis, in the foot's own cycle [u]. */
@@ -234,6 +236,18 @@ object Gait {
     /** The near hip's x from the pelvis's middle: the pelvis turns a little with each step. */
     private fun hipX(phi: Double, st: Style): Double = HIP_SWING * st.hip * cos(2 * PI * phi)
 
+    /** Where the arms' swing sits against the legs', in cycles (negative: a touch ahead). */
+    private const val ARM_LAG = -.03
+
+    /**
+     * A swing, -1 to 1 like a cosine of [u] cycles, but lingering at its ends and quicker through
+     * its middle, as a pendulum is.
+     */
+    private fun pendulum(u: Double): Double {
+        val c = cos(2 * PI * u)
+        return c * (1.25 - .25 * c * c)
+    }
+
     private const val HIP_SWING = .5
     private const val SHOULDER_SWING = .7
     private const val BASE_HIP = 1.5 - 1.1 * .94
@@ -282,16 +296,20 @@ object Gait {
         leg(ankleX(uf, st) + hip, h - ankleHeight(uf), lf)
         val ann = tilt(un) - ln[2]
         val anf = tilt(uf) - lf[2]
-        val c = cos(2 * PI * (f + .02))
+        // the arms are pendulums the shoulders drive: crossing as the legs pass, they hang a
+        // moment at each end of the swing and fall through the middle (the forearms trail them)
+        val c = pendulum(f - ARM_LAG)
         val an = -st.armNear * c
         val af = st.armFar * c
-        val en = 13.0 + 17.0 * (an + st.armNear) / (2 * st.armNear)
-        val ef = 13.0 + 17.0 * (af + st.armFar) / (2 * st.armFar)
-        val lean = st.lean + .8 * cos(4 * PI * (f - .125))
+        val en = 13.0 + 17.0 * (-c + 1) / 2
+        val ef = 13.0 + 17.0 * (c + 1) / 2
+        val sway = .8 * cos(4 * PI * (f - .125))
+        val lean = st.lean + sway
         return pose(
             turn = .94f,
             lean = lean.toFloat(),
-            head = (-lean * .7).toFloat(),
+            // the head holds the eyes level: it takes back most of the body's rocking
+            head = (-st.lean * .7 - sway * .95).toFloat(),
             an = an.toFloat(),
             en = en.toFloat(),
             af = af.toFloat(),
