@@ -798,14 +798,16 @@ private fun StageCanvas(
                         }
                     }
                     lampAir(street.furniture, sky, from, to, seconds)
-                    with(streetLife) {
-                        sweep(sky, layouts, street, from, to, seconds)
-                        people(sky, street.furniture, from, to, Silhouettes.lod(f.scale))
-                    }
+                    with(streetLife) { sweep(sky, layouts, street, from, to, seconds) }
+                    // the lamps, trees and benches stand at the back of the pavement; the people
+                    // walk along its front, so they pass in front of them
                     for (k in street.furniture.indices) {
                         val item = street.furniture[k]
                         if (item.x < from - 30f || item.x > to + 30f) continue
                         furniture(item, sky, seconds)
+                    }
+                    with(streetLife) {
+                        people(sky, street.furniture, from, to, Silhouettes.lod(f.scale))
                     }
                     with(streetLife) { car(sky, from, to) }
                     with(seasonFall) {

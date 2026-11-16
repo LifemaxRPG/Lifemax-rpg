@@ -504,9 +504,9 @@ internal class StreetLifePainter {
     // ------------------------------------------------------------------ the people themselves
 
     /**
-     * The people on the pavement, behind the lamp posts and trees: each with a soft contact shadow
-     * under either foot, a rim of light on the side the key light is, and the warmth of the nearest
-     * street lamp at night. Nobody when the street is drawn small ([lod]).
+     * The people on the pavement, in front of the lamp posts and trees: each with a soft contact
+     * shadow under either foot, a rim of light on the side the key light is, and the warmth of the
+     * nearest street lamp at night. Nobody when the street is drawn small ([lod]).
      */
     fun DrawScope.people(
         sky: SkyColors,
