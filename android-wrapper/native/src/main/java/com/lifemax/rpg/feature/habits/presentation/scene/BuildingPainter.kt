@@ -1291,6 +1291,48 @@ internal class BuildingPainter {
      * buildings), the trees in the parks (swaying as the trees do), and the lamps, trees and
      * benches on the pavement. Drawn after the pavement and before anything that stands on it.
      */
+    /** What [shadows] last drew from, for [shadeAt]: the key light, the buildings, the street. */
+    private var shadeLight: KeyLight? = null
+    private var shadeLayouts: List<BuildingLayout> = emptyList()
+    private var shadeStreet: StreetLayout? = null
+
+    /**
+     * How deep in the buildings' shade the pavement is at [x] along the street, [y] out from the
+     * facades (the street's units, as [shadows] drew this frame): 0 in the sun to the shade's own
+     * strength under it, with the same soft edges (the penumbra widening with the height that
+     * throws it). The inverse of each building's fall: the point of the facade whose shadow lands
+     * here, and whether the building is there. For the people on the pavement, who darken as they
+     * walk into a building's shade.
+     */
+    fun shadeAt(x: Float, y: Float): Float {
+        val light = shadeLight ?: return 0f
+        val street = shadeStreet ?: return 0f
+        if (light.strength < .02f || light.reach <= .01f || y <= 0f) return 0f
+        val up = y / light.reach
+        val soft = 1f + 1.6f * (1f - Px.clamp01(light.strength))
+        var deepest = 0f
+        val layouts = shadeLayouts
+        for (i in layouts.indices) {
+            val l = layouts[i]
+            var h = l.roof
+            for (p in l.pieces) if (p.kind == PieceKind.FLOOR || p.kind == PieceKind.RUIN) {
+                h += B.CORNICE
+                break
+            }
+            if (up > h + 20f) continue
+            val cx = street.centers[i]
+            val lean = SceneLight.lean(light, (cx - lightX) / lightSpan)
+            // the facade point at height `up` whose shadow falls at x: x = its x + lean * up
+            val dx = abs(x - lean * up - cx)
+            val pen = (PEN_BASE + PEN_RISE * up) * soft
+            val across = Px.smooth(B.W / 2f + pen, B.W / 2f - pen, dx)
+            if (across <= 0f) continue
+            val along = Px.smooth(h + pen, h - pen, up)
+            deepest = max(deepest, across * along)
+        }
+        return deepest * (if (light.cool > .5f) MOON_SHADE else SUN_SHADE) * light.strength
+    }
+
     fun DrawScope.shadows(
         light: KeyLight,
         sky: SkyColors,
@@ -1301,6 +1343,9 @@ internal class BuildingPainter {
         depth: Float,
         seconds: Float,
     ) {
+        shadeLight = light
+        shadeLayouts = layouts
+        shadeStreet = street
         if (light.strength < .02f) return
         val tint = shade(light, sky)
         shadowPaint.alpha = (if (light.cool > .5f) MOON_SHADE else SUN_SHADE) * light.strength
