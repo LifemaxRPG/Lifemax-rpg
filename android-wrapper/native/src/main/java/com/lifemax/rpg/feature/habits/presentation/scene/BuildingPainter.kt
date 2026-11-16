@@ -2921,6 +2921,15 @@ internal class BuildingPainter {
                             1f,
                             alpha = alpha,
                         )
+                        // the boards take the night like the wall around them
+                        if (nightOn)
+                            drawRect(
+                                nightInk,
+                                Offset(x, y),
+                                Size(ww, h),
+                                alpha = alpha,
+                                blendMode = BlendMode.Multiply,
+                            )
                     }
                     RuinWindow.DIM ->
                         drawRect(
@@ -3193,7 +3202,7 @@ internal class BuildingPainter {
             }
         }
         // what stands in front of the windows: an air conditioner, a balcony, a tag on the boards
-        if (detailed) inks(fa.front, f, alpha, true)
+        if (detailed) inks(fa.front, f, alpha, true, night = true)
         drawLine(
             SceneInk.Occlusion,
             Offset(-half, fa.bottom - 1f),
@@ -3263,6 +3272,7 @@ internal class BuildingPainter {
         detailed: Boolean,
         reveal: Color = lerp(f.wallBottom, Color.Black, .24f),
         bar: Color = f.trim,
+        night: Boolean = false,
     ) {
         for (i in 0 until INK_COUNT) {
             val fill = p.fill[i]
@@ -3300,6 +3310,27 @@ internal class BuildingPainter {
             val a = alpha * abs(v)
             if (fill != null) drawPath(fill, c, alpha = a)
             if (stroke != null && detailed) drawPath(stroke, c, alpha = a, style = inkStroke)
+            // things standing proud of the wall (an air conditioner, a balcony) are lit by the
+            // same night as the wall behind them
+            if (
+                night &&
+                    nightOn &&
+                    !INK_SIGNED[i] &&
+                    ink != DetailInk.LIGHT &&
+                    ink != DetailInk.RAISED &&
+                    ink != DetailInk.SHADE
+            ) {
+                if (fill != null)
+                    drawPath(fill, nightInk, alpha = a, blendMode = BlendMode.Multiply)
+                if (stroke != null)
+                    drawPath(
+                        stroke,
+                        nightInk,
+                        alpha = a,
+                        style = inkStroke,
+                        blendMode = BlendMode.Multiply,
+                    )
+            }
         }
     }
 
@@ -4593,8 +4624,8 @@ internal class BuildingPainter {
         /**
          * The night's ambient light on a wall, and how far towards it a wall goes at full night.
          */
-        private val NightAmbient = Color(0xFF5E6C9C)
-        const val NIGHT_DEPTH = .82f
+        private val NightAmbient = Color(0xFF55629A)
+        const val NIGHT_DEPTH = .86f
 
         /** A wet wall: what it is multiplied by. */
         private val WetWall = Color(0xFF8590AA)
