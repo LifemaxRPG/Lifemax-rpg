@@ -131,17 +131,16 @@ internal class BuildingPainter {
     private val selection = Stroke(2.6f, join = StrokeJoin.Round)
 
     /** A lamp's light, drawn as a unit circle under a transform so one brush serves them all. */
-    private val pool =
-        Brush.radialGradient(
-            listOf(SceneInk.LampLight.copy(alpha = .55f), Color.Transparent),
-            Offset.Zero,
-            1f,
-        )
     private val halo =
         Brush.radialGradient(
-            listOf(SceneInk.LampLight.copy(alpha = .5f), Color.Transparent),
-            Offset.Zero,
-            1f,
+            0f to SceneInk.LampLight.copy(alpha = .5f),
+            .15f to SceneInk.LampLight.copy(alpha = .36f),
+            .35f to SceneInk.LampLight.copy(alpha = .17f),
+            .6f to SceneInk.LampLight.copy(alpha = .055f),
+            .82f to SceneInk.LampLight.copy(alpha = .012f),
+            1f to Color.Transparent,
+            center = Offset.Zero,
+            radius = 1f,
         )
 
     /**
@@ -297,12 +296,6 @@ internal class BuildingPainter {
             lineTo(-17f, 0f)
             close()
         }
-    private val coneBrush =
-        Brush.verticalGradient(
-            listOf(SceneInk.LampLight.copy(alpha = .24f), SceneInk.LampLight.copy(alpha = .02f)),
-            startY = -91.5f,
-            endY = 0f,
-        )
 
     /** A lamp post: a base, a tapering pole with a highlight, a curved arm, a hood. */
     private val lampBase =
@@ -564,14 +557,8 @@ internal class BuildingPainter {
     /** The light a lobby window throws on the pavement at night, and the visitor's shadow in it. */
     private val spillPath = Path()
     private val spillFall = Matrix()
-    private val spillBrush =
-        Brush.verticalGradient(
-            0f to SceneInk.WindowLit.copy(alpha = .42f),
-            .55f to SceneInk.WindowLit.copy(alpha = .16f),
-            1f to Color.Transparent,
-            startY = 0f,
-            endY = SPILL,
-        )
+    private val lampTint = ColorFilter.tint(SceneInk.LampLight, BlendMode.SrcIn)
+    private val spillTint = ColorFilter.tint(SceneInk.WindowLit, BlendMode.SrcIn)
 
     /** Asphalt and paving specks, a tile of [SPECK_TILE] street units, made once. */
     private val roadSpecks: List<Offset> =
@@ -688,8 +675,18 @@ internal class BuildingPainter {
             if (f.kind != FurnitureKind.LAMP || f.x < from - 60f || f.x > to + 60f) continue
             val on = lampOn(f, dark)
             if (on <= 0f) continue
-            translate(f.x + 6f, PAVEMENT * .55f) {
-                scale(46f, 12f, Offset.Zero) { drawCircle(pool, 1f, Offset.Zero, alpha = on) }
+            // a bright middle under the lens and a long soft tail along the pavement
+            withTransform({
+                translate(f.x + LightSprites.LENS_X - 64f, PAVEMENT * .55f - 15f)
+                scale(128f / LightSprites.POOL_W, 30f / LightSprites.POOL_H, Offset.Zero)
+            }) {
+                drawImage(
+                    SceneSprites.light.pool,
+                    Offset.Zero,
+                    .62f * on,
+                    colorFilter = lampTint,
+                    blendMode = BlendMode.Plus,
+                )
             }
         }
     }
@@ -720,7 +717,22 @@ internal class BuildingPainter {
             when (f.kind) {
                 FurnitureKind.LAMP -> {
                     val on = lampOn(f, dark)
-                    if (on > 0f) drawPath(cone, coneBrush, alpha = on)
+                    if (on > 0f) {
+                        // the air under the lens lit, fading out with no edge
+                        val L = LightSprites
+                        withTransform({
+                            translate(L.AIR_X0, L.AIR_Y0)
+                            scale((L.AIR_X1 - L.AIR_X0) / L.AIR_W, -L.AIR_Y0 / L.AIR_H, Offset.Zero)
+                        }) {
+                            drawImage(
+                                SceneSprites.light.air,
+                                Offset.Zero,
+                                .5f * on,
+                                colorFilter = lampTint,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                    }
                     drawPath(lampBase, SceneInk.Lamp)
                     drawPath(lampPole, SceneInk.Lamp)
                     drawPath(lampPoleLit, SceneInk.Highlight, alpha = .5f)
@@ -1031,7 +1043,7 @@ internal class BuildingPainter {
                 translate(cx, 0f)
                 transform(fallMatrix(light, cx))
             }) {
-                drawRect(tint, Offset(l0, -h), Size(Perspective.right(s) - l0, h))
+                softBlock(tint, l0, Perspective.right(s), h, light.strength)
             }
             for (t in l.trees) treeSilhouette(cx + t.x, t.id.hashCode(), seconds, .8f, tint, light)
         }
@@ -1065,6 +1077,51 @@ internal class BuildingPainter {
         }
         streetLife?.let { with(it) { keyShadows(light, shadeFilter(tint), from, to) } }
         drawIntoCanvas { it.restore() }
+    }
+
+    /**
+     * A building's block of shade from [l] to [r], [h] high, with soft sides: the sun is a disc,
+     * not a point, so a shadow's edge is a blur (its penumbra) that widens the further it falls
+     * from what throws it, and wider still as haze or cloud soften the light ([strength] 1 for a
+     * clear sky). Drawn in bands up the caster, each its own width of blur, so the blur grows along
+     * the shadow; the far end fades out the same way.
+     */
+    private fun DrawScope.softBlock(tint: Color, l: Float, r: Float, h: Float, strength: Float) {
+        val ramp = SceneSprites.light.ramp
+        val filter = shadeFilter(tint)
+        val n = LightSprites.RAMP.toFloat()
+        val soft = 1f + 1.6f * (1f - Px.clamp01(strength))
+        val bands = SHADE_BANDS
+        for (k in 0 until bands) {
+            val y1 = -h * k / bands
+            val y0 = -h * (k + 1) / bands
+            val pen =
+                min(
+                    (PEN_BASE + PEN_RISE * h * (k + .5f) / bands) * soft,
+                    min((r - l) / 2f, (y1 - y0) * .45f),
+                )
+            // the far end of the shadow fades as its sides do
+            val top = k == bands - 1
+            val y0s = if (top) y0 + pen else y0
+            drawRect(tint, Offset(l + pen, y0s), Size(r - l - 2f * pen, y1 - y0s))
+            for (side in 0..1) {
+                val x = if (side == 0) l - pen else r + pen
+                withTransform({
+                    translate(x, y0s)
+                    scale((if (side == 0) 2f else -2f) * pen / n, y1 - y0s, Offset.Zero)
+                }) {
+                    drawImage(ramp, Offset.Zero, colorFilter = filter)
+                }
+            }
+            if (top)
+                withTransform({
+                    translate(l + pen, y0 - pen)
+                    rotate(90f, Offset.Zero)
+                    scale(2f * pen / n, -(r - l - 2f * pen), Offset.Zero)
+                }) {
+                    drawImage(ramp, Offset.Zero, colorFilter = filter)
+                }
+        }
     }
 
     /**
@@ -2811,7 +2868,24 @@ internal class BuildingPainter {
             spillPath.lineTo(ox + w + flare, SPILL)
             spillPath.lineTo(ox - flare, SPILL)
             spillPath.close()
-            drawPath(spillPath, spillBrush, alpha = dark)
+            // the light itself: soft-sided, spreading and fading, no edge where it ends
+            val span = w / 2f * LightSprites.SPILL_SPAN
+            withTransform({
+                translate(ox + w / 2f - span, 0f)
+                scale(
+                    span * 2f / LightSprites.SPILL_W,
+                    SPILL * 1.25f / LightSprites.SPILL_H,
+                    Offset.Zero,
+                )
+            }) {
+                drawImage(
+                    SceneSprites.light.spill,
+                    Offset.Zero,
+                    .5f * dark,
+                    colorFilter = spillTint,
+                    blendMode = BlendMode.Plus,
+                )
+            }
             if (side == 1 && lod == PeopleLod.FULL && stroll.here) {
                 val xv = ox + 4f + stroll.x + stroll.sway * size
                 val spread = ((xv - (ox + w / 2f)) / (w / 2f)).coerceIn(-1f, 1f)
@@ -4563,6 +4637,11 @@ internal class BuildingPainter {
 
         /** A tree's shadow in three copies, trunk-sharp to crown-soft: each copy's share. */
         private val PENUMBRA = floatArrayOf(.55f, .4f, .35f)
+
+        /** The bands a building's shade is drawn in, and its blur at the foot and per unit up. */
+        const val SHADE_BANDS = 10
+        const val PEN_BASE = 1.2f
+        const val PEN_RISE = .03f
 
         /** How far a street lamp's light reaches over a wall at night, in street units. */
         const val LAMP_REACH = 64f

@@ -82,6 +82,15 @@ internal class WeatherImages(
     val fog: Brush,
 )
 
+/** The street's soft light as images ([LightSprites]). */
+internal class LightImages(
+    val air: ImageBitmap,
+    val pool: ImageBitmap,
+    val spill: ImageBitmap,
+    val ramp: ImageBitmap,
+    val point: ImageBitmap,
+)
+
 /** The lens flare's parts as images: the three kinds of ghost and the streak. */
 internal class FlareImages(
     val sprite: FlareSprite,
@@ -228,6 +237,17 @@ internal object SceneSprites {
             img(ForegroundSprites.bollards()),
             img(ForegroundSprites.post()),
             img(ForegroundSprites.branch()),
+        )
+    }
+
+    /** The street's soft light ([LightSprites]): a lamp's air, its pool, a window's spill. */
+    val light: LightImages by lazy {
+        LightImages(
+            image(LightSprites.lampAir(), LightSprites.AIR_W, LightSprites.AIR_H),
+            image(LightSprites.pool(), LightSprites.POOL_W, LightSprites.POOL_H),
+            image(LightSprites.spill(), LightSprites.SPILL_W, LightSprites.SPILL_H),
+            image(LightSprites.ramp(), LightSprites.RAMP, 1),
+            image(LightSprites.point(), LightSprites.POINT, LightSprites.POINT),
         )
     }
 
@@ -638,6 +658,7 @@ internal object SceneSprites {
         skyline
         foreground
         flare
+        light
         for (h in BuildingSpec.HEIGHTS) {
             val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
             val wh = (h - BuildingSpec.BAND_TOP - BuildingSpec.PLAQUE_BAND - 6f * (rows - 1)) / rows
@@ -657,6 +678,7 @@ internal object SceneSprites {
             DuskSprites.bytes() +
             SkylineSprites.bytes() +
             ForegroundSprites.bytes() +
+            LightSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
             peopleBytes() +
             seasonBytes() +

@@ -70,7 +70,13 @@ internal class StreetLifePainter {
 
     /** The shade a walker throws under a street lamp, and the warmth the lamp lends them. */
     private val lampShadeFilter = ColorFilter.tint(Color(0xFF0A0806), BlendMode.SrcIn)
-    private val warmFilter = ColorFilter.tint(Color(0xFFFFD9B0), BlendMode.SrcIn)
+
+    /** A street lamp's light as it lands on a walker, and the layer it is added to them with. */
+    private val lampLitFilter = ColorFilter.tint(Color(0xFFFFC994), BlendMode.SrcIn)
+    private val lampPaint = Paint().apply { blendMode = BlendMode.Plus }
+
+    /** How the figure's images are laid down ([party] sets it for one call). */
+    private var blend = BlendMode.SrcOver
     private val dayRimFilter = ColorFilter.tint(Color(0xFFF2F5FA), BlendMode.SrcIn)
 
     /**
@@ -230,31 +236,62 @@ internal class StreetLifePainter {
             val t = q - i
             val from = if (i == 0) a else SceneSprites.walker(look, StreetGait.FRAMES + i - 1)
             val to = SceneSprites.walker(look, StreetGait.FRAMES + i)
-            drawImage(from.image, Offset(from.dx, from.dy), alpha, colorFilter = filter)
-            if (t > .03f) drawImage(to.image, Offset(to.dx, to.dy), alpha * t, colorFilter = filter)
+            drawImage(
+                from.image,
+                Offset(from.dx, from.dy),
+                alpha,
+                colorFilter = filter,
+                blendMode = blend,
+            )
+            if (t > .03f)
+                drawImage(
+                    to.image,
+                    Offset(to.dx, to.dy),
+                    alpha * t,
+                    colorFilter = filter,
+                    blendMode = blend,
+                )
             return
         }
         if (next != frame && mix > .03f) {
             val b = SceneSprites.walker(look, next)
-            drawImage(b.image, Offset(b.dx, b.dy), alpha * mix, colorFilter = filter)
+            drawImage(
+                b.image,
+                Offset(b.dx, b.dy),
+                alpha * mix,
+                colorFilter = filter,
+                blendMode = blend,
+            )
         }
-        drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter)
+        drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter, blendMode = blend)
     }
 
     private fun DrawScope.dogFrames(p: Passer, alpha: Float, filter: ColorFilter?) {
         if (p.sniff > .01f) {
             val s = SceneSprites.dog(DogRig.SNIFF_FRAME)
             val a = SceneSprites.dog(p.dogFrame)
-            drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter)
-            drawImage(s.image, Offset(s.dx, s.dy), alpha * p.sniff, colorFilter = filter)
+            drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter, blendMode = blend)
+            drawImage(
+                s.image,
+                Offset(s.dx, s.dy),
+                alpha * p.sniff,
+                colorFilter = filter,
+                blendMode = blend,
+            )
             return
         }
         if (p.dogNext != p.dogFrame && p.dogMix > .03f) {
             val b = SceneSprites.dog(p.dogNext)
-            drawImage(b.image, Offset(b.dx, b.dy), alpha * p.dogMix, colorFilter = filter)
+            drawImage(
+                b.image,
+                Offset(b.dx, b.dy),
+                alpha * p.dogMix,
+                colorFilter = filter,
+                blendMode = blend,
+            )
         }
         val a = SceneSprites.dog(p.dogFrame)
-        drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter)
+        drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter, blendMode = blend)
     }
 
     /** The bicycle: its wheels turning, then the frame and the rider. */
@@ -274,8 +311,15 @@ internal class StreetLifePainter {
         val a = SceneSprites.cycle(if (t < .5f) f0 else f1)
         val b = SceneSprites.cycle(if (t < .5f) f1 else f0)
         val mix = if (t < .5f) t else 1f - t
-        if (mix > .03f) drawImage(b.image, Offset(b.dx, b.dy), alpha * mix, colorFilter = filter)
-        drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter)
+        if (mix > .03f)
+            drawImage(
+                b.image,
+                Offset(b.dx, b.dy),
+                alpha * mix,
+                colorFilter = filter,
+                blendMode = blend,
+            )
+        drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter, blendMode = blend)
     }
 
     private fun DrawScope.cycleWheel(
@@ -296,6 +340,7 @@ internal class StreetLifePainter {
                 Offset(-wheel.ox, -wheel.oy),
                 alpha,
                 colorFilter = filter,
+                blendMode = blend,
             )
         }
     }
@@ -353,7 +398,9 @@ internal class StreetLifePainter {
         alpha: Float,
         filter: ColorFilter?,
         how: Int,
+        mode: BlendMode = BlendMode.SrcOver,
     ) {
+        blend = mode
         val s = persp * unit
         withTransform({ transform(placed(p.x, p.lane, how)) }) {
             scale(p.dir * s, s, Offset.Zero) { figure(p, alpha, filter) }
@@ -381,6 +428,7 @@ internal class StreetLifePainter {
             }
             else -> {}
         }
+        blend = BlendMode.SrcOver
     }
 
     // ------------------------------------------------------------------ shadows
@@ -465,17 +513,13 @@ internal class StreetLifePainter {
             val persp = perspective(p.lane)
             // the nearest lamp's light on them
             var lamp = 0f
-            var lampSide = 0f
             if (dark > .2f)
                 for (k in lamps.indices) {
                     val f = lamps[k]
                     if (f.kind != FurnitureKind.LAMP) continue
                     val d = p.x - (f.x + NearLight.LAMP_LENS)
                     val s = NearLight.lampFall(d) * dark
-                    if (s > lamp) {
-                        lamp = s
-                        lampSide = if (d > 0f) -1f else 1f
-                    }
+                    if (s > lamp) lamp = s
                 }
             // the feet's contact shadows (the walker's; a bicycle and a dog have their own)
             if (p.kind != Stroller.CYCLIST) contacts(p, p.look, p.frame, p.x, p.lane, persp)
@@ -496,22 +540,61 @@ internal class StreetLifePainter {
                 if (key != null)
                     key.strength * (1f - .5f * key.cool) * (1f - dark * .5f) * (1f - .55f * day)
                 else 0f
-            if (rim > .03f || lamp > .03f) {
-                val side = if (lamp > rim) lampSide else lightFrom
-                val filter =
-                    if (lamp > rim) warmFilter
-                    else if (key != null && key.cool > .5f) moonRimFilter else dayRimFilter
-                nudgeX = side * .5f
+            // (under a lamp, its light takes the place of the key light's rim, below)
+            if (rim > .03f && lamp < rim) {
+                val filter = if (key != null && key.cool > .5f) moonRimFilter else dayRimFilter
+                nudgeX = lightFrom * .5f
                 nudgeY = -.15f
-                party(p, persp, max(rim, lamp * .6f) * .55f, filter, PLAIN)
+                party(p, persp, rim * .55f, filter, PLAIN)
                 nudgeX = 0f
                 nudgeY = 0f
             }
             if (day < .99f) party(p, persp, 1f - day, nightFigure, PLAIN)
             if (day > .01f) party(p, persp, day, dayFigure, PLAIN)
-            // the lamp's warmth over them, added
-            if (lamp > .03f) party(p, persp, lamp * .12f, warmFilter, PLAIN)
+            // the street lamps' light on them, falling off across them from each lens
+            if (dark > .2f) lampsOn(p, persp, lamps, dark)
             if (p.kind == Stroller.DOG_WALKER) lead(p, persp)
+        }
+    }
+
+    /**
+     * The light of each street lamp near passer [p] on them, at night: the figure in the lamp's
+     * colour, a little brighter along the edge that faces the lens, seen through the lamp's
+     * fall-off ([LightSprites.point], centred on the lens) and added over the figure. So the light
+     * is strongest on the head and shoulders and the side nearest the lamp and fades down the body
+     * and away from it, and it grows as they walk in under the lamp and fades as they walk on.
+     */
+    private fun DrawScope.lampsOn(p: Passer, persp: Float, lamps: List<Furniture>, dark: Float) {
+        val n = LightSprites.POINT.toFloat()
+        val s = 2f * LightSprites.POINT_R / n
+        for (k in lamps.indices) {
+            val f = lamps[k]
+            if (f.kind != FurnitureKind.LAMP) continue
+            val lx = f.x + NearLight.LAMP_LENS
+            val d = p.x - lx
+            if (abs(d) > LightSprites.POINT_R) continue
+            lampPaint.alpha = (LAMP_ON_FIGURE * dark).coerceAtMost(1f)
+            drawIntoCanvas {
+                it.saveLayer(Rect(p.x - 60f, -90f, p.x + 60f, p.lane + 10f), lampPaint)
+            }
+            // the edge that faces the lens: the figure nudged towards it, the body held back
+            nudgeX = (if (d > 0f) -1f else 1f) * .6f
+            nudgeY = -.2f
+            party(p, persp, 1f, lampLitFilter, PLAIN)
+            nudgeX = 0f
+            nudgeY = 0f
+            party(p, persp, .5f, lampLitFilter, PLAIN, BlendMode.DstOut)
+            withTransform({
+                translate(lx, -NearLight.LAMP_HEIGHT)
+                scale(s, s, Offset.Zero)
+            }) {
+                drawImage(
+                    SceneSprites.light.point,
+                    Offset(-n / 2f, -n / 2f),
+                    blendMode = BlendMode.DstIn,
+                )
+            }
+            drawIntoCanvas { it.restore() }
         }
     }
 
@@ -716,3 +799,6 @@ internal class StreetLifePainter {
         }
     }
 }
+
+/** How strongly a street lamp lights a walker right under it, through its fall-off. */
+private const val LAMP_ON_FIGURE = 1f

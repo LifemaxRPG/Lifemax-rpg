@@ -438,3 +438,21 @@ Also open: Habits is not in the owner's manual backup (a native export/import is
 suggestion; the toast offset at large text. CI records Habits screenshots when the newest commit message carries
 `[refresh-habits-snapshots]`. Local compile of the Habits Kotlin, Compose included, worked with the embeddable Kotlin 2.0.21
 compiler and the Compose plugin from the Gradle cache (helper scripts were in /tmp/w/h and may not survive).
+
+### As built: soft light, pass 1
+
+Nothing in the street's light ends at a line. `LightSprites` bakes white, dithered fields that the
+light's colour tints: `lampAir` (the air under a lamp's lens, a cone with no sides, an inverse-square
+fade, a glow round the lens, fading into the pavement), `pool` (a lamp's light on the ground, an
+inverse-cube middle and a long tail), `spill` (a lit window's light on the pavement, spreading, its
+sides blurring as they spread) and `ramp` (a soft edge). They replace the lamp's hard cone, the
+two-stop pool and the window spill's trapezoid; all draw additively. A building's block of shade is
+drawn in `SHADE_BANDS` bands with a penumbra that grows up the caster (`PEN_BASE + PEN_RISE` per unit
+of height), wider as haze or cloud weaken the key light, and its far end fades the same way. At night,
+front items (air conditioners, balconies) and boarded windows take the walls' night multiply.
+Still hard: the rain lit by a lamp is clipped to the old cone path.
+A street lamp lights a walker through its fall-off: `StreetLifePainter.lampsOn` draws the figure in
+the lamp's colour (its edge facing the lens brighter) in a layer added over them, masked `DstIn` by
+`LightSprites.point` centred on the lens (an inverse square, `POINT_CORE` soft), so the light is
+strongest on the head and the near side and fades down the body and with distance. It replaces the
+flat warm overlay and the lamp-side rim.
