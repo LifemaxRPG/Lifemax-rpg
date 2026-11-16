@@ -467,3 +467,32 @@ head takes back 95% of the body's rocking. Each street look walks in its own `St
 (arm swing, one arm often less, bob, lean, roll, hips; the stride kept standard so the feet do not
 slide), its settle frames starting from its own passing pose. The street walk is baked at 64 frames a
 cycle (`StreetGait.FRAMES`); the street set's budget is 10 MB, the walkers' 6 MB (about 5.5 MB used).
+
+### As built: street people in colour, the bicycle upgraded
+
+The street walkers, the dog and the cyclist are no longer baked through `PeopleRaster`'s warm
+back-lit window palette. A `Shape` may carry its own colour (`rgb`), material (`Mat`: cloth, skin,
+hair, leather, metal, rubber, flat) and `alpha`; window figures keep `tone` and are unchanged.
+`StreetRaster` bakes the coloured shapes: non-zero fill at 3x, runs of same-colour shapes shaded as
+one piece, a pillow normal from each piece's blurred outline lit from above (`AMB`/`DIF` by
+material, a sheen for hair, leather and metal), a soft shade a piece lays on what is under it, and a
+slight head-to-feet gradient; no glow. Each `StreetLook` has a `Wear` (skin, hair, hat, coat, top,
+legs, skirt, shoe, sole, bag). Details: shoe soles, belts and buckle, the coat's opening, belt,
+buttons, pocket and hem, a jacket's waistband, the tee's short sleeves and neckline, cuffs, an ear,
+eye, brow and mouth, hair as a skull cap cut along a hairline (so the face shows), the bags' flaps,
+straps, pocket and clasp. Two shape fixes came with it: `StreetRig.bowed` no longer crosses itself
+(its round ends were wound against its sides), and the coat's skirts now hang down from the waist
+(they were built upwards). `StreetLifePainter.dayFigure` is a faint cool grade and `nightFigure`
+takes the colours to about 40% brightness, 40% desaturated, cooler; both keep alpha as baked.
+
+The bicycle (`CycleRig`) is rebuilt: the bottom bracket below the axles, a 72-degree seat tube with
+the hip 9.6 units up it, mudguards, rear sprocket, derailleur, chain runs with moving link plates, a
+five-arm spider on the chainring, silver cranks, platform pedals with reflectors, saddle, stem, bar,
+grip and brake lever, a head lamp and a tail lamp, axle nuts and a fixed tyre sheen. The rider
+(look 3's `Wear`, a helmet in its hat colour) pedals with ankling (`toeDown`), the knees by
+two-bone IK to the ball of the foot, the pelvis rocking with the stroke and the back and head bobbing
+twice a turn. `StreetGait.CRANK_FRAMES` is 32. The wheel sprite has 20 crossed spokes, a rim lip, a
+hub flange and a reflector. The painter draws the cyclist's contact shadow (`cycleContacts`: under
+each tyre and a soft shade under the bike) and at night its lamps (`cycleLamps`: a cool white glow
+and pool ahead, the red tail); its key-light and lamp shadows already came through `party`. Bytes:
+street set 8.71 MB to 8.66 MB, walkers 5.50 MB to 4.65 MB (no glow round them).

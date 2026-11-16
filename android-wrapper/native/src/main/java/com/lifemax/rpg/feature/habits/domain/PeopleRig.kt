@@ -20,14 +20,37 @@ import kotlin.math.sin
 
 /**
  * A filled polygon of a figure or of a room: [pts] as x, y, x, y..., painted in order of [layer].
+ * The window figures are painted by [tone]; the street's people carry their own colour: [rgb] (no
+ * colour: -1), what it is made of ([mat], one of [Mat]'s) and how opaque it is ([alpha]).
  */
-class Shape(val layer: Int, val pts: FloatArray, val tone: Float) {
+class Shape(
+    val layer: Int,
+    val pts: FloatArray,
+    val tone: Float,
+    val rgb: Int = -1,
+    val mat: Int = Mat.CLOTH,
+    val alpha: Float = 1f,
+) {
     companion object {
         const val FAR = 0
         const val BODY = 1
         const val NEAR = 2
         const val PROP = 3
     }
+}
+
+/** What a coloured [Shape] is made of: how it takes the light. */
+object Mat {
+    const val CLOTH = 0
+    const val SKIN = 1
+    const val HAIR = 2
+    /** Leather and shoes: a soft sheen. */
+    const val LEATHER = 3
+    /** A bicycle's paint and chrome: a sharp highlight. */
+    const val METAL = 4
+    const val RUBBER = 5
+    /** Painted as it is, unlit: a seam, a fold, a glint, a lamp's lens. */
+    const val FLAT = 6
 }
 
 /** Hair, from a bare crown to a cap. */
