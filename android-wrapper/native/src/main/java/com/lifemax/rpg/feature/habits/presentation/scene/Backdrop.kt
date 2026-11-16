@@ -317,7 +317,33 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         clouds(sky, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds)
         occultation(sky, orb, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds)
         if (Ambient.blimp(seconds, seed, pass)) blimp(pass, sky, w, top, horizon, ceiling, seconds)
-        if (Ambient.plane(seconds, seed, pass)) plane(pass, sky, w, top, band, seconds, tone)
+        if (Ambient.plane(seconds, seed, pass)) {
+            // a plane flies into the clouds in its way and out again: hidden as thick as the cloud
+            // in front of it is, its contrail with it
+            val inCloud =
+                cover(
+                    sky,
+                    Offset(pass.x * w, top + pass.y * band),
+                    w,
+                    top,
+                    horizon,
+                    ceiling,
+                    orb.x > w / 2f,
+                    shift,
+                    seconds,
+                    density,
+                    PLANE_HIDE_R * density,
+                )
+            val shows = (1f - inCloud * 1.15f).coerceIn(0f, 1f)
+            if (shows > .01f) {
+                if (shows < .99f) {
+                    planePaint.alpha = shows
+                    drawIntoCanvas { it.saveLayer(Rect(0f, 0f, w, horizon), planePaint) }
+                }
+                plane(pass, sky, w, top, band, seconds, tone)
+                if (shows < .99f) drawIntoCanvas { it.restore() }
+            }
+        }
         for (r in rows.indices) row(r, sky, horizon, shift * drift[r], seconds)
         if (tone >= .7f && Ambient.birds(seconds, seed, pass))
             birds(pass, sky, w, top, horizon, ceiling, seconds)
@@ -1286,6 +1312,9 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         }
     }
 
+    /** The layer a plane half inside a cloud is faded in. */
+    private val planePaint = Paint()
+
     /** How much of the moon the clouds in front of it hide this frame, 0 to 1 ([cover]). */
     private var moonCover = 0f
 
@@ -1305,6 +1334,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         shift: Float,
         seconds: Float,
         d: Float,
+        radius: Float = -1f,
     ): Float {
         val night = sky.dark > .8f
         val count = if (night) 3 else if (sky.dark > .3f) 4 else Ambient.CLOUDS
@@ -1313,9 +1343,11 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         if (room <= 0f) return 0f
         val pool = SceneSprites.clouds
         val r =
-            (if (sky.phase == SkyPhase.NIGHT) SunMoonSprites.MOON_R else SunMoonSprites.SUN_R) *
-                d *
-                .7f
+            if (radius > 0f) radius
+            else
+                (if (sky.phase == SkyPhase.NIGHT) SunMoonSprites.MOON_R else SunMoonSprites.SUN_R) *
+                    d *
+                    .7f
         var through = 1f
         for (i in 0 until count) {
             val c = clouds[i]
@@ -1843,6 +1875,9 @@ internal class Backdrop(private val seed: Int, day: String = "") {
 }
 
 /** How big the airliner is drawn against its sprite: a little smaller, so it reads as far off. */
+/** How far round a plane's middle the clouds are sampled to hide it, in dp. */
+private const val PLANE_HIDE_R = 7f
+
 private const val PLANE_SIZE = .55f
 
 /** The blimp is drawn this much smaller than its sprite's dp: an airship far off. */
