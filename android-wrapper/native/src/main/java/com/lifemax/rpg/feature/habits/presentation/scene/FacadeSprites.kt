@@ -21,8 +21,8 @@ internal class WallTile(val w: Int, val h: Int, val pixels: IntArray) {
 }
 
 /**
- * The awning's cloth as a tile the width of one fold, repeated across it: a shade layer (black at
- * an alpha) and a light layer (white at an alpha), drawn over the awning's colour.
+ * A strip laid over a wall ([FacadeSprites.grime], [FacadeSprites.drip]): a colour at an alpha,
+ * kept as two layers (here the same picture).
  */
 internal class ClothTile(val w: Int, val h: Int, val shade: IntArray, val light: IntArray)
 
@@ -43,10 +43,6 @@ internal object FacadeSprites {
     const val PANEL_W = 46f
     const val PANEL_H = 21f
 
-    /** How wide one fold of the awning's cloth is, in units, and how deep the cloth hangs. */
-    const val FOLD = 12f
-    const val CLOTH_H = 20f
-
     /** The tile each material repeats in, in units: whole bricks, stones or panels. */
     fun tileUnits(m: HabitMaterial): Pair<Float, Float> =
         when (m) {
@@ -60,10 +56,6 @@ internal object FacadeSprites {
     /** The lobby's granite tile, in units: two slabs across, two courses down. */
     const val LOBBY_W = 46f
     const val LOBBY_H = 27f
-
-    /** The far city mirrored in the glass: a strip of roofs this long and this tall, in units. */
-    const val MIRROR_W = 96f
-    const val MIRROR_H = 14f
 
     /**
      * The weathering hung under every floor's string course ([grime]): a strip this long and as
@@ -80,18 +72,13 @@ internal object FacadeSprites {
     /** The soot and the rain streaks' colour: a dark warm grey-brown. */
     private val GRIME_RGB = floatArrayOf(.13f, .11f, .085f)
 
-    /**
-     * Bytes all five tiles, the lobby's, the cloth, the mirrored city, the weathering and the drip
-     * take once made.
-     */
+    /** Bytes all five tiles, the lobby's, the weathering and the drip take once made. */
     fun bytes(): Int =
         HabitMaterial.entries.sumOf {
             val (uw, uh) = tileUnits(it)
             (uw * PPU).toInt() * (uh * PPU).toInt() * 4
         } +
-            (FOLD * PPU).toInt() * (CLOTH_H * PPU).toInt() * 4 * 2 +
             (LOBBY_W * PPU).toInt() * (LOBBY_H * PPU).toInt() * 4 +
-            (MIRROR_W * PPU).toInt() * (MIRROR_H * PPU).toInt() * 4 +
             (GRIME_W * GRIME_PPU).toInt() * (GRIME_H * GRIME_PPU).toInt() * 4 +
             (DRIP_W * PPU).toInt() * (DRIP_H * PPU).toInt() * 4
 
@@ -162,58 +149,6 @@ internal object FacadeSprites {
             px[y * w + x] = Px.argbF(1f, out[0], out[1], out[2])
         }
         return WallTile(w, h, px)
-    }
-
-    /**
-     * The far city as the glass mirrors it: a strip of roofs, white with their alpha (tinted when
-     * drawn), [MIRROR_W] long and seamless across, solid at its foot, the roofs' tops soft. Both
-     * layers of the [ClothTile] are the same picture.
-     */
-    fun mirror(): ClothTile {
-        val w = (MIRROR_W * PPU).toInt()
-        val h = (MIRROR_H * PPU).toInt()
-        val px = IntArray(w * h)
-        // the roofs: a run of blocks of their own widths and heights round the strip
-        val tops = FloatArray(w)
-        var x0 = 0
-        var i = 0
-        while (x0 < w) {
-            val bw = ((5f + 9f * hash(i, 0, 301)) * PPU).toInt().coerceAtMost(w - x0)
-            val top = MIRROR_H * (.15f + .6f * hash(i, 1, 301))
-            for (x in x0 until x0 + bw) tops[x] = top
-            // a mast on a few
-            if (hash(i, 2, 301) < .25f && bw > 4) tops[x0 + bw / 2] = maxOf(0f, top - 3f)
-            x0 += bw
-            i++
-        }
-        for (y in 0 until h) for (x in 0 until w) {
-            val v = (y + .5f) / PPU
-            val a = Px.smooth(tops[x] - .2f, tops[x] + .6f, v) * (.55f + .45f * v / MIRROR_H)
-            px[y * w + x] = Px.argbF(a, 1f, 1f, 1f)
-        }
-        return ClothTile(w, h, px, px)
-    }
-
-    /** The awning's cloth: a fold a tile, its ridge lit, its hollow in shade, the hem deeper. */
-    fun cloth(): ClothTile {
-        val w = (FOLD * PPU).toInt()
-        val h = (CLOTH_H * PPU).toInt()
-        val shade = IntArray(w * h)
-        val light = IntArray(w * h)
-        for (y in 0 until h) for (x in 0 until w) {
-            val u = (x + .5f) / PPU / FOLD
-            val v = (y + .5f) / PPU / CLOTH_H
-            // the fold: a ridge at the tile's middle, hollows at its edges (seamless)
-            val ridge = .5f + .5f * kotlin.math.cos((u - .5f) * 2f * Math.PI.toFloat())
-            val sag = Px.smooth(.1f, 1f, v)
-            val weave = (Noise.value(x * .9f, y * .9f, 701) - .5f) * .05f
-            val lit = (ridge * .2f * (1f - .6f * v) + (1f - sag) * .08f + weave).coerceIn(0f, 1f)
-            val dark =
-                ((1f - ridge) * .16f * (.4f + .8f * v) + sag * .14f * v + weave).coerceIn(0f, 1f)
-            light[y * w + x] = Px.argbF(lit, 1f, 1f, 1f)
-            shade[y * w + x] = Px.argbF(dark, 0f, 0f, 0f)
-        }
-        return ClothTile(w, h, shade, light)
     }
 
     /**

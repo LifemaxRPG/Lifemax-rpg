@@ -418,6 +418,54 @@ hour colours and strengths live in pure `SunLook` / `MoonLook`. `Backdrop.heaven
 `sunLayer`, `skyAt`, `throughVeil` (the sun or moon through overcast, after the veil); the lens flare scales with sun
 presence and (1 − cloudiness). 695 KB. The airliner is drawn at `PLANE_SIZE` .75 of its sprite (owner: "further away").
 
+## As built: reflective glass, the awning's canvas, the water tower
+
+Owner: the pale diagonal streaks on the windows read as stickers, not glass; the awning, the water tank and the small
+details should be "more AAA".
+
+Glass (`GlassSprites.kt`, `GlassMap`; `BuildingPainter.mirrorSky`, `glint`, `interior`): the flat streaks
+(`FloorArt.reflect`, `SceneInk.Reflection`, the lobby's two white lines, the old line `glint`) and the far-city mirror
+strip (`FacadeSprites.mirror`) are gone. Every unlit pane, lit pane (faintly), side-face slit, shop window, door light
+and skylight now mirrors the street behind the viewer from two baked panoramas, 512 px round: the sky (soft blurred
+cumulus) and the buildings across the street (rooflines with water tanks, cornices, windows, shopfronts, lamp posts,
+the street at the foot). Their channels are weights, not colours: a colour matrix per sky (`GlassMap.colours`, made in
+`glassTints` when the sky changes) turns them into the hour's zenith, horizon, cloud tops and undersides, the buildings'
+dark, their windows' glass, the windows lit at night and the lamps' lenses, so one bake serves day, dusk and night (at
+night: dark glass with warm lit windows and lamps in it). `GlassMap.place` puts each pane's view in the strips: the
+mirrored street slides 1.5× the facade's rate against the view (it moves as the street is panned), a higher pane sees
+higher (the far roofs low in it, more sky), each pane is turned and raised a hair by its seed so reflections break
+between panes, and the clouds drift with the clock at their own slower pan. Fresnel: face-on glass mirrors .74 of what
+glass at the view's edge does (`FRESNEL_FACE`, by the building's place across the view), ±12 % per pane; the side
+faces' slits mirror most. About half the panes show a dim room through the glass (blinds half down, curtains drawn back,
+a roller blind over a dim room, a net). The sun's glint is a baked hot spot with a faint star, drawn additively and
+clipped by its brush to the pane, on panes near the sun's place across the view, jumping pane to pane and travelling
+across each as the street scrolls. Cost: two transformed rects per pane (plus the room on some, the glint on few); no
+per-frame allocation.
+
+Awning (`AwningArt.kt`): canvas baked once at 4 px a unit as two pictures (canopy, valance) whose alpha is the cloth and
+whose channels are weights (the shop's colour, the stripes' cream, the light); `awningFilter` turns them into each of
+the six `AWNINGS` colours under the night's light (kept per sky). The cloth is taut over nine arms and sags between
+them, its stripes narrowing toward the wall, the cheeks at its ends darker; a rolled, stitched binding along the front
+edge; a valance of 12-unit scallops, hemmed and stitched, stirring in the air (`seconds`); faded high on the slope,
+dirtied where the rain runs to the scallops' points, mottled and stained. Under it: a two-step soft shadow and, by day,
+the cloth's colour the sun shines through. `awningFace` follows the new shape (shadow, light washes, snow).
+
+Roof (`RoofArt.kt`, `BuildingPainter.tank`, `clutter`, `railing`, `picture`): the water tower is a cedar-staved
+cylinder (per-stave tone, grain and seams, silvered up top, water-stained low, rust bleeding from the hoops) bound by
+seven steel hoops that curve round it, under a conical board roof with a hatch and finial, on a timber deck on a steel
+stand with cross-bracing, an outlet pipe and a caged ladder; baked by the sky and lit from the left and from the right,
+the painter mixing in the sun's side by its strength, with its shadow on the roof. Also baked: a vent stack with a rain
+cap, a satellite dish, an air-handling unit with louvres and a fan grille (on some roofs without a sign), timber
+planters of clipped box at the shopfront's ends. The railing has posts on base plates, a lit top rail and a mid rail
+and throws a shadow; the skylight mirrors the sky; the lobby sign's letters have depth. Everything takes the night
+through one `Modulate` filter kept per sky.
+
+Memory: glass 360 KB, awning 241 KB, roof 223 KB (about 825 KB; `FacadeSprites` lost the cloth tile and the mirror
+strip, about 60 KB). `GlassAndRoofArtTest` covers the bakes (determinism, seams, weights, clear edges for clamped
+brushes, the tower lit from each side), the panes' placement (slides with the view, higher sees higher, tilt, the
+clouds' drift) and the night's colours. Tuned from JVM composites at phone scale and 4× (not on a phone); every Habits
+reference with buildings changes.
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The
