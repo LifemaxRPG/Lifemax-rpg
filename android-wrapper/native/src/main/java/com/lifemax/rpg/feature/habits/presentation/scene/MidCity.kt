@@ -20,6 +20,7 @@ import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.Dusk
 import com.lifemax.rpg.feature.habits.domain.Pass
 import com.lifemax.rpg.feature.habits.domain.SeasonState
+import com.lifemax.rpg.feature.habits.domain.Wind
 import com.lifemax.rpg.feature.habits.presentation.scene.MidCitySprites as M
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -175,6 +176,15 @@ internal object MidLook {
  * frame.
  */
 internal class MidCity(private val seed: Int) {
+    /**
+     * The street's air ([Wind]), set with the backdrop's each frame: the trees out here sway in it
+     * (less than the street's, being far) and the roofs' steam bends over in it.
+     */
+    var wind: Wind = Wind()
+
+    /** Where along the street the view's middle is, for where the wind is read (street units). */
+    private var view = 0f
+
     private var key: Any? = null
     private var keyCloud = -1f
     private var keyMist = -1f
@@ -302,6 +312,7 @@ internal class MidCity(private val seed: Int) {
         sunRight: Boolean,
     ) {
         k = ((street - horizon) / (M.BAND * density)).coerceIn(.15f, 1.6f)
+        view = shift
         looks(sky, hour, cloud, mist, season)
         val images = SceneSprites.midCity
         layer(M.FAR, images[M.FAR], horizon, shift)
@@ -333,7 +344,7 @@ internal class MidCity(private val seed: Int) {
         var x = x0
         while (x < size.width) {
             strip(images.body, x, horizon, bodyF[l], 1f)
-            if (leafA > .01f) strip(images.masks, x, horizon, leafF[l], leafA)
+            if (leafA > .01f) leaves(l, images.masks, x, horizon)
             if (snowA > .01f) strip(images.masks, x, horizon, snowF[l], snowA)
             if (topA > .01f) strip(images.masks, x, horizon, topF[l], topA * (1f - haze[l]))
             if (images.windows != null && share > .004f && dark > .05f)
@@ -351,6 +362,52 @@ internal class MidCity(private val seed: Int) {
                     strip(images.glow, x, horizon, signF, signs * (1f - .4f * haze[l]))
             }
             x += span
+        }
+    }
+
+    /**
+     * Layer [l]'s foliage ([MidLook.leaves]) for the period at [x] (px), swaying: drawn in upright
+     * slices across the view, each slid by the wind where it stands (read along the street as if
+     * the layer were the street, so a gust crosses it the same way), the trunks and limbs in the
+     * body staying put. The wind's flutter is one field along the street, so neighbouring slices
+     * move all but alike and no crown tears where two meet. Far layers sway less. In one piece when
+     * the wind is still.
+     */
+    private fun DrawScope.leaves(l: Int, s: MidCityImage, x: Float, horizon: Float) {
+        val filter = leafF[l]
+        if (!wind.moving) {
+            strip(s, x, horizon, filter, leafA)
+            return
+        }
+        val sc = density * k / s.strip.ppd
+        val top = horizon + s.strip.topDp * density * k
+        val from = floor(-x / sc).toInt().coerceIn(0, s.strip.w)
+        val to = ceil((size.width - x) / sc).toInt().coerceIn(0, s.strip.w)
+        if (to <= from) return
+        val slice = max(8, ceil((size.width / SWAY_SLICES) / sc).toInt())
+        // how far a crown out here sways for a push of one, in dp: the nearer, the further
+        val reach = SWAY_DP[l] * density * k
+        var i = from
+        while (i < to) {
+            val j = minOf(to, i + slice)
+            val mid = x + (i + j) / 2f * sc
+            val at = view + (mid - size.width / 2f) / (density * k)
+            val dx = (.4f * wind.force(at) + .9f * wind.flutter(at, 41 + l, .8f)) * reach
+            withTransform({
+                translate(x + dx, top)
+                scale(sc, sc, Offset.Zero)
+            }) {
+                drawImage(
+                    s.image,
+                    IntOffset(i, 0),
+                    IntSize(j - i, s.strip.h),
+                    IntOffset(i, 0),
+                    IntSize(j - i, s.strip.h),
+                    alpha = leafA.coerceIn(0f, 1f),
+                    colorFilter = filter,
+                )
+            }
+            i = j
         }
     }
 
@@ -417,6 +474,8 @@ internal class MidCity(private val seed: Int) {
                     val vx = x + vents[i * 2] * u
                     if (vx < -10f * u || vx > size.width + 10f * u) continue
                     val vy = horizon + vents[i * 2 + 1] * u
+                    // the plume leans over as the wind up there blows
+                    val bend = 1.3f + 5f * wind.force(view + (vx - size.width / 2f) / u)
                     for (j in 0 until Dusk.PUFFS) {
                         val t = Dusk.puff(seed * 31 + i, j, seconds)
                         val img = puffs[j % puffs.size]
@@ -430,7 +489,7 @@ internal class MidCity(private val seed: Int) {
                         if (a < .01f) continue
                         val s = 2f * r / img.width
                         withTransform({
-                            translate(vx + 2.6f * t * t * u, vy - 7f * t * u)
+                            translate(vx + bend * t * t * u, vy - 7f * t * u / (1f + .08f * bend))
                             scale(s, s, Offset.Zero)
                         }) {
                             drawImage(
@@ -579,6 +638,12 @@ internal class MidCity(private val seed: Int) {
     companion object {
         /** A street unit scrolled slides the band's pavement line this many dp (at full size). */
         const val DRIFT_UNIT = 1.1f
+
+        /** The foliage is slid in about this many slices across the view. */
+        const val SWAY_SLICES = 14f
+
+        /** How far a crown sways for a push of one, dp at full size: far, blocks, the near kerb. */
+        val SWAY_DP = floatArrayOf(.12f, .2f, .3f)
 
         /** How long the signals take to go round green, amber, red (s). */
         const val SIGNAL_CYCLE = 26f

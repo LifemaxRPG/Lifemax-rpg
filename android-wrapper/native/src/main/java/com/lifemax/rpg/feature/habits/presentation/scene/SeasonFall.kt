@@ -14,6 +14,7 @@ import com.lifemax.rpg.feature.habits.domain.FurnitureKind
 import com.lifemax.rpg.feature.habits.domain.SeasonState
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.Trees
+import com.lifemax.rpg.feature.habits.domain.Wind
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -22,13 +23,17 @@ import kotlin.math.sin
 /**
  * What the seasons let fall over the street, drawn in street units after everything that stands on
  * it: autumn leaves tumbling from the crowns (turning as they fall, fluttering side to side,
- * drifting with the wind the trees sway in, sliding a little where they land on the pavement and
- * fading there), blossom petals in spring, and snow in winter at two depths, slow, leaning with the
- * wind. Every particle is a function of its seed and of [seconds] ([Ambient.hash]), so nothing is
- * kept from frame to frame and nothing is made per frame; at 0 seconds (motion reduced) it is a
- * still scatter, with nothing moving.
+ * carried along by the street's [wind] as it blew while they fell, sliding a little where they land
+ * on the pavement in the gusts and fading there), blossom petals in spring, and snow in winter at
+ * two depths, slow, leaning further as a gust comes through. Every particle is a function of its
+ * seed and of [seconds] ([Ambient.hash]) and the wind of a function of the time, so nothing is kept
+ * from frame to frame and nothing is made per frame; at 0 seconds (motion reduced) it is a still
+ * scatter, with nothing moving.
  */
 internal class SeasonFall {
+    /** The street's air ([Wind]), set by the stage each frame. */
+    var wind: Wind = Wind()
+
     private var key: SkyColors? = null
     private var leafTint: ColorFilter? = null
     private var flakeTint: ColorFilter? = null
@@ -94,7 +99,6 @@ internal class SeasonFall {
         val variant = Trees.variant(seed)
         if (Trees.evergreen(variant)) return
         val shape = Trees.shapes[variant]
-        val wind = Ambient.sway(seed, t)
         val red = if (Trees.turnsRed(variant)) 1 else 0
         // leaves fall while there are leaves to fall and the tree has turned
         val leaves = ceil(LEAVES * s.autumn * minOf(1f, s.leaf * 2.5f) * size).toInt()
@@ -106,7 +110,6 @@ internal class SeasonFall {
                 k,
                 shape.halfWidth * size,
                 shape.height * size,
-                wind,
                 t,
                 3.4f,
                 2.6f,
@@ -127,7 +130,6 @@ internal class SeasonFall {
                 k,
                 shape.halfWidth * size,
                 shape.height * size,
-                wind,
                 t,
                 5f,
                 3f,
@@ -153,7 +155,6 @@ internal class SeasonFall {
         k: Int,
         halfWidth: Float,
         height: Float,
-        wind: Float,
         t: Float,
         fall: Float,
         spread: Float,
@@ -180,19 +181,27 @@ internal class SeasonFall {
         val py: Float
         val rot: Float
         val a: Float
+        // carried by the air as it blew since this one let go, and (lying) as it blows over it
+        val start = t - local
         if (local < period) {
             val u = local / period
             val flap = sin(u * rate + phase)
-            px0 = x0 + side * u + wind * 3f * u * u + flap * flutter
+            // a leaf is light: it takes a while to be caught up, then goes with the air
+            val carried = wind.drift(x0, start, t) * CARRY * Px.smooth(0f, .35f, u)
+            px0 = x0 + side * u + carried + flap * flutter
             py = y0 + (land - y0) * u
-            rot = u * spin + flap * 28f
+            rot = u * spin + flap * 28f + carried * 6f
             a = alpha
         } else {
             val v = (local - period) / (cycle - period)
             val flap = sin(rate + phase)
-            px0 = x0 + side + wind * 3f + flap * flutter + 4f * Px.smooth(0f, .6f, v) * wind / 2f
+            val fell = start + period
+            val carried = wind.drift(x0, start, fell) * CARRY
+            // on the ground only the gusts push it, and less far
+            val slid = wind.drift(x0 + carried, fell, t) * SLIDE
+            px0 = x0 + side + carried + flap * flutter + slid
             py = land
-            rot = spin + flap * 28f
+            rot = spin + flap * 28f + carried * 6f + slid * 20f
             a = alpha * (1f - Px.smooth(.55f, 1f, v))
         }
         if (a <= .01f) return
@@ -217,7 +226,6 @@ internal class SeasonFall {
         depth: Float,
         t: Float,
     ) {
-        val wind = Ambient.sway(0, t)
         val reach = depth - top
         // not over the zoomed-out street: it would be a haze of thousands
         if (reach <= 0f || to - from > 1500f) return
@@ -227,6 +235,8 @@ internal class SeasonFall {
         while (tile <= last) {
             for (layer in 0..1) {
                 val near = layer == 1
+                // the flakes lean further as a gust comes through (the near ones more)
+                val lean = wind.force(tile * TILE + TILE / 2f) * (if (near) .14f else .09f)
                 val n = ceil((if (near) NEAR_FLAKES else FAR_FLAKES) * intensity).toInt()
                 val speed = if (near) 13f else 7f
                 val size = (if (near) 2.6f else 1.5f) / SeasonSprites.FLAKE
@@ -240,7 +250,7 @@ internal class SeasonFall {
                         tile * TILE +
                             hx * TILE +
                             sin(t * (1.1f + hs) + j) * (1.5f + layer) +
-                            wind * (y - top) * .04f
+                            lean * (y - top)
                     if (x < from - 4f || x > to + 4f) continue
                     withTransform({
                         translate(x, y)
@@ -266,6 +276,13 @@ internal class SeasonFall {
         /** The most leaves a full-size tree lets fall at once, and petals. */
         const val LEAVES = 11f
         const val PETALS = 9f
+
+        /**
+         * How far a falling leaf is carried for a push-second of wind ([Wind.drift]), and a lying
+         * one slid, in units.
+         */
+        const val CARRY = 4.5f
+        const val SLIDE = 1.2f
 
         /** How long a fallen leaf lies before its slot falls again, in seconds. */
         const val REST = 2.6f

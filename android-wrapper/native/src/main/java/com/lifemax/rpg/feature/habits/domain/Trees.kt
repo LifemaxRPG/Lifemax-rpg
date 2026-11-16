@@ -52,8 +52,11 @@ object Trees {
     /** Whether [variant] flowers in spring: the ornamental (pink) and the shrub (white). */
     fun blossoms(variant: Int): Boolean = variant == 2 || variant == 7
 
-    /** Whether [variant] turns red in autumn (the others turn amber). */
-    fun turnsRed(variant: Int): Boolean = variant % 2 == 1
+    /**
+     * Whether [variant] turns red in autumn (the maple and the pear; the others turn amber, the
+     * honey locust butter yellow).
+     */
+    fun turnsRed(variant: Int): Boolean = variant == 1 || variant == 4
 
     private fun kindOf(v: Int) =
         when (v) {
@@ -73,7 +76,7 @@ object Trees {
      */
     private val BASE: Array<FloatArray> =
         arrayOf(
-            // an oak: a broad crown of seven masses
+            // a London plane: a broad crown of seven masses
             floatArrayOf(
                 0f,
                 -46f,
@@ -104,7 +107,7 @@ object Trees {
                 6.5f,
                 5.5f,
             ),
-            // a maple: lower and wider
+            // a Norway maple: lower and wider
             floatArrayOf(
                 0f,
                 -40f,
@@ -131,7 +134,7 @@ object Trees {
                 12f,
                 6.5f,
             ),
-            // an ornamental: small and round
+            // a flowering cherry: small and round
             floatArrayOf(
                 0f,
                 -40f,
@@ -154,7 +157,7 @@ object Trees {
                 7f,
                 6f,
             ),
-            // a tall oval
+            // a honey locust: a tall, open oval
             floatArrayOf(
                 0f,
                 -52f,
@@ -181,7 +184,7 @@ object Trees {
                 7f,
                 5.5f,
             ),
-            // a poplar: a narrow column
+            // a pear: a narrow column
             floatArrayOf(
                 0f,
                 -55f,

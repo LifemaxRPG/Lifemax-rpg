@@ -962,3 +962,71 @@ have mipmaps (`SceneSprites.street`), and they are all made off the main thread 
 JVM about 7 s for the whole set. Tuned from contact sheets (true phone scale over crops of the street references by day
 and at night, 2-3× zooms, heads at 8×), not on a phone; every Habits reference with walkers changes.
 
+
+### As built: city street trees, and one wind for everything that sways
+
+The owner asked for nicer, more realistic street trees and for anything that could sway to sway.
+
+The wind (`domain/Wind`, pure, tested): one model the whole scene reads, a function of the time and of the place
+along the street only, so a frame at a given time is the same every time and nothing is kept between frames. Its push
+is a base that wanders slowly (value noise over about half a minute and a minute and a half), gusts in slots of 6.5 s
+(at most one a slot, more likely on a windy day) that rise over 1.1 to 2.4 s, hold and fall over 1.8 to 4 s (Perlin's
+smootherstep, so they ease in and out), and eddies riding on both. The whole field travels down the street at 110
+units a second, so a gust reaches what stands further along a moment later. How windy the day is (`Wind.levelOf`)
+follows the weather: a breeze on a clear day, more under cloud, most in the rain, near still in a mist. Things respond
+as springs (`swing`: a damped oscillator run over the last 8 s from rest in 64 steps keyed to the time, so it
+overshoots a gust and rocks back as it passes, never a fixed beat), parts can trail what they hang from (`lagged`,
+read off the spring's trail) and flutter on their own (`flutter`, smooth noise scaled by the push), and what the air
+carries is its integral (`drift`, trapezoids on a fixed time grid, so it only grows). With motion off (the stage's 0
+seconds) every reading is 0 and everything hangs still. The stage keeps one instance and hands it to the painter, the
+backdrop (the mid-ground city) and the season's fall. A slot's gust is cached, so a frame's wind costs about 10 µs a
+tree and 5 µs an awning on a desktop JVM.
+
+The trees (`TreeSprites`, rebaked at 3 px a unit, from 2.5): city species by variant: a London plane (its mottled
+bark of cream, olive and grey with dark rims where the plates flake, its pale upper limbs), a Norway maple, a flowering
+cherry (dark bark ringed with lenticels), a honey locust (a lacy crown of fine leaflets with the sky through it, butter
+yellow in autumn), a pear (the maple and the pear turn red now, `Trees.turnsRed`), the two pines (red plated bark) and
+the shrub. A trunk tapers from a root flare that spreads into the soil, round in the light (its core shadow just past
+the middle, the street's light thrown back along the far edge, the flare's top facing the sky), the bark wrapping
+round it. At the top it forks into a bough for each mass of the crown, each fanning into limbs and forking into twigs
+kept inside the mass and turned up as twigs grow; sprays of the finest twigs are a layer of their own, the winter
+crown's fine mesh (the old noise haze is gone). Each mass of leaves is built of many small heaps painted back to
+front: each lit as a ball together with its mass, the ones deep in the crown darker, the underside in the crown's
+shade, the edge broken into single leaves, gaps between them where sky and branches show; each mass shades those
+behind it, and the whole crown is lit as one volume over that. Spring's leaves are fewer and smaller, autumn's
+thinning. A street tree stands in a pit (`TreeSprites.grate`, drawn flat in the pavement's depth like the bench's
+top): granite setts round a cast-iron grate of rings and spokes with soil through it; a park tree does not.
+
+The picture is cut into parts (`TreePart`): the trunk; for each mass its boughs and twigs, its fine twigs, its leaves
+(three looks), its snow. Pixels belong to the mass that painted them last; a part keeps a 2 px margin of what the parts
+drawn after it cover, so when one moves a little against another no seam opens. The whole tree is also kept at half
+size (`TreeImages.shape`): its shadows, its reflection, its back leaves and a headlight's cast are drawn from it.
+
+Swaying (`TreeSway`, pure; the painter caches a pose per tree per frame so a tree and its shadows are posed once): the
+trunk is a spring of 2.2 to 2.7 s (a shrub 1.3 s) and leans by a shear about its foot, taking 40% of the lean; each
+mass swings about its pivot (the trunk's top, or a point 14 units under a mass sitting on it, so it never spins on
+itself) to where the crown bent a moment ago (0.1 to 0.5 s, the higher the later) and a little further at the top,
+with its own slow nod; its leaves flutter a fraction of a unit out of step. A pine is stiffer and barely flutters. The
+shadows sway with the crown's lean. In a breeze a mass moves about a unit, in a storm a few.
+
+Shear fix: Compose's `Matrix[0, 1]` maps x into y (a vertical shear), so the old trees' "lean" and the view's turn on
+the crown tilted it up and down rather than leaning it. Both now use `Matrix[1, 0]` (x moves with height), so the
+crown slides with the view as the 2.5D depth meant (front leaves one way, the darker back leaves the other).
+
+The rest of the street in the same wind: the awning (`AwningSway`) breathes, its canopy lifting a little at the front,
+and its valance is drawn in strips cut at the scallops' points, each swinging on its own (shorter seen from the front,
+its hem pushed downwind) in a ripple that runs along it; the claimed reward's pennant streams out as far as the wind
+holds it, droops in a calm and ripples to its tip with its folds shaded; the planters' clipped box stirs; the roof
+vents' steam bends over and lies flatter in a gust, and so does the far city's; the rain's sheets slant further in the
+gusts (sheared about the view's middle, whole tiles more each side so the pattern keeps its place); falling leaves are
+carried by the wind as it blew while they fell and slide a little in the gusts where they lie; the snow leans as a
+gust comes through; the far city's crowns sway less the further they are (their foliage drawn in slices across the
+view, slid by the travelling wind, the trunks still). The clouds and the walkers are untouched (the walkers' gait is
+another piece of work). Ambient's sine `sway` and `flag` are gone.
+
+Memory: the summer pool is 2.18 MB (wood 0.69 MB, leaves and shapes; from 1.45), each further season's leaves and
+shape about 1.2 MB (from 1.12), the snow 0.36 MB (from 0.37), the grate 18 KB; budgets in `TreePartsTest`. Bake time
+for every variant and season about 0.4 s on a desktop JVM. A street tree draws about 2n + 3 images by day for its n
+masses (5 to 7), the valance 16 strips. Tuned from software previews (the parts posed with the same arithmetic, every
+variant in every season and look, a tree and an awning through a gust, 4× crops), not on a phone; every Habits
+reference with trees or awnings changes.

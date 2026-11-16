@@ -73,6 +73,7 @@ import com.lifemax.rpg.feature.habits.domain.StreetWeather
 import com.lifemax.rpg.feature.habits.domain.SunEdge
 import com.lifemax.rpg.feature.habits.domain.TOP_FADE
 import com.lifemax.rpg.feature.habits.domain.WeatherOverride
+import com.lifemax.rpg.feature.habits.domain.Wind
 import com.lifemax.rpg.feature.habits.domain.buildingAt
 import com.lifemax.rpg.feature.habits.domain.buildingLayout
 import com.lifemax.rpg.feature.habits.domain.centred
@@ -327,6 +328,8 @@ private fun StageCanvas(
     val backdrop = remember(seed) { Backdrop(seed, p.day) }
     val season = remember(p.day) { Season.at(p.day) }
     val seasonFall = remember { SeasonFall() }
+    // the air everything that sways moves in: one model, read by time and place ([Wind])
+    val wind = remember { Wind() }
     val foregroundPainter = remember { ForegroundPainter() }
     val sunGlare = remember { SunGlare() }
     val backlight = remember { Backlight() }
@@ -729,6 +732,11 @@ private fun StageCanvas(
         backdrop.season = season
         painter.season = season
         painter.clock(p.hour, seconds)
+        // still with motion off: the stage holds the street at 0 seconds then
+        wind.update(seconds, weather)
+        painter.wind = wind
+        seasonFall.wind = wind
+        backdrop.wind = wind
         streetLife.light = light
         streetLife.lightX = painter.lightX
         streetLife.lightSpan = painter.lightSpan
