@@ -116,19 +116,30 @@ internal class Palette(pixels: IntArray) {
      * The colour [steps] places along [index]'s ramp (negative darker, positive lighter), stopping
      * at the ramp's end and at a jump in luminance too big to be a shade.
      */
-    fun step(index: Int, steps: Int): Int {
+    fun step(index: Int, steps: Int): Int = step(index, steps, 0)
+
+    /**
+     * [step] by [first] places, then [then] more along the same ramp (each stopping at the ramp's
+     * end on its own): a face's light, then its texture's own shade, which so still shows on a side
+     * already as dark as the ramp goes.
+     */
+    fun step(index: Int, first: Int, then: Int): Int {
         val ramp = ramps[index]
-        var at = rank[index]
+        return ramp[walk(ramp, walk(ramp, rank[index], first), then)]
+    }
+
+    private fun walk(ramp: IntArray, from: Int, steps: Int): Int {
+        var at = from
         val dir = if (steps < 0) -1 else 1
         repeat(abs(steps)) {
             val next = at + dir
-            if (next !in ramp.indices) return ramp[at]
+            if (next !in ramp.indices) return at
             if (abs(luminance[ramp[next]] - luminance[ramp[at]]) > RampTuning.MAX_JUMP) {
-                return ramp[at]
+                return at
             }
             at = next
         }
-        return ramp[at]
+        return at
     }
 
     private fun rampOf(i: Int): IntArray {

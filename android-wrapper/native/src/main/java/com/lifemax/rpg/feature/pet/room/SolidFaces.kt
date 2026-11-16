@@ -104,9 +104,18 @@ internal object FaceView {
  * Everything is packed into one [image] (a block per shading, the same layout in each). Baking
  * allocates (a few milliseconds a piece, once); drawing allocates nothing.
  *
+ * The sides and tops are the piece's own authored surfaces ([FaceSkin], [FaceSkins]): a skin says
+ * what each face pixel is made of (a wooden side panel with its grain and edge banding, a fabric
+ * arm with its seam, the pages on top of a book), and the room's light is added to it here.
+ *
  * @param backed the piece stands against the wall (its sides darken where they meet it).
+ * @param skin the piece's side and top textures.
  */
-internal class SolidFaces(private val model: VolumeModel, private val backed: Boolean) {
+internal class SolidFaces(
+    private val model: VolumeModel,
+    private val backed: Boolean,
+    private val skin: FaceSkin = FaceSkin.PLAIN,
+) {
     /** How many depth strips the piece has. */
     val slices = FaceView.slices(model.depth)
 
@@ -149,6 +158,9 @@ internal class SolidFaces(private val model: VolumeModel, private val backed: Bo
 
     /** The deepest back of the columns in each strip: where its faces end. */
     private val sliceBack = FloatArray(slices)
+
+    /** The face pixel [skin] is asked about (used while baking). */
+    private val spot = FaceSpot(model)
 
     init {
         val wm = model.width
@@ -301,9 +313,20 @@ internal class SolidFaces(private val model: VolumeModel, private val backed: Bo
                 from = -1
             }
         }
-        if (from >= 0 && model.solid(from)) {
-            if (model.front[i] - model.front[from] <= VolumeTuning.SLOPE_STEP) {
-                return model.colours[i] // one surface: the slope keeps the painted colour
+        val slope =
+            from >= 0 &&
+                model.solid(from) &&
+                model.front[i] - model.front[from] <= VolumeTuning.SLOPE_STEP
+        val palette = model.palette
+        spot.set(i, j, face, slope)
+        val tex = skin.paint(spot)
+        if (tex == FaceTex.INK) return palette.colours[palette.ink]
+        // one surface: the slope keeps the painted colour (or the skin's, unlit)
+        if (slope) {
+            return when {
+                tex == FaceTex.KEEP -> model.colours[i]
+                FaceTex.isExact(tex) -> palette.colours[FaceTex.index(tex)]
+                else -> palette.colours[palette.step(FaceTex.index(tex), FaceTex.steps(tex))]
             }
         }
         var steps =
@@ -317,9 +340,13 @@ internal class SolidFaces(private val model: VolumeModel, private val backed: Bo
         if (deeperBehind && FaceView.depthOf(j) >= back - VolumeTuning.CREVICE_REACH) {
             steps += VolumeTuning.CREVICE_STEP
         }
-        val palette = model.palette
         if (inkFaces) return palette.colours[palette.ink]
-        return palette.colours[palette.step(VolumeShade.material(model, i, face), steps)]
+        if (FaceTex.isExact(tex)) return palette.colours[FaceTex.index(tex)]
+        if (tex == FaceTex.KEEP) {
+            return palette.colours[palette.step(VolumeShade.material(model, i, face), steps)]
+        }
+        // the light first, then the texture's own steps (so a texture still shows on a dark side)
+        return palette.colours[palette.step(FaceTex.index(tex), steps, FaceTex.steps(tex))]
     }
 
     /**
