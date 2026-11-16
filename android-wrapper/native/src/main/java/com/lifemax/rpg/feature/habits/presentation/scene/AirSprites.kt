@@ -71,7 +71,13 @@ internal object AirSprites {
      * engines.
      */
     const val TRAIL_X = -1.8f
-    const val TRAIL_Y = 2.4f
+    const val TRAIL_Y = 1.3f
+
+    /**
+     * How far behind the engines (dp) the exhaust condenses into a visible trail: past the tail,
+     * with a short clear gap, as a real one does, so it never pokes out from under the plane.
+     */
+    const val TRAIL_GAP = 11.5f
 
     /**
      * The engines' and the wingtips' places, for the lights: near wingtip, far wingtip, belly,
@@ -435,8 +441,10 @@ internal object AirSprites {
             var cSum = 0f
             for (sy in 0 until sub) for (sx in 0 until sub) {
                 // s: dp behind the engines; y: dp off the centre line
-                val sdp = (ox - (px + (sx + .5f) / sub)) / ppd
+                val back = (ox - (px + (sx + .5f) / sub)) / ppd
                 val y = (py + (sy + .5f) / sub - oy) / ppd
+                // the trail's own shape is laid out from where it condenses, past the tail
+                val sdp = back - TRAIL_GAP
                 if (sdp < 0f) continue
                 // the trail wanders a little as the air moves it
                 val wander =
@@ -458,7 +466,7 @@ internal object AirSprites {
                 // the exhaust condenses a little way behind the engine
                 val onset = Px.smooth(.3f, 2.2f, sdp)
                 // thins out with distance; and the far part breaks into lumps
-                val fade = exp(-sdp / 85f) * Px.smooth(TRAIL_DP, TRAIL_DP - 90f, sdp)
+                val fade = exp(-sdp / 85f) * Px.smooth(TRAIL_DP, TRAIL_DP - 90f, back)
                 val lumpN = Noise.fbm(sdp * .1f, yy * .15f, 403, 4)
                 val fineN = Noise.fbm(sdp * .3f, yy * .45f, 404, 3)
                 val broken = Px.smooth(25f, 140f, sdp)

@@ -127,7 +127,7 @@ class AirSpritesTest {
         val body = trail.layers[AirSprites.TRAIL_BODY]
         val core = trail.layers[AirSprites.TRAIL_CORE]
         fun column(layer: IntArray, dp: Float): IntArray {
-            val x = (trail.ox - dp * trail.ppd).toInt()
+            val x = (trail.ox - (dp + AirSprites.TRAIL_GAP) * trail.ppd).toInt()
             return IntArray(trail.h) { alpha(layer[it * trail.w + x]) }
         }
         // right behind the engines (nearly in line, seen from the street): two peaks, one above
@@ -151,7 +151,12 @@ class AirSpritesTest {
         assertTrue(far.count { it > 20 } > nearBody.count { it > 20 })
         assertTrue(far.max() < nearBody.max())
         // and by the end, nothing
-        assertTrue(column(body, AirSprites.TRAIL_DP - 1f).all { it < 8 })
+        assertTrue(column(body, AirSprites.TRAIL_DP - AirSprites.TRAIL_GAP - 1f).all { it < 8 })
+        // and nothing between the engines and the gap past the tail: it doesn't start under the
+        // plane
+        for (k in 0 until (AirSprites.TRAIL_GAP * trail.ppd).toInt()) assertTrue(
+            (0 until trail.h).all { alpha(body[it * trail.w + (trail.ox - k).toInt()]) < 4 }
+        )
         // the core is never more than the body
         for (p in body.indices) assertTrue(alpha(core[p]) <= alpha(body[p]) + 1)
     }
