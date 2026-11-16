@@ -296,6 +296,108 @@ class SolidFacesTest {
         assertEquals("never back the other way", 0, backwards)
     }
 
+    // ------------------------------------------------------------------ authored faces
+
+    /**
+     * The faces are the pieces' own surfaces (docs/specs/CAT_ROOM_CONTINUOUS_DEPTH.md, section 8):
+     * the bookcase's side boards are its wood whatever books stand at its edge, and the top of a
+     * book standing on a shelf shows its pages between its covers.
+     */
+    @Test
+    fun theBookcaseSidesAreWoodAndItsBooksShowTheirPages() {
+        val piece = solids.first { it.name == "bookcase_plant" }
+        val model = piece.volume!!.model
+        val wood = WOOD.map { it or OPAQUE }.toSet()
+        for (yaw in floatArrayOf(-1f, 1f)) {
+            val c = composite(piece, FaceView.vx(yaw, level), FaceView.vy(yaw, level), 4)
+            // the device pixels beyond the case's edge, beside the shelves: its side board
+            val xs = if (yaw > 0f) 0 until margin * 4 else (margin + model.width) * 4 until c.w
+            var board = 0
+            for (y in (margin + 34) * 4 until (margin + 110) * 4) for (x in xs) {
+                val p = c.pixels[y * c.w + x]
+                if (p == 0) continue
+                assertTrue("yaw $yaw: the side at ($x, $y) is wood", p in wood)
+                board++
+            }
+            assertTrue("yaw $yaw: the side board shows: $board", board > 300)
+        }
+        val faces = piece.volume!!.faces
+        val pages = 0xFFE8E0D0.toInt()
+        val back = 0xFF432A18.toInt()
+        var tops = 0
+        for (y in 34 until model.height) for (x in 3 until model.width - 3) {
+            val i = y * model.width + x
+            val above = model.colours[i - model.width]
+            if (above != back || model.colours[i] in wood || !model.solid(i)) continue
+            if (model.colours[i - 1] in wood) continue // the book's left edge: a side there
+            val j = FaceView.sliceOf(model.front[i]) + 2
+            if (FaceView.depthOf(j + 2) >= model.back[i]) continue
+            assertEquals("the top of the book at ($x, $y)", pages, faces.colourOf(i, j, 0, false))
+            tops++
+        }
+        assertTrue("books' tops: $tops", tops > 20)
+    }
+
+    /** The fridge's door split goes through the doors only; the white body runs on behind it. */
+    @Test
+    fun theFridgeDoorSplitStopsAtTheDoor() {
+        val piece = solids.first { it.name == "fridge" }
+        val model = piece.volume!!.model
+        val faces = piece.volume!!.faces
+        val split = 0xFF382852.toInt()
+        val i = 36 * model.width // the split's row, at the left edge
+        val first = FaceView.sliceOf(model.front[i]) + 1
+        assertEquals("through the door", split, faces.colourOf(i, first, 0, false))
+        for (j in first + 4 until faces.slices - 2) {
+            val p = faces.colourOf(i, j, 0, false)
+            assertTrue("behind the door at strip $j", p != split && p != RampTuning.ART_INK)
+        }
+    }
+
+    /**
+     * A side is its depth drawn a few device pixels wide, so a texture that changed strip by strip
+     * would flicker as the camera turns: along every column, no colour comes back after a single
+     * strip of another, except where the shape itself does (a strip where the column shows a top
+     * between two that show a side, as the plain faces have it too).
+     */
+    @Test
+    fun noTextureChangesStripByStripAlongTheDepth() {
+        var columns = 0
+        for (piece in solids) {
+            val model = piece.volume!!.model
+            val faces = piece.volume!!.faces
+            val plain = SolidFaces(model, piece.volume!!.wall)
+            for (i in 0 until model.width * model.height) {
+                if (!model.solid(i)) continue
+                val from = FaceView.sliceOf(model.front[i]) + 2
+                val to = FaceView.slices(model.back[i]) - 2
+                if (to - from < 2) continue
+                columns++
+                for (side in 0..1) {
+                    // which face each strip shows: the side, or a top where the side is covered
+                    val x = i % model.width
+                    val beside = if (side == 0) x - 1 else x + 1
+                    fun shape(j: Int): Int =
+                        (if (beside in 0 until model.width && faces.inSlice(i - x + beside, j)) 2
+                        else 0) + if (faces.inSlice(i - model.width, j)) 1 else 0
+                    fun blips(f: SolidFaces): List<Int> {
+                        val c = IntArray(to - from + 1) { f.colourOf(i, from + it, side, false) }
+                        return (1 until c.size - 1).filter {
+                            c[it - 1] == c[it + 1] &&
+                                c[it] != c[it - 1] &&
+                                shape(from + it) == shape(from + it - 1) &&
+                                shape(from + it) == shape(from + it + 1)
+                        }
+                    }
+                    val own = blips(faces) - blips(plain).toSet()
+                    val at = "(${i % model.width}, ${i / model.width})"
+                    assertTrue("${piece.name} at $at side $side: strips $own", own.isEmpty())
+                }
+            }
+        }
+        assertTrue("columns: $columns", columns > 1000)
+    }
+
     // ------------------------------------------------------------------ in the room
 
     private class BoxCats(
@@ -447,5 +549,8 @@ class SolidFacesTest {
     private companion object {
         const val OPAQUE = 0xFF000000.toInt()
         const val CAT = 0xFFFF00FF.toInt()
+
+        /** The bookcase's wood. */
+        val WOOD = intArrayOf(0xA87446, 0x8A5A34, 0x684225, 0x53341D, 0x432A18)
     }
 }

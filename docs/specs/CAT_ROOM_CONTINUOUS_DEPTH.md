@@ -34,6 +34,8 @@ bitmap moved by its depth times the live view; nothing is stretched, so the art'
 - Rim only: a strip pixel that the next nearer strip always covers (its column and its neighbours left,
   right and above reach that strip too; strips are at most 0.18 px apart across, 0.11 down) is dropped.
   The result is pixel-identical to drawing whole cross-sections (tested), at a fraction of the pixels.
+- The rim's sides and tops are the pieces' authored surfaces (section 8), not the front's edge
+  colours extruded.
 - Two shadings (left sides, right sides) and, for pieces painted with the art's outline, their inked
   copies (the far edge's outline, which comes in continuously once a face is wider than a pixel).
 - Each strip's rim is cut into runs (12 rows, split at gaps of 12 clear columns), each cropped; all
@@ -99,3 +101,66 @@ The run size (12 rows, gaps of 12) trades memory against draw calls: 16 rows was
   strip.
 - The screenshots change: sides are now finer than an art pixel on the phone, and the floor and cats sit
   at device-pixel offsets.
+
+## 8. Authored faces
+
+Owner, after build 558: "the 3D effect is way better" but "it looks a bit weird... you'll have to make
+textures for each side of each furniture". Until then a side or top was the colour of the front's edge
+pixel extruded backwards and re-shaded: a bookcase showed its edge books' colours along its side, the
+counter's worktop its top surface's light rows running back as stripes, a platform of the cat tree a
+staircase of its top rows.
+
+Now every face pixel is asked of the piece's skin (`FaceSkin`, catalogue `FaceSkins` by piece name):
+given where it is (`FaceSpot`: row and column on the sprite, which face, its strip, how many strips
+behind the column's front and before its back, its fraction along the column, the rows of the piece
+above and below it at that depth, whether it is the outside of the piece), the skin answers a colour of
+the piece's own palette and a number of ramp steps (`FaceTex.of`), a colour chosen outright for that
+side (`FaceTex.exact`), the outline (`FaceTex.INK`) or `KEEP` (the old extrusion). `SolidFaces` adds
+the room's light on top (top +1, left -1, right -2, crevice -1) along the same ramp, light first, so a
+texture still shows on a side that is already as dark as its ramp goes; slopes (the painted top rows,
+round posts) are unlit as before. The front at rest is untouched (only face pixels are asked), the
+rims and the bitmaps are the same size as before, and the skins run only while baking.
+
+Rules every texture keeps:
+- A side is its whole depth drawn `D * |vx|` pixels wide, about one device pixel per strip at the
+  widest, fewer in between, so a feature one strip wide would come and go as the camera turns. A
+  texture therefore changes along the depth only in bands (`FaceSpot.band`: a quarter, a fifth of
+  the column) or at the front edge (the first strip, which once shown stays shown); its detail runs
+  along the rows (stripes, hems, grain), which hold at every angle.
+- The front edge of a face is the board's edge or the piping: lighter.
+- Outlines carry round: on a piece outlined in ink, a side's top edge is inked where the front's top
+  is; an outline row of the front stays an outline only as far back as what it outlines (the fridge's
+  door split goes through the door, not the body).
+- A face inside the piece (between seat cushions, inside a shelf, the walls of the cubby's opening) is
+  in its own shadow.
+- Where a ramp would step into another material (the browns share a hue with the terracotta and the
+  red books, the lampshade's cream with the pole's brown), the colours of each side are given
+  outright (`FaceSkins.Tones`: panel, grain and edge of the left and right side, a top and its grain).
+
+What each piece shows:
+
+| piece | sides | top |
+|---|---|---|
+| sofa | blue fabric arm ends: piping down the front edge, the rolled arm and back catching the light, the hem in shadow, the outline along the top; gaps between the seat cushions dark | fabric, piping at the front, darker at the back |
+| cushions | their stripes carry round, rounded and darker as they turn | fabric |
+| floor lamp | the cloth shade in its own three colours, darker as it turns; round pole and base | the open top: the rim, and the glowing inside |
+| side table | leaves; round terracotta pot, bands carrying round; wooden table with grain along its edge and up the legs | soil in the pot within its rim; the table top's grain front to back, its lip lit |
+| bookcase, study shelf | wooden side boards (grain up the board, lighter edge banding, the top edge) that hide the books; inside the shelves in shadow, books' covers dark | the top board and shelves with their grain; the tops of the books are their pages between the covers; soil in the pot |
+| cat tree post | round: the sisal wrap carries on round the back with its slant, darker as it turns; the toy and string round | plain |
+| cubby | carpeted walls with the light trim at the front edge; the opening's walls dark (only where the front has an opening) | carpet |
+| platforms (3) | the board's edge as thick as the front shows it, rising towards the back as the top recedes, carpet; below it the dark underside | carpet |
+| counter | worktop edge as thick as the front's (wood tones, lit top edge, dark underside); cabinet side panel: the doors' edge, the gap behind them, the shadow under the worktop; kettle, tap, fruit round | the worktop's painted top, its grain at the back |
+| fridge | white: the doors a row thick with a lit edge, the grey seal behind them, the body darkening towards the back, the door split only through the doors, the kick plate dark, the outline along the top | white, lit lip, shadowed at the wall |
+| sun bench, desk, desk chair | wood in their own tones with grain; cushions and seats as upholstery | wood grain, cushions as fabric |
+| wicker chair, baskets | an over-and-under weave two rows tall and a quarter of the depth long; cushions and contents as fabric | |
+| big plant | leaves darker towards the back, round pot | soil |
+| bath, sink cabinet | enamel and painted wood: lit front edge, a shade darker towards the back | lit lip, darker at the back |
+
+Cost: the rims are the same pixels as before, so the bitmaps are unchanged (3.25 MB for the 13
+pieces of the first three rooms, 1,126 strip runs); baking takes 13 to 24 ms on the JVM (the skins
+run once per art, on the background thread); nothing changes per frame.
+
+Tests: `SolidFacesTest` (the sprite at rest exactly, the palette, the rims against whole
+cross-sections, the ray cast's shape, the order at both extremes, the cost) still holds; new ones check
+the bookcase's side boards are wood and its books' tops pages, the fridge's door split stops at the
+door, and that no texture changes strip by strip along a side (beyond where the shape itself does).

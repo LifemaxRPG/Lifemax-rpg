@@ -20,6 +20,7 @@ import org.json.JSONObject
  *   is, by surface key.
  * @property covered by surface key, the piece wholly in front of a cat standing there (the cat
  *   tree's top platform over a cat on the middle one).
+ * @property name the piece's name: which authored side and top textures it has ([FaceSkins]).
  */
 internal class PieceVolume(
     val model: VolumeModel,
@@ -28,12 +29,13 @@ internal class PieceVolume(
     val wall: Boolean,
     val surfaces: Map<String, Float>,
     val covered: Map<String, String> = emptyMap(),
+    val name: String = "",
 ) {
     /** The row whose parallax the front plane has. */
     val parallaxFront: Float
         get() = if (wall) Parallax.WALL_ROW + depth else sortFront
 
-    private val baking = lazy { SolidFaces(model, wall) }
+    private val baking = lazy { SolidFaces(model, wall, FaceSkins.of(name, model)) }
 
     /**
      * The piece's faces, baked the first time they are asked for (on whichever thread asks; a
@@ -253,6 +255,7 @@ internal class RoomLayerArt(
             val surfaces = v.getJSONObject("surfaces")
             val covered = v.getJSONObject("covered")
             return PieceVolume(
+                name = o.getString("name"),
                 covered = covered.keys().asSequence().associateWith { covered.getString(it) },
                 model = VolumeModel.decode(sprite, read(v.getString("file"))),
                 sortFront = baseY - v.getDouble("front").toFloat(),
