@@ -61,6 +61,8 @@ internal object StreetSprites {
                 Part.UPPER_F -> StreetRig.upperArm(look, false)
                 Part.HEAD -> StreetRig.head(look, false)
                 Part.HEAD_GLANCE -> StreetRig.head(look, true)
+                Part.HEAD_AWAY -> StreetRig.head(look, -1f)
+                Part.STICK -> StreetRig.stick(look)
                 Part.TAIL -> StreetRig.tail(look)
                 Part.HANDBAG -> StreetRig.handbag(look)
                 Part.PHONE -> StreetRig.phone()

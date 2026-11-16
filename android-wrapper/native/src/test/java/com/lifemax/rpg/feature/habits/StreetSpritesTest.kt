@@ -48,8 +48,9 @@ class StreetSpritesTest {
             val n = StreetGait.FRAMES
             for (f in 6 * n / 32..11 * n / 32) {
                 val j = StreetRig.figure(look, f / StreetGait.FRAMES.toFloat()).joints
-                val world =
-                    j.footNX + Gait.STRIDE * StreetLooks.ALL[look].height * f / StreetGait.FRAMES
+                val stride =
+                    Gait.STRIDE * StreetLooks.ALL[look].height * StreetGait.style(look).stride
+                val world = j.footNX + stride * f / StreetGait.FRAMES
                 if (ref.isNaN()) ref = world
                 assertEquals("look $look frame $f", ref, world, .12f)
                 assertTrue(j.footNH < .3f)
@@ -74,7 +75,7 @@ class StreetSpritesTest {
                 )
                 last = cur
             }
-            val stand = StreetRig.frame(look, StreetRig.TOTAL_FRAMES - 1).joints
+            val stand = StreetRig.frame(look, StreetRig.STAND_AT).joints
             assertTrue(abs(stand.footNX - stand.footFX) < 2.5f)
             assertTrue(stand.footNH < .3f && stand.footFH < .3f)
         }
@@ -152,7 +153,8 @@ class StreetSpritesTest {
     fun theStreetSetFitsItsBudget() {
         val walkers = StreetSprites.walkerBytes()
         // the walk is the hardest thing on the street to make smooth: it gets the most frames
-        assertTrue("walkers are $walkers bytes", walkers < 6 * 1024 * 1024)
-        assertTrue(StreetSprites.bytes() < 10 * 1024 * 1024)
+        // (six looks, the older two with their own short steps, and the kneel to a shoe)
+        assertTrue("walkers are $walkers bytes", walkers < 8 * 1024 * 1024)
+        assertTrue(StreetSprites.bytes() < 12 * 1024 * 1024)
     }
 }

@@ -649,3 +649,36 @@ vehicles (`RoadSkySprites.generate`) are now these cars made small (a 4×4 box a
 lenses marked. `NEAR_CAR_AT` is now 49.3 (a navy saloon mid-screen at 23:00, a people carrier ahead). Tuned from
 contact sheets composited onto the CI references, not on a phone; every Habits reference with ambient time now
 shows more cars.
+
+### As built: walkers with their own manner, and stops on the way
+
+The owner: "add a few different gaits ... an elderly walk style ... some people walk faster ... some are just chilling
+... some might stop and look at their phone". `StreetManners.kt` (new) gives each passer a `Manner`, from the slot's
+seed and their look: BRISK (cadence ×1.17, arms ×1.28, leaning 2.6° into it, half the glances, more calls and watch
+checks, acts 1.5× rarer), AVERAGE (as before), STROLLER (×0.82, loose arms ×0.78, upright, 2.6× the glances, more
+hands in pockets), YOUNG (×1.07, arms ×1.1, phone and texting 2.4–3×) and ELDERLY. Two new looks are older people: a
+woman (silver bun, plum long coat) and a man (tweed flat cap, `StreetHair.FLAT`, grey hair, olive overcoat, walking
+stick). Older looks bake their own walk (`StreetGait.style`: stride 0.74, stoop 7–10°, arm swing 11–14° (half on the
+stick's side), bob 0.55, stiff hips and shoulders, a slightly uneven step) and walk at cadence ×0.86, about 0.65 of an
+average walker's pace. Every walk's phase still comes from the distance at the look's own stride (`StreetLife.pace`
+now includes it), so a manner only changes how fast the frames come and the feet stay planted. Looks are shared
+20.5 % each for the four younger ones and 9 % each for the older; manners come out at about 18 % brisk, 26 % average,
+21 % strolling, 17 % young and 18 % older among lone walkers; each person adds ±5 % of their own pace (about 9 to 18
+units a second). The stick (`Part.STICK`, a layer) is planted ahead of the far foot and lifts with it; the near hand
+holds it by IK. Speeds now differ, so the quick overtake the slow: the slow keep to the shop fronts and the quick to
+the outside (`StreetManners.lane`), and `StreetLife.makeWay` steps two people apart across the pavement (eased by
+their distance along it, respecting the wall and kerb) whenever they would walk through each other.
+
+Stops (`Halt`): 12 % of brisk, 35 % of average, 85 % of strolling (40 % twice), 50 % of older and 45 % of young
+walkers stop, and 55 % of pairs stop to talk: to read the phone (1.6–4.2 s), look in a shop window (the nearest
+window either side of a lobby's door; head turned away from us, `Part.HEAD_AWAY`, hands clasped behind the back),
+look round (towards the street and back), kneel to tie a shoe (`StreetRig.CROUCH`, five baked frames from standing
+to one knee; never with a stick) or, for a pair, talk (heads turned, a hand at work). A stop is planned in the walk's
+own clock, which stands still through it: 0.8 s to ease down (the stop lands on a whole stride, so the settle frames
+start from the passing pose; the live drift fades out near it), the hold, 0.95 s to ease back to pace; the walking
+acts fade out around it. A pair's companion's phase is offset so both settle from the passing pose. Memory: walkers
+6.17 MB (from 3.82 MB: 1.96 MB for the older looks, the rest the crouch frames), street set 9.77 MB; the budgets are
+now 8 MB and 12 MB. Draw cost: one more layer for the stick, a shear for the lean, no per-frame allocation (stop plans
+are cached in the `Passer`). `StreetMannersTest` covers planted feet for every manner, paces, shares, determinism,
+stops easing in and out on the passing pose, the stick planted with the far foot and the kneel. Tuned from contact
+sheets, not on a phone; every Habits reference with walkers changes.

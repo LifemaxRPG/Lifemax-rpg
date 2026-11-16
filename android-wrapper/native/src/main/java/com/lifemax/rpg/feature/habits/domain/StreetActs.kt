@@ -43,6 +43,14 @@ enum class Act {
     FAR_PHONE,
     /** A look at the watch on the far wrist. */
     FAR_WATCH,
+    /** Stopped at a shop window: the head turned away from us, to the glass. */
+    PEER,
+    /** Stopped, looking round: towards the street, then the other way, then on. */
+    LOOK_ROUND,
+    /** Down on one knee tying the near shoe. */
+    TIE,
+    /** Stopped to talk to the one beside them: the head turned to them, a hand at work. */
+    TALK,
 }
 
 /** What one walker is doing this moment, written by [StreetActs.at]. */
@@ -65,6 +73,9 @@ class Gesture {
     /** Seconds of walking lost so far to slowing down over the phone. */
     var lost = 0f
 
+    /** How far their arms swing, of the walk's own swing ([StreetManners.swing]). */
+    var swing = 1f
+
     fun clear() {
         act = Act.RELAX
         w = 0f
@@ -73,6 +84,7 @@ class Gesture {
         vary = 0f
         cup = false
         lost = 0f
+        swing = 1f
     }
 }
 
@@ -121,6 +133,10 @@ object StreetActs {
     fun blend(act: Act): Float =
         when (act) {
             Act.GLANCE -> QUICK
+            Act.TIE -> 1f
+            Act.PEER,
+            Act.LOOK_ROUND,
+            Act.TALK -> .6f
             Act.CALL,
             Act.SCRATCH,
             Act.RUB,
@@ -147,6 +163,10 @@ object StreetActs {
             Act.POCKETS -> 5f + 7f * h
             Act.STRAP -> 4f + 5f * h
             Act.SIP -> 1.8f + .8f * h
+            Act.PEER,
+            Act.LOOK_ROUND,
+            Act.TIE,
+            Act.TALK -> 3f + 3f * h
             Act.RELAX -> 1f
         }
 
@@ -154,7 +174,15 @@ object StreetActs {
      * How likely [act] is for [look], with the near hand [busy] (a lead, a handbag) or holding a
      * [cup]: 0 for what they cannot do.
      */
-    fun weight(act: Act, look: Int, busy: Boolean, cup: Boolean): Float {
+    fun weight(
+        act: Act,
+        look: Int,
+        busy: Boolean,
+        cup: Boolean,
+        manner: Manner = Manner.AVERAGE,
+    ): Float = plain(act, look, busy, cup) * StreetManners.liking(manner, act)
+
+    private fun plain(act: Act, look: Int, busy: Boolean, cup: Boolean): Float {
         val l = StreetLooks.ALL[look]
         if (busy || cup) {
             return when (act) {
@@ -189,7 +217,16 @@ object StreetActs {
      * What the walker of slot [k] ([who]: 0 the walker, 1 a companion) of [look] is doing [t]
      * seconds into their walk, their near hand [busy] or not, written into [out].
      */
-    fun at(seed: Int, k: Int, who: Int, t: Float, look: Int, busy: Boolean, out: Gesture) {
+    fun at(
+        seed: Int,
+        k: Int,
+        who: Int,
+        t: Float,
+        look: Int,
+        busy: Boolean,
+        out: Gesture,
+        manner: Manner = Manner.AVERAGE,
+    ) {
         out.clear()
         val base = seed * 131 + who * 17
         val cup = cup(seed, k, who, busy)
@@ -197,13 +234,13 @@ object StreetActs {
         if (t <= 0f) return
         // the walker's own habits: each act's likelihood scaled by a factor of their own
         var total = 0f
-        for (a in ACTS) total += weight(a, look, busy, cup) * like(base, k, a)
+        for (a in ACTS) total += weight(a, look, busy, cup, manner) * like(base, k, a)
         if (total <= 0f) return
         var start = 1f + 4f * Ambient.hash(base, k, 300)
         var lost = 0f
         var i = 0
         while (i < MOST && start <= t) {
-            val act = pick(base, k, i, look, busy, cup, total)
+            val act = pick(base, k, i, look, busy, cup, total, manner)
             val dur = duration(act, Ambient.hash(base, k, 400 + i * 4))
             val b = blend(act)
             val end = start + dur
@@ -220,8 +257,9 @@ object StreetActs {
             }
             if (slows(act)) lost += SLOW * (dur - b)
             val gap =
-                if (cup) 2.5f + 4f * Ambient.hash(base, k, 402 + i * 4)
-                else GAP + GAP_MORE * Ambient.hash(base, k, 402 + i * 4)
+                StreetManners.gap(manner) *
+                    if (cup) 2.5f + 4f * Ambient.hash(base, k, 402 + i * 4)
+                    else GAP + GAP_MORE * Ambient.hash(base, k, 402 + i * 4)
             start = end + gap
             i++
         }
@@ -240,11 +278,12 @@ object StreetActs {
         busy: Boolean,
         cup: Boolean,
         total: Float,
+        manner: Manner,
     ): Act {
         var h = Ambient.hash(base, k, 403 + i * 4) * total
         var last = Act.GLANCE
         for (a in ACTS) {
-            val wt = weight(a, look, busy, cup) * like(base, k, a)
+            val wt = weight(a, look, busy, cup, manner) * like(base, k, a)
             if (wt <= 0f) continue
             last = a
             if (h < wt) return a
