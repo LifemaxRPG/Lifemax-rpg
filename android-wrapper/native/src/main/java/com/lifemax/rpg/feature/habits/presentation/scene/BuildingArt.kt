@@ -29,6 +29,7 @@ import com.lifemax.rpg.feature.habits.domain.lightOrder
 import com.lifemax.rpg.feature.habits.domain.occupancy
 import com.lifemax.rpg.feature.habits.domain.ruinWindow
 import com.lifemax.rpg.feature.habits.presentation.HabitsCopy
+import kotlin.math.abs
 
 /**
  * Words measured for the scene. A building is drawn in its own units (dp at scale 1) under one
@@ -195,12 +196,35 @@ internal fun buildingArt(layout: BuildingLayout, stack: HabitStack, text: SceneT
     val seen = HashMap<String, Int>()
     val choices = BuildingDetail.choices(stack.id.hashCode())
     val pipeX = if (choices.pipeSide == 0) Float.NaN else choices.pipeX
-    for (p in layout.pieces) {
+    val stacked =
+        layout.pieces.filter {
+            it.block != null && (it.kind == PieceKind.FLOOR || it.kind == PieceKind.RUIN)
+        }
+    // the fire escape: up the brick floors of a building that has one, each platform joined by a
+    // stair to the one over it where the next floor up is brick too
+    fun escapes(i: Int): Boolean =
+        choices.fireEscape &&
+            i in stacked.indices &&
+            stacked[i].kind == PieceKind.FLOOR &&
+            stacked[i].block?.material == HabitMaterial.CLAY
+    fun touching(lower: Int, upper: Int): Boolean =
+        abs(stacked[upper].bottom - stacked[lower].top) < .5f
+    for ((i, p) in stacked.withIndex()) {
         val b = p.block ?: continue
-        if (p.kind != PieceKind.FLOOR && p.kind != PieceKind.RUIN) continue
         val storey = seen[p.id] ?: 0
         seen[p.id] = storey + 1
-        floors += floorArt(p, b, text, storey, storeyCount[p.id] ?: 1, pipeX)
+        val escape =
+            if (!escapes(i)) null
+            else {
+                val under = i - 1
+                val over = i + 1
+                Escape(
+                    i,
+                    if (escapes(under) && touching(under, i)) stacked[under].height else Float.NaN,
+                    escapes(over) && touching(i, over),
+                )
+            }
+        floors += floorArt(p, b, text, storey, storeyCount[p.id] ?: 1, pipeX, escape)
     }
     val lobby = layout.pieces.first { it.kind == PieceKind.LOBBY }
     val sign = layout.pieces.firstOrNull { it.kind == PieceKind.SIGN }
@@ -267,6 +291,7 @@ private fun floorArt(
     storey: Int,
     storeys: Int,
     pipeX: Float,
+    escape: Escape?,
 ): FloorArt {
     val ruin = p.kind == PieceKind.RUIN
     val f = facade(if (ruin) HabitMaterial.FADE else b.material)
@@ -353,6 +378,7 @@ private fun floorArt(
         wallShapes,
         frontShapes,
         overShapes,
+        escape,
     )
     val crack =
         if (!ruin && labelled && (b.miss >= 1 || b.scar))

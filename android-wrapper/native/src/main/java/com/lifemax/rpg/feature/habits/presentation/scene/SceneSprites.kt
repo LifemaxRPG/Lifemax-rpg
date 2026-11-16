@@ -624,6 +624,23 @@ internal object SceneSprites {
         ShaderBrush(ImageShader(image(t.light, t.w, t.h), TileMode.Repeated, TileMode.Clamp))
     }
 
+    /**
+     * The weathering under every floor's string course ([FacadeSprites.grime]): a strip repeated
+     * across, clamped down (its last row is clear).
+     */
+    val grime: Brush by lazy {
+        val t = FacadeSprites.grime()
+        synchronized(this) { facadeBytes += t.w * t.h * 4 }
+        ShaderBrush(ImageShader(image(t.light, t.w, t.h), TileMode.Repeated, TileMode.Clamp))
+    }
+
+    /** A rain streak run off a sill's end ([FacadeSprites.drip]). */
+    val drip: ImageBitmap by lazy {
+        val t = FacadeSprites.drip()
+        synchronized(this) { facadeBytes += t.w * t.h * 4 }
+        image(t.light, t.w, t.h)
+    }
+
     /** What the facades' walls made so far take, in bytes. */
     @Synchronized fun facadeBytes(): Int = facadeBytes
 

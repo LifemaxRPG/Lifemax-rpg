@@ -506,3 +506,21 @@ hub flange and a reflector. The painter draws the cyclist's contact shadow (`cyc
 each tyre and a soft shade under the bike) and at night its lamps (`cycleLamps`: a cool white glow
 and pool ahead, the red tail); its key-light and lamp shadows already came through `party`. Bytes:
 street set 8.71 MB to 8.66 MB, walkers 5.50 MB to 4.65 MB (no glow round them).
+
+### As built: facades v3, weathering, quoins and fire escapes
+
+The owner: "a little bit more detailed, AAA looking". Three things that read at phone size. Weathering: every floor
+but glass carries `FacadeSprites.grime` (128 x 84 units at 1.5 px/unit, a dark warm grey at an alpha, seamless across,
+clear on its last row): soot under the string course and rain streaks washed down from it, each its own width, length
+and depth, with a fine striation between; `BuildingPainter.grime` lays it from the floor's top at an offset of the
+floor's own (`Repeated` across, `Clamp` down), over the wall and its trim, under the windows and under the night
+Multiply; heaviest on stone, lighter on brick, faint on gold, a touch more when wet. Sills: `stains` now hangs a baked
+streak (`FacadeSprites.drip`, 6 x 30 units) off most sills' ends, each its own length, never past the floor's foot
+(up close only; glass none, gold faint). Brick floors have quoins up both corners (`BuildingDetail.quoins`: long and
+short dressed blocks in the trim colour, lit top, shaded underside and joint, a lit or shaded inner edge and its cast
+shadow). Half the buildings (`BuildingChoices.fireEscape`) carry a fire escape up their brick floors' two right-hand
+bays (`BuildingDetail.fireEscape`, in `front`, so up close only): a platform under the sills on braces with a
+balustrade, its occlusion on the brick, a stair to the floor above where that floor is brick too, zigzagging (each
+flight drawn in two parts, one by each floor, `Escape(index, below, above)` worked out in `buildingArt`), the drop
+ladder under the lowest platform; such a floor has no AC unit or balcony. Bytes: +103 KB (grime 97 KB, drip 6 KB);
+`FacadeTest` covers both bakes, the quoins, the escape's parts and bounds and its share.

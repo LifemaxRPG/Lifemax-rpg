@@ -65,7 +65,25 @@ internal object FacadeSprites {
     const val MIRROR_W = 96f
     const val MIRROR_H = 14f
 
-    /** Bytes all five tiles, the lobby's, the cloth and the mirrored city take once made. */
+    /**
+     * The weathering hung under every floor's string course ([grime]): a strip this long and as
+     * deep as the tallest floor, in units, at [GRIME_PPU] pixels a unit (it is all soft).
+     */
+    const val GRIME_W = 128f
+    const val GRIME_H = 84f
+    const val GRIME_PPU = 1.5f
+
+    /** One rain streak run off a sill's end ([drip]), in units, at [PPU]. */
+    const val DRIP_W = 6f
+    const val DRIP_H = 30f
+
+    /** The soot and the rain streaks' colour: a dark warm grey-brown. */
+    private val GRIME_RGB = floatArrayOf(.13f, .11f, .085f)
+
+    /**
+     * Bytes all five tiles, the lobby's, the cloth, the mirrored city, the weathering and the drip
+     * take once made.
+     */
     fun bytes(): Int =
         HabitMaterial.entries.sumOf {
             val (uw, uh) = tileUnits(it)
@@ -73,7 +91,9 @@ internal object FacadeSprites {
         } +
             (FOLD * PPU).toInt() * (CLOTH_H * PPU).toInt() * 4 * 2 +
             (LOBBY_W * PPU).toInt() * (LOBBY_H * PPU).toInt() * 4 +
-            (MIRROR_W * PPU).toInt() * (MIRROR_H * PPU).toInt() * 4
+            (MIRROR_W * PPU).toInt() * (MIRROR_H * PPU).toInt() * 4 +
+            (GRIME_W * GRIME_PPU).toInt() * (GRIME_H * GRIME_PPU).toInt() * 4 +
+            (DRIP_W * PPU).toInt() * (DRIP_H * PPU).toInt() * 4
 
     fun tile(m: HabitMaterial): WallTile {
         val (uw, uh) = tileUnits(m)
@@ -195,6 +215,95 @@ internal object FacadeSprites {
         }
         return ClothTile(w, h, shade, light)
     }
+
+    /**
+     * The weathering of a wall, laid over a floor's front from its top (under its string course):
+     * soot gathered under the ledge, uneven along it, and the streaks the rain has washed down from
+     * it over the years, each its own width, length and depth, wandering a little as water does,
+     * fading out down the wall; a fine vertical striation of grime between them. A colour at an
+     * alpha (the same colour throughout), seamless across, clear on its last row so it can be
+     * clamped below.
+     */
+    fun grime(): ClothTile {
+        val w = (GRIME_W * GRIME_PPU).toInt()
+        val h = (GRIME_H * GRIME_PPU).toInt()
+        val keep = FloatArray(w * h) { 1f }
+        // the streaks, combined as layers of a stain (each takes a share of what light is left)
+        for (i in 0 until GRIME_STREAKS) {
+            val x0 = hash(i, 0, 801) * GRIME_W
+            val wide = .7f + 3.4f * hash(i, 1, 801).sq()
+            val len = 7f + (GRIME_H - 12f) * Math.pow(hash(i, 2, 801).toDouble(), 1.15).toFloat()
+            val depth = .06f + .2f * hash(i, 3, 801)
+            val phase = hash(i, 4, 801) * 6.283f
+            for (y in 0 until h) {
+                val v = (y + .5f) / GRIME_PPU
+                if (v >= len) break
+                val fade = Math.pow((1f - v / len).toDouble(), 1.4).toFloat()
+                val cx =
+                    x0 +
+                        .3f * kotlin.math.sin(v * .12f + phase) +
+                        .12f * kotlin.math.sin(v * .43f + phase * 1.7f)
+                val ww = wide * (1f - .45f * v / len)
+                val stutter = .7f + .3f * Noise.value(i * 5.3f, v * .45f, 811)
+                val reach = ((ww + 1f) * GRIME_PPU).toInt() + 1
+                val px = (cx * GRIME_PPU).toInt()
+                for (dx in -reach..reach) {
+                    val x = ((px + dx) % w + w) % w
+                    val u = (x + .5f) / GRIME_PPU
+                    var d = abs(u - cx)
+                    if (d > GRIME_W / 2f) d = GRIME_W - d
+                    val prof = Px.smooth(ww, 0f, d)
+                    if (prof <= 0f) continue
+                    keep[y * w + x] *= 1f - depth * fade * prof * stutter
+                }
+            }
+        }
+        val px = IntArray(w * h)
+        for (y in 0 until h) for (x in 0 until w) {
+            val u = (x + .5f) / GRIME_PPU
+            val v = (y + .5f) / GRIME_PPU
+            // the soot under the ledge, heavier in places along it
+            val along = seamless(u * .3f, 0f, GRIME_W * .3f, 1f, 821, 1f, 2)
+            val soot = .26f * kotlin.math.exp(-v / 4.5f) * (.45f + 1.1f * along)
+            // the fine striation, fading down the strip
+            val fine = seamless(u * 1.4f, v * .06f, GRIME_W * 1.4f, GRIME_H * .06f, 823, 1f)
+            val stria = .07f * Px.smooth(.52f, .85f, fine) * (1f - .7f * v / GRIME_H)
+            var a = 1f - keep[y * w + x] * (1f - soot.coerceIn(0f, .5f)) * (1f - stria)
+            a *= Px.smooth(GRIME_H, GRIME_H - 8f, v)
+            if (y == h - 1) a = 0f
+            px[y * w + x] = Px.argbF(a.coerceIn(0f, .6f), GRIME_RGB[0], GRIME_RGB[1], GRIME_RGB[2])
+        }
+        return ClothTile(w, h, px, px)
+    }
+
+    /**
+     * A rain streak run off the end of a sill: a bead of damp at its top, a thin wandering trail
+     * narrowing and fading down the wall, a faint wider halo round it. A colour at an alpha, clear
+     * at its sides and on its last row.
+     */
+    fun drip(): ClothTile {
+        val w = (DRIP_W * PPU).toInt()
+        val h = (DRIP_H * PPU).toInt()
+        val px = IntArray(w * h)
+        for (y in 0 until h) for (x in 0 until w) {
+            val u = (x + .5f) / PPU
+            val v = (y + .5f) / PPU
+            val t = v / DRIP_H
+            val cx = DRIP_W / 2f + .45f * kotlin.math.sin(v * .33f) + .2f * kotlin.math.sin(v * .9f)
+            val ww = if (v < 1.4f) 1.3f else 1.05f * (1f - .55f * t)
+            val d = abs(u - cx)
+            val core =
+                .55f * Math.pow((1f - t).toDouble(), 1.2).toFloat() * Px.smooth(ww, ww * .3f, d)
+            val halo = .14f * (1f - t).sq() * Px.smooth(minOf(ww * 2.6f, 2.4f), ww, d)
+            var a = 1f - (1f - core) * (1f - halo)
+            if (y == h - 1 || x == 0 || x == w - 1) a = 0f
+            px[y * w + x] = Px.argbF(a, GRIME_RGB[0], GRIME_RGB[1], GRIME_RGB[2])
+        }
+        return ClothTile(w, h, px, px)
+    }
+
+    /** How many rain streaks hang in the weathering strip. */
+    private const val GRIME_STREAKS = 54
 
     // ------------------------------------------------------------------ the materials
 

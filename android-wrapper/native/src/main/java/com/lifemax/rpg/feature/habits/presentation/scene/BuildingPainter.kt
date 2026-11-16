@@ -435,16 +435,6 @@ internal class BuildingPainter {
             endX = 1f,
         )
 
-    /** A rain stain running down from a window's sill (a unit square, drawn under a transform). */
-    private val stainBrush =
-        Brush.verticalGradient(
-            0f to Color.Black.copy(alpha = .2f),
-            .35f to Color.Black.copy(alpha = .1f),
-            1f to Color.Transparent,
-            startY = 0f,
-            endY = 1f,
-        )
-
     /** The bloom of a television's light, cool where a lamp's is warm. */
     private val tvBloom =
         Brush.radialGradient(
@@ -2269,23 +2259,68 @@ internal class BuildingPainter {
     }
 
     /**
-     * Rain stains under some of a stone or brick floor's windows: a faint darker streak running
-     * down from the sill, deeper while the street is wet.
+     * The weathering of a floor's wall ([FacadeSprites.grime]): soot under its string course and
+     * the streaks the rain has washed down from it, laid from the floor's top at a place along the
+     * strip of the floor's own, over the wall and its trim (under the windows, which are drawn
+     * after). Heaviest on stone, which shows dirt, lighter on brick, faint on gold, none on glass.
+     */
+    private fun DrawScope.grime(fa: FloorArt, alpha: Float) {
+        val k =
+            when (fa.material) {
+                HabitMaterial.STONE -> .9f
+                HabitMaterial.CLAY -> .75f
+                HabitMaterial.FADE -> 1f
+                HabitMaterial.GOLD -> .4f
+                HabitMaterial.GLASS -> 0f
+            }
+        if (k <= 0f) return
+        val ppu = FacadeSprites.GRIME_PPU
+        val off = Ambient.hash(fa.seed, 0, 640) * FacadeSprites.GRIME_W * ppu
+        withTransform({
+            translate(-B.W / 2f, fa.top)
+            scale(1f / ppu, 1f / ppu, Offset.Zero)
+            translate(-off, 0f)
+        }) {
+            drawRect(
+                SceneSprites.grime,
+                Offset(off, 0f),
+                Size(B.W * ppu, (fa.bottom - fa.top) * ppu),
+                alpha = alpha * k * (1f + .25f * weather.wet).coerceAtMost(1f),
+            )
+        }
+    }
+
+    /**
+     * Rain streaks run off the ends of most of a floor's sills ([FacadeSprites.drip]), each its own
+     * length, down the wall under them to no lower than the floor's foot; deeper while the street
+     * is wet. Faint on gold.
      */
     private fun DrawScope.stains(fa: FloorArt, top: Float, alpha: Float) {
         val w = fa.windows
-        val a = alpha * (.45f + .55f * weather.wet)
+        val gold = if (fa.material == HabitMaterial.GOLD) .45f else 1f
+        val a = alpha * gold * (.6f + .4f * weather.wet)
+        val image = SceneSprites.drip
+        val ppu = FacadeSprites.PPU
+        val reach = BuildingDetail.REVEAL + BuildingDetail.SILL_REACH
         for (k in 0 until fa.windowCount) {
-            if (Ambient.hash(fa.seed, k, 400) >= .45f) continue
+            val x = w[k * 4]
             val ww = w[k * 4 + 2]
-            val x = w[k * 4] + ww * (.1f + .45f * Ambient.hash(fa.seed, k, 401))
-            val y = top + w[k * 4 + 1] + w[k * 4 + 3]
-            val len = 5f + 7f * Ambient.hash(fa.seed, k, 402)
-            withTransform({
-                translate(x, y)
-                scale(ww * (.25f + .2f * Ambient.hash(fa.seed, k, 403)), len, Offset.Zero)
-            }) {
-                drawRect(stainBrush, Offset.Zero, Size(1f, 1f), alpha = a)
+            val y = top + w[k * 4 + 1] + w[k * 4 + 3] + BuildingDetail.SILL_H + .3f
+            val room = fa.bottom - y - .5f
+            if (room < 3f) continue
+            for (end in 0..1) {
+                val n = k * 2 + end
+                if (Ambient.hash(fa.seed, n, 404) >= .68f) continue
+                val len =
+                    minOf(room, FacadeSprites.DRIP_H * (.3f + .7f * Ambient.hash(fa.seed, n, 405)))
+                val cx = if (end == 0) x - reach + 1.4f else x + ww + reach - 1.4f
+                val depth = .55f + .45f * Ambient.hash(fa.seed, n, 406)
+                withTransform({
+                    translate(cx - FacadeSprites.DRIP_W / 2f, y)
+                    scale(1f / ppu, len / FacadeSprites.DRIP_H / ppu, Offset.Zero)
+                }) {
+                    drawImage(image, Offset.Zero, alpha = a * depth)
+                }
             }
         }
     }
@@ -2965,10 +3000,10 @@ internal class BuildingPainter {
             if (nightOn) drawPath(fa.side, nightInk, alpha = alpha, blendMode = BlendMode.Multiply)
         }
         inks(fa.detail, f, alpha, detailed)
+        if (!ruin) grime(fa, alpha)
         grade(fa, alpha)
         blueHour(-half, top, B.W, fa.bottom - top, .42f * alpha)
-        if (!ruin && (b.material == HabitMaterial.STONE || b.material == HabitMaterial.CLAY))
-            stains(fa, top, alpha)
+        if (!ruin && detailed && b.material != HabitMaterial.GLASS) stains(fa, top, alpha)
         val done = !live || b.done
         val count = fa.windowCount
         val w = fa.windows
