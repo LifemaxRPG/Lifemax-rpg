@@ -91,6 +91,8 @@ class StreetActsTest {
         val g = Gesture()
         for (look in 0 until StreetLooks.COUNT) for (act in Act.values()) {
             if (act == Act.RELAX) continue
+            // nobody with a stick kneels to a shoe
+            if (act == Act.TIE && StreetLooks.ALL[look].stick) continue
             var lastDeg = Float.NaN
             var t = -.2f
             val dur = 3f
@@ -103,7 +105,9 @@ class StreetActsTest {
                 g.cup = act == Act.SIP
                 val phase = (t / 1.09f).let { it - kotlin.math.floor(it) }
                 val f = (phase * StreetGait.FRAMES).toInt() % StreetGait.FRAMES
-                StreetLayers.lay(look, f, (f + 1) % StreetGait.FRAMES, 0f, 0f, g, out)
+                // what a stop is for is done standing
+                val still = if (act.ordinal >= Act.PEER.ordinal) 1f else 0f
+                StreetLayers.lay(look, f, (f + 1) % StreetGait.FRAMES, 0f, still, g, out)
                 // the near upper arm's turn from one sixtieth of a second to the next
                 var deg = Float.NaN
                 for (i in 0 until out.count) if (out.part[i] == Part.UPPER_N) deg = out.deg[i]

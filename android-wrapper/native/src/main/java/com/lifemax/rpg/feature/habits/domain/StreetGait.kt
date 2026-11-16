@@ -47,17 +47,36 @@ object StreetGait {
 
     /**
      * How street look [look] walks: its own arm swing (one arm often swinging less), bob, posture,
-     * shoulder roll and hips, so that no two walkers on the street move alike. The stride stays the
-     * standard one: the walk's phase comes from the distance at that stride, and the feet must not
-     * slide.
+     * shoulder roll and hips, so that no two walkers on the street move alike. The stride is the
+     * standard one except for an older look's short steps ([ELDER_STRIDE]): the walk's phase comes
+     * from the distance at the look's own stride ([StreetLife.pace]), so the feet never slide.
      */
     fun style(look: Int): Gait.Style = STYLES[look]
+
+    /** An older walker's step, of the standard one: short, the feet kept near the ground. */
+    const val ELDER_STRIDE = .74f
 
     private fun spread(look: Int, salt: Int, lo: Float, hi: Float): Float =
         lo + (hi - lo) * Ambient.hash(look + 1, 52, salt)
 
     private val STYLES: Array<Gait.Style> =
         Array(StreetLooks.COUNT) { look ->
+            val l = StreetLooks.ALL[look]
+            if (l.elder) {
+                // short steps, a stoop, small arm swings (none to speak of on the stick's side),
+                // little bob and stiff hips and shoulders, one step a touch longer than the other
+                val arm = spread(look, 1, 11f, 14f)
+                return@Array Gait.Style(
+                    stride = ELDER_STRIDE,
+                    armNear = if (l.stick) arm * .5f else arm,
+                    armFar = arm * .85f,
+                    bob = .55f,
+                    lean = if (l.stick) 10f else 7f,
+                    split = .025f,
+                    roll = .5f,
+                    hip = .7f,
+                )
+            }
             val arm = spread(look, 1, 17f, 30f)
             val less = spread(look, 2, .78f, 1f)
             val nearLess = Ambient.hash(look + 1, 52, 3) < .5f

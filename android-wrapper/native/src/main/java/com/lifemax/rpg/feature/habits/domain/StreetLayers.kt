@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.habits.domain
 
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -31,7 +32,9 @@ object Part {
     const val HANDBAG = 11
     const val PHONE = 12
     const val CUP = 13
-    const val COUNT = 14
+    const val HEAD_AWAY = 14
+    const val STICK = 15
+    const val COUNT = 16
 }
 
 /**
@@ -127,6 +130,10 @@ object StreetLayers {
     private var af = 0f
     private var ef = 0f
     private var tail = 0f
+    private var footNX = 0f
+    private var footNH = 0f
+    private var footFX = 0f
+    private var footFH = 0f
 
     private fun joints(a: WalkerJoints, b: WalkerJoints, t: Float) {
         shNX = lerp(a.shNX, b.shNX, t)
@@ -141,6 +148,30 @@ object StreetLayers {
         af = lerp(a.af, b.af, t)
         ef = lerp(a.ef, b.ef, t)
         tail = lerp(a.tail, b.tail, t)
+        footNX = lerp(a.footNX, b.footNX, t)
+        footNH = lerp(a.footNH, b.footNH, t)
+        footFX = lerp(a.footFX, b.footFX, t)
+        footFH = lerp(a.footFH, b.footFH, t)
+    }
+
+    /** How far down into the crouch [g] has them, 0 standing to 1 on one knee. */
+    fun crouch(g: Gesture): Float = if (g.act == Act.TIE) smooth(g.w) else 0f
+
+    /**
+     * The body frame that shows most at the walk's [frame], settled [still] and crouched as [g] has
+     * them: what the feet's contact shadows are taken from.
+     */
+    fun shown(frame: Int, still: Float, g: Gesture): Int {
+        val c = crouch(g)
+        if (c > .01f)
+            return StreetRig.CROUCH_AT +
+                (c * (StreetRig.CROUCH_FRAMES - 1) + .5f)
+                    .toInt()
+                    .coerceIn(0, StreetRig.CROUCH_FRAMES - 1)
+        if (still > .5f)
+            return StreetRig.SETTLE_AT +
+                (still * StreetRig.SETTLE_FRAMES).toInt().coerceIn(0, StreetRig.SETTLE_FRAMES - 1)
+        return frame
     }
 
     /**
@@ -157,7 +188,16 @@ object StreetLayers {
         var bodyA: Int
         var bodyB: Int
         var bodyMix: Float
-        if (still > .01f) {
+        val crouch = crouch(g)
+        if (crouch > .01f) {
+            // down from standing to one knee
+            val q = crouch * StreetRig.CROUCH_FRAMES
+            val i = q.toInt().coerceIn(0, StreetRig.CROUCH_FRAMES - 1)
+            bodyA = if (i == 0) StreetRig.STAND_AT else StreetRig.CROUCH_AT + i - 1
+            bodyB = StreetRig.CROUCH_AT + i
+            bodyMix = (q - i).coerceIn(0f, 1f)
+            joints(js[bodyA], js[bodyB], bodyMix)
+        } else if (still > .01f) {
             val q = still * StreetRig.SETTLE_FRAMES
             val i = q.toInt().coerceIn(0, StreetRig.SETTLE_FRAMES - 1)
             bodyA = if (i == 0) frame else StreetGait.FRAMES + i - 1
@@ -212,6 +252,31 @@ object StreetLayers {
             }
             Act.WAVE -> glance = w
             Act.CALL -> tilt = 4f * w
+            Act.PEER -> {
+                glance = -w
+                tilt = -2f * w
+                // the hands clasped behind the back, looking in (the far one only if the near
+                // one is taken)
+                farW = w
+                reach(look, out, false, shFX - 1.7f * b, shFY + 5.8f * hgt)
+                farHand = StreetRig.GRIP
+                if (!busy(l)) {
+                    nearW = w
+                    reach(look, out, true, shNX - 1.9f * b, shNY + 5.9f * hgt)
+                }
+            }
+            Act.LOOK_ROUND -> {
+                // round towards the street, then the other way (to the shops), then back
+                val s = sin(2f * PI.toFloat() * (t / g.dur.coerceAtLeast(.5f)) + .4f * g.vary)
+                glance = (w * 1.3f * s).coerceIn(-1f, 1f)
+                tilt = -2f * w
+            }
+            Act.TIE -> tilt = 22f * w
+            Act.TALK -> {
+                // turned to the one beside them (the companion is nearer us), nodding as they talk
+                glance = if (g.vary < .6f) .75f * w else .2f * w
+                tilt = 3f * w * sin(2f * PI.toFloat() * 1.1f * t)
+            }
             else -> {}
         }
         val hA = headA + tilt
@@ -335,13 +400,38 @@ object StreetLayers {
                 nearW = w
                 reach(look, out, true, headX(1.1f, 1.55f), headY(1.1f, 1.55f))
             }
+            Act.TIE -> {
+                // both hands down at the near shoe's laces once they are down, tugging
+                val a = smooth((w - .55f) / .45f)
+                nearW = a
+                farW = a
+                val tug = .25f * sin(pi2 * 2.3f * t)
+                reach(look, out, true, footNX - .9f * hgt + tug, -footNH - 1.5f * hgt)
+                reach(look, out, false, footNX - .3f * hgt - tug, -footNH - 1.2f * hgt)
+                nearHand = StreetRig.GRIP
+                farHand = StreetRig.GRIP
+            }
+            Act.TALK -> {
+                // a hand at work as they talk: up a little, turning over now and then
+                val s1 = sin(pi2 * .7f * t + 3f * g.vary)
+                val s2 = sin(pi2 * 1.6f * t + 5f * g.vary)
+                if (busy(l)) {
+                    farW = .85f * w
+                    farA = 8f + 6f * s1
+                    farE = 96f + 14f * s2
+                } else {
+                    nearW = .85f * w
+                    nearA = 6f + 6f * s1
+                    nearE = 98f + 14f * s2
+                }
+            }
             else -> {}
         }
-        if (nearW > 0f && act != Act.WAVE && act != Act.SCRATCH) {
+        if (nearW > 0f && act != Act.WAVE && act != Act.SCRATCH && act != Act.TALK) {
             nearA = out.nA
             nearE += out.nE
         }
-        if (farW > 0f) {
+        if (farW > 0f && act != Act.TALK) {
             farA = out.fA
             farE = out.fE
         }
@@ -353,20 +443,40 @@ object StreetLayers {
             cupA = out.ikA
             cupE = out.ikE
         }
-        val nearRestA = if (g.cup) cupA else an * nearSwing
-        val nearRestE = if (g.cup) cupE else en
+        // a walking stick: its tip planted ahead of the far foot and lifted with it (the stick
+        // goes with the far leg), the near hand on its handle
+        var stickX = 0f
+        var stickY = 0f
+        var stickDeg = 0f
+        if (l.stick) {
+            val len = StreetRig.stickLength(look)
+            val tipX = footFX + 2.3f * hgt
+            val tipY = -.6f * kotlin.math.max(0f, footFH - FLAT)
+            val lean = 1.4f * hgt
+            stickX = tipX - lean
+            stickY = tipY - sqrt(kotlin.math.max(0f, len * len - lean * lean))
+            stickDeg = -deg(atan2(tipX - stickX, tipY - stickY))
+            // the hand's middle on the handle: the wrist a little behind and above it
+            ik(look, stickX - .15f - shNX, stickY - .62f - shNY, out)
+            cupA = out.ikA
+            cupE = out.ikE
+            nearHand = StreetRig.GRIP
+        }
+        val carry = g.cup || l.stick
+        val nearRestA = if (carry) cupA else an * nearSwing * g.swing
+        val nearRestE = if (carry) cupE else en
         val nA = lerp(nearRestA, nearA, nearW)
         // a hand on its way up to the head folds the elbow as it goes (it does not reach out
         // straight in front on the way)
         val fold = if (nearA > 60f) 70f * 4f * nearW * (1f - nearW) else 0f
         val nE = lerp(nearRestE, nearE, nearW) + fold
-        val fA = lerp(af * farSwing, farA, farW)
+        val fA = lerp(af * farSwing * g.swing, farA, farW)
         val fE = lerp(ef, farE, farW)
         if (g.cup) {
             nearHand = StreetRig.GRIP
             nearProp = Part.CUP
         }
-        val handW = if (g.cup) 1f else nearW
+        val handW = if (carry) 1f else nearW
         propAlpha = if (g.cup) 1f else smooth((w - .45f) / .3f)
 
         // ---- back to front: the far arm (and what it holds), the body, the head, the near arm
@@ -392,8 +502,10 @@ object StreetLayers {
         }
         // the face comes round: the glanced head over the one in profile (their outlines are
         // the same, only the features move)
-        if (glance < .98f) out.add(Part.HEAD, neckX, neckY, hA, 1f)
-        out.add(Part.HEAD_GLANCE, neckX, neckY, hA, smooth(glance))
+        if (abs(glance) < .98f) out.add(Part.HEAD, neckX, neckY, hA, 1f)
+        if (glance > 0f) out.add(Part.HEAD_GLANCE, neckX, neckY, hA, smooth(glance))
+        else if (glance < 0f) out.add(Part.HEAD_AWAY, neckX, neckY, hA, smooth(-glance))
+        if (l.stick) out.add(Part.STICK, stickX, stickY, stickDeg, 1f)
         arm(look, out, true, shNX, shNY, nA, nE, nearHand, handW, nearProp, propDeg, propAlpha, g)
         if (l.bag == Bag.HAND)
             out.add(
@@ -404,6 +516,12 @@ object StreetLayers {
                 1f,
             )
     }
+
+    /** How high a foot flat on the pavement sits in the joints (its sole's thickness). */
+    private const val FLAT = .045f
+
+    /** Whether [l]'s near hand is taken all the way (a handbag, a stick). */
+    private fun busy(l: StreetLook): Boolean = l.bag == Bag.HAND || l.stick
 
     /** The walk's phase at the frames shown, for what hangs loose. */
     private fun phaseOf(a: Int, b: Int, t: Float): Float {

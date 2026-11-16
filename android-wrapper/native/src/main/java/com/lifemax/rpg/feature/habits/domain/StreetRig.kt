@@ -45,6 +45,8 @@ enum class StreetHair {
     LONG,
     BEANIE,
     CAP,
+    /** A tweed flat cap, grey hair under it. */
+    FLAT,
 }
 
 /**
@@ -65,7 +67,11 @@ class Wear(
     val bag: Int,
 )
 
-/** One street walker's look: build, clothes, hair and bag, and their colours. */
+/**
+ * One street walker's look: build, clothes, hair and bag, and their colours; [elder] for an older
+ * person (who walks as one: [StreetGait.style]), [stick] for one who walks with a stick in the near
+ * hand.
+ */
 class StreetLook(
     val height: Float,
     val build: Float,
@@ -75,6 +81,8 @@ class StreetLook(
     val bag: Bag,
     val skirt: Boolean,
     val wear: Wear,
+    val elder: Boolean = false,
+    val stick: Boolean = false,
 )
 
 object StreetLooks {
@@ -167,6 +175,55 @@ object StreetLooks {
                     sole = 0xE4E4DE,
                     bag = 0x2C2624,
                 ),
+            ),
+            // an older woman: silver hair in a bun, a plum long coat, slate trousers, flat brown
+            // shoes, a small shoulder bag
+            StreetLook(
+                .95f,
+                .98f,
+                1f,
+                Coat.LONG,
+                StreetHair.BUN,
+                Bag.SHOULDER,
+                false,
+                Wear(
+                    skin = 0xE6BFA0,
+                    hair = 0xC9C6C0,
+                    hat = 0xC9C6C0,
+                    coat = 0x6A4A5C,
+                    top = 0xDCD6CC,
+                    legs = 0x4A4F58,
+                    skirt = 0,
+                    shoe = 0x4A3226,
+                    sole = 0x241A14,
+                    bag = 0x3A2C26,
+                ),
+                elder = true,
+            ),
+            // an older man: a tweed flat cap over grey hair, a charcoal-olive overcoat, brown
+            // trousers and shoes, a walking stick
+            StreetLook(
+                .97f,
+                1.02f,
+                1f,
+                Coat.LONG,
+                StreetHair.FLAT,
+                Bag.NONE,
+                false,
+                Wear(
+                    skin = 0xC99878,
+                    hair = 0xA9A6A2,
+                    hat = 0x6E6450,
+                    coat = 0x474B42,
+                    top = 0xCFC8BA,
+                    legs = 0x5B4E42,
+                    skirt = 0,
+                    shoe = 0x3E2A1E,
+                    sole = 0x1E1612,
+                    bag = 0x2C2624,
+                ),
+                elder = true,
+                stick = true,
             ),
         )
 
@@ -277,13 +334,57 @@ object StreetRig {
     private fun settleOf(look: Int): List<FloatArray> =
         SETTLES[look] ?: settle(look).also { SETTLES[look] = it }
 
-    /** Frame [frame] of [look]: the walk's [StreetGait.FRAMES], then the settle's. */
+    /**
+     * Frames baked after the settle's: from standing down to a crouch over the near foot (to tie a
+     * shoe), the far knee on the pavement.
+     */
+    const val CROUCH_FRAMES = 5
+
+    /** The first settle frame, the standing one, and the first crouch frame. */
+    const val SETTLE_AT = StreetGait.FRAMES
+    const val STAND_AT = SETTLE_AT + SETTLE_FRAMES - 1
+    const val CROUCH_AT = SETTLE_AT + SETTLE_FRAMES
+
+    /**
+     * Down on the far knee over the near foot: the hips gone back and down (the near foot stays
+     * where it stood, the far one steps back to kneel), the back bent over the shoe.
+     */
+    val CROUCH: FloatArray =
+        pose(
+            x = -4.6f,
+            turn = .94f,
+            lean = 32f,
+            head = -6f,
+            an = 30f,
+            en = 40f,
+            af = 25f,
+            ef = 40f,
+            ln = 92f,
+            kn = 98f,
+            lf = -17f,
+            kf = 74f,
+            ann = 4f,
+            anf = -48f,
+        )
+
+    /** The crouch's poses: from [STAND], eased, to [CROUCH] (the last one). */
+    val CROUCHING: List<FloatArray> by lazy { Gait.between(STAND, CROUCH, CROUCH_FRAMES) }
+
+    /** The pose of [look]'s frame [frame]: the walk's, the settle's or the crouch's. */
+    private fun poseOf(look: Int, frame: Int): FloatArray =
+        when {
+            frame < SETTLE_AT -> StreetGait.pose(frame / StreetGait.FRAMES.toFloat(), look)
+            frame < CROUCH_AT -> settleOf(look)[frame - SETTLE_AT]
+            else -> CROUCHING[frame - CROUCH_AT]
+        }
+
+    /** Frame [frame] of [look]: the walk's [StreetGait.FRAMES], then the settle's, the crouch's. */
     fun frame(look: Int, frame: Int): StreetFigure =
         if (frame < StreetGait.FRAMES) figure(look, frame / StreetGait.FRAMES.toFloat())
-        else figure(look, settleOf(look)[frame - StreetGait.FRAMES], Gait.PASSING)
+        else figure(look, poseOf(look, frame), Gait.PASSING)
 
     /** Every frame a look has. */
-    const val TOTAL_FRAMES = StreetGait.FRAMES + SETTLE_FRAMES
+    const val TOTAL_FRAMES = StreetGait.FRAMES + SETTLE_FRAMES + CROUCH_FRAMES
 
     /**
      * Frame [frame] of [look] as the street bakes it, in layers: the body alone (the legs, the
@@ -292,10 +393,7 @@ object StreetRig {
      * ([StreetLayers]) while the legs keep the walk's every frame.
      */
     fun body(look: Int, frame: Int): StreetFigure {
-        val p =
-            if (frame < StreetGait.FRAMES)
-                StreetGait.pose(frame / StreetGait.FRAMES.toFloat(), look)
-            else settleOf(look)[frame - StreetGait.FRAMES]
+        val p = poseOf(look, frame)
         val phi =
             if (frame < StreetGait.FRAMES) frame / StreetGait.FRAMES.toFloat() else Gait.PASSING
         return build(StreetLooks.ALL[look], p, phi, false)
@@ -362,7 +460,14 @@ object StreetRig {
      * face in profile, or [glance]d round towards us. A ponytail is left off ([tail]): it swings on
      * its own.
      */
-    fun head(look: Int, glance: Boolean): List<Shape> {
+    fun head(look: Int, glance: Boolean): List<Shape> = head(look, if (glance) 1f else 0f)
+
+    /**
+     * The head of [look] as [head] has it, turned [g]: 0 in profile, 1 glanced round towards us, -1
+     * turned away from us (to a shop window): the ear comes forward and the face goes round the far
+     * side, only the eye's corner showing.
+     */
+    fun head(look: Int, g: Float): List<Shape> {
         val l = StreetLooks.ALL[look]
         val o = Out()
         val hgt = l.height
@@ -370,7 +475,7 @@ object StreetRig {
         val ry = 1.65f * hgt * l.head
         val neck = 1.0f * hgt
         val hy = -(neck * .6f + ry * .92f)
-        head(o, l.wear, l.hair, 0f, hy, rx, ry, 0f, .94f, glance)
+        head(o, l.wear, l.hair, 0f, hy, rx, ry, 0f, .94f, g)
         hair(o, l.hair, l.wear, 0f, hy, rx, ry, 0f, hgt, 0f, false)
         return o.shapes
     }
@@ -431,6 +536,45 @@ object StreetRig {
         val j = WalkerJoints()
         handbag(o, l.wear, j, l.height, l.build, 0f)
         return o.shapes
+    }
+
+    /**
+     * [look]'s walking stick hanging from its handle at 0, 0 down +y ([stickLength] long): the
+     * crook over the hand, the shaft, the rubber ferrule (none for a look without a stick).
+     */
+    fun stick(look: Int): List<Shape> {
+        val l = StreetLooks.ALL[look]
+        val o = Out()
+        if (!l.stick) return o.shapes
+        val len = stickLength(look)
+        val wood = 0x4A3222
+        o.add(FigBuilder.capsule(0f, -.2f, .3f, 0f, len - .5f, .26f, 6), wood, Mat.LEATHER)
+        // the crook: over the top and a little way down the front
+        o.add(
+            FigBuilder.capsule(-.4f, -.55f, .3f, 1.0f, -.5f, .28f, 4),
+            dim(wood, .9f),
+            Mat.LEATHER,
+        )
+        o.add(
+            FigBuilder.capsule(1.05f, -.5f, .27f, 1.25f, .15f, .25f, 3),
+            dim(wood, .9f),
+            Mat.LEATHER,
+        )
+        o.add(
+            FigBuilder.capsule(0f, len - .7f, .34f, 0f, len - .15f, .34f, 3),
+            0x1A1714,
+            Mat.RUBBER,
+        )
+        return o.shapes
+    }
+
+    /**
+     * How long [look]'s stick is, handle to tip, units: as high as their hand hangs with the elbow
+     * a little bent, from their own standing frame.
+     */
+    fun stickLength(look: Int): Float {
+        val l = StreetLooks.ALL[look]
+        return 9.6f * l.height
     }
 
     /** How far a handbag's swing turns it, degrees, for a trail of 1. */
@@ -714,7 +858,7 @@ object StreetRig {
             )
         }
         if (whole) {
-            head(o, w, look.hair, hx, hy, headRx, headRy, headA, turn, false)
+            head(o, w, look.hair, hx, hy, headRx, headRy, headA, turn, 0f)
             hair(o, look.hair, w, hx, hy, headRx, headRy, headA, hgt, trail2, true)
         }
         j.top = hy - headRy * 1.08f
@@ -1141,12 +1285,14 @@ object StreetRig {
         ry: Float,
         ang: Float,
         turn: Float,
-        glance: Boolean,
+        g: Float,
     ) {
         o.add(headShape(cx, cy, rx, ry, ang, turn), w.skin, Mat.SKIN)
         // glanced round towards us: the face comes round, so the ear moves back, both eyes show
-        // and the mouth widens; the profile's outline stays (the hair and the hat do not move)
-        val g = if (glance) 1f else 0f
+        // and the mouth widens; the profile's outline stays (the hair and the hat do not move).
+        // Turned away, the other way round: the ear forward, the face gone round the far side
+        val glance = g > 0f
+        val away = g < 0f
         val ca = cos(rad(ang))
         val sa = sin(rad(ang))
         // a point of the head: [lx] forward, [ly] down, in its radii
@@ -1178,9 +1324,9 @@ object StreetRig {
         if (hair != StreetHair.LONG)
             o.add(
                 FigBuilder.ellipse(
-                    hx(-.12f - .3f * g, .08f),
-                    hy(-.12f - .3f * g, .08f),
-                    (.34f - .1f * g) * rx,
+                    hx(if (away) .32f else -.12f - .3f * g, .08f),
+                    hy(if (away) .32f else -.12f - .3f * g, .08f),
+                    (.34f - .1f * max(g, 0f)) * rx,
                     .3f * ry,
                     ang,
                     8,
@@ -1188,6 +1334,24 @@ object StreetRig {
                 dim(w.skin, .8f),
                 Mat.SKIN,
             )
+        if (away) {
+            // only the far eye's corner and the brow's end show at the face's edge
+            o.add(
+                FigBuilder.capsule(
+                    hx(.7f, -.33f),
+                    hy(.7f, -.33f),
+                    .1f,
+                    hx(.86f, -.31f),
+                    hy(.86f, -.31f),
+                    .09f,
+                    3,
+                ),
+                dim(w.hair, .9f),
+                Mat.FLAT,
+                .7f,
+            )
+            return
+        }
         o.add(
             FigBuilder.capsule(
                 hx(.4f - .22f * g, -.34f),
@@ -1248,7 +1412,7 @@ object StreetRig {
         val hgt = look.height
         val rx = 1.35f * hgt * look.head
         val ry = 1.65f * hgt * look.head
-        head(o, w, StreetHair.CROP, hx, hy, rx, ry, ang, 0f, false)
+        head(o, w, StreetHair.CROP, hx, hy, rx, ry, ang, 0f, 0f)
         o.add(cap(hx, hy, rx, ry, ang, -.1f, -.6f, 1.06f, 0f, -.08f), w.hair, Mat.HAIR)
         val ca = cos(rad(ang))
         val sa = sin(rad(ang))
@@ -1451,6 +1615,19 @@ object StreetRig {
                 )
                 o.add(cap(hx, hy, rx, ry, ang, .45f, -.2f, 1.2f, .02f, -.04f), dim(w.hat, .8f))
                 o.add(cap(hx, hy, rx, ry, ang, .75f, .1f, 1.15f, .1f, -.04f), w.hat)
+            }
+            StreetHair.FLAT -> {
+                // grey hair at the nape and over the ear, then the cap: a low crown pulled
+                // forward and down to a short peak
+                o.add(cap(hx, hy, rx, ry, ang, 0f, -.6f, 1.07f, 0f, -.1f), hair, Mat.HAIR)
+                o.add(cap(hx, hy, rx, ry, ang, .5f, .2f, 1.14f, -.04f, .06f), dim(w.hat, .82f))
+                o.add(cap(hx, hy, rx, ry, ang, .62f, .34f, 1.12f, -.02f, .1f), w.hat)
+                val bx = hx + ux * ry * .5f + fx * rx * .9f
+                val by = hy + uy * ry * .5f + fy * rx * .9f
+                o.add(
+                    FigBuilder.capsule(bx, by, .36f, bx + fx * 1.5f, by + fy * 1.5f + .32f, .2f, 5),
+                    dim(w.hat, .62f),
+                )
             }
             StreetHair.CAP -> {
                 o.add(cap(hx, hy, rx, ry, ang, .1f, -.5f, 1.06f, 0f, -.08f), hair, Mat.HAIR)

@@ -42,6 +42,7 @@ import com.lifemax.rpg.feature.habits.domain.StreetLife
 import com.lifemax.rpg.feature.habits.domain.Stroller
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.tan
 
 /**
  * The street's life on the canvas: the people on the pavement ([StreetLife.passers]), their shadows
@@ -231,7 +232,7 @@ internal class StreetLifePainter {
 
     /** Fills in who is on the street at [seconds]. */
     fun update(seconds: Float, seed: Int, street: StreetLayout) {
-        count = StreetLife.passers(seconds, seed, street.start, street.end, passers)
+        count = StreetLife.passers(seconds, seed, street.start, street.end, passers, street.centers)
         val busy = StreetLife.traffic(painter?.hour ?: 12f)
         carCount = StreetLife.cars(seconds, seed, street.start, street.end, busy, cars)
     }
@@ -396,6 +397,13 @@ internal class StreetLifePainter {
     private var nudgeX = 0f
     private var nudgeY = 0f
 
+    /**
+     * How far the figure [placed] puts leans into its walk: the top forward of the feet by this
+     * much a unit up (the tangent of the lean, signed by the way they walk).
+     */
+    private var skew = 0f
+    private val shear = Matrix()
+
     private fun placed(x: Float, y: Float, how: Int): Matrix {
         place.reset()
         place.translate(x + nudgeX, y + nudgeY)
@@ -410,6 +418,11 @@ internal class StreetLifePainter {
                 fall[1, 1] = -NearLight.lampReach(y * 2f)
                 place *= fall
             }
+        }
+        if (skew != 0f) {
+            shear.reset()
+            shear[1, 0] = -skew
+            place *= shear
         }
         return place
     }
@@ -428,9 +441,13 @@ internal class StreetLifePainter {
     ) {
         blend = mode
         val s = persp * unit
+        // a brisk walker leans into it a little: the whole figure, sheared about the feet
+        skew = p.dir * tan(p.lean * (Math.PI.toFloat() / 180f))
         withTransform({ transform(placed(p.x, p.lane, how)) }) {
             scale(p.dir * s, s, Offset.Zero) { figure(p, alpha, filter) }
         }
+        val lean = skew
+        skew = 0f
         when (p.kind) {
             Stroller.DOG_WALKER ->
                 withTransform({ transform(placed(p.dogX, p.lane, how)) }) {
@@ -438,6 +455,7 @@ internal class StreetLifePainter {
                 }
             Stroller.PAIR -> {
                 val s2 = perspective(p.lane + StreetLife.SIDE_OUT) * unit
+                skew = lean
                 withTransform({
                     transform(
                         placed(
@@ -451,6 +469,7 @@ internal class StreetLifePainter {
                         walkerFrames(p, p.look2, p.frame2, p.next2, p.mix2, alpha, filter, p.act2)
                     }
                 }
+                skew = 0f
             }
             else -> {}
         }
@@ -607,12 +626,13 @@ internal class StreetLifePainter {
                 }
             // the feet's contact shadows, or the bicycle's under its tyres and frame
             if (p.kind == Stroller.CYCLIST) cycleContacts(p, persp)
-            else contacts(p, p.look, p.frame, p.x, p.lane, persp)
+            else
+                contacts(p, p.look, StreetLayers.shown(p.frame, p.still, p.act), p.x, p.lane, persp)
             if (p.kind == Stroller.PAIR)
                 contacts(
                     p,
                     p.look2,
-                    p.frame2,
+                    StreetLayers.shown(p.frame2, p.still, p.act2),
                     p.x - p.dir * StreetLife.SIDE_BACK,
                     p.lane + StreetLife.SIDE_OUT,
                     perspective(p.lane + StreetLife.SIDE_OUT),

@@ -28,6 +28,9 @@ enum class Stroller {
 /** Someone on the pavement this moment, written by [StreetLife.passers]. */
 class Passer {
     var on = false
+
+    /** Which of the street's slots they set out in ([StreetLife.start]): who they are. */
+    var slot = 0
     var kind = Stroller.WALKER
 
     /**
@@ -80,6 +83,33 @@ class Passer {
     /** What the walker's hands and head are doing ([StreetActs]), and their companion's. */
     val act = Gesture()
     val act2 = Gesture()
+
+    /** How they walk ([StreetManners]), and how far they lean into it, degrees forward. */
+    var manner = Manner.AVERAGE
+    var lean = 0f
+
+    /** What they have stopped for this moment (easing to it or from it), [Halt.NONE] walking. */
+    var halt = Halt.NONE
+
+    /** Their own way along the pavement, before they step aside for someone ([lane]). */
+    var lane0 = StreetLife.LANE
+
+    /**
+     * The stops planned on their walk: how many, how far along each is, the walk's clock as they
+     * begin to ease into it, how long they stand and why.
+     */
+    var stops = 0
+    val stopD = FloatArray(StreetLife.MOST_STOPS)
+    val stopC = FloatArray(StreetLife.MOST_STOPS)
+    val stopH = FloatArray(StreetLife.MOST_STOPS)
+    val stopHalt = Array(StreetLife.MOST_STOPS) { Halt.NONE }
+
+    /** Which walk the plan is for (worked out once, not every frame). */
+    internal var planK = Int.MIN_VALUE
+    internal var planSeed = 0
+    internal var planFrom = 0f
+    internal var planTo = 0f
+    internal var planShops = 0
 }
 
 /**
@@ -135,6 +165,9 @@ object StreetLife {
     /** The most passers kept at once. */
     const val MOST = 5
 
+    /** The most stops planned on one walk. */
+    const val MOST_STOPS = 2
+
     /** A cyclist's speed next to a walker's. */
     const val CYCLIST = 2.4f
 
@@ -188,10 +221,13 @@ object StreetLife {
     /** How many slots back a passer can still be walking: a long street takes a few. */
     private const val LOOKBACK = 8
 
-    /** The rig's scale for [look]: everyone is about as tall as the street's people are. */
-    fun pace(look: Int): Float = SIZE * StreetLooks.ALL[look].height
+    /**
+     * The scale of [look]'s stride: everyone is about as tall as the street's people are, their
+     * legs as long as they are tall, and an older look's steps are short ([StreetGait.style]).
+     */
+    fun pace(look: Int): Float = SIZE * StreetLooks.ALL[look].height * StreetGait.style(look).stride
 
-    /** How fast [look] walks, in street units a second. */
+    /** How fast [look] walks at the standard cadence, in street units a second. */
     fun speed(look: Int): Float = pace(look) * Gait.SPEED
 
     fun kind(seed: Int, k: Int): Stroller {
@@ -204,8 +240,7 @@ object StreetLife {
         }
     }
 
-    fun look(seed: Int, k: Int): Int =
-        (Ambient.hash(seed, k, 202) * StreetLooks.COUNT).toInt().coerceIn(0, StreetLooks.COUNT - 1)
+    fun look(seed: Int, k: Int): Int = StreetManners.look(Ambient.hash(seed, k, 202))
 
     fun dir(seed: Int, k: Int): Float = if (Ambient.hash(seed, k, 203) < .5f) -1f else 1f
 
@@ -218,10 +253,18 @@ object StreetLife {
     fun length(from: Float, to: Float): Float = to - from + 2f * MARGIN
 
     /**
-     * Everyone on the pavement at [seconds] on a street from [from] to [to], written into [out]
-     * (the nearest the kerb last); how many there are. At rest ([seconds] 0) nobody.
+     * Everyone on the pavement at [seconds] on a street from [from] to [to] (its buildings' middles
+     * at [shops], for those who stop at a window), written into [out]; how many there are. At rest
+     * ([seconds] 0) nobody.
      */
-    fun passers(seconds: Float, seed: Int, from: Float, to: Float, out: Array<Passer>): Int {
+    fun passers(
+        seconds: Float,
+        seed: Int,
+        from: Float,
+        to: Float,
+        out: Array<Passer>,
+        shops: List<Float>? = null,
+    ): Int {
         var n = 0
         for (p in out) p.on = false
         if (seconds <= 0f) return 0
@@ -230,29 +273,52 @@ object StreetLife {
         while (k > k0 - LOOKBACK && n < out.size && n < MOST) {
             if (happens(seed, k)) {
                 val t = seconds - start(seed, k)
-                if (t >= 0f && fill(seed, k, t, from, to, out[n])) n++
+                if (t >= 0f && fill(seed, k, t, from, to, out[n], shops)) n++
             }
             k--
         }
+        makeWay(out, n)
         return n
     }
 
     /**
-     * Fills [p] with the passer of slot [k], [t] seconds into their walk; false once it is over.
+     * Fills [p] with the passer of slot [k], [t] seconds into their walk, on a street whose
+     * buildings stand at [shops] (their middles: someone looking in a window stops at one); false
+     * once it is over.
      */
-    fun fill(seed: Int, k: Int, t: Float, from: Float, to: Float, p: Passer): Boolean {
+    fun fill(
+        seed: Int,
+        k: Int,
+        t: Float,
+        from: Float,
+        to: Float,
+        p: Passer,
+        shops: List<Float>? = null,
+    ): Boolean {
         p.on = false
         p.still = 0f
         p.sniff = 0f
+        p.halt = Halt.NONE
         val kind = kind(seed, k)
-        val look = look(seed, k)
+        var look = look(seed, k)
+        // a lead in the hand that holds a stick: someone else walks the dog
+        if (kind == Stroller.DOG_WALKER && StreetLooks.ALL[look].stick) look = ELDER_LOOK
         val dir = dir(seed, k)
+        val pair = kind == Stroller.PAIR
+        val look2 = if (pair) companion(seed, k, look) else look
+        val manner = manner(seed, k, kind, look)
         val size = pace(look)
         val length = length(from, to)
-        val v = speed(look) * if (kind == Stroller.CYCLIST) CYCLIST else 1f
+        val v = speed(seed, k, kind, look, look2, manner)
+        val busy =
+            kind == Stroller.DOG_WALKER ||
+                StreetLooks.ALL[look].bag == Bag.HAND ||
+                StreetLooks.ALL[look].stick
+        val busy2 = StreetLooks.ALL[look2].bag == Bag.HAND || StreetLooks.ALL[look2].stick
         var travel: Float
         when (kind) {
             Stroller.DOG_WALKER -> {
+                p.stops = 0
                 // they stop once, on the passing pose (a whole number of strides along), settle to
                 // a stand while the dog sniffs, and set off again
                 val stride = Gait.STRIDE * size
@@ -260,7 +326,6 @@ object StreetLife {
                 val tc = max(0f, (at - v * STOP / 2f) / v)
                 val tStop = tc + STOP
                 val tHold = tStop + SNIFF
-                val tGo = tHold + START
                 if (t < tStop) {
                     travel = gone(t, v, 0f, tc, STOP)
                     if (t > tStop - SETTLE) p.still = (t - (tStop - SETTLE)) / SETTLE
@@ -272,30 +337,95 @@ object StreetLife {
                     p.still = (1f - (t - tHold) / SETTLE).coerceIn(0f, 1f)
                 }
                 p.sniff = p.still
+                StreetActs.at(seed, k, 0, t, look, true, p.act, manner)
             }
-            else -> travel = v * t
+            Stroller.CYCLIST -> {
+                p.stops = 0
+                travel = v * t
+                p.act.clear()
+            }
+            else -> {
+                // on foot: the walk's own clock runs with the time but stands still through each
+                // stop (easing down to it and up from it), and what the hands do and the ground
+                // covered both follow that clock, so a stop lands where it was planned
+                plan(seed, k, kind, manner, look, from, to, dir, v, busy, shops, p)
+                var off = 0f
+                var c = t
+                var halted = -1
+                var u = 0f
+                val pi = PI.toFloat()
+                for (i in 0 until p.stops) {
+                    val r = p.stopC[i] + off
+                    if (t < r) {
+                        c = t - off
+                        break
+                    }
+                    u = t - r
+                    val h = p.stopH[i]
+                    if (u < HALT_STOP + h + HALT_START) {
+                        halted = i
+                        c =
+                            if (u < HALT_STOP)
+                                p.stopC[i] +
+                                    u / 2f +
+                                    HALT_STOP / (2f * pi) * sin(pi * u / HALT_STOP)
+                            else if (u < HALT_STOP + h) p.stopC[i] + HALT_STOP / 2f
+                            else {
+                                val w = u - HALT_STOP - h
+                                p.stopC[i] + HALT_STOP / 2f + w / 2f -
+                                    HALT_START / (2f * pi) * sin(pi * w / HALT_START)
+                            }
+                        p.still =
+                            if (u < HALT_STOP)
+                                ((u - (HALT_STOP - SETTLE)) / SETTLE).coerceIn(0f, 1f)
+                            else if (u < HALT_STOP + h) 1f
+                            else (1f - (u - HALT_STOP - h) / SETTLE).coerceIn(0f, 1f)
+                        break
+                    }
+                    off += HALT_STOP / 2f + h + HALT_START / 2f
+                    c = t - off
+                }
+                StreetActs.at(seed, k, 0, c, look, busy, p.act, manner)
+                travel = v * (c - p.act.lost)
+                val q = quiet(c, p)
+                p.act.w *= q
+                if (halted >= 0) {
+                    p.halt = p.stopHalt[halted]
+                    halting(p.act, p.halt, busy, u, p.stopH[halted], seed, k, halted, 0)
+                }
+                if (pair) {
+                    StreetActs.at(seed, k, 1, c, look2, busy2, p.act2, manner)
+                    p.act2.w *= q
+                    if (halted >= 0)
+                        halting(p.act2, p.halt, busy2, u, p.stopH[halted], seed, k, halted, 1)
+                }
+            }
         }
-        // what they do with their hands as they go (a cyclist keeps them on the bars); reading a
-        // phone slows them a little, so the ground covered is the time less what that lost
-        val busy = kind == Stroller.DOG_WALKER || StreetLooks.ALL[look].bag == Bag.HAND
-        if (kind == Stroller.CYCLIST) p.act.clear()
-        else StreetActs.at(seed, k, 0, t, look, busy, p.act)
-        if (kind == Stroller.WALKER || kind == Stroller.PAIR) travel = v * (t - p.act.lost)
         if (travel > length) return false
+        p.act.swing = StreetManners.swing(manner)
         p.on = true
+        p.slot = k
         p.kind = kind
         p.look = look
+        p.manner = manner
+        p.lean = if (kind == Stroller.CYCLIST) 0f else StreetManners.lean(manner)
         p.dir = dir
         p.size = size
         // on foot the ground covered is lived, not metered: the steps drift and hesitate a little
-        // ([Gait.liveTravel]); the same live distance places them and picks the frame, so the feet
-        // never slide. A cyclist rolls steadily, and the dog walker keeps the metered pace so the
-        // stop lands exactly on the passing pose.
+        // ([Gait.liveTravel]), less so near a stop so it still lands on the passing pose; the
+        // same live distance places them and picks the frame, so the feet never slide. A cyclist
+        // rolls steadily, and the dog walker keeps the metered pace so the stop lands exactly on
+        // the passing pose.
         val live =
             if (kind == Stroller.CYCLIST || kind == Stroller.DOG_WALKER) travel
-            else Gait.liveTravel(travel, size, seed * 31 + k)
+            else live(travel, size, seed * 31 + k, p)
         p.travel = live
-        p.lane = LANE - 2f + 4f * Ambient.hash(seed, k, 206)
+        val laneH = Ambient.hash(seed, k, 206)
+        p.lane0 =
+            if (kind == Stroller.CYCLIST) LANE + 1f + 2f * laneH
+            else if (pair) min(StreetManners.lane(manner, laneH), PAIR_LANE)
+            else StreetManners.lane(manner, laneH)
+        p.lane = p.lane0
         p.x = if (dir > 0f) from - MARGIN + live else to + MARGIN - live
         walk(StreetGait.phase(live, size), p)
         when (kind) {
@@ -312,21 +442,15 @@ object StreetLife {
                 p.wheel = StreetGait.wheel(travel)
             }
             Stroller.PAIR -> {
-                p.look2 =
-                    (look + 1 + (Ambient.hash(seed, k, 207) * (StreetLooks.COUNT - 1)).toInt()) %
-                        StreetLooks.COUNT
-                p.size2 = pace(p.look2)
-                StreetActs.at(
-                    seed,
-                    k,
-                    1,
-                    t,
-                    p.look2,
-                    StreetLooks.ALL[p.look2].bag == Bag.HAND,
-                    p.act2,
-                )
-                val phase =
-                    StreetGait.phase(travel, p.size2, Gait.PASSING + Ambient.hash(seed, k, 208))
+                p.look2 = look2
+                p.size2 = pace(look2)
+                p.act2.swing = p.act.swing
+                // the companion's steps are their own; when the two stop to talk, the
+                // companion's land on the passing pose there too, so both settle to a stand
+                val from2 =
+                    if (p.stops > 0) Gait.PASSING - p.stopD[0] / (Gait.STRIDE * p.size2)
+                    else Gait.PASSING + Ambient.hash(seed, k, 208)
+                val phase = StreetGait.phase(travel, p.size2, from2)
                 p.frame2 = Gait.nearest(phase, StreetGait.FRAMES)
                 p.next2 = Gait.neighbour(phase, StreetGait.FRAMES)
                 p.mix2 = abs(Gait.offset(phase, StreetGait.FRAMES))
@@ -335,6 +459,271 @@ object StreetLife {
         }
         return true
     }
+
+    /** The older woman's look: she walks the dog (a stick and a lead want the same hand). */
+    private const val ELDER_LOOK = 4
+
+    /** How many looks are not the older people's (the first ones). */
+    private const val YOUNGER = 4
+
+    /** The farthest out a pair walks (the companion is [SIDE_OUT] nearer the kerb). */
+    const val PAIR_LANE = 10.5f
+
+    /** Easing down to a planned stop and up from it, seconds: a slower start than the dog's. */
+    const val HALT_STOP = .8f
+    const val HALT_START = .95f
+
+    /** The hands and the head start on a stop's business this long before they stand. */
+    const val HALT_LEAD = .3f
+
+    /** How far either side of a lobby's middle its shop windows are, street units. */
+    const val WINDOW = 48f
+
+    /** How [look] of slot [k] ([kind]) walks. */
+    fun manner(seed: Int, k: Int, kind: Stroller, look: Int): Manner {
+        if (kind == Stroller.CYCLIST) return Manner.AVERAGE
+        if (StreetLooks.ALL[look].elder) return Manner.ELDERLY
+        if (kind == Stroller.PAIR)
+            return if (Ambient.hash(seed, k, 210) < .55f) Manner.STROLLER else Manner.AVERAGE
+        return StreetManners.manner(look, Ambient.hash(seed, k, 210))
+    }
+
+    /** The look of a pair's companion: the other older look for an older walker, else another. */
+    fun companion(seed: Int, k: Int, look: Int): Int {
+        if (StreetLooks.ALL[look].elder)
+            return if (look == ELDER_LOOK) ELDER_LOOK + 1 else ELDER_LOOK
+        return (look + 1 + (Ambient.hash(seed, k, 207) * (YOUNGER - 1)).toInt()) % YOUNGER
+    }
+
+    /**
+     * How fast the passer of slot [k] goes, street units a second: their look's pace at their
+     * manner's cadence, a little of their own; a pair at the slower one's.
+     */
+    fun speed(seed: Int, k: Int, kind: Stroller, look: Int, look2: Int, m: Manner): Float {
+        if (kind == Stroller.CYCLIST) return speed(look) * CYCLIST
+        val own = StreetManners.tempo(m) * (.95f + .1f * Ambient.hash(seed, k, 209))
+        val v = speed(look) * own
+        return if (kind == Stroller.PAIR) min(v, speed(look2) * own) else v
+    }
+
+    /**
+     * Plans the stops of slot [k]'s walk into [p] (how many, where, for what and how long, and the
+     * walk's clock as each begins), unless it holds them already.
+     */
+    private fun plan(
+        seed: Int,
+        k: Int,
+        kind: Stroller,
+        m: Manner,
+        look: Int,
+        from: Float,
+        to: Float,
+        dir: Float,
+        v: Float,
+        busy: Boolean,
+        shops: List<Float>?,
+        p: Passer,
+    ) {
+        val shopsKey = shops?.size ?: -1
+        if (
+            p.planK == k &&
+                p.planSeed == seed &&
+                p.planFrom == from &&
+                p.planTo == to &&
+                p.planShops == shopsKey
+        )
+            return
+        p.planK = k
+        p.planSeed = seed
+        p.planFrom = from
+        p.planTo = to
+        p.planShops = shopsKey
+        p.stops = 0
+        val pair = kind == Stroller.PAIR
+        val n = StreetManners.stops(m, pair, Ambient.hash(seed, k, 240))
+        if (n == 0) return
+        val length = length(from, to)
+        val stride = Gait.STRIDE * pace(look)
+        val stick = StreetLooks.ALL[look].stick
+        var lastD = 0f
+        var lastEnd = 0f
+        for (i in 0 until n) {
+            val frac =
+                if (n == 1) .2f + .6f * Ambient.hash(seed, k, 241)
+                else if (i == 0) .14f + .28f * Ambient.hash(seed, k, 241)
+                else .58f + .28f * Ambient.hash(seed, k, 242)
+            val halt = StreetManners.halt(m, pair, stick, Ambient.hash(seed, k, 243 + i))
+            var d = length * frac
+            if (halt == Halt.WINDOW && !shops.isNullOrEmpty()) {
+                // the nearest shop window (either side of a lobby's door) to where they would be
+                val x = if (dir > 0f) from - MARGIN + d else to + MARGIN - d
+                var best = x
+                var bestD = Float.MAX_VALUE
+                for (s in shops.indices) {
+                    val c = shops[s]
+                    for (side in 0..1) {
+                        val w = c + (if (side == 0) -WINDOW else WINDOW)
+                        if (w < from || w > to) continue
+                        val e = abs(w - x)
+                        if (e < bestD) {
+                            bestD = e
+                            best = w
+                        }
+                    }
+                }
+                d = if (dir > 0f) best - from + MARGIN else to + MARGIN - best
+            }
+            // a whole number of strides along: they settle to a stand from the passing pose
+            d = round(d / stride) * stride
+            if (d < lastD + 4f * stride || d > length - 2f * MARGIN) continue
+            // the clock at which the cruise gets there: the walk less what reading the phone has
+            // slowed it (a contraction: a few rounds settle it)
+            var c = d / v
+            for (r in 0 until 8) {
+                StreetActs.at(seed, k, 0, c, look, busy, p.act, m)
+                c = d / v + p.act.lost
+            }
+            val start = c - HALT_STOP / 2f
+            if (start < lastEnd + 1f) continue
+            val j = p.stops
+            p.stopD[j] = d
+            p.stopC[j] = start
+            p.stopH[j] = StreetManners.hold(m, halt, Ambient.hash(seed, k, 245 + i))
+            p.stopHalt[j] = halt
+            p.stops = j + 1
+            lastD = d
+            lastEnd = start + HALT_STOP / 2f + HALT_START / 2f
+        }
+    }
+
+    /**
+     * How much of what the hands are doing shows at the walk's clock [c]: none from just before a
+     * stop to just after it (the stop's own business has the hands then), easing back either side.
+     */
+    private fun quiet(c: Float, p: Passer): Float {
+        var q = 1f
+        for (i in 0 until p.stops) {
+            val a = p.stopC[i] - .15f
+            val b = p.stopC[i] + HALT_STOP / 2f + HALT_START / 2f + .15f
+            val d = if (c < a) a - c else if (c > b) c - b else 0f
+            q = min(q, smooth(d / .5f))
+        }
+        return q
+    }
+
+    /**
+     * Writes into [g] what the hands and the head do [u] seconds into a stop for [halt] that holds
+     * [hold] seconds: the business begins just before they stand and is over as they set off.
+     */
+    private fun halting(
+        g: Gesture,
+        halt: Halt,
+        busy: Boolean,
+        u: Float,
+        hold: Float,
+        seed: Int,
+        k: Int,
+        i: Int,
+        who: Int,
+    ) {
+        val x = u - (HALT_STOP - HALT_LEAD)
+        val dur = hold + HALT_LEAD
+        if (x <= 0f || x >= dur) return
+        val act = StreetManners.act(halt, busy)
+        g.act = act
+        g.t = x
+        g.dur = dur
+        g.w = StreetActs.envelope(x, dur, StreetActs.blend(act))
+        g.vary = Ambient.hash(seed * 131 + who * 17, k, 250 + i)
+    }
+
+    private fun smooth(v: Float): Float {
+        val c = v.coerceIn(0f, 1f)
+        return c * c * (3f - 2f * c)
+    }
+
+    /**
+     * The ground [p] has covered, lived: [travel] metered with [Gait.liveTravel]'s drift, which
+     * fades out within a couple of strides of a planned stop.
+     */
+    private fun live(travel: Float, size: Float, seed: Int, p: Passer): Float {
+        val stride = Gait.STRIDE * size
+        var w = 1f
+        for (i in 0 until p.stops) {
+            val d = abs(travel - p.stopD[i]) / stride
+            w = min(w, smooth((d - .3f) / 1.7f))
+        }
+        if (w <= 0f) return travel
+        return travel + w * (Gait.liveTravel(travel, size, seed) - travel)
+    }
+
+    /**
+     * Two people on the pavement where they would walk through each other (one overtaking the
+     * other, or two coming the other way) step apart across the pavement: each moves half of what
+     * keeps a little room between them, easing in as they draw near and out once past.
+     */
+    private fun makeWay(out: Array<Passer>, n: Int) {
+        for (i in 0 until n) out[i].lane = out[i].lane0
+        // a few rounds, so that someone against the wall or the kerb leaves the moving to the other
+        for (round in 0 until 3) for (i in 0 until n) for (j in i + 1 until n) {
+            val a = out[i]
+            val b = out[j]
+            val gap = max(lo(b) - hi(a), lo(a) - hi(b))
+            val w = 1f - smooth((gap - 2f) / 14f)
+            if (w <= 0f) continue
+            // the one nearer the wall stays nearer it
+            val aLow = a.lane0 < b.lane0 || (a.lane0 == b.lane0 && a.dir < b.dir)
+            val low = if (aLow) a else b
+            val high = if (aLow) b else a
+            val base = high.lane0 - low.lane0
+            val want = max(base, base + (2f * BAND + ROOM + outer(low) - base) * w)
+            val short = want - (high.lane - low.lane)
+            if (short <= 0f) continue
+            val downRoom = max(0f, low.lane - LANE_MIN)
+            val upRoom = max(0f, laneMax(high) - high.lane)
+            var down = min(short / 2f, downRoom)
+            val up = min(short - down, upRoom)
+            down = min(short - up, downRoom)
+            low.lane -= down
+            high.lane += up
+        }
+    }
+
+    /**
+     * The nearest the wall and the kerb anyone walks, making way (a pair's companion [SIDE_OUT]
+     * further out, at the kerb's edge when two pairs pass).
+     */
+    private const val LANE_MIN = 7f
+    private const val LANE_MAX = 13.5f
+    private const val PAIR_MAX = 12f
+
+    private fun laneMax(p: Passer): Float = if (p.kind == Stroller.PAIR) PAIR_MAX else LANE_MAX
+
+    /** How much of the pavement's depth one person takes either side of their lane. */
+    private const val BAND = .8f
+
+    /** The room kept between two people's bands when one passes another. */
+    private const val ROOM = .6f
+
+    /** How much further out than its lane a passer reaches: a pair's companion. */
+    private fun outer(p: Passer): Float = if (p.kind == Stroller.PAIR) SIDE_OUT else 0f
+
+    /** Where [p] begins along the street and where it ends, with a little room. */
+    private fun lo(p: Passer): Float =
+        when (p.kind) {
+            Stroller.PAIR -> min(p.x, p.x - p.dir * SIDE_BACK) - 3f
+            Stroller.DOG_WALKER -> min(p.x, p.dogX) - 4f
+            Stroller.CYCLIST -> p.x - 12f
+            else -> p.x - 3f
+        }
+
+    private fun hi(p: Passer): Float =
+        when (p.kind) {
+            Stroller.PAIR -> max(p.x, p.x - p.dir * SIDE_BACK) + 3f
+            Stroller.DOG_WALKER -> max(p.x, p.dogX) + 4f
+            Stroller.CYCLIST -> p.x + 12f
+            else -> p.x + 3f
+        }
 
     private fun walk(phase: Float, p: Passer) {
         p.frame = Gait.nearest(phase, StreetGait.FRAMES)

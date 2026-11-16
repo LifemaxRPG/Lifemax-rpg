@@ -2,6 +2,7 @@ package com.lifemax.rpg.feature.habits
 
 import com.lifemax.rpg.feature.habits.domain.CarPass
 import com.lifemax.rpg.feature.habits.domain.Gait
+import com.lifemax.rpg.feature.habits.domain.Halt
 import com.lifemax.rpg.feature.habits.domain.NearLight
 import com.lifemax.rpg.feature.habits.domain.Passer
 import com.lifemax.rpg.feature.habits.domain.StreetGait
@@ -11,6 +12,8 @@ import com.lifemax.rpg.feature.habits.domain.Stroller
 import com.lifemax.rpg.feature.habits.domain.buildingLayout
 import com.lifemax.rpg.feature.habits.domain.streetLayout
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.round
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -78,19 +81,44 @@ class StreetLifeTest {
     }
 
     @Test
-    fun walkersGoingTheSameWayNeverOverlapOnScreen() {
+    fun theQuickOvertakeTheSlowAndNobodyWalksThroughAnybody() {
         var t = .5f
-        while (t < 2 * 3600f) {
-            val n = StreetLife.passers(t, seed, street.start, street.end, out)
+        var overtakes = 0
+        val was = HashMap<Long, Float>()
+        while (t < 3 * 3600f) {
+            val n = StreetLife.passers(t, seed, street.start, street.end, out, street.centers)
             for (i in 0 until n) for (j in i + 1 until n) {
                 val a = out[i]
                 val b = out[j]
-                if (a.kind == Stroller.CYCLIST || b.kind == Stroller.CYCLIST || a.dir != b.dir)
-                    continue
-                assertTrue("$t: ${a.x} and ${b.x}", abs(a.x - b.x) > 250f)
+                // side by side along the street: apart across the pavement
+                val ax =
+                    if (a.kind == Stroller.PAIR) a.x - a.dir * StreetLife.SIDE_BACK / 2f else a.x
+                val bx =
+                    if (b.kind == Stroller.PAIR) b.x - b.dir * StreetLife.SIDE_BACK / 2f else b.x
+                if (abs(ax - bx) < 4f) {
+                    val lowA = a.lane0 <= b.lane0
+                    val low = if (lowA) a else b
+                    val high = if (lowA) b else a
+                    val reach = if (low.kind == Stroller.PAIR) StreetLife.SIDE_OUT else 0f
+                    assertTrue(
+                        "$t: lanes ${low.lane} (+$reach) and ${high.lane}",
+                        high.lane - (low.lane + reach) > 1.5f,
+                    )
+                }
+                // one walking past another going the same way
+                if (a.dir == b.dir && a.kind != Stroller.CYCLIST && b.kind != Stroller.CYCLIST) {
+                    val key = min(a.slot, b.slot).toLong() * 100_000L + max(a.slot, b.slot)
+                    val first = if (a.slot < b.slot) a else b
+                    val second = if (a.slot < b.slot) b else a
+                    val ahead = (first.x - second.x) * first.dir
+                    val before = was[key]
+                    if (before != null && before * ahead < 0f) overtakes++
+                    was[key] = ahead
+                }
             }
             t += .5f
         }
+        assertTrue("overtakes $overtakes", overtakes >= 3)
     }
 
     @Test
@@ -102,7 +130,7 @@ class StreetLifeTest {
             val n = StreetLife.passers(t, seed, street.start, street.end, out)
             for (i in 0 until n) {
                 val p = out[i]
-                if (p.kind != Stroller.WALKER) continue
+                if (p.kind != Stroller.WALKER || p.halt != Halt.NONE) continue
                 val x0 = p.x
                 val travel0 = p.travel
                 val dir = p.dir
@@ -115,6 +143,7 @@ class StreetLifeTest {
                         q.look != look ||
                             q.dir != dir ||
                             q.kind != Stroller.WALKER ||
+                            q.halt != Halt.NONE ||
                             abs(q.x - x0) > 20f
                     )
                         continue
