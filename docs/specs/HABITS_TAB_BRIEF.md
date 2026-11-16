@@ -724,3 +724,41 @@ away when a tall building leaves no room. Its propellers turn (a blurred disc an
 flies at dusk and night: the panel and windows glow with the light sweeping along the panel, a soft glow under it, a
 green (flying right) or red (flying left) navigation light at the near tailplane tip, white at the tail, a strobe under the
 cabin. Screenshots: `blimpAndCloudsDay` now focuses a foundation so the sky has room; `blimpNight` added.
+
+### As built: the sun at a building's edge
+
+The owner sent a photo of the sun rising half behind the Empire State Building and asked for "that flare of light"
+when the sun is only partly behind a building. The backdrop (sky, sun, lens flare, clouds over the sun) is drawn
+before the buildings, so a building simply covered the sun; the glare is a new pass drawn after the street and the
+near foreground, in screen space, under the vignette and grain, clipped under the heading (`SunGlare`, new file).
+
+Occlusion (`domain/SunEdge`, pure Kotlin, allocation-free): each building in view is given as screen boxes: its
+front (lobby and storeys) and its cornice, each swept along its shown side and up by the roof's depth (`B.DY`), which
+is exactly the front + side face + roof face silhouette; its water tank (when it has floors and no crane) and its
+reward sign's board (the legs let light through) as plain boxes. Nothing hides the sun above the top of the window,
+or above the middle of the fade under the heading where a tall building is rubbed out (`ceiling`). Each frame the sun
+disc (`SunMoonSprites.SUN_R`) is sampled on a 17x17 grid (225 points): the share outside every box is `visible`, the
+centroid of those points the peek point (for a sliver it hugs the edge); two rings at 1.7 and 2.8 radii give `near`,
+how open the sky round the sun is, and its centroid (towards the edge a hidden sun is behind).
+
+What is drawn, by `visible` (`SunEdge.spikes/bloom/rim`): at 1 (open) nothing new, the lens flare as before; from
+0.9 a faint bloom and rim come in; around 0.5 a full bloom over the edge (added, so the silhouette's edge is eaten),
+a warm haze (the sun's sky layer at 0.42), the core, and half-strength rays; from about 0.25 down to a sliver (0.03)
+the full starburst: 8 main rays of uneven length (up to 104 dp) and 8 finer, shorter ones, the fan turned 9 to 51
+degrees with the peek's place on the screen, from one baked ray sprite (`GlareSprites`, 192x13 px at 2 px/dp, a
+hairline in a soft wing narrowing and fading along it, dithered; 10 KB) drawn rotated and scaled, plus a white hot
+point laid over the edge; at 0 (hidden) only the backlit rim and a faint glow where the sky opens, both gone when
+the sun is deep behind a building (`near` 0). The rim: each outline edge of the swept boxes near the sun that faces
+the sky (not the ground's), cut into short pieces, each as strong as it is near the sun (Gaussian, 3.5 radii) and
+turned to it: a thin hot line just inside the silhouette in a soft warm one, added. Strength: `SunLook.up`, the
+overcast (`cloudiness`), a cloud across the sun (`Backdrop.sunCover`, a new read-only accessor), mist (fewer rays,
+more haze); tints warm from white-gold by day to gold-orange at dusk (`SunLook.dusk`); none at night. The bloom, core
+and haze reuse the sun's baked layers. No per-frame allocation; about 16 images and up to some 60 short lines a frame
+only while the sun is at an edge.
+
+Screenshots: `sunAtEdgeMidday` and `sunAtEdgeGoldenHour` (a new `edge` scenario: an empty foundation in front and a
+tall building beside it, so the sun's right-hand lane falls on the tall one's left edge) and `sunOverSignMidday` (the
+city's second building in front at 12:15, the sun over the first one's sign board). The positions were worked out
+from the reference pictures, not rendered here: CI renders them. Tuned from software composites over CI reference
+crops at several shares shown, not on a phone. `SunEdgeTest` covers the shares, the peek, the sweep, the open sky
+round a hidden sun, the strengths and the ray sprite.

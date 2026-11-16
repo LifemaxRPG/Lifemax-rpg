@@ -70,6 +70,7 @@ import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.StreetView
 import com.lifemax.rpg.feature.habits.domain.StreetWeather
+import com.lifemax.rpg.feature.habits.domain.SunEdge
 import com.lifemax.rpg.feature.habits.domain.TOP_FADE
 import com.lifemax.rpg.feature.habits.domain.WeatherOverride
 import com.lifemax.rpg.feature.habits.domain.buildingAt
@@ -326,6 +327,7 @@ private fun StageCanvas(
     val season = remember(p.day) { Season.at(p.day) }
     val seasonFall = remember { SeasonFall() }
     val foregroundPainter = remember { ForegroundPainter() }
+    val sunGlare = remember { SunGlare() }
     val sky = remember(p.hour) { skyColors(p.hour) }
     // the day's weather at this hour (or the one a test forces), and the key light under it
     val forced = WeatherOverride.forced
@@ -764,6 +766,12 @@ private fun StageCanvas(
             )
         }
         val fades = layouts.isNotEmpty() && f.ground - reach * f.unit < f.top + TOP_FADE * d
+        // the buildings' outlines round the sun, for its glare where it peeks past an edge: none
+        // over the heading, nor where the fade under it has rubbed them out (half way down it)
+        sunEdge(sunGlare.edge, layouts, arts, street, f, from, to)
+        sunGlare.edge.ceiling = if (fades) f.top + TOP_FADE * d * .5f else f.top
+        val sunR = SunMoonSprites.SUN_R * d
+        sunGlare.edge.measure(orb.first * d, orb.second * d, sunR)
         if (fades)
             drawIntoCanvas { it.saveLayer(Rect(0f, 0f, this.size.width, this.size.height), layer) }
         clipRect(0f, f.top, this.size.width, this.size.height) {
@@ -870,6 +878,18 @@ private fun StageCanvas(
                 seconds,
             )
         }
+        // the sun at a building's edge: its glare over the silhouette that hides part of it
+        with(sunGlare) {
+            glare(
+                sky,
+                Offset(orb.first * d, orb.second * d),
+                sunR,
+                weather.cloudiness,
+                backdrop.sunCover,
+                weather.mist,
+                f.skyTop,
+            )
+        }
         // the finish: a very faint vignette (the corners a little deeper) and fine film grain over
         // the
         // whole picture, which also breaks up the banding of the sky's gradients
@@ -921,6 +941,53 @@ private fun sunClear(
         if (clear <= 0f) break
     }
     return clear
+}
+
+/**
+ * The buildings in view as [SunEdge] boxes on the screen, for the sun's glare at their edges: each
+ * one's front (its lobby and storeys, then its cornice a little wider) swept along its shown side
+ * and up by its roof's depth, and what stands on its roof: the water tank, the reward's sign board.
+ */
+private fun sunEdge(
+    edge: SunEdge,
+    layouts: List<BuildingLayout>,
+    arts: List<BuildingArt>,
+    street: StreetLayout,
+    f: Frame,
+    from: Float,
+    to: Float,
+) {
+    edge.clear()
+    val u = f.unit
+    val half = B.W / 2f
+    for (i in layouts.indices) {
+        val l = street.lefts[i]
+        if (l + layouts[i].lot < from || l - B.DX > to) continue
+        val layout = layouts[i]
+        val art = arts.getOrNull(i) ?: continue
+        val cx = street.centers[i]
+        val s = f.sideShift(cx) * u
+        val dy = B.DY * u
+        fun x(at: Float) = f.screenX(cx + at)
+        fun y(up: Float) = f.ground - up * u
+        val roof = layout.roof
+        edge.box(x(-half), y(roof), x(half), f.ground, s, dy)
+        if (art.floors.isEmpty()) continue
+        edge.box(x(-half - 3f), y(roof + B.CORNICE), x(half + 3f), y(roof), s, dy)
+        if (art.craneOn == null) {
+            // the water tank on its legs, over the roof's middle depth
+            val tx = -half + 26f
+            val base = roof + B.CORNICE + B.DY / 2f
+            edge.box(x(tx - 8f), y(base + 26f), x(tx + 8f), y(base + 6f))
+        }
+        val sign = art.sign
+        if (sign != null) {
+            // its board (the legs under it let the light through)
+            val w = sign.width / 2f
+            val topUp = sign.bottom + sign.height
+            edge.box(x(-w), y(topUp), x(w), y(topUp - 24f))
+        }
+    }
 }
 
 /**
