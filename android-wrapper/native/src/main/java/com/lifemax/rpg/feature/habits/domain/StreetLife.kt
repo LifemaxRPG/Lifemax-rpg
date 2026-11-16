@@ -227,8 +227,10 @@ object StreetLife {
      */
     fun pace(look: Int): Float = SIZE * StreetLooks.ALL[look].height * StreetGait.style(look).stride
 
-    /** How fast [look] walks at the standard cadence, in street units a second. */
-    fun speed(look: Int): Float = pace(look) * Gait.SPEED
+    /**
+     * How fast [look] walks at their own cadence ([StreetGait.cadence]), in street units a second.
+     */
+    fun speed(look: Int): Float = pace(look) * Gait.SPEED * StreetGait.cadence(look)
 
     fun kind(seed: Int, k: Int): Stroller {
         val h = Ambient.hash(seed, k, 201)

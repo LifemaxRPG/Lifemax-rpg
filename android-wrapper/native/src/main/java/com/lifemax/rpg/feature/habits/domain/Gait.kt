@@ -1,12 +1,16 @@
 package com.lifemax.rpg.feature.habits.domain
 
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.exp
 import kotlin.math.floor
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -115,6 +119,31 @@ object Gait {
     }
 
     // ------------------------------------------------------------------------------ the walk
+    //
+    // Measured against the gait lab (Perry's phases; Winter's sagittal angles), one foot's own
+    // cycle, 0 at its heel strike: the heel lands with the leg nearly straight (knee about 5
+    // degrees) and the toes up; the knee gives 15 to 20 degrees as the weight comes on (the
+    // loading response, to about 12 per cent) and the foot rolls down flat (about 10); the body
+    // vaults over the planted leg, the knee straightening again; the heel rises from about a third
+    // of the way round while the thigh carries on back behind the body; the knee folds as the
+    // other foot takes the weight, and the toes leave the ground at about 62 per cent (stance 62,
+    // swing 38, two spells of both feet down of about 12 each). In the swing the knee folds to
+    // about 60 degrees early (72 per cent) to clear the toe, which passes a centimetre or two over
+    // the floor beside the other foot, and then the shank swings out ahead and the knee straightens
+    // and slows as the thigh eases back a little (it reaches forward and is drawn back to land).
+    // The pelvis rides lowest just after each heel strike and highest over the planted foot, 4 or
+    // 5 cm between, as a smooth wave.
+    //
+    // Here: the planted foot (heel down, flat, then rolling over the ball) is fixed on the ground.
+    // The pelvis rides a smooth wave whose size is what the step's own geometry gives: as high as
+    // a straight leg lets it be over the planted foot and as low as the knee's give as the weight
+    // comes on, worked out once per style. While the heel is down the planted leg is solved to
+    // reach its foot; once the heel may rise, the knee follows a smooth curve (settling to nearly
+    // straight, then folding to push off) and the heel rises exactly as far as that leg needs to
+    // reach the floor behind the body. The swinging leg follows the lab's joint curves from the
+    // very angles and speeds it leaves the ground with to the very ones it lands with, the toes
+    // kept clear over the floor and the heel let down onto it from above, so the two halves meet
+    // without a jolt.
 
     /** The legs of the standard figure, as [FigBuilder] draws them. */
     private const val THIGH = 5.9
@@ -122,7 +151,9 @@ object Gait {
     private const val LEG = THIGH + SHIN
 
     /**
-     * Where the foot sits: from the ankle, the heel and the ball, so that the sole can be found.
+     * Where the foot sits: from the ankle, the heel and the ball, so that the sole can be found
+     * (flat, the two are equally low, as the street's shoes are drawn: the foot rocks onto the ball
+     * as soon as the heel lifts).
      */
     private fun heelX(t: Double) = .3 * sin(t) - .25 * cos(t)
 
@@ -130,108 +161,221 @@ object Gait {
 
     private fun heelBottom(t: Double) = .3 * cos(t) + .25 * sin(t) + .62
 
-    private fun toeBottom(t: Double) = .38 * cos(t) - 2.1 * sin(t) + .47
+    private fun toeBottom(t: Double) = .38 * cos(t) - 2.1 * sin(t) + .54
 
     /** How far below the ankle the lowest part of a foot toes-up by [t] radians is. */
     private fun sole(t: Double) = max(heelBottom(t), toeBottom(t))
 
     private fun rad(d: Double) = d * PI / 180.0
 
+    private fun deg(r: Double) = r * 180.0 / PI
+
+    private fun frac(x: Double) = x - floor(x)
+
     private fun smooth(x: Double): Double {
         val c = x.coerceIn(0.0, 1.0)
         return .5 - .5 * cos(PI * c)
     }
 
-    // when in a foot's own cycle (0 at its heel strike) the heel is down, flat, heel-off, toe-off
-    private const val U_FLAT = .13
-    private const val U_HEEL_OFF = .42
+    /** The cubic from [p0] (slope [m0]) to [p1] (slope [m1]) over [t] 0 to 1. */
+    private fun hermite(t: Double, p0: Double, m0: Double, p1: Double, m1: Double): Double {
+        val t2 = t * t
+        val t3 = t2 * t
+        return (2 * t3 - 3 * t2 + 1) * p0 +
+            (t3 - 2 * t2 + t) * m0 +
+            (-2 * t3 + 3 * t2) * p1 +
+            (t3 - t2) * m1
+    }
+
+    // when in a foot's own cycle (0 at its heel strike) the foot comes down flat, the heel starts
+    // to rise and the toes leave the ground
+    private const val U_FLAT = .1
+    private const val U_HEEL_OFF = .3
     private const val U_TOE_OFF = .62
 
-    /** The foot's tilt from the floor, in degrees, toes up, through its own cycle [u]. */
-    private const val HEEL_STRIKE = 17.0
-    private const val TOE_OFF = -42.0
+    /** The foot's tilt from the floor at the heel strike, degrees, toes up. */
+    private const val HEEL_STRIKE = 15.0
 
-    private fun tilt(u: Double): Double =
-        when {
-            u < U_FLAT -> HEEL_STRIKE * (.5 + .5 * cos(PI * u / U_FLAT))
-            u < U_HEEL_OFF -> 0.0
-            u < U_TOE_OFF -> TOE_OFF * smooth((u - U_HEEL_OFF) / (U_TOE_OFF - U_HEEL_OFF))
-            else -> TOE_OFF + (HEEL_STRIKE - TOE_OFF) * smooth((u - U_TOE_OFF) / (1.0 - U_TOE_OFF))
-        }
+    private fun heelStrike(st: Style) = HEEL_STRIKE * (.4 + .6 * st.spring)
 
-    /** The heel's world x at the heel strike: where it lands, ahead of the pelvis. */
-    private const val LAND = 4.2
+    /** The foot flat on the floor: heel and ball both down. */
+    private const val FLAT = 0.0
 
     /**
-     * The ankle's x in the world from the heel strike on (the pelvis is at the stride times u),
-     * stance only, for a heel that lands [land] ahead.
+     * The planted foot's tilt up to the heel rising ([U_HEEL_OFF]): down from the heel strike at
+     * once, slowing to lie flat, then flat.
      */
-    private fun ankleWorld(u: Double, land: Double): Double {
-        val flat = land - heelX(0.0)
-        return when {
-            u < U_FLAT -> land - heelX(rad(tilt(u)))
-            u < U_HEEL_OFF -> flat
-            else -> flat + toeX(0.0) - toeX(rad(tilt(u)))
-        }
+    private fun tilt(u: Double, st: Style): Double =
+        if (u < U_FLAT) FLAT + (heelStrike(st) - FLAT) * sq(1 - u / U_FLAT) else FLAT
+
+    /** The heel's x at the heel strike, from the pelvis: where it lands, ahead of the body. */
+    private const val LAND = 2.9
+
+    /** The planted heel's x in the world, the pelvis at 0 at the heel strike. */
+    private fun landing(st: Style) = LAND * st.stride
+
+    /** Where the ball of the planted foot is in the world, the pelvis at 0 at the heel strike. */
+    private fun ball(st: Style) = landing(st) - heelX(rad(FLAT)) + toeX(rad(FLAT))
+
+    /** How far the pelvis has gone from the planted foot's heel strike at its own [u]. */
+    private fun travel(u: Double, st: Style) = STRIDE * st.stride * u
+
+    /** The planted ankle's x (from the pelvis's middle) and height, the foot tilted [t] degrees. */
+    private fun ankleX(u: Double, t: Double, st: Style): Double {
+        val r = rad(t)
+        val x = if (u < U_FLAT) landing(st) - heelX(r) else ball(st) - toeX(r)
+        return x - travel(u, st)
     }
 
-    private fun stance(u: Double, st: Style) =
-        ankleWorld(u, LAND * st.stride) - Gait.STRIDE * st.stride * u
+    private fun ankleY(t: Double): Double = sole(rad(t))
 
-    /** The clearance of the swinging foot over the floor, at [s] (0 to 1) of the swing. */
-    private fun lift(s: Double): Double {
-        // the knee folds early in the swing (the foot snatched up off the toe) and the leg then
-        // reaches out long and low to the heel: the peak comes before half way
-        val a = sin(PI * (s + .35 * s * (1.0 - s)))
-        return 1.75 * a * a * (1.0 - .3 * s)
-    }
+    /**
+     * The straightest a planted knee is ever asked to be, degrees, and the straightest while the
+     * heel is down (a little more bent, so it can still settle as the heel rises).
+     */
+    private const val KNEE_MIN = 4.0
+    private const val KNEE_FLAT = 7.0
 
-    /** The ankle's x, from the pelvis, in the foot's own cycle [u]. */
-    private fun ankleX(u: Double, st: Style): Double {
-        if (u < U_TOE_OFF) return stance(u, st)
-        val d = 1.0 - U_TOE_OFF
-        val e = 1e-4
-        val x0 = stance(U_TOE_OFF, st)
-        val m0 = (stance(U_TOE_OFF, st) - stance(U_TOE_OFF - e, st)) / e * d
-        val x1 = stance(0.0, st)
-        val m1 = (stance(e, st) - stance(0.0, st)) / e * d
-        val s = (u - U_TOE_OFF) / d
-        val s2 = s * s
-        val s3 = s2 * s
-        return (2 * s3 - 3 * s2 + 1) * x0 +
-            (s3 - 2 * s2 + s) * m0 +
-            (-2 * s3 + 3 * s2) * x1 +
-            (s3 - s2) * m1
-    }
-
-    /** The ankle's height over the floor in the foot's own cycle [u]. */
-    private fun ankleHeight(u: Double): Double {
-        val t = rad(tilt(u))
-        val extra = if (u < U_TOE_OFF) 0.0 else lift((u - U_TOE_OFF) / (1.0 - U_TOE_OFF))
-        return sole(t) + extra
+    /** How long a leg is from hip to ankle with the knee bent [k] degrees. */
+    private fun span(k: Double): Double {
+        val c = cos(rad(k))
+        return sqrt(THIGH * THIGH + SHIN * SHIN + 2 * THIGH * SHIN * c)
     }
 
     /**
-     * The pelvis's height over the floor at [phi]: as high as the two legs let it be with the knee
-     * as straight as the walk wants it (a little bent, more so on the down pose), so that it is
-     * lowest at the contacts and the down poses, and highest on the way up.
+     * How much the trailing knee bends from [PUSH_AT] on, degrees over its straightest, and how
+     * fast, a cycle: nearly straight as the body goes on over the foot (the heel peeling up so that
+     * it can stay so), folding as the other foot takes the weight, about 38 as the toes leave.
+     */
+    private val PUSH_AT = doubleArrayOf(.44, .5, .56, .62)
+    private val PUSH_KNEE = doubleArrayOf(0.0, 5.5, 16.0, 33.0)
+    private val PUSH_RATE = doubleArrayOf(0.0, 125.0, 230.0, 260.0)
+
+    /**
+     * The trailing knee at [u] past the heel's rising: settling from [k0] (bending [m0] a cycle),
+     * as it was with the foot flat at [U_HEEL_OFF], to its straightest without a jolt, then folding
+     * as [PUSH_KNEE] says.
+     */
+    private fun pushKnee(u: Double, k0: Double, m0: Double, st: Style): Double {
+        // an older walker keeps the knee a little bent and folds it less
+        val floor = KNEE_MIN + (1 - st.spring) * 16.0
+        val give = k0 - floor
+        val rate = if (m0 < 0 && give > .1) -m0 / give else 30.0
+        var k = floor + give * exp(-rate * (u - U_HEEL_OFF))
+        if (u > PUSH_AT[0]) {
+            val fold = .6 + .4 * st.spring
+            var i = 1
+            while (i < PUSH_AT.size - 1 && u > PUSH_AT[i]) i++
+            val d = PUSH_AT[i] - PUSH_AT[i - 1]
+            k +=
+                fold *
+                    hermite(
+                        ((u - PUSH_AT[i - 1]) / d).coerceAtMost(1.0),
+                        PUSH_KNEE[i - 1],
+                        PUSH_RATE[i - 1] * d,
+                        PUSH_KNEE[i],
+                        PUSH_RATE[i] * d,
+                    )
+        }
+        return k
+    }
+
+    /**
+     * The tilt of the planted foot, pivoting on its ball, at which the ankle is [d] from a hip at
+     * ([hx], [h]) at the stance's [u]: the higher the heel, the nearer. Never past flat.
+     */
+    private fun rise(u: Double, hx: Double, h: Double, d: Double, st: Style): Double {
+        var lo = -89.0
+        var hi = FLAT
+        for (i in 0 until 36) {
+            val m = (lo + hi) / 2
+            val r = rad(m)
+            val ax = ball(st) - toeX(r) - travel(u, st) - hx
+            val ay = h - sole(r)
+            if (ax * ax + ay * ay > d * d) hi = m else lo = m
+        }
+        return (lo + hi) / 2
+    }
+
+    /** The far foot's own cycle at [phi]. */
+    private fun farU(phi: Double, st: Style) = frac(phi + .5 + st.split)
+
+    /**
+     * The pelvis's height over the floor at [phi]: a smooth wave twice a cycle, lowest just after
+     * each heel strike as the knee gives, highest as the body passes over the planted foot, its
+     * size the style's bob; as high as the planted legs let it be with their knees no straighter
+     * than [KNEE_MIN] while the heel is down. Worked out once per style.
      */
     private fun pelvisHeight(phi: Double, st: Style): Double {
-        val dip = .5 + .5 * cos(4 * PI * (phi - .125))
-        val flex = rad(KNEE_STRAIGHT + KNEE_DOWN * st.bob * dip * dip)
-        val d = LEG * cos(flex / 2)
-        val un = phi
-        val uf = (phi + .5 + st.split) % 1.0
-        val hip = hipX(phi, st)
-        return min(reach(un, hip, d, st), reach(uf, -hip, d, st))
+        val r = rideOf(st)
+        return r[0] + r[1] * wave(phi)
     }
 
     /**
-     * How high a hip at [hip] from the pelvis's middle sits over an ankle in the cycle [u], the leg
-     * [d] long.
+     * The pelvis's path, -1 to 1, twice a cycle: rising over the planted leg in a broad arc as an
+     * inverted pendulum does and dipping more sharply where the weight passes from foot to foot.
      */
-    private fun reach(u: Double, hip: Double, d: Double, st: Style): Double =
-        ankleHeight(u) + sqrt(max(0.0, d * d - sq(ankleX(u, st) - hip)))
+    private fun wave(phi: Double): Double {
+        val c2 = sq(cos(2 * PI * (phi - PHI_LOW)))
+        return 1 - 2 * c2 * c2.pow(ARC)
+    }
+
+    /** Where in the cycle the pelvis is lowest. */
+    private const val PHI_LOW = .03
+
+    /** How much broader than a sine the pelvis's arc is at its top (0: a sine). */
+    private const val ARC = .5
+
+    private val RIDES = java.util.IdentityHashMap<Style, DoubleArray>()
+
+    /** The pelvis's mean height and half its rise and fall, for [st]. */
+    private fun rideOf(st: Style): DoubleArray =
+        synchronized(RIDES) { RIDES.getOrPut(st) { ride(st) } }
+
+    /**
+     * Half the pelvis's rise and fall for [st]: what the geometry of its step gives (the hip at the
+     * top of its arc over the straight planted leg, and at its lowest as the weight comes on, at
+     * [PHI_LOW], the knee given [KNEE_LOW]: a longer step lands with the leg more slanted, so the
+     * body vaults higher), give or take the style's own bob.
+     */
+    private fun bob(st: Style): Double {
+        val bend = (1 - st.spring) * 14.0
+        val d = span(KNEE_MIN + bend)
+        var top = 0.0
+        for (i in 0 until 100) {
+            val u = i / 100.0 * U_HEEL_OFF
+            val t = tilt(u, st)
+            val x = ankleX(u, t, st) - hipX(u, st)
+            top = max(top, ankleY(t) + sqrt(max(0.0, d * d - x * x)))
+        }
+        val t = tilt(PHI_LOW, st)
+        val x = ankleX(PHI_LOW, t, st) - hipX(PHI_LOW, st)
+        val dl = span(KNEE_LOW * (.5 + .5 * st.spring) + bend)
+        val low = ankleY(t) + sqrt(max(0.0, dl * dl - x * x))
+        return max(.04, (top - low) / 2 * (.7 + .3 * st.bob))
+    }
+
+    /** The knee's bend as the weight comes onto it, degrees (the loading response). */
+    private const val KNEE_LOW = 14.0
+
+    private fun ride(st: Style): DoubleArray {
+        val bob = bob(st)
+        var r = Double.MAX_VALUE
+        for (i in 0 until 400) {
+            val phi = i / 400.0
+            val hip = hipX(phi, st)
+            for (side in 0 until 2) {
+                val u = if (side == 0) phi else farU(phi, st)
+                if (u >= U_HEEL_OFF) continue
+                val t = tilt(u, st)
+                val d = span(KNEE_FLAT + (1 - st.spring) * 16.0)
+                val x = ankleX(u, t, st) - if (side == 0) hip else -hip
+                val top = ankleY(t) + sqrt(max(0.0, d * d - x * x))
+                r = min(r, top - bob * wave(phi))
+            }
+        }
+        return doubleArrayOf(r, bob)
+    }
 
     /** The near hip's x from the pelvis's middle: the pelvis turns a little with each step. */
     private fun hipX(phi: Double, st: Style): Double = HIP_SWING * st.hip * cos(2 * PI * phi)
@@ -248,7 +392,7 @@ object Gait {
         return c * (1.25 - .25 * c * c)
     }
 
-    private const val HIP_SWING = .5
+    private const val HIP_SWING = .32
     private const val SHOULDER_SWING = .7
     private const val BASE_HIP = 1.5 - 1.1 * .94
     private const val BASE_SHOULDER = 2.9 - 2.4 * .94
@@ -256,27 +400,217 @@ object Gait {
     private fun sq(x: Double) = x * x
 
     /**
-     * The knee's bend at its straightest and how much more it gives on the down pose, in degrees.
-     */
-    private const val KNEE_STRAIGHT = 11.0
-    private const val KNEE_DOWN = 9.0
-
-    /**
      * One leg's angles worked out so the ankle is at ([x], [y]) from the hip: thigh, knee, shin,
      * all in degrees.
      */
     private fun leg(x: Double, y: Double, out: DoubleArray) {
         val d0 = sqrt(x * x + y * y)
-        val d = min(d0, LEG * .9985)
+        val d = min(d0, LEG * .9995)
         val g =
             acos(((THIGH * THIGH + SHIN * SHIN - d * d) / (2 * THIGH * SHIN)).coerceIn(-1.0, 1.0))
         val knee = PI - g
         val a = acos(((THIGH * THIGH + d * d - SHIN * SHIN) / (2 * THIGH * d)).coerceIn(-1.0, 1.0))
         val dir = atan2(x, y)
         val thigh = dir + a
-        out[0] = thigh * 180 / PI
-        out[1] = knee * 180 / PI
-        out[2] = (thigh - knee) * 180 / PI
+        out[0] = deg(thigh)
+        out[1] = deg(knee)
+        out[2] = deg(thigh - knee)
+    }
+
+    /**
+     * A planted leg at its own [u] (the leg's cycle starting [o] after the near one's, its hip on
+     * the [side] +1 near, -1 far): thigh, knee, shin and the foot's tilt into [out].
+     */
+    private fun planted(u: Double, o: Double, side: Double, st: Style, out: DoubleArray) {
+        if (u < U_HEEL_OFF) {
+            flat(u, o, side, st, out)
+            return
+        }
+        // the knee as it was when the heel began to rise, and how fast it was going
+        val e = 1e-4
+        flat(U_HEEL_OFF, o, side, st, out)
+        val k0 = out[1]
+        flat(U_HEEL_OFF - e, o, side, st, out)
+        val m0 = (k0 - out[1]) / e
+        val k = pushKnee(u, k0, m0, st)
+        val phi = frac(u - o)
+        val h = pelvisHeight(phi, st)
+        val hx = side * hipX(phi, st)
+        val t = rise(u, hx, h, span(k), st)
+        leg(ankleX(u, t, st) - hx, h - ankleY(t), out)
+        out[3] = t
+    }
+
+    /** A planted leg with its heel down (or coming down) at [u]: as [planted]. */
+    private fun flat(u: Double, o: Double, side: Double, st: Style, out: DoubleArray) {
+        val phi = frac(u - o)
+        val h = pelvisHeight(phi, st)
+        val hx = side * hipX(phi, st)
+        val t = tilt(u, st)
+        leg(ankleX(u, t, st) - hx, h - ankleY(t), out)
+        out[3] = t
+    }
+
+    // the swing: when (of the swing) the knee is most bent and the thigh furthest forward, and how
+    // far the ankle drops below square just after the toe-off before the foot comes up level
+    private const val SWING_KNEE = 61.0
+    private const val S_KNEE = .27
+    private const val S_OPEN = .72
+    private const val OPEN = .35
+    private const val S_THIGH = .7
+    private const val S_THRUST = .3
+    private const val THRUST = .55
+    private const val THIGH_OVER = 2.0
+    private const val S_ANKLE = .08
+    private const val S_LEVEL = .45
+    private const val ANKLE_LEVEL = 1.0
+
+    /**
+     * A swinging leg at its own [u] (past the toe-off): thigh, knee, shin and foot tilt into [out],
+     * on the lab's curves from how it left the ground to how it lands. [a] and [b] are scratch.
+     */
+    private fun swing(
+        u: Double,
+        o: Double,
+        side: Double,
+        st: Style,
+        out: DoubleArray,
+        a: DoubleArray,
+        b: DoubleArray,
+    ) {
+        val span = 1.0 - U_TOE_OFF
+        val e = 1e-4
+        // leaving the ground: the angles and how fast they are going
+        planted(U_TOE_OFF - e, o, side, st, a)
+        planted(U_TOE_OFF - 2 * e, o, side, st, b)
+        val t0 = a[0]
+        val k0 = a[1]
+        val a0 = a[3] - a[2]
+        val dt0 = (a[0] - b[0]) / e * span
+        val dk0 = (a[1] - b[1]) / e * span
+        val da0 = ((a[3] - a[2]) - (b[3] - b[2])) / e * span
+        // landing
+        planted(0.0, o, side, st, a)
+        planted(e, o, side, st, b)
+        val t1 = a[0]
+        val k1 = a[1]
+        val a1 = a[3] - a[2]
+        val dt1 = (b[0] - a[0]) / e * span
+        val dk1 = (b[1] - a[1]) / e * span
+        val da1 = ((b[3] - b[2]) - (a[3] - a[2])) / e * span
+        val s = (u - U_TOE_OFF) / span
+        // the knee folds to its most, then opens to land
+        val kp = max(SWING_KNEE * (.7 + .3 * st.spring), k0 + 8.0)
+        // (most of the way open by the time the shin hangs straight down, then easing to land)
+        val ko = k1 + OPEN * (kp - k1)
+        val mo = -1.25 * (kp - k1) / (1 - S_KNEE)
+        val m1 = min(dk1 * (1 - S_OPEN), 2.5 * (ko - k1))
+        val knee =
+            when {
+                s < S_KNEE -> hermite(s / S_KNEE, k0, dk0 * S_KNEE, kp, 0.0)
+                s < S_OPEN ->
+                    hermite((s - S_KNEE) / (S_OPEN - S_KNEE), kp, 0.0, ko, mo * (S_OPEN - S_KNEE))
+                else -> hermite((s - S_OPEN) / (1 - S_OPEN), ko, mo * (1 - S_OPEN), k1, m1)
+            }
+        // the thigh swings forward past where it lands and is drawn back to it
+        val tp = t1 + THIGH_OVER * st.spring
+        // (quickly at first: half way there by [S_THRUST], the hip flexing hardest just after
+        // the toes leave)
+        val tm = t0 + THRUST * (tp - t0)
+        val mm = 1.5 * (tp - t0) / S_THIGH
+        val thigh =
+            when {
+                s < S_THRUST -> hermite(s / S_THRUST, t0, dt0 * S_THRUST, tm, mm * S_THRUST)
+                s < S_THIGH ->
+                    hermite(
+                        (s - S_THRUST) / (S_THIGH - S_THRUST),
+                        tm,
+                        mm * (S_THIGH - S_THRUST),
+                        tp,
+                        0.0,
+                    )
+                else -> {
+                    // (landing as it goes on in the stance, but never by first dipping under)
+                    val m = dt1 * (1 - S_THIGH)
+                    val cap = 2 * (tp - t1) + 1
+                    hermite(
+                        (s - S_THIGH) / (1 - S_THIGH),
+                        tp,
+                        0.0,
+                        t1,
+                        m.coerceIn(-3 * cap, 3 * cap),
+                    )
+                }
+            }
+        // the ankle runs on down a moment after the push, then comes up square and holds there
+        val am = a0 + .5 * da0 * S_ANKLE
+        val ankle =
+            when {
+                s < S_ANKLE -> hermite(s / S_ANKLE, a0, da0 * S_ANKLE, am, 0.0)
+                s < S_LEVEL ->
+                    hermite((s - S_ANKLE) / (S_LEVEL - S_ANKLE), am, 0.0, ANKLE_LEVEL, 0.0)
+                else -> {
+                    val m = da1 * (1 - S_LEVEL)
+                    val cap = 2 * abs(a1 - ANKLE_LEVEL) + 4
+                    hermite(
+                        (s - S_LEVEL) / (1 - S_LEVEL),
+                        ANKLE_LEVEL,
+                        0.0,
+                        a1,
+                        m.coerceIn(-cap, cap),
+                    )
+                }
+            }
+        // and the toes kept clear of the floor as the foot swings through low beside the other
+        // one: the ankle flexes up as much as it must (a smooth floor under the need, no corner)
+        val shin = thigh - knee
+        val h = pelvisHeight(frac(u - o), st)
+        val toe = h - THIGH * cos(rad(thigh)) - SHIN * cos(rad(shin)) - toeBottom(rad(shin + ankle))
+        val need = CLEAR * smooth(s / S_CLEAR) - toe
+        // (none at all as the toes leave, so the swing starts just as the stance ends)
+        val lift = deg(SOFT * ln(1 + exp(need / SOFT)) / 2.1) * smooth(s / .06)
+        // and the heel let down onto the floor from above, never skimming it before it lands:
+        // the thigh carried a touch further forward if it must
+        val t = shin + ankle + lift
+        val heel = h - THIGH * cos(rad(thigh)) - SHIN * cos(rad(shin)) - heelBottom(rad(t))
+        val want = HEEL_CLEAR * ((1 - s) / (1 - S_DESCENT)).coerceIn(0.0, 1.0)
+        val short = want - heel
+        val g = max(1.5, THIGH * sin(rad(thigh)) + SHIN * sin(rad(shin)))
+        // (none at all as it lands, so the stance takes over just where the swing ends)
+        val more =
+            deg(SOFT_HEEL * ln(1 + exp(short / SOFT_HEEL)) / g) *
+                smooth((s - .5) / .2) *
+                smooth((1 - s) / .06)
+        out[0] = thigh + more
+        out[1] = knee
+        out[2] = shin + more
+        out[3] = t + more
+    }
+
+    /** The heel's way down to the floor: no lower than this, falling to nothing as it lands. */
+    private const val HEEL_CLEAR = .35
+    private const val S_DESCENT = .74
+    private const val SOFT_HEEL = .05
+
+    /**
+     * How far the swinging toes keep over the floor (2 cm or so on a person: just enough to see),
+     * from [S_CLEAR] of the swing on, and how soft the floor under the ankle's give is.
+     */
+    private const val CLEAR = .35
+    private const val S_CLEAR = .2
+    private const val SOFT = .04
+
+    /** One leg at its own [u]: thigh, knee, shin, tilt into [out]. */
+    private fun legAt(
+        u: Double,
+        o: Double,
+        side: Double,
+        st: Style,
+        out: DoubleArray,
+        a: DoubleArray,
+        b: DoubleArray,
+    ) {
+        if (u < U_TOE_OFF) planted(u, o, side, st, out) else swing(u, o, side, st, out, a, b)
     }
 
     /**
@@ -285,17 +619,17 @@ object Gait {
      */
     fun walkPose(phi: Float, style: Style = NEUTRAL): FloatArray {
         val st = style
-        val f = phi.toDouble() - floor(phi.toDouble())
-        val h = pelvisHeight(f, st)
-        val un = f
-        val uf = (f + .5 + st.split) % 1.0
-        val ln = DoubleArray(3)
-        val lf = DoubleArray(3)
+        val f = frac(phi.toDouble())
+        val ln = DoubleArray(4)
+        val lf = DoubleArray(4)
+        val a = DoubleArray(4)
+        val b = DoubleArray(4)
+        val of = .5 + st.split
+        legAt(f, 0.0, 1.0, st, ln, a, b)
+        legAt(frac(f + of), of, -1.0, st, lf, a, b)
         val hip = hipX(f, st)
-        leg(ankleX(un, st) - hip, h - ankleHeight(un), ln)
-        leg(ankleX(uf, st) + hip, h - ankleHeight(uf), lf)
-        val ann = tilt(un) - ln[2]
-        val anf = tilt(uf) - lf[2]
+        val ann = ln[3] - ln[2]
+        val anf = lf[3] - lf[2]
         // the arms are pendulums the shoulders drive: crossing as the legs pass, they hang a
         // moment at each end of the swing and fall through the middle (the forearms trail them)
         val c = pendulum(f - ARM_LAG)
@@ -333,7 +667,10 @@ object Gait {
      * and [armFar] are how far each arm swings, in degrees; [bob] scales how much the body rises
      * and falls; [lean] is the posture's forward lean in degrees; [split] moves the far foot's
      * landing from exactly half way round the cycle (one step a little longer than the other);
-     * [roll] scales the shoulders' counter-swing and [hip] the pelvis's.
+     * [roll] scales the shoulders' counter-swing and [hip] the pelvis's; [spring] is how much
+     * spring the legs have (1: a heel strike, a straight knee in mid-stance, a push off the toes
+     * and a high knee in the swing; less, as an older walker: a flatter foot, knees kept a little
+     * bent, a feebler push and a lower swing).
      */
     class Style(
         val stride: Float,
@@ -344,6 +681,7 @@ object Gait {
         val split: Float,
         val roll: Float,
         val hip: Float,
+        val spring: Float = 1f,
     )
 
     /** The standard walk: what the tests of the gait's mechanics are written against. */
@@ -662,13 +1000,16 @@ object Gait {
     val JOG_KEYS: List<FloatArray> = List(9) { jogPose((it % 8) / 8f) }
 
     /**
-     * The eight key poses of a walk (contact, down, passing, up, and again on the other leg) and
-     * back to the first.
+     * The key poses of a walk, one for each of its [FRAMES] (contact, down, passing, up and the
+     * in-betweens, and again on the other leg) and back to the first: the walk's curves (the toes
+     * leaving at 62 per cent, the knee most bent at 72, the heel let down onto the floor) are too
+     * quick for a spline through only the eight classic poses to follow without the feet skating.
      */
     val WALK_KEYS: List<FloatArray> = walkKeys(NEUTRAL)
 
     /** [WALK_KEYS] walked in [style]. */
-    fun walkKeys(style: Style): List<FloatArray> = List(9) { walkPose((it % 8) / 8f, style) }
+    fun walkKeys(style: Style): List<FloatArray> =
+        List(FRAMES + 1) { walkPose((it % FRAMES) / FRAMES.toFloat(), style) }
 
     /** The key poses of each look's own walk. */
     val LOOK_WALK_KEYS: List<List<FloatArray>> = List(Looks.COUNT) { walkKeys(style(it)) }

@@ -56,6 +56,23 @@ object StreetGait {
     /** An older walker's step, of the standard one: short, the feet kept near the ground. */
     const val ELDER_STRIDE = .74f
 
+    /** How much spring an older walker's legs have ([Gait.Style.spring]). */
+    const val ELDER_SPRING = .55f
+
+    /**
+     * The street walker's step, of the standard one: a person of the street's size at its walking
+     * pace steps about a third of their height (a gait lab's 0.57 m at about 1 m/s), not the window
+     * figure's shorter, quicker step. Their speed stays the same: they take fewer steps for it
+     * ([cadence]).
+     */
+    const val STRIDE = 1.1f
+
+    /**
+     * The cadence of [look]'s walk, of the standard one ([Gait.CYCLE]): fewer steps for the longer
+     * stride, so that they go as fast as they did; an older walker's short steps at the usual rate.
+     */
+    fun cadence(look: Int): Float = if (StreetLooks.ALL[look].elder) 1f else 1f / STRIDE
+
     private fun spread(look: Int, salt: Int, lo: Float, hi: Float): Float =
         lo + (hi - lo) * Ambient.hash(look + 1, 52, salt)
 
@@ -75,13 +92,14 @@ object StreetGait {
                     split = .025f,
                     roll = .5f,
                     hip = .7f,
+                    spring = ELDER_SPRING,
                 )
             }
             val arm = spread(look, 1, 17f, 30f)
             val less = spread(look, 2, .78f, 1f)
             val nearLess = Ambient.hash(look + 1, 52, 3) < .5f
             Gait.Style(
-                stride = 1f,
+                stride = STRIDE,
                 armNear = if (nearLess) arm * less else arm,
                 armFar = if (nearLess) arm else arm * less,
                 bob = spread(look, 5, .75f, 1.3f),
