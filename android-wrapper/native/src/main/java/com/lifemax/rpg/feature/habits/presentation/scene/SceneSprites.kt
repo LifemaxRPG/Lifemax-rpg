@@ -198,8 +198,37 @@ internal class DuskImages(val puffs: Array<ImageBitmap>, val pigeon: Array<Image
  */
 internal class FacadeImages(val tile: WallTile, val brush: Brush)
 
-/** The awning's cloth as two repeating brushes: its shade and its light. */
-internal class ClothImages(val tile: ClothTile, val shade: Brush, val light: Brush)
+/**
+ * What glass mirrors ([GlassSprites]): the sky and the street across it as brushes repeating
+ * sideways and clamped up and down, the sun's glint as a brush clamped all round (its rim is
+ * clear), and the rooms' blinds and curtains seen through some panes.
+ */
+internal class GlassImages(
+    val sky: Brush,
+    val street: Brush,
+    val glint: Brush,
+    val interiors: Array<ImageBitmap>,
+)
+
+/** A [RoofPicture] as an image, with its measures. */
+internal class RoofImage(val picture: RoofPicture, val image: ImageBitmap)
+
+/**
+ * The roof's furniture and the shop's planters ([RoofArt]): the water tank by the sky alone and
+ * with the sun from the left and from the right, the air-handling unit, the dish, the vent stack.
+ */
+internal class RoofImages(
+    val tank: RoofImage,
+    val tankLeft: RoofImage,
+    val tankRight: RoofImage,
+    val hvac: RoofImage,
+    val dish: RoofImage,
+    val stack: RoofImage,
+    val planter: RoofImage,
+)
+
+/** The awning's canopy and its valance ([AwningArt]), coloured per shop when drawn. */
+internal class AwningImages(val canopy: ImageBitmap, val valance: ImageBitmap)
 
 internal object SceneSprites {
     val clouds: Array<CloudImages> by lazy {
@@ -675,15 +704,6 @@ internal object SceneSprites {
             .also { facades[m.ordinal] = it }
     }
 
-    /** The awnings' cloth. */
-    val cloth: ClothImages by lazy {
-        val t = FacadeSprites.cloth()
-        facadeBytes += t.w * t.h * 4 * 2
-        fun brush(px: IntArray) =
-            ShaderBrush(ImageShader(image(px, t.w, t.h), TileMode.Repeated, TileMode.Clamp))
-        ClothImages(t, brush(t.shade), brush(t.light))
-    }
-
     /** The lobby's granite wall, a repeating brush like a floor's. */
     val lobbyWall: FacadeImages by lazy {
         val t = FacadeSprites.lobbyTile()
@@ -694,13 +714,6 @@ internal object SceneSprites {
                 ImageShader(image(t.pixels, t.w, t.h), TileMode.Repeated, TileMode.Repeated)
             ),
         )
-    }
-
-    /** The far city the glass mirrors by day: a strip repeated across, clamped down. */
-    val mirror: Brush by lazy {
-        val t = FacadeSprites.mirror()
-        synchronized(this) { facadeBytes += t.w * t.h * 4 }
-        ShaderBrush(ImageShader(image(t.light, t.w, t.h), TileMode.Repeated, TileMode.Clamp))
     }
 
     /**
@@ -718,6 +731,53 @@ internal object SceneSprites {
         val t = FacadeSprites.drip()
         synchronized(this) { facadeBytes += t.w * t.h * 4 }
         image(t.light, t.w, t.h)
+    }
+
+    /** What glass mirrors, made the first time a pane is drawn. */
+    val glass: GlassImages by lazy {
+        val sky = GlassSprites.sky()
+        val street = GlassSprites.street()
+        val glint = GlassSprites.glint()
+        GlassImages(
+            ShaderBrush(
+                ImageShader(image(sky.pixels, sky.w, sky.h), TileMode.Repeated, TileMode.Clamp)
+            ),
+            ShaderBrush(
+                ImageShader(
+                    image(street.pixels, street.w, street.h),
+                    TileMode.Repeated,
+                    TileMode.Clamp,
+                )
+            ),
+            ShaderBrush(
+                ImageShader(image(glint.pixels, glint.w, glint.h), TileMode.Clamp, TileMode.Clamp)
+            ),
+            Array(GlassSprites.INTERIORS) {
+                val r = GlassSprites.interior(it)
+                image(r.pixels, r.w, r.h)
+            },
+        )
+    }
+
+    /** The roof's furniture and the shop's planters. */
+    val roof: RoofImages by lazy {
+        fun img(p: RoofPicture) = RoofImage(p, image(p.pixels, p.w, p.h))
+        RoofImages(
+            img(RoofArt.tank(0)),
+            img(RoofArt.tank(-1)),
+            img(RoofArt.tank(1)),
+            img(RoofArt.hvac()),
+            img(RoofArt.dish()),
+            img(RoofArt.stack()),
+            img(RoofArt.planter()),
+        )
+    }
+
+    /** The shops' awnings. */
+    val awning: AwningImages by lazy {
+        val c = AwningArt.canopy()
+        val v = AwningArt.valance()
+        AwningImages(image(c.pixels, c.w, c.h), image(v.pixels, v.w, v.h))
     }
 
     /** What the facades' walls made so far take, in bytes. */
@@ -751,6 +811,9 @@ internal object SceneSprites {
         blimp
         weather
         dusk
+        glass
+        roof
+        awning
 
         skyline
         foreground
@@ -781,6 +844,9 @@ internal object SceneSprites {
             SkylineSprites.bytes() +
             ForegroundSprites.bytes() +
             LightSprites.bytes() +
+            GlassSprites.bytes() +
+            RoofArt.bytes() +
+            AwningArt.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
             MilkyWay.BYTES +
             peopleBytes() +

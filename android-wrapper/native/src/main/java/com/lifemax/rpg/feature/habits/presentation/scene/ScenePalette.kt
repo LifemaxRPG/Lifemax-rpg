@@ -288,7 +288,6 @@ internal object SceneInk {
     val WindowLitDay = Color(0xFFFFE7B0)
     val GlassNight = Color(0xFF151C30)
     val GlassDay = Color(0xFF58728F)
-    val Reflection = Color(0x33FFFFFF)
     val Person = Color(0xE6331F17)
     val Boards = Color(0xFF8E6E4A)
     val BoardLine = Color(0xFF5E4630)

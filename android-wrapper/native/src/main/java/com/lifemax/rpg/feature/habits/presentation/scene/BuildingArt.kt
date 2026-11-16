@@ -126,7 +126,6 @@ internal class FloorArt(
     val detail: InkPaths,
     val over: InkPaths,
     val front: InkPaths,
-    val reflect: Path,
     /** Its windows as x, y, w, h (y from the front's top), in the order they light up. */
     val windows: FloatArray,
     val occupancy: Occupancy,
@@ -370,20 +369,6 @@ private fun floorArt(
     val seed = key.hashCode()
     val hall = Silhouettes.hallLight(key, spots.size)
     val ruins = Array(spots.size) { ruinWindow(b.id, storey, storeys, it) }
-    val reflect = Path()
-    for (k in 0 until spots.size) {
-        val x = windows[k * 4]
-        val y = top + windows[k * 4 + 1]
-        val w = windows[k * 4 + 2]
-        val h = windows[k * 4 + 3]
-        // a streak of sky on dark glass
-        reflect.moveTo(x + w * .2f, y + h)
-        reflect.lineTo(x + w * .75f, y)
-        reflect.lineTo(x + w, y)
-        reflect.lineTo(x + w, y + h * .2f)
-        reflect.lineTo(x + w * .45f, y + h)
-        reflect.close()
-    }
     val wallShapes = Shapes()
     val frontShapes = Shapes()
     val overShapes = Shapes()
@@ -422,7 +407,6 @@ private fun floorArt(
         InkPaths.of(wallShapes),
         InkPaths.of(overShapes),
         InkPaths.of(frontShapes),
-        reflect,
         windows,
         occ,
         cast,

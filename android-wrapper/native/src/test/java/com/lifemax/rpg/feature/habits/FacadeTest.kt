@@ -127,27 +127,17 @@ class FacadeTest {
     fun theWholePoolIsInsideItsBudget() {
         val bytes = tiles.values.sumOf { it.pixels.size * 4 }
         val lobby = FacadeSprites.lobbyTile()
-        val mirror = FacadeSprites.mirror()
         val grime = FacadeSprites.grime()
         val drip = FacadeSprites.drip()
         assertEquals(
-            bytes +
-                2 * FacadeSprites.cloth().let { it.w * it.h * 4 } +
-                lobby.pixels.size * 4 +
-                mirror.w * mirror.h * 4 +
-                grime.w * grime.h * 4 +
-                drip.w * drip.h * 4,
+            bytes + lobby.pixels.size * 4 + grime.w * grime.h * 4 + drip.w * drip.h * 4,
             FacadeSprites.bytes(),
         )
         assertTrue("${FacadeSprites.bytes()}", FacadeSprites.bytes() < 1_000_000)
-        val cloth = FacadeSprites.cloth()
-        assertTrue(cloth.shade.all { (it and 0xFFFFFF) == 0 })
-        assertTrue(cloth.light.all { (it and 0xFFFFFF) == 0xFFFFFF })
-        assertTrue(cloth.shade.any { (it ushr 24) > 20 } && cloth.light.any { (it ushr 24) > 20 })
     }
 
     @Test
-    fun theLobbysGraniteAndTheMirroredCityAreBakedOnceTheSameAndInTone() {
+    fun theLobbysGraniteIsBakedOnceTheSameAndInTone() {
         val a = FacadeSprites.lobbyTile()
         assertArrayEquals(a.pixels, FacadeSprites.lobbyTile().pixels)
         assertTrue(a.pixels.all { (it ushr 24) == 255 })
@@ -176,12 +166,6 @@ class FacadeTest {
         val inside = (0 until a.w - 1).maxOf { step(it, it + 1) }
         val wrap = step(a.w - 1, 0)
         assertTrue("granite seam $wrap vs $inside", wrap <= inside * 1.05f + 2 * a.h)
-        val m = FacadeSprites.mirror()
-        assertArrayEquals(m.light, FacadeSprites.mirror().light)
-        assertTrue(m.light.all { (it and 0xFFFFFF) == 0xFFFFFF })
-        // the roofs: solid at the strip's foot, sky over some of its top
-        assertTrue((0 until m.w).all { (m.light[(m.h - 1) * m.w + it] ushr 24) > 100 })
-        assertTrue((0 until m.w).count { (m.light[it] ushr 24) < 20 } > m.w / 3)
     }
 
     @Test
