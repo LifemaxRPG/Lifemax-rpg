@@ -199,7 +199,51 @@ internal object TreeSprites {
             }
             else -> masses(p, shape, variant, footX, footY, 0f)
         }
+        if (season != TreeSeason.BARE) volume(p, shape, footX, footY)
         return p
+    }
+
+    /**
+     * The crown as one rounded mass: over the lumps' own light, the whole crown is lit as a ball
+     * (or a pine as a cone) from the light's side, falling darker on the far side and underneath,
+     * so the tree reads as a volume and not a flat cut-out. Leaves only (the bark keeps its own).
+     */
+    private fun volume(p: Planes, shape: TreeShape, footX: Float, footY: Float) {
+        val c = shape.clumps
+        var x0 = Float.MAX_VALUE
+        var x1 = -Float.MAX_VALUE
+        var y0 = Float.MAX_VALUE
+        var y1 = -Float.MAX_VALUE
+        val pine = shape.kind == TreeKind.PINE
+        for (m in 0 until c.size / 4) {
+            val cx = c[m * 4]
+            val cy = c[m * 4 + 1]
+            val rx = c[m * 4 + 2]
+            val ry = c[m * 4 + 3]
+            x0 = min(x0, cx - rx)
+            x1 = max(x1, cx + rx)
+            // a pine's tier stands up from its foot; a mass is about its middle
+            y0 = min(y0, cy - ry)
+            y1 = max(y1, if (pine) cy else cy + ry)
+        }
+        val ccx = footX + (x0 + x1) / 2f * PPU
+        val ccy = footY + (y0 + y1) / 2f * PPU
+        val crx = (x1 - x0) / 2f * PPU
+        val cry = (y1 - y0) / 2f * PPU
+        for (i in 0 until p.w * p.h) {
+            if (p.alpha[i] <= 0f || p.bark[i] > .5f) continue
+            val gx = ((i % p.w) - ccx) / crx
+            val gy = ((i / p.w) - ccy) / cry
+            // a pine is a cone: round across, not up
+            val ry = if (pine) 0f else gy
+            val r2 = min(.96f, gx * gx + ry * ry)
+            val nz = sqrt(1f - r2)
+            val lam = gx * LX + ry * LY + nz * LZ
+            var k = .66f + .46f * Px.smooth(-.55f, .85f, lam)
+            // the underside, out of the sky's light
+            k *= 1f - (if (pine) .1f else .22f) * Px.smooth(.35f, 1f, gy)
+            p.tone[i] = (p.tone[i] * k).coerceIn(0f, 1f)
+        }
     }
 
     // ---- painting the planes
@@ -242,7 +286,12 @@ internal object TreeSprites {
                 val nz = sqrt(max(0f, 1f - nx * nx))
                 val lam = nx * LX + nz * LZ + (-.3f) * LY * .2f
                 val streak = Noise.fbm(x * .55f, y * .09f, 140 + variant, 3)
-                val v = Px.smooth(-.25f, .85f, lam) * .8f + (streak - .5f) * .35f + .05f
+                var v = Px.smooth(-.25f, .85f, lam) * .8f + (streak - .5f) * .35f + .05f
+                // round: the core shadow just past the middle on the far side, the light the
+                // ground throws back along the far edge, and the crown's shade on its top
+                v *= 1f - .32f * Px.smooth(.05f, .45f, nx) * Px.smooth(.95f, .6f, nx)
+                v += .12f * Px.smooth(.6f, .92f, nx)
+                v *= 1f - .3f * Px.smooth(.6f, 1f, t)
                 val i = y * p.w + x
                 p.alpha[i] = max(p.alpha[i], cover)
                 p.tone[i] = v.coerceIn(0f, 1f)
@@ -465,14 +514,15 @@ internal object TreeSprites {
         val c = shape.clumps
         // paint the lowest first; the higher masses sit in front, nearest the light
         val order = (0 until c.size / 4).sortedByDescending { c[it * 4 + 1] }
-        for (m in order) {
+        for ((rank, m) in order.withIndex()) {
             val cx = footX + c[m * 4] * PPU
             val cy = footY + c[m * 4 + 1] * PPU
             val rx = c[m * 4 + 2] * PPU
             val ry = c[m * 4 + 3] * PPU
             val seed = 150 + variant * 17 + m * 3
             cast(p, cx, cy, rx, ry, seed)
-            mass(p, cx, cy, rx, ry, seed, patchy)
+            // the masses behind (painted first) a little darker than those in front of them
+            mass(p, cx, cy, rx, ry, seed, patchy, .84f + .16f * rank / max(1, order.size - 1))
         }
     }
 
@@ -526,6 +576,7 @@ internal object TreeSprites {
         ry: Float,
         seed: Int,
         patchy: Float = 0f,
+        depth: Float = 1f,
     ) {
         for (y in
             max(0, (cy - ry - 4f * PPU).toInt())..min(p.h - 1, (cy + ry + 4f * PPU).toInt())) {
@@ -568,7 +619,7 @@ internal object TreeSprites {
                     Px.smooth(.25f, .95f, dx * .8f - dy * .1f + (1f - nz) * .3f) *
                         Px.smooth(.35f, .9f, sqrt(r2) + bx * .2f)
                 val i = y * p.w + x
-                p.tone[i] = Px.mix(p.tone[i], v.coerceIn(0f, 1f), cover)
+                p.tone[i] = Px.mix(p.tone[i], (v * depth).coerceIn(0f, 1f), cover)
                 p.lamp[i] = Px.mix(p.lamp[i], lampSide, cover)
                 p.bark[i] = Px.mix(p.bark[i], 0f, cover)
                 p.alpha[i] = p.alpha[i] + (1f - p.alpha[i]) * cover

@@ -506,3 +506,30 @@ hub flange and a reflector. The painter draws the cyclist's contact shadow (`cyc
 each tyre and a soft shade under the bike) and at night its lamps (`cycleLamps`: a cool white glow
 and pool ahead, the red tail); its key-light and lamp shadows already came through `party`. Bytes:
 street set 8.71 MB to 8.66 MB, walkers 5.50 MB to 4.65 MB (no glow round them).
+
+### As built: the pavement's furniture in 2.5D
+
+`domain/StreetVolume` puts the lamps, trees and benches in the buildings' perspective. The furniture
+stands in front of the facades, so it is drawn at `BuildingPainter.standAt(x)` = x plus
+`StreetVolume.near(shiftAt(x))` (a quarter of a building's side shift, the other way: up to 3.5
+units out from the middle of the view), and moves a touch faster than the fronts as the street
+scrolls. Its key-light shadow, its headlight shadow (`caster`), its night pool, its wet reflection
+and the lit rain under a lamp all start from that place. Lamps and benches are boxes drawn with
+`box` (front, top and the side away from the middle, skewed by `StreetVolume.skew(side)` and raised
+by `RISE`, each face lit by `StreetVolume.face`): a lamp's plinth is two stepped boxes and a collar
+under the arm; its pole is seven tapered strips each lit as part of a cylinder turned with the view
+(`StreetVolume.cylinder`: lit flank, core shadow, a thin rim of light thrown back), its arm has a
+lit top stroke, its hood a highlight on the light's side and a shaded far side that slide round with
+the view, and a dark lip underneath. A bench is three back slats, two iron ends with their depth,
+three seat slats with their tops and two arms; the snow lies on those top faces. Iron and wood take
+the key light's side and strength and go bluer under the moon. Trees: `TreeSprites.volume` shades
+the whole crown as one ball (a pine as a cone) lit from the light's side, darker on the far side and
+underneath, and the masses behind are a little darker than those in front; the trunk has a core
+shadow, a rim of thrown-back light and the crown's shade at its top. When drawn, a tree whose side
+shift is more than half a unit gets a darker copy of itself (`backLeaves`, multiplied) behind it,
+sheared about the foot to slide towards the middle (`TREE_BACK`) while the tree itself slides a
+little out (`TREE_FRONT`), so the crown's far side shows as a band of shade on the side the
+buildings show theirs and the back leaves move less than the front. No sprite bytes were added.
+The street people's lamp light (`StreetLifePainter`, `NearLight.LAMP_LENS`) still reads the lamp's
+street x, so it can sit up to 3.5 units off the drawn lens at the view's edge; the falling leaves
+(`SeasonFall`) likewise.
