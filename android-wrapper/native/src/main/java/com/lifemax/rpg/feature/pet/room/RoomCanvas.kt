@@ -61,32 +61,10 @@ internal interface RoomCanvas {
 
     /**
      * Draw the [sw] x [sh] part of [image] at ([sx], [sy]) with its top left at ([dx], [dy]),
-     * unscaled: a picture the room renders while it runs (one camera step of the solid furniture,
-     * [VolumeSheets]). A canvas that caches a bitmap of it keeps one per [slot] (0 until
-     * [MAX_SHEETS]) for as long as that slot's [version] stays the same. [alpha] (0 to 1) scales
-     * how opaque it is drawn: below 1 only while a piece cross-fades between two camera steps
-     * ([StepMix]); at 1 the pixels are drawn exactly as they are.
-     */
-    fun sheet(
-        image: ArgbImage,
-        slot: Int,
-        version: Int,
-        sx: Int,
-        sy: Int,
-        sw: Int,
-        sh: Int,
-        dx: Int,
-        dy: Int,
-        alpha: Float,
-    )
-
-    /**
-     * Draw the [sw] x [sh] part of [image] at ([sx], [sy]) with its top left at ([dx], [dy]),
      * unscaled and opaque as it is, where the position is in house pixels but need not be whole: a
-     * slice of a piece drawn in continuous 3D ([SolidStack]). A canvas places it at its own nearest
-     * pixel (the screen's canvas at a device pixel, so the piece's sides grow a device pixel at a
-     * time), keeping a bitmap of [image] per [slot] (0 until [MAX_STACKS]) while [version] stays
-     * the same. By default it is drawn at the nearest house pixel, as a [sheet].
+     * depth strip of a solid piece ([SolidFaces]). A canvas places it at its own nearest pixel (the
+     * screen's canvas at a device pixel, so a piece's sides grow a device pixel at a time), keeping
+     * a bitmap of [image] per [slot] (0 until [MAX_STACKS]) while [version] stays the same.
      */
     fun stack(
         image: ArgbImage,
@@ -98,12 +76,18 @@ internal interface RoomCanvas {
         sh: Int,
         dx: Float,
         dy: Float,
-    ) = sheet(image, slot, version, sx, sy, sw, sh, Math.round(dx), Math.round(dy), 1f)
+    )
+
+    /**
+     * Move everything drawn from now on [dx] house pixels across, until it is set again (0 puts
+     * things back where they are asked for): the parallax of the layer being drawn, which need not
+     * be whole. The screen's canvas moves by the nearest whole device pixel, so the floor, the
+     * furniture and the cats slide continuously as the camera pans; a canvas of house pixels moves
+     * by the nearest whole house pixel (rounded half up).
+     */
+    fun nudge(dx: Float)
 
     companion object {
-        /** How many [sheet] pictures a canvas keeps at once: one per camera step. */
-        const val MAX_SHEETS = 2 * SheetTuning.MAX_STEPS_PER_SIDE + 1
-
         /** How many [stack] pictures a canvas keeps at once: one per solid piece. */
         const val MAX_STACKS = DepthOrder.MAX_PIECES
     }
@@ -140,11 +124,12 @@ internal interface CatLayer {
     fun surface(i: Int): String? = null
 
     /**
-     * Draw cat [i] in the 2.5D room: moved [shift] art pixels sideways by the parallax, with the
-     * soft contact shadow and rim light the [style] asks for, painted through [canvas]. A layer
+     * Draw cat [i] in the 2.5D room: moved [shift] art pixels sideways by the parallax (need not be
+     * whole: the screen places the cat at its nearest device pixel, as the floor under it), with
+     * the soft contact shadow and rim light the [style] asks for, painted through [canvas]. A layer
      * that cannot do this (the classic room) draws as [draw] does.
      */
-    fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) = draw(i)
+    fun draw(i: Int, shift: Float, style: RoomStyle, canvas: RoomCanvas) = draw(i)
 }
 
 /** An empty room: the fidelity test and the room without cats. */

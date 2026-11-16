@@ -73,8 +73,8 @@ internal class HouseStage(
         private set
 
     /**
-     * Whether the 2.5D room's camera steps are made by a background thread ([warmDepth]) and a
-     * frame never waits for one. Off for screenshots and tests, which make what they need.
+     * Whether the 2.5D room's furniture faces are baked by a background thread ([warmDepth]) and a
+     * frame never waits for them. Off for screenshots and tests, which bake what they need.
      */
     var asyncWarm = false
         set(value) {
@@ -82,7 +82,7 @@ internal class HouseStage(
             scene.depth?.asyncWarm = value
         }
 
-    /** Whether the room can be drawn without a hitch: the 2.5D room's rest picture is made. */
+    /** Whether the room can be drawn without a hitch: the 2.5D room's faces are baked. */
     val depthReady: Boolean
         get() = scene.depth?.ready ?: true
 
@@ -195,8 +195,9 @@ internal class HouseStage(
 
     /**
      * Draw the room in [next] from now on (the performance guard stepped the depth down, or the
-     * phone's motion setting changed): the cats and the camera carry on. The new room's rest
-     * picture is made off the main thread first, so the swap is not a hitch.
+     * phone's motion setting changed): the cats and the camera carry on. The furniture's faces are
+     * baked off the main thread first (once per art: a new level shares them), so the swap is not a
+     * hitch.
      */
     suspend fun useStyle(next: RoomStyle) {
         if (next == style) return
@@ -211,25 +212,26 @@ internal class HouseStage(
         canvas.releaseSheets()
     }
 
-    /** Make the 2.5D room's rest picture (a background thread, before the room is first shown). */
+    /**
+     * Bake the 2.5D room's furniture faces (a background thread, before the room is first shown).
+     */
     fun prepareDepth() {
         scene.depth?.prepare()
     }
 
     /**
-     * Make every camera step's pictures of the 2.5D room (rest first). Run on a background thread
-     * when the room comes on screen; [cancelled] is asked between steps.
+     * Bake the 2.5D room's furniture faces if they are not yet. Run on a background thread when the
+     * room comes on screen; [cancelled] is asked between pieces.
      */
     fun warmDepth(cancelled: () -> Boolean = { false }) {
         scene.depth?.warm(cancelled)
     }
 
     /**
-     * Let go of the cached camera steps and their bitmaps (the room left the screen or the app
-     * stopped); [warmDepth] makes them again when it returns.
+     * Let go of the bitmaps of the furniture's faces (the room left the screen or the app stopped);
+     * the next frame makes them again from the baked faces, which are kept (they are small).
      */
     fun trimDepth() {
-        scene.depth?.release()
         canvas.releaseSheets()
     }
 
@@ -329,7 +331,6 @@ internal class HouseStage(
         particles.step(dt)
         followCats(dt)
         scene.depth?.let {
-            it.solid3d = LiveDepth.solid3d
             it.follow(if (drawn) screenCentre else director.camera.cx)
             it.step(dt)
             LiveDepth.reportOffsets(it.wallShiftNow, it.nearShiftNow)
@@ -431,7 +432,7 @@ internal class HouseStage(
      * Cat [i] in the 2.5D room: [shift] pixels over for the parallax, the soft contact shadow in
      * place of the two-row blob, and a rim of window light under the cat on the window's side.
      */
-    override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
+    override fun draw(i: Int, shift: Float, style: RoomStyle, canvas: RoomCanvas) {
         val k = visible[i]
         val pose = house.bodies[k].pose
         toyPainter.before(pose.z, shift)
@@ -441,14 +442,16 @@ internal class HouseStage(
         if (style.softShadows) {
             val halfW =
                 (pose.shadowHalfWidth * pose.shadowScale * style.level.shadowSize).roundToInt()
+            canvas.nudge(shift) // the shadow moves with the cat, a device pixel at a time
             ContactShadow.paint(
                 canvas,
-                (pose.shadowX - houseX + shift).roundToInt(),
+                (pose.shadowX - houseX).roundToInt(),
                 pose.shadowY.roundToInt(),
                 halfW,
                 ContactShadow.halfHeightFor(halfW),
                 pose.shadowAlpha / Tuning.Shadow.ALPHA * style.level.shadowStrength,
             )
+            canvas.nudge(0f)
         } else {
             val shadowX = originX + (pose.shadowX - houseX + shift) * scale
             scope.drawShadowAt(pose, scale, shadowX, originY + pose.shadowY * scale)
@@ -471,7 +474,7 @@ internal class HouseStage(
     override fun draw(i: Int) {
         val k = visible[i]
         val pose = house.bodies[k].pose
-        toyPainter.before(pose.z, 0)
+        toyPainter.before(pose.z, 0f)
         val houseX = RoomLayout.HOUSE_X0.toFloat()
         val footX = (originX + (pose.x - houseX) * scale).roundToInt().toFloat()
         val footY = (originY + (pose.y + pose.bob) * scale).roundToInt().toFloat()
@@ -480,7 +483,7 @@ internal class HouseStage(
         scope.drawShadowAt(pose, scale, shadowX, shadowY)
         val light = lighting.keyFor(pose, clock, i)
         scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, null, secondaryMotion, light)
-        toyPainter.held(house.bodies[k], 0)
+        toyPainter.held(house.bodies[k], 0f)
     }
 
     private companion object {

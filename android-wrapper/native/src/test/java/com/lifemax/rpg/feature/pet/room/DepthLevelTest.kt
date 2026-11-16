@@ -51,16 +51,14 @@ class DepthLevelTest {
     }
 
     @Test
-    fun eachLevelCachesEnoughStepsForOnePixelAStep() {
-        val deepest = solids.maxOf { it.volume!!.model.depth }
-        val steps = DepthLevel.entries.map { VolumeSheets.stepsFor(solids, it) }
-        assertEquals(listOf(3, 4, 5), steps)
-        for ((level, n) in DepthLevel.entries.zip(steps)) {
-            assertTrue(
-                "$level: a step moves the deepest back at most a pixel",
-                deepest * level.depthGain / n <= 1f,
-            )
-            assertTrue(2 * n + 1 <= RoomCanvas.MAX_SHEETS)
+    fun atEveryLevelNeighbouringStripsAreLessThanAPixelApart() {
+        // the faces' strips cover each other only if a strip is less than a pixel from the next
+        for (level in DepthLevel.entries) {
+            val across = FaceView.vx(1f, level) * FaceView.depthOf(1)
+            val down = FaceView.vy(1f, level) * FaceView.depthOf(1)
+            assertTrue("$level: $across across", kotlin.math.abs(across) < 0.25f)
+            assertTrue("$level: $down down", kotlin.math.abs(down) < 0.25f)
         }
+        assertTrue(solids.size <= RoomCanvas.MAX_STACKS)
     }
 }

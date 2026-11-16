@@ -45,17 +45,18 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
     private val path = Path()
     private var overlay: ImageBitmap? = null
     private var overlayVersion = Int.MIN_VALUE
-    private val sheets = arrayOfNulls<ImageBitmap>(RoomCanvas.MAX_SHEETS)
-    private val sheetVersions = IntArray(RoomCanvas.MAX_SHEETS)
     private val stacks = arrayOfNulls<ImageBitmap>(RoomCanvas.MAX_STACKS)
     private val stackVersions = IntArray(RoomCanvas.MAX_STACKS)
 
+    /** The [nudge] as it is, in house pixels, and rounded to whole device pixels. */
+    private var nudge = 0f
+    private var nudgePx = 0
+
     /**
-     * Let go of the bitmaps of the solid pieces' camera steps (the room left the screen); the next
-     * frame that needs one makes it again.
+     * Let go of the bitmaps of the solid pieces' faces (the room left the screen); the next frame
+     * that draws a piece makes its bitmap again.
      */
     fun releaseSheets() {
-        sheets.fill(null)
         stacks.fill(null)
     }
 
@@ -65,9 +66,15 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
         this.scale = scale
         this.originX = originX
         this.originY = originY
+        nudge(0f)
     }
 
-    private fun px(x: Int) = originX + x * scale
+    override fun nudge(dx: Float) {
+        nudge = dx
+        nudgePx = (dx * scale).roundToInt()
+    }
+
+    private fun px(x: Int) = originX + x * scale + nudgePx
 
     private fun py(y: Int) = originY + y * scale
 
@@ -120,10 +127,10 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
         argb: Int,
     ) {
         path.reset()
-        path.moveTo(originX + x0 * scale, originY + y0 * scale)
-        path.lineTo(originX + x1 * scale, originY + y1 * scale)
-        path.lineTo(originX + x2 * scale, originY + y2 * scale)
-        path.lineTo(originX + x3 * scale, originY + y3 * scale)
+        path.moveTo(originX + (x0 + nudge) * scale, originY + y0 * scale)
+        path.lineTo(originX + (x1 + nudge) * scale, originY + y1 * scale)
+        path.lineTo(originX + (x2 + nudge) * scale, originY + y2 * scale)
+        path.lineTo(originX + (x3 + nudge) * scale, originY + y3 * scale)
         path.close()
         scope.drawPath(path, Color(argb))
     }
@@ -150,36 +157,9 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
         )
     }
 
-    override fun sheet(
-        image: ArgbImage,
-        slot: Int,
-        version: Int,
-        sx: Int,
-        sy: Int,
-        sw: Int,
-        sh: Int,
-        dx: Int,
-        dy: Int,
-        alpha: Float,
-    ) {
-        if (sheets[slot] == null || sheetVersions[slot] != version) {
-            sheets[slot] = bitmap(image)
-            sheetVersions[slot] = version
-        }
-        scope.drawImage(
-            sheets[slot]!!,
-            srcOffset = IntOffset(sx, sy),
-            srcSize = IntSize(sw, sh),
-            dstOffset = IntOffset(px(dx), py(dy)),
-            dstSize = IntSize(sw * scale, sh * scale),
-            alpha = alpha.coerceIn(0f, 1f),
-            filterQuality = FilterQuality.None,
-        )
-    }
-
     /**
-     * A slice of a piece in continuous 3D: placed at the device pixel nearest its house position,
-     * so it moves a device pixel at a time while its own pixels stay whole art pixels.
+     * A depth strip of a piece: placed at the device pixel nearest its house position (with the
+     * nudge), so it moves a device pixel at a time while its own pixels stay whole art pixels.
      */
     override fun stack(
         image: ArgbImage,
@@ -192,6 +172,9 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
         dx: Float,
         dy: Float,
     ) {
+        val x = (originX + (dx + nudge) * scale).roundToInt()
+        // most of the house is off the screen: its strips are not drawn at all
+        if (x >= scope.size.width || x + sw * scale <= 0) return
         if (stacks[slot] == null || stackVersions[slot] != version) {
             stacks[slot] = bitmap(image)
             stackVersions[slot] = version
@@ -200,8 +183,7 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
             stacks[slot]!!,
             srcOffset = IntOffset(sx, sy),
             srcSize = IntSize(sw, sh),
-            dstOffset =
-                IntOffset((originX + dx * scale).roundToInt(), (originY + dy * scale).roundToInt()),
+            dstOffset = IntOffset(x, (originY + dy * scale).roundToInt()),
             dstSize = IntSize(sw * scale, sh * scale),
             filterQuality = FilterQuality.None,
         )

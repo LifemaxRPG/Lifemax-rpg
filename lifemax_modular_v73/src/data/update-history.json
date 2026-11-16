@@ -5,6 +5,7 @@
    "date": "2026-11-07",
    "title": "Overview drag-and-drop & navigation polish",
    "changes": [
+    "Cat tab: the furniture now turns smoothly and continuously as the camera moves, like the Habits street: its sides and tops grow a fine step at a time instead of switching between fixed pictures, and the floor, rugs and cats slide just as smoothly.",
     "Habits street: the buildings look more lived-in, with soot and rain streaks down the walls, stone corner blocks on brick floors and iron fire escapes on some buildings.",
     "Cat tab: the furniture's 3D sides and tops now fade in and out smoothly as the camera pans, instead of jumping between a few fixed pictures; a still camera shows the same room as before.",
     "Cat tab: choosing a cat (tap it in the room, or switch cats on the Together card) now pans the camera to that cat and keeps following it, also in the full-screen room.",

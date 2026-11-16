@@ -56,8 +56,8 @@ open class SurfaceWalkTest {
 
         override fun draw(i: Int) = Unit
 
-        override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
-            shifts[i] = shift
+        override fun draw(i: Int, shift: Float, style: RoomStyle, canvas: RoomCanvas) {
+            shifts[i] = Math.round(shift)
         }
     }
 
@@ -220,7 +220,7 @@ open class SurfaceWalkTest {
         val catKey = volume.sortFront - volume.surfaces[surface]!!
         for (k in codes.indices) {
             val code = codes[k]
-            if (code >= VolumeStep.FURNITURE) continue
+            if (code >= DepthOrder.FURNITURE) continue
             val piece = depth.bandPiece(code)
             val key = depth.bandKey(code)
             val where = "$surface: ${depth.pieces[piece].name} band at row $key, slot $k, cat $at"
@@ -248,7 +248,7 @@ open class SurfaceWalkTest {
                 val at = codes.indexOfFirst { it >= DepthOrder.CAT }
                 for (k in codes.indices) {
                     val code = codes[k]
-                    if (code >= VolumeStep.FURNITURE) continue
+                    if (code >= DepthOrder.FURNITURE) continue
                     val band = depth.bandKey(code)
                     val farther = band <= key + DepthOrder.CAT_AFTER
                     assertEquals("z=$z x=$x band row $band, cat row $key", farther, k < at)
@@ -274,7 +274,7 @@ open class SurfaceWalkTest {
             val codes = IntArray(depth.order.size) { depth.order.order[it] }
             val at = codes.indexOfFirst { it >= DepthOrder.CAT }
             val sofa = depth.pieces.indexOfFirst { it.name == "sofa" }
-            val bands = codes.filter { it < VolumeStep.FURNITURE && depth.bandPiece(it) == sofa }
+            val bands = codes.filter { it < DepthOrder.FURNITURE && depth.bandPiece(it) == sofa }
             if (bands.isNotEmpty()) {
                 assertTrue(
                     "every band of the sofa is behind the cat",

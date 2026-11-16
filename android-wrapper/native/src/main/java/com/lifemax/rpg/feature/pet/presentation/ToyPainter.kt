@@ -48,7 +48,7 @@ internal class ToyPainter(kit: RoomKit) {
     }
 
     /** The free toys behind depth [z] not drawn yet, moved [shift] pixels (a cat comes next). */
-    fun before(z: Float, shift: Int) {
+    fun before(z: Float, shift: Float) {
         val f = field ?: return
         for (i in 0 until f.count) {
             val t = f[i] ?: continue
@@ -57,7 +57,7 @@ internal class ToyPainter(kit: RoomKit) {
     }
 
     /** The toy [body] holds, when it is drawn over the cat (it was just drawn). */
-    fun held(body: CatBody, shift: Int) {
+    fun held(body: CatBody, shift: Float) {
         val f = field ?: return
         val t = body.heldToy ?: return
         if (t.overCat && t.id < f.count && !drawn[t.id]) paint(t.id, t, shift)
@@ -68,11 +68,11 @@ internal class ToyPainter(kit: RoomKit) {
         val f = field ?: return
         for (i in 0 until f.count) {
             val t = f[i] ?: continue
-            if (!drawn[i]) paint(i, t, 0)
+            if (!drawn[i]) paint(i, t, 0f)
         }
     }
 
-    private fun paint(i: Int, t: ToyBody, shift: Int) {
+    private fun paint(i: Int, t: ToyBody, shift: Float) {
         drawn[i] = true
         val s = scale.toFloat()
         val canvas = scope.drawContext.canvas
@@ -109,7 +109,7 @@ internal class ToyPainter(kit: RoomKit) {
     }
 
     /** The yarn's thread: a line through its points, one device pixel per room pixel of width. */
-    private fun thread(t: ToyBody, shift: Int) {
+    private fun thread(t: ToyBody, shift: Float) {
         val s = scale.toFloat()
         val p = t.thread
         for (k in 1 until t.threadCount) {

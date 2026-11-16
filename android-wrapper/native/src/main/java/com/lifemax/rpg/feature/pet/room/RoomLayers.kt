@@ -32,6 +32,19 @@ internal class PieceVolume(
     /** The row whose parallax the front plane has. */
     val parallaxFront: Float
         get() = if (wall) Parallax.WALL_ROW + depth else sortFront
+
+    private val baking = lazy { SolidFaces(model, wall) }
+
+    /**
+     * The piece's faces, baked the first time they are asked for (on whichever thread asks; a
+     * second asker waits for the first), then kept for as long as the art: they do not depend on
+     * the depth level or the camera, so every room drawn from this art shares them.
+     */
+    val faces: SolidFaces by baking
+
+    /** Whether [faces] are baked. */
+    val baked: Boolean
+        get() = baking.isInitialized()
 }
 
 /**

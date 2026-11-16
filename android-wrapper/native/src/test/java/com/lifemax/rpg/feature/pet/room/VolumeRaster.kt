@@ -2,54 +2,10 @@ package com.lifemax.rpg.feature.pet.room
 
 import kotlin.math.abs
 import kotlin.math.ceil
-import kotlin.math.floor
-
-/** Which face of a column a rendered pixel shows. */
-internal object Face {
-    const val NONE: Byte = 0
-
-    /** The painted front: the sprite's own pixel. */
-    const val FRONT: Byte = 1
-
-    /** A side facing left (the light's side), facing right, a top, an underside. */
-    const val LEFT: Byte = 2
-    const val RIGHT: Byte = 3
-    const val TOP: Byte = 4
-    const val BOTTOM: Byte = 5
-
-    /**
-     * The small step between two neighbouring columns of one surface (the rows of a painted top,
-     * the columns of a round trunk): part of that surface, so it keeps the painted colour.
-     */
-    const val SLOPE: Byte = 6
-}
-
-/** The light and the look of the faces the sway shows. */
-internal object VolumeTuning {
-    /** Ramp steps of each face from its material: the light comes from the windows, above left. */
-    const val TOP_STEP = 1
-    const val LEFT_STEP = -1
-    const val RIGHT_STEP = -2
-    const val BOTTOM_STEP = -2
-
-    /** A side within this much of where its column meets the wall or a deeper part is shaded. */
-    const val CREVICE_REACH = 1f
-    const val CREVICE_STEP = -1
-
-    /** A face pixel next to something at least this much deeper is on an edge: outlined. */
-    const val EDGE_GAP = 1.5f
-
-    /** How far into the piece a side looks for its material past the painted outline. */
-    const val MATERIAL_REACH = 3
-
-    /** Neighbouring columns whose fronts differ by at most this are one surface ([Face.SLOPE]). */
-    const val SLOPE_STEP = 2f
-}
 
 /**
  * The rendered picture of one piece for one camera view, with what each pixel shows. [x0], [y0] is
- * the picture's top left relative to the sprite's (the sides can show left of and above it). Arrays
- * are sized once and reused; a pixel with no colour shows nothing of the piece.
+ * the picture's top left relative to the sprite's (the sides can show left of and above it).
  */
 internal class VolumeFrame(capacity: Int) {
     var x0 = 0
@@ -74,18 +30,13 @@ internal class VolumeFrame(capacity: Int) {
 }
 
 /**
- * Renders a [VolumeModel] for a camera view: an oblique projection in which a point [depth] rows
- * behind the front plane is drawn `depth * vx` pixels across and `depth * vy` down from where it
- * stands, so the front plane stays put, the back lags, and the sides and tops between them show.
- * Each picture pixel casts one ray back through the model's columns (a grid walk, exact, nearest
- * surface first: a z-buffer by construction) and shows the face it meets:
- * - a column's front: the painted pixel, untouched (so a view of (0, 0) is the sprite exactly);
- * - a side, top or underside: the colour of the material behind the painted outline there, stepped
- *   along the piece's own ramp by the face's light ([VolumeTuning]), one more step dark in a
- *   crevice (where the side meets the wall or a deeper part of the piece), and the piece's ink
- *   where the face ends at an edge, as the painted outline does.
- *
- * Pure arithmetic; nothing is allocated (the frame is the caller's).
+ * The reference renderer of a [VolumeModel], test-only: the exact ray cast the room used to cache
+ * per camera step before the furniture's depth became continuous ([SolidFaces]). The faces are
+ * tested against it at the views it rendered. An oblique projection in which a point [depth] rows
+ * behind the front plane is drawn `depth * vx` pixels across and `depth * vy` down; each picture
+ * pixel casts one ray back through the model's columns (nearest surface first) and shows the face
+ * it meets: a column's front (the painted pixel), or a side, top or underside shaded along the
+ * piece's own ramp ([VolumeTuning]), darker in a crevice, and in the piece's ink at an edge.
  */
 internal object VolumeRaster {
     /** The picture a view ([vx], [vy]) needs, `width * height`, for sizing a [VolumeFrame]. */
@@ -97,19 +48,13 @@ internal object VolumeRaster {
 
     private fun span(reach: Float): Int = ceil(abs(reach).toDouble()).toInt() + 1
 
-    /**
-     * Render [model] seen with offsets ([vx], [vy]) pixels per floor row of depth into [out].
-     * [backed]: the piece's back stands against the wall (its sides darken where they meet it).
-     */
+    /** Render [model] seen with offsets ([vx], [vy]) into [out]; [backed]: against the wall. */
     fun render(model: VolumeModel, vx: Float, vy: Float, backed: Boolean, out: VolumeFrame) {
         cover(model, vx, vy, out)
         shade(model, backed, out)
     }
 
-    /**
-     * Which pixels [model] covers seen with offsets ([vx], [vy]), and at what depth, into [out]:
-     * [render] without the shading of the faces (a covered pixel has a colour, the painted one).
-     */
+    /** Which pixels [model] covers seen with offsets ([vx], [vy]), and at what depth. */
     fun cover(model: VolumeModel, vx: Float, vy: Float, out: VolumeFrame) {
         val rx = model.depth * vx
         val ry = model.depth * vy
@@ -123,10 +68,6 @@ internal object VolumeRaster {
         }
     }
 
-    /**
-     * One ray from the picture pixel at sprite position ([px], [py]): walk the model's columns in
-     * the order the ray crosses them and stop at the first solid one it passes through.
-     */
     private fun cast(
         model: VolumeModel,
         px: Int,
@@ -138,7 +79,6 @@ internal object VolumeRaster {
     ) {
         out.face[at] = Face.NONE
         out.colour[at] = 0
-        // the ray: at depth d it is over the point (px + 0.5 - d vx, py + 0.5 - d vy)
         val ux = -vx
         val uy = -vy
         var cx = px
@@ -189,10 +129,6 @@ internal object VolumeRaster {
         }
     }
 
-    /**
-     * Whether the side of column ([cx], [cy]) the ray entered through ([entered]) is a small step
-     * from the column it came from, which is solid and starts a little nearer: one surface.
-     */
     private fun slope(model: VolumeModel, cx: Int, cy: Int, entered: Byte, front: Float): Boolean {
         val px =
             when (entered) {
@@ -211,7 +147,6 @@ internal object VolumeRaster {
         return model.solid(p) && front - model.front[p] <= VolumeTuning.SLOPE_STEP
     }
 
-    /** True when the ray is outside the model and moving away from it: it can meet nothing more. */
     private fun leaving(
         cx: Int,
         cy: Int,
@@ -226,7 +161,6 @@ internal object VolumeRaster {
         return goneX || goneY
     }
 
-    /** Colour the faces the sway shows: material, light, crevices, then the edges. */
     private fun shade(model: VolumeModel, backed: Boolean, out: VolumeFrame) {
         val palette = model.palette
         val n = out.width * out.height
@@ -246,9 +180,9 @@ internal object VolumeRaster {
                 steps += VolumeTuning.CREVICE_STEP
             }
             out.colour[at] =
-                palette.colours[palette.step(material(model, cell, out.face[at]), steps)]
+                palette.colours[
+                        palette.step(VolumeShade.material(model, cell, out.face[at]), steps)]
         }
-        // a piece painted without the art's outline (the cat tree, the lamp) gets none on its sides
         val ink = palette.colours[palette.ink]
         if (ink != RampTuning.ART_INK) return
         for (at in 0 until n) {
@@ -258,44 +192,6 @@ internal object VolumeRaster {
         }
     }
 
-    /**
-     * The palette index of what a side of column [cell] is made of: the painted pixel there, or, if
-     * that is the outline, the first pixel inward past it (a few pixels at most).
-     */
-    fun material(model: VolumeModel, cell: Int, face: Byte): Int {
-        val palette = model.palette
-        val dx =
-            when (face) {
-                Face.LEFT -> 1
-                Face.RIGHT -> -1
-                else -> 0
-            }
-        val dy =
-            when (face) {
-                Face.TOP -> 1
-                Face.BOTTOM -> -1
-                else -> 0
-            }
-        var x = cell % model.width
-        var y = cell / model.width
-        var index = model.index[cell]
-        for (k in 0 until VolumeTuning.MATERIAL_REACH) {
-            if (palette.colours[index] != RampTuning.ART_INK) return index
-            x += dx
-            y += dy
-            if (x !in 0 until model.width || y !in 0 until model.height) break
-            val next = model.index[y * model.width + x]
-            if (next < 0) break
-            index = next
-        }
-        return model.index[cell]
-    }
-
-    /**
-     * Whether a shown face pixel is on an edge: beside nothing, or beside something clearly deeper,
-     * with more of the shown face on its other side (a face one pixel wide keeps its colour, so a
-     * sliver of side reads as a side and not as a thicker outline).
-     */
     private fun onEdge(out: VolumeFrame, at: Int): Boolean {
         val x = at % out.width
         val y = at / out.width
@@ -312,11 +208,6 @@ internal object VolumeRaster {
         return false
     }
 
-    /**
-     * Whether the pixel at ([x], [y]) is open beside a pixel of [face] at [depth]: nothing there,
-     * or something clearly deeper that is not more of the same face (a side runs back in depth
-     * across its own width, so its own pixels are never an edge to it).
-     */
     private fun open(out: VolumeFrame, x: Int, y: Int, depth: Float, face: Byte): Boolean {
         if (x !in 0 until out.width || y !in 0 until out.height) return true
         val i = y * out.width + x
@@ -327,7 +218,4 @@ internal object VolumeRaster {
 
     private val DX = intArrayOf(-1, 1, 0, 0)
     private val DY = intArrayOf(0, 0, -1, 1)
-
-    /** The band (whole floor rows of depth) a pixel of [depth] is drawn in. */
-    fun band(depth: Float): Int = floor(depth).toInt()
 }

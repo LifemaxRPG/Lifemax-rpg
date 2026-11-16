@@ -18,7 +18,7 @@ class ViewAngleSceneTest {
 
     /** One cat standing on the floor at depth [z]; records the shift it is drawn at. */
     private class OneCat(val z: Float, val x: Float) : CatLayer {
-        val shifts = ArrayList<Int>()
+        val shifts = ArrayList<Float>()
         override val count = 1
 
         override fun depth(i: Int) = z
@@ -31,7 +31,7 @@ class ViewAngleSceneTest {
 
         override fun draw(i: Int) = Unit
 
-        override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
+        override fun draw(i: Int, shift: Float, style: RoomStyle, canvas: RoomCanvas) {
             shifts.add(shift)
         }
     }
@@ -56,8 +56,8 @@ class ViewAngleSceneTest {
         val near = d.shiftAtZ(95f)
         println("at rest, camera on the middle of the house: wall $wall px, near $near px")
         assertTrue("wall $wall near $near", near - wall >= 4)
-        val sofa = d.stepOf("sofa")
-        assertTrue("the sofa shows its side at rest ($sofa)", sofa != d.sheets.rest)
+        val sofa = d.yawOf("sofa")
+        assertTrue("the sofa shows its side at rest ($sofa)", kotlin.math.abs(sofa) > 0.1f)
     }
 
     @Test
@@ -78,6 +78,6 @@ class ViewAngleSceneTest {
         }
         assertEquals("frames that changed with the camera standing still", 0, changed)
         assertEquals("one shift for the still cat", 1, cat.shifts.toSet().size)
-        assertEquals("the floor's shift at its depth", d.shiftAtZ(60f), cat.shifts.last())
+        assertEquals("the floor's shift at its depth", d.offsetAtZ(60f), cat.shifts.last(), 0f)
     }
 }

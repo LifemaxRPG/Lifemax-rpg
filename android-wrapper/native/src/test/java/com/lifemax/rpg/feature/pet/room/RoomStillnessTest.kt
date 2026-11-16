@@ -79,8 +79,8 @@ class RoomStillnessTest {
         val s = RoomScene(art, live)
         val changed = changedFrames(s, 11f, 1f) { BEDROOM_X } // 10 s held still
         assertEquals("frames that changed with the camera standing still", 0, changed)
-        val sofa = s.depth!!.stepOf("sofa")
-        assertTrue("the sofa shows its side ($sofa)", sofa != s.depth!!.sheets.rest)
+        val sofa = s.depth!!.yawOf("sofa")
+        assertTrue("the sofa shows its side ($sofa)", kotlin.math.abs(sofa) > 0.1f)
     }
 
     @Test
@@ -105,11 +105,13 @@ class RoomStillnessTest {
             val u = (t / PAN_S).coerceIn(0f, 1f)
             d.follow(PAN_FROM + (PAN_TO - PAN_FROM) * u * u * (3f - 2f * u))
             d.step(DT)
-            s.frame() // the painter chooses the steps
+            s.frame() // the painter aims the pieces
             if (t >= PAN_S) {
                 tracked[0].add(d.shiftAtZ(0f))
                 tracked[1].add(d.shiftAtZ(NEAR_Z))
-                for (p in d.pieces.indices) tracked[2 + p].add(d.stepOf(d.pieces[p].name))
+                for (p in d.pieces.indices) {
+                    tracked[2 + p].add(Math.round(d.yawOf(d.pieces[p].name) * YAW_UNITS))
+                }
             }
             if (t >= PAN_TOTAL_S - REST_CHECK_S) {
                 val now = s.frame()
@@ -140,22 +142,6 @@ class RoomStillnessTest {
             sway.step(DT)
             assertEquals("the drawn sway under +-$TILT_NOISE of tilt noise", held, sway.shown)
         }
-    }
-
-    @Test
-    fun aSwayHoveringOnAStepEdgeKeepsItsStep() {
-        val d = RoomScene(art, live).depth!!
-        val sheets = d.sheets
-        val edge = (sheets.swayOf(sheets.rest) + sheets.swayOf(sheets.rest + 1)) / 2f
-        var step = sheets.indexOf(edge, sheets.rest)
-        var switches = 0
-        val noise = Random(5)
-        repeat(1000) {
-            val next = sheets.indexOf(edge + (noise.nextFloat() * 2f - 1f) * EDGE_NOISE, step)
-            if (next != step) switches++
-            step = next
-        }
-        assertEquals("switches of a sway hovering on a step edge", 0, switches)
     }
 
     /** How many times the values turn back (a step one way, then a step the other). */
@@ -196,10 +182,7 @@ class RoomStillnessTest {
         const val HELD_TILT = 0.3f
         const val TILT_NOISE = 0.01f
 
-        /**
-         * Noise on a sway resting on a step edge: within the steps' hysteresis (0.15 of a step; a
-         * step is a quarter of the sway at MEDIUM), more than the drawn sway ever wanders at rest.
-         */
-        const val EDGE_NOISE = 0.03f
+        /** A piece's yaw is tracked in thousandths. */
+        const val YAW_UNITS = 1000f
     }
 }

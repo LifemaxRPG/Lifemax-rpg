@@ -49,12 +49,6 @@ internal class RoomScene(private val art: RoomArt, val style: RoomStyle = RoomSt
     val depth: DepthScene? =
         if (style.depth && art.layers != null) DepthScene(art, style, this) else null
 
-    /**
-     * Shift every furniture sprite drawn from here on by this many pixels (the parallax); 0 in the
-     * classic room.
-     */
-    internal var shiftX = 0
-
     /** Whether the food bowl is full (a fed cat) or empty. */
     var foodBowlFull = false
 
@@ -219,7 +213,7 @@ internal class RoomScene(private val art: RoomArt, val style: RoomStyle = RoomSt
         val h = src.height * (pct / 100.0)
         val floorY =
             World.HORIZON_Y + (World.FLOOR_Y_ART - World.HORIZON_Y).toDouble() * pct / 100.0
-        val dx = RoomLight.jsRound(x - w / 2) - RoomLayout.HOUSE_X0 + shiftX
+        val dx = RoomLight.jsRound(x - w / 2) - RoomLayout.HOUSE_X0
         val dy = RoomLight.jsRound(floorY - h + 1)
         c.image(
             image,
@@ -242,7 +236,7 @@ internal class RoomScene(private val art: RoomArt, val style: RoomStyle = RoomSt
             r.y,
             r.width,
             r.height,
-            RoomLight.jsRound(x) + shiftX,
+            RoomLight.jsRound(x),
             RoomLight.jsRound(y),
             r.width,
             r.height,
