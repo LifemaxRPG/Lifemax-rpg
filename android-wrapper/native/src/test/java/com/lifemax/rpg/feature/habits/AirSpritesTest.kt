@@ -36,7 +36,7 @@ class AirSpritesTest {
     @Test
     fun theSpritesAreWhiteTintableLayersOfTheirStatedSize() {
         assertEquals(AirSprites.LAYERS, plane.layers.size)
-        assertEquals(AirSprites.LAYERS, blimp.layers.size)
+        assertEquals(AirSprites.BLIMP_LAYERS, blimp.layers.size)
         assertEquals(AirSprites.TRAIL_LAYERS, trail.layers.size)
         assertEquals(AirSprites.PLANE_W * AirSprites.PLANE_H, plane.layers[0].size)
         assertEquals(AirSprites.BLIMP_W * AirSprites.BLIMP_H, blimp.layers[0].size)
@@ -166,20 +166,51 @@ class AirSpritesTest {
         var lit = 0
         for (x in x0 until x1) if (alpha(glow[y * blimp.w + x]) > 100) lit++
         assertTrue("panel pixels $lit of ${x1 - x0}", lit > (x1 - x0) * 3 / 4)
-        // nothing glows above the envelope's middle but the panel is below it
-        for (x in 0 until blimp.w) assertEquals(
+        // nothing glows above the panel's top
+        val above = (blimp.oy + (AirSprites.BAND_T - 1f) * blimp.ppd).toInt()
+        for (yy in 0 until above) for (x in 0 until blimp.w) assertEquals(
             0,
-            alpha(glow[(blimp.oy - 6f * blimp.ppd).toInt() * blimp.w + x]),
+            alpha(glow[yy * blimp.w + x]),
         )
-        // the gondola's windows glow under the envelope
-        val gy = (blimp.oy + 12.1f * blimp.ppd).toInt()
-        assertTrue((0 until blimp.w).count { alpha(glow[gy * blimp.w + it]) > 100 } > 10)
+        // the cabin's windows glow under the envelope, a row of panes
+        val gy = (blimp.oy + AirSprites.WINDOW_Y * blimp.ppd).toInt()
+        val panes = (0 until blimp.w).count { alpha(glow[gy * blimp.w + it]) > 100 }
+        assertTrue("window pixels $panes", panes > 10)
         // the top of the envelope is lit more than its belly
         fun litAt(dp: Float): Int {
             val yy = (blimp.oy + dp * blimp.ppd).toInt()
             return alpha(blimp.layers[AirSprites.LIT][yy * blimp.w + blimp.ox.toInt()])
         }
-        assertTrue(litAt(-7f) > litAt(7f) + 40)
+        assertTrue(litAt(-4f) > litAt(4f) + 80)
+    }
+
+    @Test
+    fun theBlimpIsAnAirshipWithFinsInACrossAndItsLivery() {
+        val shade = blimp.layers[AirSprites.SHADE]
+        fun solid(xDp: Float, yDp: Float): Boolean {
+            val x = (blimp.ox + xDp * blimp.ppd).toInt()
+            val y = (blimp.oy + yDp * blimp.ppd).toInt()
+            return alpha(shade[y * blimp.w + x]) > 200
+        }
+        // a hull far longer than it is deep, fullest towards its nose
+        assertTrue(solid(AirSprites.HULL_HALF - 1.5f, 0f) && solid(-AirSprites.HULL_HALF + 4f, 0f))
+        assertTrue(!solid(0f, -AirSprites.HULL_R - .8f) && solid(0f, -AirSprites.HULL_R + .8f))
+        assertTrue(AirSprites.envelopeR(8f) > AirSprites.envelopeR(-8f))
+        // the upper and lower fins stand well clear of the tail, the cabin hangs under the front
+        assertTrue(solid(-22f, -9f) && solid(-22f, 8.5f))
+        assertTrue(solid(8f, AirSprites.HULL_R + 2f) && !solid(-8f, AirSprites.HULL_R + 2f))
+        // the livery: a share of the body painted, never more than the body (checked above), and
+        // the panel's middle mostly paint
+        val paint = blimp.layers[AirSprites.LIVERY]
+        val painted = paint.count { alpha(it) > 120 }
+        val body = shade.count { alpha(it) > 200 }
+        assertTrue("painted $painted of $body", painted in body / 30..body / 4)
+        // the gleam is a highlight: bright somewhere, a small share of the body
+        val glint = blimp.layers[AirSprites.GLINT]
+        assertTrue(glint.any { alpha(it) > 90 })
+        assertTrue(glint.count { alpha(it) > 60 } * 6 < body)
+        // the draw order holds each layer once
+        assertEquals(AirSprites.BLIMP_LAYERS, AirSprites.BLIMP_ORDER.toSet().size)
     }
 
     @Test

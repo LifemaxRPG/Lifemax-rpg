@@ -1,10 +1,13 @@
 package com.lifemax.rpg.feature.habits.presentation.scene
 
 import kotlin.math.abs
+import kotlin.math.asin
+import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -88,14 +91,14 @@ internal object AirSprites {
 
     fun planeBytes(): Int = PLANE_W * PLANE_H * 4 * LAYERS
 
-    fun blimpBytes(): Int = BLIMP_W * BLIMP_H * 4 * LAYERS
+    fun blimpBytes(): Int = BLIMP_W * BLIMP_H * 4 * BLIMP_LAYERS
 
     fun trailBytes(): Int = TRAIL_W * TRAIL_H * 4 * TRAIL_LAYERS
 
     const val PLANE_W = 130
     const val PLANE_H = 66
-    const val BLIMP_W = 248
-    const val BLIMP_H = 136
+    const val BLIMP_W = 216
+    const val BLIMP_H = 104
     const val TRAIL_W = 544
     const val TRAIL_H = 76
 
@@ -126,6 +129,7 @@ internal object AirSprites {
         var glint = 0f
         var bounce = 0f
         var glow = 0f
+        var paint = 0f
 
         fun clear() {
             cover = 0f
@@ -133,15 +137,17 @@ internal object AirSprites {
             glint = 0f
             bounce = 0f
             glow = 0f
+            paint = 0f
         }
 
         /**
          * Lays a part over what is here: [c] of it, lit [l], gleaming [g], bounced [b], glowing
-         * [w].
+         * [w], painted [p].
          */
-        fun put(c: Float, l: Float, g: Float, b: Float, w: Float = 0f) {
+        fun put(c: Float, l: Float, g: Float, b: Float, w: Float = 0f, p: Float = 0f) {
             if (c <= 0f) return
             lit = lit * (1f - c) + l * c
+            paint = paint * (1f - c) + p * c
             glint = glint * (1f - c) + g * c
             bounce = bounce * (1f - c) + b * c
             glow = glow * (1f - c) + w * c
@@ -475,44 +481,181 @@ internal object AirSprites {
 
     // ---- the blimp
 
-    /** The envelope's half height at [x] (dp, nose to the right, 54.5 dp long). */
-    private fun envelopeH(x: Float): Float {
-        val u = (x + 27f) / 54.5f
-        if (u <= 0f || u >= 1f) return 0f
-        val base = kotlin.math.sin(Math.PI * u.pow(.74f).toDouble()).toFloat().pow(.8f)
-        return 10f * base
-    }
+    /**
+     * The blimp's own sixth layer: the livery painted on it (the panel with its mark, the
+     * cheatline, the rudders and elevators, the cabin's belly), drawn over the light so it keeps
+     * the shading under it, and under the gleam, which lies on top of the paint as on any glossy
+     * finish.
+     */
+    const val LIVERY = 5
+    const val BLIMP_LAYERS = 6
 
-    private val FIN_TOP_X = floatArrayOf(-17f, -24.5f, -30f, -27.5f)
-    private val FIN_TOP_Y = floatArrayOf(-8f, -4f, -14.2f, -16f)
-    private val FIN_BOT_X = floatArrayOf(-17f, -27f, -29.5f, -24.5f)
-    private val FIN_BOT_Y = floatArrayOf(8f, 15f, 13.4f, 4f)
-    private val FIN_SIDE_X = floatArrayOf(-18f, -29f, -29f)
-    private val FIN_SIDE_Y = floatArrayOf(0f, 3.4f, -3.4f)
+    /** The order the blimp's layers are drawn in: the paint over the light, the gleam over it. */
+    val BLIMP_ORDER = intArrayOf(SHADE, LIT, BOUNCE, LIVERY, GLINT, GLOW)
 
-    /** The lit panel on the envelope's side, in dp: its left, top, right and bottom. */
-    const val BAND_L = -15.5f
-    const val BAND_T = .4f
-    const val BAND_R = 17.5f
-    const val BAND_B = 4.2f
+    /** The hull: its nose [HULL_HALF] dp ahead of the origin, its tail as far behind. */
+    const val HULL_HALF = 25f
+
+    /** The hull's radius where it is fullest, in dp. */
+    const val HULL_R = 6.3f
+
+    /** Where the hull is fullest: this share of its length back from the nose. */
+    private const val FULL_AT = .31f
 
     /**
-     * The airship, nose to the right: a smooth envelope shaded as the fabric cylinder it is (lit
-     * from the upper left, a broad gleam along its top, the sky's light under its belly, faint gore
-     * seams and ribs), tail fins (the upper one lit, the lower in the envelope's shade), a gondola
-     * with a window strip. The glow layer is the advertising panel on its side and the gondola's
-     * windows, for the night.
+     * The street looks up at the ship: this many radians from straight side on. The belly shows a
+     * little more than the back, the near tailplane rises over the axis and the far one dips under
+     * it, the far engine hangs a little lower than the near one.
+     */
+    private const val VIEW_UP = .13f
+    private val SIN_UP = sin(VIEW_UP)
+    private val COS_UP = cos(VIEW_UP)
+
+    // the key light on the ship: high, a little behind the viewer and to the left; the half vector
+    // between it and the viewer, for the gleam
+    private const val BLX = -.3f
+    private const val BLY = -.78f
+    private const val BLZ = .55f
+    private val BHX: Float
+    private val BHY: Float
+    private val BHZ: Float
+
+    init {
+        val hx = BLX
+        val hy = BLY + SIN_UP
+        val hz = BLZ + COS_UP
+        val n = sqrt(hx * hx + hy * hy + hz * hz)
+        BHX = hx / n
+        BHY = hy / n
+        BHZ = hz / n
+    }
+
+    /** Angles between the gores (the fabric's long seams) and between the nose battens. */
+    private val GORE = (Math.PI / 9.0).toFloat()
+    private val BATTEN = (Math.PI / 6.0).toFloat()
+
+    /**
+     * The lit panel on the hull's side: from [BAND_L] to [BAND_R] dp along it, between the angles
+     * [BAND_TH_T] and [BAND_TH_B] round it (radians below the side facing level, so it curves with
+     * the hull). [BAND_T] and [BAND_B] are its top and bottom in dp at the hull's fullest.
+     */
+    const val BAND_L = -9f
+    const val BAND_R = 14f
+    const val BAND_TH_T = -.18f
+    const val BAND_TH_B = .62f
+    const val BAND_T = -1.84f
+    const val BAND_B = 2.83f
+    private const val PANEL_ROUND = 1.3f
+
+    /** The cheatline's angle round the hull, under the panel; it sweeps up towards the tail. */
+    private const val CHEAT_TH = 1.02f
+
+    /** The cabin: from [GOND_REAR] to [GOND_FRONT] dp, [GOND_H] dp deep at its deepest. */
+    private const val GOND_REAR = 1.8f
+    private const val GOND_FRONT = 13.2f
+    private const val GOND_H = 3.9f
+
+    /**
+     * Where the lights are, in dp from the origin: the navigation light at the near tailplane's tip
+     * (green on the ship's right, the side seen when it flies to the right), the white light at the
+     * tail, the strobe under the cabin; the propellers' hubs (the near engine's, the far one's) and
+     * their radius; the row of cabin windows.
+     */
+    const val NAV_X = -20.6f
+    const val NAV_Y = -1.85f
+    const val STERN_X = -25.4f
+    const val STERN_Y = 0f
+    const val STROBE_X = 8.2f
+    val STROBE_Y: Float = gondolaKeel(STROBE_X) + .55f
+    const val PROP_NEAR_X = 1.05f
+    const val PROP_NEAR_Y = 6.95f
+    const val PROP_FAR_X = 1.4f
+    const val PROP_FAR_Y = 7.45f
+    const val PROP_R = 1.25f
+    val WINDOW_Y: Float = envelopeR(7f) - .5f * sqrt(gondolaShape(7f)) + 1.15f
+
+    // the fins: root front, tip front, tip rear, root rear (convex); the hinge of each control
+    // surface, from its root to its tip
+    private val TOP_X = floatArrayOf(-13.2f, -19.9f, -23.3f, -25.1f)
+    private val TOP_Y = floatArrayOf(-2.4f, -10.9f, -11.1f, -.3f)
+    private val TOP_HINGE = floatArrayOf(-22.2f, -2f, -22.6f, -11f)
+    private val LOW_X = floatArrayOf(-13.4f, -20f, -23.2f, -25.1f)
+    private val LOW_Y = floatArrayOf(2.4f, 9.9f, 10.1f, .3f)
+    private val LOW_HINGE = floatArrayOf(-22.2f, 2f, -22.6f, 10f)
+    private val NEAR_X = floatArrayOf(-13.2f, -19.6f, -23.3f, -25.1f)
+    private val NEAR_Y = floatArrayOf(-.45f, -1.95f, -2.05f, -.25f)
+    private val NEAR_HINGE = floatArrayOf(-22.2f, -.2f, -22.6f, -2f)
+    private val FAR_X = floatArrayOf(-12.6f, -19.6f, -23.5f, -25.3f)
+    private val FAR_Y = floatArrayOf(.5f, 1.9f, 2f, .3f)
+    private val FAR_HINGE = floatArrayOf(-22.2f, .3f, -22.7f, 1.9f)
+
+    /**
+     * The hull's radius at [x] (dp, nose to the right; 0 off its ends): a blunt rounded nose,
+     * fullest a third of the way back, a long taper to the tail.
+     */
+    fun envelopeR(x: Float): Float {
+        val u = (HULL_HALF - x) / (2f * HULL_HALF)
+        if (u <= 0f || u >= 1f) return 0f
+        val f =
+            if (u < FULL_AT) {
+                val s = (FULL_AT - u) / FULL_AT
+                (1f - s.pow(2.3f)).pow(1f / 2.3f)
+            } else {
+                val s = (u - FULL_AT) / (1f - FULL_AT)
+                (1f - s.pow(2.1f)).pow(.9f)
+            }
+        return HULL_R * f
+    }
+
+    /**
+     * The panel's top ([top]) or bottom edge at [x], in dp below the axis as the street sees it.
+     */
+    fun bandEdge(x: Float, top: Boolean): Float =
+        envelopeR(x) * sin((if (top) BAND_TH_T else BAND_TH_B) - VIEW_UP)
+
+    /** How deep the cabin is at [x], 0 to 1 (0 off its ends): fuller at the front, tapered aft. */
+    private fun gondolaShape(x: Float): Float {
+        val v = (x - GOND_REAR) / (GOND_FRONT - GOND_REAR)
+        if (v <= 0f || v >= 1f) return 0f
+        return sqrt(max(0f, sin(Math.PI.toFloat() * v.pow(1.3f))))
+    }
+
+    /** The y of the cabin's keel at [x]. */
+    private fun gondolaKeel(x: Float): Float = envelopeR(x) - .4f + GOND_H * gondolaShape(x)
+
+    /** Distance to the cabin, negative inside: faired into the envelope's belly. */
+    private fun gondolaD(x: Float, y: Float): Float {
+        val k = gondolaShape(x)
+        if (k <= 0f) return 9f
+        val top = envelopeR(x) - .5f * sqrt(k)
+        val bot = gondolaKeel(x)
+        val sl = ((gondolaKeel(x + .1f) - gondolaKeel(x - .1f)) / .2f).coerceIn(-6f, 6f)
+        return max(y - bot, top - y) / sqrt(1f + sl * sl)
+    }
+
+    /**
+     * A modern airship seen side on from a little below, nose to the right, 50 dp long. The
+     * envelope is a pressurised fabric hull (blunt nose, fullest a third back, a long taper),
+     * shaded with a wrapped key light from above and the cool sky's light under its belly, a soft
+     * terminator round it and a sheen along its upper flank; its gores run nose to tail and stiff
+     * battens fan back from the mooring cap. Four fins in a cross at the tail: the upper and lower
+     * in profile, the near tailplane foreshortened over the axis, the far one dipping under it,
+     * each with its control surface hinged off (painted in the livery). A streamlined cabin is
+     * faired under the front third with its window row and windscreen, a wheel under it, and two
+     * engine pods on outriggers at its back (their propellers turn in [Backdrop]). The livery: a
+     * rounded panel on the flank with a plain invented mark (a disc with a chevron, two bars) and a
+     * cheatline sweeping up to the tail. By night the panel and the windows glow.
      */
     fun blimp(): AirSprite {
         val w = BLIMP_W
         val h = BLIMP_H
         val ppd = BLIMP_PPD
-        val ox = 128f
-        val oy = 68f
-        val out = Array(LAYERS) { FloatArray(w * h) }
+        val ox = 108f
+        val oy = 54f
+        val out = Array(BLIMP_LAYERS) { FloatArray(w * h) }
         val s = Sample()
         val sub = 3
-        val acc = FloatArray(LAYERS)
+        val acc = FloatArray(BLIMP_LAYERS)
         for (py in 0 until h) for (px in 0 until w) {
             acc.fill(0f)
             for (sy in 0 until sub) for (sx in 0 until sub) {
@@ -525,122 +668,267 @@ internal object AirSprites {
                 acc[GLINT] += s.cover * s.glint
                 acc[BOUNCE] += s.cover * s.bounce
                 acc[GLOW] += s.cover * s.glow
+                acc[LIVERY] += s.cover * s.paint
             }
             val n = (sub * sub).toFloat()
             val edge = border(px, py, w, h)
             val i = py * w + px
-            for (l in 0 until LAYERS) out[l][i] = acc[l] / n * edge
+            for (l in 0 until BLIMP_LAYERS) out[l][i] = acc[l] / n * edge
         }
         return AirSprite(w, h, ox, oy, ppd, pack(w, h, out))
     }
 
+    /** A soft wrapped light: the terminator rolls a little past the side facing away. */
+    private fun wrapLight(nx: Float, ny: Float, nz: Float): Float {
+        val k = Px.clamp01((nx * BLX + ny * BLY + nz * BLZ + .18f) / 1.18f)
+        return k * k * (3f - 2f * k)
+    }
+
+    private fun sheen(nx: Float, ny: Float, nz: Float, power: Float): Float =
+        max(0f, nx * BHX + ny * BHY + nz * BHZ).pow(power)
+
+    /**
+     * A fin, a flat plate: lit [lit] at its root to [tipLit] at its tip, its rounded leading edge
+     * catching the light, the control surface behind the hinge [hinge] turned a little and painted
+     * [paint] of the livery. [ao]: the root lies in the hull's shade.
+     */
+    private fun fin(
+        s: Sample,
+        xs: FloatArray,
+        ys: FloatArray,
+        hinge: FloatArray,
+        x: Float,
+        y: Float,
+        lit: Float,
+        tipLit: Float,
+        bounce: Float,
+        paint: Float,
+        ao: Boolean,
+    ) {
+        val d = polygon(xs, ys, x, y)
+        val c = cov(d, .28f)
+        if (c <= 0f) return
+        val out = ((y - ys[0]) / (ys[1] - ys[0])).coerceIn(0f, 1f)
+        var l = Px.mix(lit, tipLit, out)
+        if (ao) {
+            val r = envelopeR(x)
+            l *= .6f + .4f * Px.smooth(r, r + 2.4f, abs(y))
+        }
+        val hx = hinge[0] + (hinge[2] - hinge[0]) * ((y - hinge[1]) / (hinge[3] - hinge[1]))
+        val aft = Px.smooth(hx + .06f, hx - .06f, x)
+        val line = Px.smooth(.2f, .05f, abs(x - hx))
+        l *= (1f - .1f * aft) * (1f - .5f * line)
+        val lead = capsule(xs[0], ys[0], xs[1], ys[1], 0f, x, y)
+        val g = Px.smooth(.45f, 0f, lead) * .38f + Px.smooth(.3f, 0f, abs(d)) * .08f
+        val p = paint * aft * (1f - line)
+        s.put(
+            c,
+            l * (1f - .9f * p),
+            g * (1f - line),
+            bounce * (1f - .5f * line) * (1f - .9f * p),
+            0f,
+            p * (.7f + .3f * l),
+        )
+    }
+
+    /** An engine pod, a short cylinder from [x0] (its back) to [x1] (its intake) at [cy]. */
+    private fun pod(
+        s: Sample,
+        x0: Float,
+        x1: Float,
+        cy: Float,
+        r: Float,
+        dim: Float,
+        x: Float,
+        y: Float,
+    ) {
+        val d = capsule(x0, cy, x1, cy, r, x, y)
+        val c = cov(d, .25f)
+        if (c <= 0f) return
+        val t = ((y - cy) / r).coerceIn(-1f, 1f)
+        val nx = .8f * (Px.smooth(x1 - .2f, x1 + r, x) - Px.smooth(x0 + .2f, x0 - r, x))
+        val k = sqrt(max(0f, 1f - nx * nx))
+        val ny = t * k
+        val nz = sqrt(max(0f, 1f - t * t)) * k
+        val intake = Px.smooth(x1 + .15f, x1 + .45f, x)
+        val l = (.1f + .72f * wrapLight(nx, ny, nz)) * dim * (1f - .7f * intake)
+        val g = sheen(nx, ny, nz, 30f) * .7f * dim * (1f - intake)
+        val b = .45f * Px.smooth(-.2f, .9f, t)
+        s.put(c, l, g, b, 0f, 0f)
+    }
+
     private fun blimpSample(x: Float, y: Float, s: Sample) {
-        // the fins first, the envelope lies over their roots
+        // behind the hull: the far tailplane (its tip shows under the tail), the upper and lower
+        // fins in profile, their roots under the envelope
+        fin(s, FAR_X, FAR_Y, FAR_HINGE, x, y, .14f, .2f, .32f, 0f, false)
+        fin(s, TOP_X, TOP_Y, TOP_HINGE, x, y, .5f, .66f, .1f, 1f, true)
+        fin(s, LOW_X, LOW_Y, LOW_HINGE, x, y, .3f, .44f, .38f, 1f, true)
+        // the far engine, behind the cabin and a little lower
+        pod(s, 1.8f, 4.3f, PROP_FAR_Y, .55f, .4f, x, y)
+        envelope(x, y, s)
+        // the wheel under the cabin, its top in the cabin
         run {
-            val dTop = polygon(FIN_TOP_X, FIN_TOP_Y, x, y)
-            val c = cov(dTop, .3f)
-            if (c > 0f) {
-                val l = .5f + .35f * Px.smooth(-14f, -27f, x)
-                val rim = Px.smooth(.4f, 0f, abs(dTop)) * .3f
-                s.put(c, l, rim, .1f, 0f)
-            }
-            val dBot = polygon(FIN_BOT_X, FIN_BOT_Y, x, y)
-            val cb = cov(dBot, .3f)
-            if (cb > 0f) s.put(cb, .18f, 0f, .3f, 0f)
-            val dSide = polygon(FIN_SIDE_X, FIN_SIDE_Y, x, y)
-            val cs = cov(dSide, .3f)
-            if (cs > 0f) {
-                val l = .3f + .25f * Px.smooth(-18f, -29f, x)
-                s.put(cs, l, Px.smooth(.35f, 0f, abs(dSide)) * .25f, .2f, 0f)
-            }
+            val wy = gondolaKeel(8.2f) - .05f
+            val d = sqrt((x - 8.2f).pow(2f) + (y - wy).pow(2f)) - .45f
+            val c = cov(d, .2f)
+            if (c > 0f) s.put(c, .1f, Px.smooth(.25f, 0f, abs(d + .15f)) * .2f, .2f, 0f, 0f)
         }
-        // the gondola: two struts, a cabin with a rounded roof and a lit window strip
+        cabin(x, y, s)
+        // the near engine on its outrigger
         run {
-            val strutA = capsule(-3f, 8.6f, -3.5f, 10.4f, .3f, x, y)
-            val strutB = capsule(5f, 8.8f, 5.5f, 10.4f, .3f, x, y)
-            val cst = cov(min(strutA, strutB), .25f)
-            if (cst > 0f) s.put(cst, .25f, 0f, .1f, 0f)
-            // the cabin: a rounded box
-            val cx = (x - 1f) / 7.8f
-            val cy = (y - 12.4f) / 2.6f
-            val d = roundBox(1f, 12.4f, 7.8f, 2.6f, 2.2f, x, y)
-            val cc = cov(d, .3f)
-            if (cc > 0f) {
-                // lit along its roof, darker under; a window strip a little below the roof
-                val l = .32f + .4f * Px.smooth(.9f, -.9f, cy) + .12f * Px.smooth(.5f, -1f, cx)
-                val g = Px.smooth(-.55f, -.95f, cy) * .5f * Px.smooth(.9f, .3f, abs(cx))
-                val winY = abs(y - 12.1f) - .8f
-                val winX = abs(x - 1f) - 6.2f
-                val strip = Px.smooth(.1f, -.1f, max(winY, winX))
-                // the windows are panes with mullions between
-                val k = (x - 1f + 6.2f) / 1.55f
-                val fk = k - kotlin.math.floor(k)
-                val pane = Px.smooth(.06f, .14f, min(fk, 1f - fk))
-                val win = strip * pane
-                s.put(cc, l * (1f - .6f * win), g, .15f, win)
-            }
+            val d = capsule(3.1f, PROP_NEAR_Y, 4.7f, PROP_NEAR_Y - 1f, .17f, x, y)
+            val c = cov(d, .2f)
+            if (c > 0f) s.put(c, .22f, 0f, .3f, 0f, 0f)
         }
-        // the envelope
-        run {
-            val hh = envelopeH(x)
-            if (hh > 0f) {
-                val d = abs(y) - hh
-                val c = cov(d, .3f)
-                if (c > 0f) {
-                    val t = (y / hh).coerceIn(-1f, 1f)
-                    val nz = sqrt(max(0f, 1f - t * t))
-                    val slope = (envelopeH(x + .15f) - envelopeH(x - .15f)) / .3f
-                    val nx = (-slope * .7f).coerceIn(-.9f, .9f)
-                    val k = sqrt(max(0f, 1f - nx * nx))
-                    val ny = t * k
-                    val nzz = nz * k
-                    var l = .24f + .76f * lambert(nx, ny, nzz)
-                    // the fabric's broad soft gleam, and a sharper one
-                    var g = gleam(nx, ny, nzz, 5f) * .28f + gleam(nx, ny, nzz, 30f) * .5f
-                    // the rim on the sun's side, where the hull curves away
-                    g += Px.smooth(.3f, -.1f, d) * Px.smooth(-.5f, -.95f, ny) * .25f
-                    // the sky's light under the belly
-                    val b = .6f * Px.smooth(-.1f, .95f, t) * Px.smooth(-.9f, -.3f, nx)
-                    // the ribs: faint shaded creases across the envelope every 7 dp
-                    var seam = 0f
-                    for (r in 0 until 7) {
-                        val rx = -21f + r * 7f
-                        seam = max(seam, Px.smooth(.38f, .08f, abs(x - rx)))
-                    }
-                    // the gores, running nose to tail, curving with the hull
-                    for (gt in floatArrayOf(-.62f, -.25f, .14f, .52f, .86f)) {
-                        seam = max(seam, Px.smooth(.05f, .012f, abs(t - gt)) * .55f)
-                    }
-                    val crease = seam * (.08f + .06f * nz)
-                    l -= crease
-                    g *= (1f - seam * .4f)
-                    // the panel on its side: a rounded strip, softly edged, with blocks of
-                    // lettering (a little less lit) along it
-                    val bx = (x - (BAND_L + BAND_R) / 2f) / ((BAND_R - BAND_L) / 2f)
-                    val bandY = y - (BAND_T + BAND_B) / 2f - .9f * (1f - bx * bx)
-                    val by = bandY / ((BAND_B - BAND_T) / 2f)
-                    val pd = roundBox(0f, 0f, 1f, 1f, .5f, bx, by)
-                    val panel = Px.smooth(.06f, -.06f, pd)
-                    var glow = panel
-                    if (panel > 0f) {
-                        // the lettering: a run of narrow blocks of two heights, a shade less lit
-                        val lx = (x - BAND_L - 2.4f) / 1.35f
-                        val fx = lx - kotlin.math.floor(lx)
-                        val k = kotlin.math.floor(lx).toInt()
-                        val tall =
-                            if (Px.smooth(0f, 1f, Noise.value(k * .7f, .5f, 17)) > .5f) .72f
-                            else .5f
-                        val letter =
-                            Px.smooth(.2f, .32f, fx) *
-                                Px.smooth(.8f, .68f, fx) *
-                                Px.smooth(tall + .15f, tall - .1f, abs(by + .05f)) *
-                                Px.smooth(-.2f, .1f, lx) *
-                                Px.smooth(20.4f, 20f, lx)
-                        glow = panel * (1f - .3f * letter)
-                    }
-                    s.put(c, l, g, b, glow)
-                }
-            }
+        pod(s, 1.5f, 4.1f, PROP_NEAR_Y, .62f, .62f, x, y)
+        // the near tailplane, over the hull: its underside seen, lit by the sky
+        fin(s, NEAR_X, NEAR_Y, NEAR_HINGE, x, y, .3f, .36f, .55f, 1f, false)
+    }
+
+    private fun envelope(x: Float, y: Float, s: Sample) {
+        val r = envelopeR(x)
+        if (r <= 0f) return
+        val slope = ((envelopeR(x + .12f) - envelopeR(x - .12f)) / .24f).coerceIn(-5f, 5f)
+        val d = (abs(y) - r) / sqrt(1f + slope * slope)
+        val c = cov(d, .3f)
+        if (c <= 0f) return
+        val t = (y / r).coerceIn(-1f, 1f)
+        val cosT = sqrt(max(0f, 1f - t * t))
+        // the angle round the hull of the point seen here (0 facing level, down positive), and its
+        // normal: the hull's round section tilted by its taper
+        val th = asin(t) + VIEW_UP
+        var nx = -slope * .9f
+        var ny = sin(th)
+        var nz = cos(th)
+        val nn = sqrt(nx * nx + ny * ny + nz * nz)
+        nx /= nn
+        ny /= nn
+        nz /= nn
+        var l = .03f + .97f * wrapLight(nx, ny, nz).pow(1.25f)
+        // the sky's cool light under the belly, and the air's at the rim where the hull turns away
+        val facing = max(0f, ny * SIN_UP + nz * COS_UP)
+        val b = .5f * Px.smooth(-.15f, .85f, ny) + .32f * (1f - facing).pow(3f)
+        // a broad soft sheen along the upper flank, a tighter gleam in it
+        var g = sheen(nx, ny, nz, 12f) * .16f + sheen(nx, ny, nz, 70f) * .42f
+        // the gores, nose to tail, and the battens fanning back from the nose cap
+        val nose = Px.smooth(HULL_HALF - 6.4f, HULL_HALF - 5.4f, x)
+        val gp = th / GORE
+        val gd = abs(gp - kotlin.math.round(gp)) * GORE * r * max(.2f, cosT)
+        val seam =
+            Px.smooth(.14f, .03f, gd) * (1f - nose) * Px.smooth(-HULL_HALF + 2f, -HULL_HALF + 6f, x)
+        val bp = th / BATTEN
+        val bd = abs(bp - kotlin.math.round(bp)) * BATTEN * r * max(.2f, cosT)
+        val batten = Px.smooth(.22f, .07f, bd) * nose
+        l *= 1f - .1f * seam - .14f * batten
+        g = g * (1f - .5f * seam) + batten * .1f * l
+        // the mooring cap at the nose, the cone at the tail
+        val cap = Px.smooth(HULL_HALF - .8f, HULL_HALF - .55f, x)
+        val cone = Px.smooth(-HULL_HALF + 1f, -HULL_HALF + .75f, x)
+        l *= (1f - .5f * cap) * (1f - .45f * cone)
+        g += cap * .3f * l
+        // the cabin's shade on the belly where it is faired in
+        val ao = Px.smooth(1.5f, 0f, gondolaD(x, y))
+        l *= 1f - .35f * ao
+        g *= 1f - ao
+        // the livery: the panel with its mark, and the cheatline
+        val pcx = (BAND_L + BAND_R) / 2f
+        val phw = (BAND_R - BAND_L) / 2f
+        val thc = (BAND_TH_T + BAND_TH_B) / 2f
+        val thw = (BAND_TH_B - BAND_TH_T) / 2f
+        val qx = abs(x - pcx) - phw + PANEL_ROUND
+        val qy = (abs(th - thc) - thw) * r + PANEL_ROUND
+        val sd =
+            min(max(qx, qy), 0f) + sqrt(max(qx, 0f).pow(2f) + max(qy, 0f).pow(2f)) - PANEL_ROUND
+        val panel = Px.smooth(.1f, -.1f, sd)
+        var mark = 0f
+        if (panel > 0f) {
+            val my = r * sin(thc - VIEW_UP)
+            // the emblem at the panel's front: a disc with an upward chevron cut out of it
+            val ex = BAND_R - 2.7f
+            val ey = envelopeR(ex) * sin(thc - VIEW_UP)
+            val disc = sqrt((x - ex).pow(2f) + (y - ey).pow(2f)) - 1.5f
+            val chev =
+                min(
+                    capsule(ex - .78f, ey + .45f, ex, ey - .38f, .22f, x, y),
+                    capsule(ex, ey - .38f, ex + .78f, ey + .45f, .22f, x, y),
+                )
+            val emblem = Px.smooth(.12f, -.12f, max(disc, -chev))
+            // two bars as a wordmark would sit, curving with the hull
+            val b1 = bar(x, y, BAND_L + 2.6f, BAND_R - 5.6f, my - .3f, .42f)
+            val b2 = bar(x, y, BAND_L + 2.6f, BAND_L + 9.5f, my + .9f, .2f)
+            mark = max(emblem, Px.smooth(.12f, -.12f, min(b1, b2)))
         }
+        val thl = CHEAT_TH - .52f * Px.smooth(4f, -21f, x)
+        val yl = r * sin(thl - VIEW_UP)
+        val cheat =
+            Px.smooth(.32f, .14f, abs(y - yl)) *
+                Px.smooth(-22f, -18f, x) *
+                Px.smooth(22.6f, 19.6f, x)
+        val paint = max(panel * (1f - mark), cheat)
+        val glow = panel * (.58f + .42f * mark)
+        s.put(c, l * (1f - .9f * paint), g, b * (1f - .9f * paint), glow, paint * (.72f + .28f * l))
+    }
+
+    /** Distance to a bar from [x0] to [x1] at height [cy] and half thickness [r], ends rounded. */
+    private fun bar(x: Float, y: Float, x0: Float, x1: Float, cy: Float, r: Float): Float {
+        val dx = max(0f, max(x0 - x, x - x1))
+        val dy = y - cy
+        return sqrt(dx * dx + dy * dy) - r
+    }
+
+    private fun cabin(x: Float, y: Float, s: Sample) {
+        val d = gondolaD(x, y)
+        val c = cov(d, .26f)
+        if (c <= 0f) return
+        val k = gondolaShape(x)
+        val top = envelopeR(x) - .5f * sqrt(k)
+        val bot = gondolaKeel(x)
+        val mid = (top + bot) / 2f + .35f
+        val hh = max(.2f, (bot - top) / 2f)
+        val t = ((y - mid) / hh).coerceIn(-1f, 1f)
+        val sl = ((gondolaKeel(x + .1f) - gondolaKeel(x - .1f)) / .2f).coerceIn(-4f, 4f)
+        var nx = -sl * .35f * Px.smooth(-.6f, .6f, t)
+        var ny = t
+        var nz = sqrt(max(0f, 1f - t * t))
+        val nn = sqrt(nx * nx + ny * ny + nz * nz)
+        nx /= nn
+        ny /= nn
+        nz /= nn
+        // under the envelope: in its shade, deepest right up under it
+        var l =
+            (.12f + .78f * wrapLight(nx, ny, nz)) *
+                (.5f + .5f * Px.smooth(top + .2f, top + 2.2f, y))
+        var g = sheen(nx, ny, nz, 40f) * .45f
+        val b = .55f * Px.smooth(-.2f, .9f, t)
+        // the window row, panes between mullions, and the raked windscreen at the front
+        val wy0 = top + .72f
+        val wy1 = top + 1.58f
+        val row =
+            Px.smooth(.06f, -.06f, max(wy0 - y, y - wy1)) *
+                Px.smooth(3.1f, 3.3f, x) *
+                Px.smooth(11.1f, 10.9f, x)
+        val kk = (x - 3.3f) / 1.1f
+        val fk = kk - kotlin.math.floor(kk)
+        val pane = Px.smooth(.07f, .15f, min(fk, 1f - fk))
+        val screen =
+            Px.smooth(11.25f, 11.45f, x) *
+                Px.smooth(-.28f, -.42f, d) *
+                Px.smooth(.06f, -.06f, max(wy0 - .15f - y, y - (wy1 + .3f - (x - 11.3f) * .45f)))
+        val win = max(row * pane, screen)
+        // the sky caught in the glass, brightest at the top of it
+        val glass = win * (.12f + .3f * Px.smooth(wy1, wy0, y))
+        // a painted stripe under the windows
+        val paint =
+            Px.smooth(.32f, .16f, abs(y - wy1 - .62f)) * Px.smooth(2.6f, 3.6f, x) * (1f - win)
+        l *= 1f - .85f * win
+        g = g * (1f - win) + glass
+        s.put(
+            c,
+            l * (1f - .9f * paint),
+            g,
+            b * (1f - .7f * win) * (1f - .9f * paint),
+            win,
+            paint * (.72f + .28f * l),
+        )
     }
 }

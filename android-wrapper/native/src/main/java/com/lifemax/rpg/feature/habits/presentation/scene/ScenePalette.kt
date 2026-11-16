@@ -374,7 +374,7 @@ internal object SceneInk {
     val BirdDusk = Color(0xFF2A1E2C)
     val Blimp = Color(0xFFDCE2EC)
     val BlimpShade = Color(0xFF8D98B0)
-    val BlimpBand = Color(0xFFD9493F)
+    val BlimpLivery = Color(0xFFC8463D)
     val Headlight = Color(0xFFFFF4D6)
     val Taillight = Color(0xFFFF4D4D)
     val Dust = Color(0xFFE8EDFF)
