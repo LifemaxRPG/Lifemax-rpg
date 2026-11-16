@@ -476,4 +476,4 @@ the body (disc layers by clear², bloom and rays less, the lens flare by clear²
 over the clouds near the light: the clouds' coverage A, then DstOut by A again, leaves A(1-A), the
 thin edges, masked by `LightSprites.point` round the light and added with the alpha raised (the
 silver lining); half hidden (4·c·(1-c)) the sun's rays fan wide over the clouds and the moon's halo
-spreads into a soft corona.
+spreads into a soft corona. The sun shares the same cover (`moonCover` holds whichever body is up).
