@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -27,6 +28,8 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import com.lifemax.rpg.feature.habits.domain.Activity
 import com.lifemax.rpg.feature.habits.domain.Ambient
 import com.lifemax.rpg.feature.habits.domain.BuildingLayout
@@ -55,10 +58,12 @@ import com.lifemax.rpg.feature.habits.domain.Stroll
 import com.lifemax.rpg.feature.habits.domain.Trees
 import com.lifemax.rpg.feature.habits.domain.Visit
 import com.lifemax.rpg.feature.habits.domain.WeatherState
+import com.lifemax.rpg.feature.habits.domain.Wind
 import com.lifemax.rpg.feature.habits.domain.WindowCast
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
@@ -388,7 +393,58 @@ internal class BuildingPainter {
 
     /** The wind's lean and the view's turn on a tree's back leaves (kept, like [shear]). */
     private val backShear = Matrix()
-    private val backLeaves = ColorFilter.tint(BackLeaves, BlendMode.Modulate)
+
+    /**
+     * The air the street's things move in ([Wind]): the trees, the awnings, the flags, the rain,
+     * the steam. Set by the stage each frame; still (all its readings 0) with motion off.
+     */
+    var wind: Wind = Wind()
+
+    /**
+     * The trees' poses in the wind ([TreeSway]), kept by slot with what each was posed for (its
+     * place, its variant and side, the moment and the weather), so a tree and its shadows are posed
+     * once a frame; [treePose] is the one being drawn.
+     */
+    private val poses = Array(POSES) { TreeSway.buffer() }
+    private val poseAt = FloatArray(POSES) { Float.NaN }
+    private val poseKey = IntArray(POSES)
+    private val poseTime = FloatArray(POSES)
+    private val poseLevel = FloatArray(POSES)
+    private var poseNext = 0
+    private var treePose = poses[0]
+
+    /** The pose of the tree of [variant] standing at [x] this frame, posed once. */
+    private fun poseOf(variant: Int, x: Float): FloatArray {
+        val key = variant * 2 + (if (lightFrom < 0f) 0 else 1)
+        val t = wind.seconds
+        val level = wind.level
+        for (i in 0 until POSES) if (
+            poseAt[i] == x && poseKey[i] == key && poseTime[i] == t && poseLevel[i] == level
+        )
+            return poses[i]
+        val i = poseNext
+        poseNext = (poseNext + 1) % POSES
+        TreeSway.pose(variant, x, -lightFrom, wind, poses[i])
+        poseAt[i] = x
+        poseKey[i] = key
+        poseTime[i] = t
+        poseLevel[i] = level
+        return poses[i]
+    }
+
+    /** An awning's pose in the wind ([AwningSway]), kept, and a valance strip's push. */
+    private val awningPose = AwningSway.buffer()
+    private val stripShear = Matrix()
+
+    /**
+     * The tints the wood's parts lit by day take for the hour (and the twigs under the leaves for
+     * the shade of the crown), and the back leaves': remade only when the sky or the leaves change.
+     */
+    private var woodKey: SkyColors? = null
+    private var woodCanopy = -1f
+    private var twigFilter: ColorFilter? = null
+    private var fineFilter: ColorFilter? = null
+    private var backLeaves: ColorFilter? = null
 
     /** Which side the light falls from: -1 the left (the trees are lit on it), 1 the right. */
     var lightFrom = -1f
@@ -399,8 +455,18 @@ internal class BuildingPainter {
     private var pavementBrush: Brush? = null
     private var roadBrush: Brush? = null
 
-    /** The wind's lean on a tree, as a shear: one matrix, kept (nothing is made per frame). */
+    /**
+     * The wind's lean on a tree, as a shear (x moves by its factor times y: [Matrix] [1, 0]): one
+     * matrix, kept (nothing is made per frame).
+     */
     private val shear = Matrix()
+
+    /** The tree pit's grate laid flat on the pavement ([grate]), kept. */
+    private val flat = Matrix()
+
+    /** The planters' box stirring in the wind, and the rain's slant in it, kept. */
+    private val plantShear = Matrix()
+    private val rainShear = Matrix()
 
     /**
      * The time of year ([Season]): which looks the trees wear and how much snow lies on the street.
@@ -840,7 +906,7 @@ internal class BuildingPainter {
                             }
                         }
                 }
-                FurnitureKind.TREE -> tree(0f, f.seed, seconds, 1f, sky, f.x)
+                FurnitureKind.TREE -> tree(0f, f.seed, 1f, sky, f.x, pit = true)
                 FurnitureKind.BENCH -> bench(sky)
             }
         }
@@ -1036,28 +1102,31 @@ internal class BuildingPainter {
     }
 
     /**
-     * A street tree at [x]: a painted sprite ([TreeSprites]: crown in several values, rim light,
-     * bark, soft foot shadow), the look of the hour crossfaded (day, dusk, night, the street lamps
-     * rimming it warm at night), mirrored for a light from the right. With motion on it leans in
-     * the wind by a vertical shear (the foot stays put), so nothing is redrawn. Which variant it is
-     * comes from [seed].
+     * A street tree at [x]: painted in parts ([TreeSprites]: a trunk with its root flare and bark,
+     * a bough and twigs for each mass of the crown, the winter's fine twigs, each mass's leaves in
+     * several values with sky through them), the look of the hour crossfaded (day, dusk, night, the
+     * street lamps rimming it warm at night), mirrored for a light from the right. In the wind
+     * ([TreeSway]) the trunk leans by a shear about its foot (the foot stays put), each mass swings
+     * about the trunk's top a moment behind it and its leaves flutter; still with motion off. Which
+     * variant it is comes from [seed]; a street tree ([pit]) stands in a grated pit.
      *
      * It has depth as the street scrolls: standing at [at] along the street, its crown slides a
      * little out from the middle of the view with the trunk (the leaves in front) while a darker
-     * copy of it behind (the leaves at the back, [backLeaves]) slides a little the other way, so
-     * the far side of the crown shows as a band of shade on the side the buildings show theirs.
+     * copy of it behind (the leaves at the back, its half-size [TreeImages.shape]) slides a little
+     * the other way, so the far side of the crown shows as a band of shade on the side the
+     * buildings show theirs.
      */
     private fun DrawScope.tree(
         x: Float,
         seed: Int,
-        seconds: Float,
         size: Float,
         sky: SkyColors,
         at: Float = buildingX + x,
+        pit: Boolean = false,
     ) {
         val variant = Trees.variant(seed)
-        val sp = SceneSprites.trees[variant].sprite
-        val lean = if (seconds > 0f) Ambient.sway(seed, seconds) else 0f
+        val wood = SceneSprites.treeWood[variant]
+        val rig = wood.rig
         // two looks, the one under and the other over it by how far the hour has gone on
         val dark = sky.dark
         val under = if (dark <= .55f) 0 else 1
@@ -1065,59 +1134,197 @@ internal class BuildingPainter {
         val t = if (dark <= .55f) dark / .55f else (dark - .55f) / .45f
         // and the looks of the season, the bare tree under the canopy ([TreeDress])
         TreeDress.plan(season, variant, dress)
+        val canopy = TreeDress.canopy(dress)
+        val bare = dress[TreeSeason.BARE.ordinal]
         val snow = season.snow
         if (snow > .01f) snowInk(sky)
+        woodTints(sky, canopy)
+        if (pit) grate(x, size)
+        // the wind: the picture is mirrored for a light from the right, so is the wind in it
+        val pose = poseOf(variant, at)
+        treePose = pose
         // the view's turn as a shear about the foot (in the mirrored picture's own sense): the
         // crown's middle slides by its share of the side face, the foot stays where it stands
         val shift = shiftAt(at)
         val turn = -lightFrom * shift / (Trees.shapes[variant].height * .7f)
-        val wind = -tan(lean * (PI.toFloat() / 180f))
-        shear.reset()
-        shear[0, 1] = wind + turn * TREE_FRONT
-        val u = size / sp.ppu
+        val u = size / rig.ppu
         if (abs(shift) > .5f) {
             backShear.reset()
-            backShear[0, 1] = wind - turn * TREE_BACK
+            backShear[1, 0] = TreeSway.crownShear(pose) - turn * TREE_BACK
             withTransform({
                 translate(x, 0f)
                 scale(u * -lightFrom, u, Offset.Zero)
                 transform(backShear)
+                translate(-rig.footX, -rig.footY)
             }) {
-                val foot = Offset(-sp.footX, -sp.footY)
                 for (s in TreeDress.ORDER) {
                     val a = dress[s.ordinal]
                     if (a <= .01f) continue
-                    drawImage(
-                        SceneSprites.tree(variant, s).looks[under],
-                        foot,
-                        // a soft darker mass, not an outline: the back leaves are in shade, not
-                        // black
-                        alpha = a * .6f,
-                        colorFilter = backLeaves,
-                    )
+                    // a soft darker mass, not an outline: the back leaves are in shade, not black
+                    half(SceneSprites.tree(variant, s).shape, a * .6f, backLeaves)
                 }
             }
         }
+        shear.reset()
+        shear[1, 0] = pose[TreeSway.SHEAR] + turn * TREE_FRONT
         withTransform({
             translate(x, 0f)
             scale(u * -lightFrom, u, Offset.Zero)
             transform(shear)
+            translate(-rig.footX, -rig.footY)
         }) {
-            val at = Offset(-sp.footX, -sp.footY)
+            val trunk = wood.trunk
+            val foot = Offset(trunk.x, trunk.y)
+            drawImage(trunk.looks[under], foot)
+            if (t > .01f) drawImage(trunk.looks[over], foot, alpha = t)
+            // the boughs and twigs, then (as the leaves go) the fine twigs, each with its mass
+            for (k in rig.order.indices) {
+                val m = rig.order[k]
+                val p = wood.twigs[m] ?: continue
+                mass(rig, m, false) {
+                    drawImage(p.looks[0], Offset(p.x, p.y), colorFilter = twigFilter)
+                }
+            }
+            if (bare > .01f)
+                for (k in rig.order.indices) {
+                    val m = rig.order[k]
+                    val p = wood.fine[m] ?: continue
+                    mass(rig, m, false) {
+                        drawImage(
+                            p.looks[0],
+                            Offset(p.x, p.y),
+                            alpha = bare,
+                            colorFilter = fineFilter,
+                        )
+                    }
+                }
+            // the season's leaves, mass by mass
             for (s in TreeDress.ORDER) {
                 val a = dress[s.ordinal]
-                if (a <= .01f) continue
-                val images = SceneSprites.tree(variant, s)
-                drawImage(images.looks[under], at, alpha = a)
-                if (t > .01f) drawImage(images.looks[over], at, alpha = a * t)
+                if (a <= .01f || s == TreeSeason.BARE) continue
+                val leaves = SceneSprites.tree(variant, s).leaves
+                for (k in rig.order.indices) {
+                    val m = rig.order[k]
+                    val p = leaves[m] ?: continue
+                    mass(rig, m, true) {
+                        val o = Offset(p.x, p.y)
+                        drawImage(p.looks[under], o, alpha = a)
+                        if (t > .01f) drawImage(p.looks[over], o, alpha = a * t)
+                    }
+                }
             }
-            if (snow > .01f)
-                drawImage(
-                    SceneSprites.treeSnow(variant),
-                    at,
-                    alpha = snow,
-                    colorFilter = snowFilter,
-                )
+            if (snow > .01f) {
+                val parts = SceneSprites.treeSnow(variant)
+                val pine = Trees.evergreen(variant)
+                for (k in rig.order.indices) {
+                    val m = rig.order[k]
+                    val p = parts[m] ?: continue
+                    mass(rig, m, pine) {
+                        drawImage(
+                            p.looks[0],
+                            Offset(p.x, p.y),
+                            alpha = snow,
+                            colorFilter = snowFilter,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Draws [draw] as mass [m] of a tree hangs in the wind ([treePose]): swung about the trunk's
+     * top and, for its [leaves], fluttered a little on its own.
+     */
+    private inline fun DrawScope.mass(
+        rig: TreeRig,
+        m: Int,
+        leaves: Boolean,
+        crossinline draw: DrawScope.() -> Unit,
+    ) {
+        val pose = treePose
+        val i = 1 + m * TreeSway.STRIDE
+        val deg = TreeSway.degrees(pose, m)
+        val dx = if (leaves) pose[i + 1] else 0f
+        val dy = if (leaves) pose[i + 2] else 0f
+        if (deg == 0f && dx == 0f && dy == 0f) {
+            draw()
+            return
+        }
+        withTransform({
+            rotate(deg, Offset(rig.px[m], rig.py[m]))
+            translate(dx, dy)
+        }) {
+            draw()
+        }
+    }
+
+    /** A half-size picture ([TreeImages.shape]) drawn at full size from the origin. */
+    private fun DrawScope.half(
+        image: ImageBitmap,
+        alpha: Float,
+        filter: ColorFilter?,
+        blend: BlendMode = BlendMode.SrcOver,
+    ) {
+        drawImage(
+            image,
+            IntOffset.Zero,
+            IntSize(image.width, image.height),
+            IntOffset.Zero,
+            IntSize(image.width * 2, image.height * 2),
+            alpha = alpha,
+            colorFilter = filter,
+            blendMode = blend,
+        )
+    }
+
+    /**
+     * The tints of a tree's wood lit by day ([TreeWoodImages]) for [sky]: the hour's light on it,
+     * the twigs deeper under a full [canopy]; and the back leaves' shade, darker by night.
+     */
+    private fun woodTints(sky: SkyColors, canopy: Float) {
+        val c = (canopy * 16f).toInt() / 16f
+        if (woodKey === sky && woodCanopy == c) return
+        val d = sky.dark
+        val hour =
+            if (d <= .55f) lerp(Color.White, WoodDusk, d / .55f)
+            else lerp(WoodDusk, WoodNight, (d - .55f) / .45f)
+        val under = lerp(Color.White, UnderLeaves, c)
+        twigFilter =
+            ColorFilter.tint(
+                Color(hour.red * under.red, hour.green * under.green, hour.blue * under.blue),
+                BlendMode.Modulate,
+            )
+        fineFilter = ColorFilter.tint(hour, BlendMode.Modulate)
+        backLeaves =
+            ColorFilter.tint(
+                lerp(BackLeaves, BackLeavesNight, Px.smooth(.3f, .9f, d)),
+                BlendMode.Modulate,
+            )
+        woodKey = sky
+        woodCanopy = c
+    }
+
+    /**
+     * The pit a street tree at [x] stands in ([TreeSprites.grate]): its granite kerb and iron grate
+     * laid flat on the pavement and seen from the frame's side, as the bench's and the lamp's tops
+     * are, darker by night. It does not move in the wind.
+     */
+    private fun DrawScope.grate(x: Float, size: Float) {
+        val g = TreeSprites.GRATE_PPU
+        val half = TreeSprites.GRATE_UNITS / 2f
+        val sx = furnSkew
+        val r = volume.RISE
+        // a row of the picture is a depth, its first the back of the pit (up the picture): across
+        // stays across, a row down comes forward (down the picture by the rise, aside by the skew)
+        flat.reset()
+        flat[0, 0] = size / g
+        flat[1, 0] = -sx * size / g
+        flat[1, 1] = r * size / g
+        flat[3, 0] = x + (-half + sx * half) * size
+        flat[3, 1] = -r * half * size
+        withTransform({ transform(flat) }) {
+            drawImage(SceneSprites.grate, colorFilter = nightFilter)
         }
     }
 
@@ -1378,7 +1585,7 @@ internal class BuildingPainter {
             }) {
                 softBlock(tint, -B.W / 2f, B.W / 2f, h, light.strength)
             }
-            for (t in l.trees) treeSilhouette(cx + t.x, t.id.hashCode(), seconds, .8f, tint, light)
+            for (t in l.trees) treeSilhouette(cx + t.x, t.id.hashCode(), .8f, tint, light)
         }
         val near = lean * 100f + 60f
         for (k in street.furniture.indices) {
@@ -1387,7 +1594,7 @@ internal class BuildingPainter {
             // from the foot where the piece is drawn ([standAt]), so the shadow stays on it
             val fx = standAt(f.x)
             when (f.kind) {
-                FurnitureKind.TREE -> treeSilhouette(fx, f.seed, seconds, 1f, tint, light)
+                FurnitureKind.TREE -> treeSilhouette(fx, f.seed, 1f, tint, light)
                 FurnitureKind.LAMP ->
                     withTransform({
                         translate(fx, 0f)
@@ -1488,23 +1695,23 @@ internal class BuildingPainter {
                     )
                 }
             FurnitureKind.TREE -> {
-                val images = SceneSprites.trees[Trees.variant(f.seed)]
-                val sp = images.sprite
-                val lean = if (seconds > 0f) Ambient.sway(f.seed, seconds) else 0f
+                val variant = Trees.variant(f.seed)
+                val shape = SceneSprites.trees[variant].shape
+                val rig = SceneSprites.treeWood[variant].rig
                 shear.reset()
-                shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
-                val u = 1f / sp.ppu
+                shear[1, 0] = TreeSway.crownShear(poseOf(variant, f.x))
+                val u = 1f / rig.ppu
                 withTransform({
                     translate(standAt(f.x), 0f)
                     scale(u * -lightFrom, u, Offset.Zero)
                     transform(shear)
+                    translate(-rig.footX, -rig.footY)
                 }) {
-                    drawImage(
-                        images.looks[0],
-                        Offset(-sp.footX, -sp.footY),
-                        alpha = alpha,
-                        colorFilter = if (color == Color.Black) blackFilter else shadeFilter(color),
-                        blendMode = blend,
+                    half(
+                        shape,
+                        alpha,
+                        if (color == Color.Black) blackFilter else shadeFilter(color),
+                        blend,
                     )
                 }
             }
@@ -1521,26 +1728,22 @@ internal class BuildingPainter {
     private fun DrawScope.treeSilhouette(
         x: Float,
         seed: Int,
-        seconds: Float,
         size: Float,
         tint: Color,
         light: KeyLight,
     ) {
         val variant = Trees.variant(seed)
-        val images = SceneSprites.trees[variant]
-        val sp = images.sprite
-        val lean = if (seconds > 0f) Ambient.sway(seed, seconds) else 0f
+        val rig = SceneSprites.treeWood[variant].rig
         shear.reset()
-        shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
-        val u = size / sp.ppu
+        shear[1, 0] = TreeSway.crownShear(poseOf(variant, x))
+        val u = size / rig.ppu
         val filter = shadeFilter(tint)
-        val at = Offset(-sp.footX, -sp.footY)
         // the season's shape: the bare tree, and the canopy as full as its leaves are
         TreeDress.plan(season, variant, dress)
         val bare = dress[TreeSeason.BARE.ordinal]
         val canopy = TreeDress.canopy(dress)
-        val skeleton =
-            if (bare > .01f) SceneSprites.tree(variant, TreeSeason.BARE).looks[0] else null
+        val skeleton = if (bare > .01f) SceneSprites.tree(variant, TreeSeason.BARE).shape else null
+        val leafy = if (canopy > .01f) SceneSprites.trees[variant].shape else null
         withTransform({
             translate(x, 0f)
             transform(fallMatrix(light, x))
@@ -1550,15 +1753,10 @@ internal class BuildingPainter {
             for (k in PENUMBRA.indices) {
                 val grow = 1f + .045f * k
                 scale(grow, grow, Offset.Zero) {
-                    if (skeleton != null)
-                        drawImage(skeleton, at, alpha = PENUMBRA[k] * bare, colorFilter = filter)
-                    if (canopy > .01f)
-                        drawImage(
-                            images.looks[0],
-                            at,
-                            alpha = PENUMBRA[k] * canopy,
-                            colorFilter = filter,
-                        )
+                    translate(-rig.footX, -rig.footY) {
+                        if (skeleton != null) half(skeleton, PENUMBRA[k] * bare, filter)
+                        if (leafy != null) half(leafy, PENUMBRA[k] * canopy, filter)
+                    }
                 }
             }
         }
@@ -1873,19 +2071,16 @@ internal class BuildingPainter {
      * A tree's dark shape in the wet under its foot at [x] (no sway: the water is still enough).
      */
     private fun DrawScope.treeReflection(x: Float, seed: Int, size: Float, a: Float) {
-        val images = SceneSprites.trees[Trees.variant(seed)]
-        val sp = images.sprite
-        val u = size / sp.ppu
+        val variant = Trees.variant(seed)
+        val shape = SceneSprites.trees[variant].shape
+        val rig = SceneSprites.treeWood[variant].rig
+        val u = size / rig.ppu
         withTransform({
             translate(x, 0f)
             scale(u * -lightFrom, -u * SQUASH, Offset.Zero)
+            translate(-rig.footX, -rig.footY)
         }) {
-            drawImage(
-                images.looks[0],
-                Offset(-sp.footX, -sp.footY),
-                alpha = a * .55f,
-                colorFilter = reflectFilter,
-            )
+            half(shape, a * .55f, reflectFilter)
         }
     }
 
@@ -2061,7 +2256,8 @@ internal class BuildingPainter {
             )
             tile++
         }
-        // the streaks: far, then near, over the whole view
+        // the streaks: far, then near, over the whole view, slanting further in the gusts
+        rainLean = .2f * wind.force((from + to) / 2f)
         streaks(
             images,
             from,
@@ -2113,6 +2309,9 @@ internal class BuildingPainter {
             }
     }
 
+    /** How far the rain slants in the wind this frame (x per unit fallen, near streaks). */
+    private var rainLean = 0f
+
     /** One tile of streaks over the view at [scale], falling [speed] units a second. */
     private fun DrawScope.streaks(
         images: WeatherImages,
@@ -2131,15 +2330,24 @@ internal class BuildingPainter {
         val tileH = WeatherSprites.STREAK_H * s
         val tileW = WeatherSprites.STREAK_W * s
         val phase = frac(seconds * speed / tileH) * tileH
-        val x0 = kotlin.math.floor(from / tileW) * tileW
+        // whole tiles more each side for the slant, so the pattern keeps its place on the street
+        val more = ceil((depth - top) * rainLean / tileW) * tileW
+        val x0 = kotlin.math.floor(from / tileW) * tileW - more
+        // the wind's slant about the middle of the view, so the sheets lean and do not slide off
+        rainShear.reset()
+        rainShear[1, 0] = rainLean * scale
+        val mid = (top + depth) / 2f
         withTransform({
+            translate(0f, mid)
+            transform(rainShear)
+            translate(0f, -mid)
             translate(x0 + phase * WeatherSprites.SLANT, top - tileH + phase)
             scale(s, s, Offset.Zero)
         }) {
             drawRect(
                 images.rain,
                 Offset.Zero,
-                Size((to - x0 + tileW) / s, (depth - top + tileH) / s),
+                Size((to - x0 + tileW + more) / s, (depth - top + tileH) / s),
                 alpha = alpha.coerceIn(0f, 1f),
                 colorFilter = filter,
                 blendMode = blend,
@@ -2897,14 +3105,16 @@ internal class BuildingPainter {
         val density = Dusk.steam(hour, season.dayOfYear)
         if (density <= 0f) return
         duskTints(sky)
-        val wind = Ambient.sway(seed, seconds)
+        // the plume bends over in the wind up there (stronger over the roofs), and lies flatter in
+        // a gust
+        val push = wind.force(buildingX + px) * 1.4f
         val puffs = SceneSprites.dusk.puffs
         val half = DuskSprites.PUFF / 2f
         for (j in 0 until Dusk.PUFFS) {
             val t = Dusk.puff(seed, j, seconds)
             val size = (.4f + 1.7f * t) * 7f / DuskSprites.PUFF
-            val x = px + t * (2.5f + 1.8f * wind) + 2.5f * t * t
-            val y = top - t * 21f
+            val x = px + t * (1.5f + 4f * push) + (1.5f + 9f * push) * t * t
+            val y = top - t * 21f / (1f + .5f * push)
             val fade = (1f - t) * (1f - t)
             val a = density * .45f * fade * min(1f, t * 10f)
             if (a <= .01f) continue
@@ -3065,7 +3275,7 @@ internal class BuildingPainter {
             val t = trees[i]
             if (selected == t.id)
                 drawOval(accent, Offset(t.x - 17f, -5f), Size(34f, 10f), style = ring)
-            tree(t.x, t.id.hashCode(), seconds, .8f, sky)
+            tree(t.x, t.id.hashCode(), .8f, sky)
         }
         // a low fence along its front
         var x = from
@@ -3169,7 +3379,18 @@ internal class BuildingPainter {
             for (side in 0..1) {
                 val px = if (side == 0) -half + PLANTER_IN else half - PLANTER_IN
                 footShadow(px, 0f, 4.6f)
-                picture(SceneSprites.roof.planter, px, 0f)
+                // the clipped box stirs a little in the wind, its foot in the planter still
+                val at = buildingX + px
+                plantShear.reset()
+                plantShear[1, 0] =
+                    -(.012f * wind.force(at) + .014f * wind.flutter(at, side * 17 + 5, 1.4f))
+                withTransform({
+                    translate(px, 0f)
+                    transform(plantShear)
+                    translate(-px, 0f)
+                }) {
+                    picture(SceneSprites.roof.planter, px, 0f)
+                }
                 shaded(px - 4.6f, -5.7f, 9.2f, 5f)
             }
         spill(
@@ -3358,16 +3579,47 @@ internal class BuildingPainter {
             }
             val cloth = awningFilter(art.awning)
             val img = SceneSprites.awning
-            val stir = .018f * sin(seconds * 1.9f + (art.stack.id.hashCode() and 63) * .4f)
-            withTransform({
-                translate(-half, AwningArt.VALANCE_AT)
-                scale(1f / ppu, (1f + stir) / ppu, Offset.Zero)
-            }) {
-                drawImage(img.valance, colorFilter = cloth)
-            }
+            // the wind ([AwningSway]): the canopy lifts a little at its front, and each scallop of
+            // the valance swings on its own, cut at the scallops' points so nothing tears
+            val pose = awningPose
+            AwningSway.pose(buildingX, art.stack.id.hashCode(), wind, pose)
+            val lift = pose[0]
+            val drop = -AwningArt.FRONT * lift
+            if (!wind.moving)
+                withTransform({
+                    translate(-half, AwningArt.VALANCE_AT)
+                    scale(1f / ppu, 1f / ppu, Offset.Zero)
+                }) {
+                    drawImage(img.valance, colorFilter = cloth)
+                }
+            else
+                for (k in 0 until AwningSway.STRIPS) {
+                    val x0 = if (k == 0) -half else AwningSway.stripX(k)
+                    val x1 = if (k == AwningSway.STRIPS - 1) half else AwningSway.stripX(k + 1)
+                    val i0 = ((x0 + half) * ppu).toInt()
+                    val i1 = min(AwningArt.W, ((x1 + half) * ppu).toInt())
+                    if (i1 <= i0) continue
+                    // shorter as it swings out (seen from the front), its hem pushed along
+                    stripShear.reset()
+                    stripShear[1, 0] = pose[2 + 2 * k] / AwningArt.VALANCE_H
+                    withTransform({
+                        translate(-half + i0 / ppu, AwningArt.VALANCE_AT + drop)
+                        transform(stripShear)
+                        scale(1f / ppu, (1f - pose[1 + 2 * k]) / ppu, Offset.Zero)
+                    }) {
+                        drawImage(
+                            img.valance,
+                            IntOffset(i0, 0),
+                            IntSize(i1 - i0, AwningArt.VALANCE_PX),
+                            IntOffset.Zero,
+                            IntSize(i1 - i0, AwningArt.VALANCE_PX),
+                            colorFilter = cloth,
+                        )
+                    }
+                }
             withTransform({
                 translate(-half, 0f)
-                scale(1f / ppu, 1f / ppu, Offset.Zero)
+                scale(1f / ppu, (1f - lift) / ppu, Offset.Zero)
             }) {
                 drawImage(img.canopy, colorFilter = cloth)
             }
@@ -4594,15 +4846,64 @@ internal class BuildingPainter {
         if (st.claimed) {
             val x = half + 8f
             drawLine(SceneInk.FlagPole, Offset(x, y + B.SIGN_H), Offset(x, y - 14f), 1.6f)
-            // the flag ripples in the wind the trees sway in, not a wind of its own
-            val wave = if (seconds > 0f) Ambient.sway(st.id.hashCode(), seconds) * .95f else 0f
-            path.rewind()
-            path.moveTo(x, y - 14f)
-            path.quadraticTo(x + 8f, y - 12f - wave, x + 16f, y - 9.5f + wave)
-            path.lineTo(x, y - 5f)
-            path.close()
-            drawPath(path, SceneInk.Flag)
+            flag(x, y - 14f, buildingX + x, st.id.hashCode())
         }
+    }
+
+    /**
+     * The claimed reward's pennant on its pole at ([x], [top]), standing at [at] along the street:
+     * it streams out downwind as far as the wind ([Wind]) holds it, droops in a calm, and ripples
+     * along its length, the ripples running to its tip faster and deeper in a gust; its folds catch
+     * the light and fall into shade by turns. Hangs still with motion off.
+     */
+    private fun DrawScope.flag(x: Float, top: Float, at: Float, seed: Int) {
+        val w = wind
+        val f = w.force(at) * 1.3f
+        val s = seed and 0x3FF
+        // how far out it streams: a calm leaves it hanging, a breeze lifts it, a gust holds it out
+        val out = Px.smooth(0f, .7f, f)
+        val len = FLAG_LEN * (.78f + .22f * out)
+        val droop = (1f - out) * 5.5f
+        // the ripples: their phase runs on with the time, the wind's own flutter in it so no two
+        // beats are alike; deeper the harder it blows
+        val amp = if (w.moving) .5f + .9f * min(1f, f) else 0f
+        val phase = w.seconds * (5f + 3f * min(1f, f)) + 2f * w.flutter(at, s, .7f)
+        path.rewind()
+        val n = FLAG_STEPS
+        for (k in 0..n) {
+            val l = k / n.toFloat()
+            val px = x + len * l
+            val wave = amp * l * sin(phase - l * 6.3f)
+            path.apply {
+                if (k == 0) moveTo(px, top)
+                else lineTo(px, top + droop * l * l + wave + 4.5f * l * (1f - out * .2f))
+            }
+        }
+        for (k in n downTo 0) {
+            val l = k / n.toFloat()
+            val px = x + len * l
+            val wave = amp * l * sin(phase - l * 6.3f)
+            path.lineTo(px, top + FLAG_H - (FLAG_H - 4.5f) * l + droop * l * l + wave)
+        }
+        path.close()
+        drawPath(path, SceneInk.Flag)
+        // the folds: where the cloth turns from the light a band of shade runs down it
+        if (amp > 0f)
+            for (k in 1 until n) {
+                val l = k / n.toFloat()
+                val slope = cos(phase - l * 6.3f)
+                if (slope < .3f) continue
+                val px = x + len * l
+                val y0 = top + droop * l * l + 4.5f * l * (1f - out * .2f)
+                val y1 = top + FLAG_H - (FLAG_H - 4.5f) * l + droop * l * l
+                drawLine(
+                    Color.Black,
+                    Offset(px, y0 + amp * l * sin(phase - l * 6.3f) + .3f),
+                    Offset(px, y1 + amp * l * sin(phase - l * 6.3f) - .3f),
+                    len / n,
+                    alpha = .16f * (slope - .3f) * l,
+                )
+            }
     }
 
     private val curtainColors = arrayOf(Color(0xFF8A4B3A), Color(0xFF4E6B6B), Color(0xFF8A7A4A))
@@ -5430,6 +5731,14 @@ internal class BuildingPainter {
         private val WoodLit = Color(0xFFB88A5C)
         private val WoodMoon = Color(0xFF5E5A6E)
         private val BackLeaves = Color(0xFF7E8C80)
+        private val BackLeavesNight = Color(0xFF5A6474)
+
+        /** The hour's light on a tree's wood lit by day: dusk's and the night's, multiplied. */
+        private val WoodDusk = Color(0xFFF2C3A0)
+        private val WoodNight = Color(0xFF4E5C80)
+
+        /** The shade a full crown lays over the boughs and twigs inside it. */
+        private val UnderLeaves = Color(0xFF6E7A70)
 
         /** Where a lamp pole's lit strips part, across it from its left edge (-1) to its right. */
         private val POLE_U = floatArrayOf(-1f, -.74f, -.44f, -.12f, .2f, .52f, .8f, 1f)
@@ -5439,6 +5748,14 @@ internal class BuildingPainter {
          * as the view turns, as shares of a building's side face at its place.
          */
         const val TREE_FRONT = .03f
+
+        /** How many trees' poses a frame keeps ([poseOf]): more than are ever in view at once. */
+        const val POSES = 24
+
+        /** The claimed reward's pennant: its length and its height at the pole, and its steps. */
+        const val FLAG_LEN = 16f
+        const val FLAG_H = 9f
+        const val FLAG_STEPS = 8
         const val TREE_BACK = .05f
 
         /**

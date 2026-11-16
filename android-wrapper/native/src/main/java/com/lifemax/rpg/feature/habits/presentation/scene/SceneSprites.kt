@@ -22,6 +22,7 @@ import com.lifemax.rpg.feature.habits.domain.StreetLooks
 import com.lifemax.rpg.feature.habits.domain.StreetRig
 import com.lifemax.rpg.feature.habits.domain.Trees
 import com.lifemax.rpg.feature.habits.domain.WalkerJoints
+import kotlin.math.min
 
 /** A cloud sprite's four layers, as images. */
 internal class CloudImages(
@@ -65,8 +66,33 @@ internal class MoonImages(val sprite: MoonSprite, val halo: ImageBitmap)
 /** The moon at one [step] of its cycle, as an image. */
 internal class MoonPictureImage(val step: Int, val layer: SkyLayer, val image: ImageBitmap)
 
-/** A tree variant's images, one per [TreeLook]. */
-internal class TreeImages(val sprite: TreeSprite, val looks: Array<ImageBitmap>)
+/**
+ * A piece of a tree ([TreePart]) as images: one per look (or one, tinted when drawn), its top-left
+ * at ([x], [y]) in the tree's picture.
+ */
+internal class TreePartImage(val x: Float, val y: Float, val looks: Array<ImageBitmap>)
+
+/**
+ * A tree variant's wood ([TreeSprites]): its trunk in the three looks, and by mass of its crown its
+ * boughs and twigs and its sprays of fine twigs (lit by day, tinted when drawn; none on a pine).
+ */
+internal class TreeWoodImages(
+    val rig: TreeRig,
+    val trunk: TreePartImage,
+    val twigs: Array<TreePartImage?>,
+    val fine: Array<TreePartImage?>,
+)
+
+/**
+ * A tree variant's leaves in one season, by mass of its crown, each in the three looks; and the
+ * whole tree's silhouette at half size ([shape], by day): what its shadows, its reflection and the
+ * leaves at the back of its crown are drawn from.
+ */
+internal class TreeImages(
+    val rig: TreeRig,
+    val leaves: Array<TreePartImage?>,
+    val shape: ImageBitmap,
+)
 
 /** A puddle's two layers as images: the pool itself and the bright rim of its far edge. */
 internal class PuddleImages(val fill: ImageBitmap, val rim: ImageBitmap)
@@ -350,23 +376,84 @@ internal object SceneSprites {
         return MoonPictureImage(step, l, image(l)).also { picture = it }
     }
 
-    val trees: Array<TreeImages> by lazy {
-        Array(com.lifemax.rpg.feature.habits.domain.Trees.VARIANTS) {
-            val s = TreeSprites.generate(it)
-            TreeImages(s, Array(s.pixels.size) { look -> image(s.pixels[look], s.w, s.h) })
+    /** Every tree variant's wood: trunk, boughs and twigs, the winter's fine twigs. */
+    val treeWood: Array<TreeWoodImages> by lazy {
+        Array(Trees.VARIANTS) {
+            TreeWoodImages(
+                TreeSprites.rig(it),
+                part(TreeSprites.trunk(it))!!,
+                parts(TreeSprites.twigs(it)),
+                parts(TreeSprites.fine(it)),
+            )
         }
+    }
+
+    /** Every tree variant in summer leaf (and a pine all year). */
+    val trees: Array<TreeImages> by lazy {
+        Array(Trees.VARIANTS) { treeImages(it, TreeSeason.SUMMER) }
+    }
+
+    /** The pit a street tree stands in, seen from above ([TreeSprites.grate]). */
+    val grate: ImageBitmap by lazy {
+        image(TreeSprites.grate(), TreeSprites.GRATE_W, TreeSprites.GRATE_H)
+    }
+
+    private fun part(p: TreePart?): TreePartImage? =
+        p?.let {
+            TreePartImage(
+                it.x.toFloat(),
+                it.y.toFloat(),
+                Array(it.pixels.size) { l -> image(it.pixels[l], it.w, it.h) },
+            )
+        }
+
+    private fun parts(ps: Array<TreePart?>): Array<TreePartImage?> = Array(ps.size) { part(ps[it]) }
+
+    private fun treeImages(variant: Int, season: TreeSeason): TreeImages {
+        val whole = TreeSprites.generate(variant, season)
+        return TreeImages(
+            TreeSprites.rig(variant),
+            parts(TreeSprites.leaves(variant, season)),
+            image(half(whole.pixels[0], whole.w, whole.h), (whole.w + 1) / 2, (whole.h + 1) / 2),
+        )
+    }
+
+    /** A picture at half its size, each pixel the mean of four (by their alpha). */
+    private fun half(px: IntArray, w: Int, h: Int): IntArray {
+        val hw = (w + 1) / 2
+        val hh = (h + 1) / 2
+        val out = IntArray(hw * hh)
+        for (y in 0 until hh) for (x in 0 until hw) {
+            var a = 0
+            var r = 0
+            var g = 0
+            var b = 0
+            for (dy in 0..1) for (dx in 0..1) {
+                val xx = min(w - 1, x * 2 + dx)
+                val yy = min(h - 1, y * 2 + dy)
+                val c = px[yy * w + xx]
+                val ca = c ushr 24
+                a += ca
+                r += ((c shr 16) and 255) * ca
+                g += ((c shr 8) and 255) * ca
+                b += (c and 255) * ca
+            }
+            if (a == 0) continue
+            out[y * hw + x] = ((a / 4) shl 24) or ((r / a) shl 16) or ((g / a) shl 8) or (b / a)
+        }
+        return out
     }
 
     // ---- the seasons: the other looks of the trees, made as the year first needs them
 
     private val seasonTrees = HashMap<Int, TreeImages>()
-    private val snowTrees = arrayOfNulls<ImageBitmap>(Trees.VARIANTS)
+    private val snowTrees = arrayOfNulls<Array<TreePartImage?>>(Trees.VARIANTS)
     private var seasonTreeBytes = 0
 
     /**
      * The tree [variant] in [season]: the summer pool for summer and for the evergreens, otherwise
-     * a look baked the first time that season is drawn and kept (a season's looks are about a
-     * megabyte; two or three are ever in use).
+     * a look baked the first time that season is drawn and kept (a season's leaves are about a
+     * megabyte; two or three are ever in use). The bare tree has no leaves, only its shape.
      */
     @Synchronized
     fun tree(variant: Int, season: TreeSeason): TreeImages {
@@ -375,21 +462,22 @@ internal object SceneSprites {
         seasonTrees[key]?.let {
             return it
         }
-        val s = TreeSprites.generate(variant, season)
-        seasonTreeBytes += s.w * s.h * 4 * s.pixels.size
-        return TreeImages(s, Array(s.pixels.size) { look -> image(s.pixels[look], s.w, s.h) })
-            .also { seasonTrees[key] = it }
+        seasonTreeBytes += TreeSprites.leafBytes(variant, season)
+        return treeImages(variant, season).also { seasonTrees[key] = it }
     }
 
-    /** The snow that lies on the tree [variant], made the first winter day it is drawn. */
+    /**
+     * The snow that lies on the tree [variant], by mass of its crown, made the first winter day it
+     * is drawn.
+     */
     @Synchronized
-    fun treeSnow(variant: Int): ImageBitmap {
+    fun treeSnow(variant: Int): Array<TreePartImage?> {
         snowTrees[variant]?.let {
             return it
         }
-        val sp = trees[variant].sprite
-        seasonTreeBytes += sp.w * sp.h * 4
-        return image(TreeSprites.snow(variant), sp.w, sp.h).also { snowTrees[variant] = it }
+        val ps = TreeSprites.snowParts(variant)
+        seasonTreeBytes += ps.sumOf { if (it == null) 0 else it.w * it.h * 4 }
+        return parts(ps).also { snowTrees[variant] = it }
     }
 
     /** What the seasons' tree looks and snow made so far take, in bytes. */
@@ -809,6 +897,8 @@ internal object SceneSprites {
         sun
         moon
         trees
+        treeWood
+        grate
         vehicles
         glow
         beam
@@ -847,6 +937,7 @@ internal object SceneSprites {
         CloudSprites.bytes() +
             SunMoonSprites.bytes() +
             TreeSprites.bytes() +
+            TreeSprites.grateBytes() +
             RoadSkySprites.bytes() +
             AirSprites.bytes() +
             WeatherSprites.bytes() +

@@ -380,6 +380,13 @@ internal class Backdrop(private val seed: Int, day: String = "") {
 
     private val midCity = MidCity(seed)
 
+    /** The street's air ([com.lifemax.rpg.feature.habits.domain.Wind]) the far city sways in. */
+    var wind: com.lifemax.rpg.feature.habits.domain.Wind
+        get() = midCity.wind
+        set(v) {
+            midCity.wind = v
+        }
+
     private var veilKey: Any? = null
     private var veilH = 0f
     private var veilBrush: Brush? = null

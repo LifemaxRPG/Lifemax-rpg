@@ -502,13 +502,6 @@ object Ambient {
         return ((cloud.x0 + seconds * cloud.speed) % span + span) % span - .25f
     }
 
-    /** A tree's lean at [seconds], in degrees: a slow sway with a gust in it. */
-    fun sway(seed: Int, seconds: Float): Float =
-        1.4f * sin(seconds * .9f + seed) + .5f * sin(seconds * 2.3f + seed * 1.7f)
-
-    /** A flag's ripple at [seconds], -1 to 1. */
-    fun flag(seconds: Float): Float = sin(seconds * 4.2f)
-
     /**
      * How far on the light with [seed] is at [hour], 0 to 1: each light has its own moment across
      * the dusk hour and ramps up over a few minutes there, off in reverse around dawn ([Dusk]).

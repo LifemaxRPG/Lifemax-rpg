@@ -200,11 +200,7 @@ class AmbientTest {
     }
 
     @Test
-    fun treesSwayAndTheFlagWavesGently() {
-        for (t in 0 until 600) {
-            assertTrue(abs(Ambient.sway(3, t / 10f)) <= 2f)
-            assertTrue(abs(Ambient.flag(t / 10f)) <= 1f)
-        }
+    fun thePeopleInTheWindowsStepAtTheirPace() {
         assertEquals(0, Ambient.step(0f))
         assertEquals(12, Ambient.step(1.01f))
     }
