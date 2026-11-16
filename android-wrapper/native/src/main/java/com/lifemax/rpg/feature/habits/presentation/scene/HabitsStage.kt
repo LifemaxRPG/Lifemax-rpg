@@ -723,6 +723,8 @@ private fun StageCanvas(
         painter.weather = weather
         backdrop.cloudiness = weather.cloudiness
         backdrop.mist = weather.mist
+        backdrop.street = f.ground
+        backdrop.season = season
         painter.season = season
         painter.clock(p.hour, seconds)
         streetLife.light = light

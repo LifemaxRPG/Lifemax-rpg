@@ -418,6 +418,53 @@ hour colours and strengths live in pure `SunLook` / `MoonLook`. `Backdrop.heaven
 `sunLayer`, `skyAt`, `throughVeil` (the sun or moon through overcast, after the veil); the lens flare scales with sun
 presence and (1 − cloudiness). 695 KB. The airliner is drawn at `PLANE_SIZE` .75 of its sprite (owner: "further away").
 
+## As built: the middle distance (the city between the street and the skyline)
+
+Owner: "the background looks kind of barren ... a massive gap of grayness with nothing in it". The band between the
+horizon and the street's pavement line (30 dp at full size, `HORIZON_DP`, smaller as the camera pulls back) is now a
+lived-in city in three depth layers, baked once by `MidCitySprites` (pure Kotlin, `MidCityTest`) as periodic strips
+640 dp long, drawn by `MidCity` (from `Backdrop`, after the weather veil, so the veil's horizon seam never cuts it):
+
+- the district (`FAR`, feet 4.5 dp under the horizon, 1.25 px/dp): mid-rises of brick, stone, concrete and paint with
+  grids of small windows, parapets, water towers, plant, a billboard, two church spires, a factory chimney, an elevated
+  railway on girders and piers, and a row of low roofs in front of their feet;
+- the blocks across the boulevard (`BLOCKS`, fronts at 12.6 dp, 1.75 px/dp), laid out as parcels: brownstone rows with
+  stoops and cornices, shops with striped awnings, lit fronts and signs, warehouses with gridded windows, a fading painted
+  sign and a water tank, flats with balconies, a stone church with a rose window, clock and spire, a park (lawn, path,
+  trees at several depths, benches, a statue, lamps, railing), a plaza (fountain, café umbrellas), a car park with rows
+  of cars, and side streets going back with a signal on the corner; then the boulevard itself: the far pavement with its
+  trees, lamps, hydrants and bins, kerb, asphalt, lane dashes, zebra crossings at the side streets, parked cars;
+- the near kerb (`KERB`, 22.6 dp, 2.5 px/dp): cars parked along it, the kerb and pavement, lamps, trees in pits,
+  benches, bins, hydrants, bikes, a mailbox, two bus shelters with a lit advert, a news kiosk, then a low wall and a
+  hedge down past the street's line, so no bare ground shows.
+
+Each layer is a body (its own colours under a flat white light) and channel strips: windows (coverage, switch-on order,
+warm-to-cool kind), glow (lamps with their pools, signs and adverts) and masks (foliage with its shade, snow, the tops
+that catch the sun). The hour, weather and season go on at draw time through colour matrices made once per sky
+(`MidLook`, pure, shared with the previews): the light (white by day, warmer in the golden hour, rosy at dusk, dim blue
+at night, flatter when overcast) and aerial perspective toward the horizon's air (haze .46/.22/.08 by day, thicker with
+mist, overcast and dusk, the furthest most); windows come on in their own order as `MidLook.share(hour)` passes their
+order (none by day, rising 17:36 to 19:24, fewer after midnight, the last out by 08:36; steep, so each window snaps on,
+nothing flickers); lamps with `Dusk.LAMP`, signs with `Dusk.SIGN`; leaves in the season's colours (spring, summer,
+autumn, blossom, none bare: the bare limbs are in the body), snow on roofs, ledges, lawns, cars and the hedge; tops
+catching a low sun; a warm wash on the sun's side in the golden hour. Live, per frame and cheap (no allocation): tiny
+walkers on both pavements (22 and 16 a span, legs swinging; still at 0 seconds), the signals turning green, amber, red
+(26 s), steam off a few roofs on cold days (`Dusk.steam`, the dusk puffs), and an elevated train of five carriages
+(`Ambient.train`, most 64 s periods, windows lit and a headlight after dark) between the district and the blocks.
+
+Parallax: each layer slides `shift × density × k × 1.1 × foot / 30` px (district .15, blocks .43, kerb .75 of the
+pavement line's rate), `k` the band's scale (pavement line to horizon over 30 dp); everything scales with `k`. The far
+road's passing car now drives the boulevard's lanes (left-going in the far lane at 17 dp, right-going in the near one
+at 19.6 dp) at half its old size × `k`, between the blocks and the near kerb. `HabitsStage` sets two new `Backdrop`
+fields per frame: `street` (the pavement line) and `season`.
+
+Cost: per visible period (two at most on a phone) one body plus up to three mask, one window and two glow draws per
+layer, all clipped to the view's columns; about 40 image draws a frame at night, fewer by day. Memory
+`MidCitySprites.bytes()` about 1.9 MB (the far layer 0.37, the blocks 0.95, the kerb 0.58; glow and masks baked at half resolution, the windows at full), under the 2 MB the test holds it to, made off the main thread in
+`SceneSprites.warm`. Tuned from software composites of the strips into the street references (day, dusk, night, golden
+hour, winter, autumn, mist, zoomed out) at phone scale and 2×, not on a phone; every Habits reference with the
+backdrop in view changes.
+
 ## Pending work (handed over)
 
 State: build 517 (commit ee9a1d5, NativeApi 168) is published: native Habits with towers, typed suggestions, no cat. The

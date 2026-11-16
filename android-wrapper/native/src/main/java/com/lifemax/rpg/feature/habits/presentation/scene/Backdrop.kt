@@ -36,6 +36,8 @@ import com.lifemax.rpg.feature.habits.domain.FlockPose
 import com.lifemax.rpg.feature.habits.domain.LensFlare
 import com.lifemax.rpg.feature.habits.domain.MoonPhase
 import com.lifemax.rpg.feature.habits.domain.Pass
+import com.lifemax.rpg.feature.habits.domain.Season
+import com.lifemax.rpg.feature.habits.domain.SeasonState
 import com.lifemax.rpg.feature.habits.domain.SkyPhase
 import com.lifemax.rpg.feature.habits.domain.Star
 import com.lifemax.rpg.feature.habits.domain.orbAt
@@ -352,7 +354,13 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         drawRect(sky.ground[0], Offset(0f, horizon), Size(w, size.height - horizon))
         drawLine(sky.line, Offset(0f, horizon), Offset(w, horizon), d)
         weather(sky, w, horizon, orb, shift, seconds)
+        // the city between the street and the far skyline, the passing car on its boulevard
+        val pave = if (street > horizon) street else horizon + MidCitySprites.BAND * d
+        with(midCity) {
+            back(sky, hour, horizon, pave, shift, seconds, season, cloudiness, mist, orb.x > w / 2f)
+        }
         if (Ambient.car(seconds, seed, pass)) car(pass, sky, w, horizon, seconds)
+        with(midCity) { front(horizon, shift, seconds) }
     }
 
     // ---- the weather over the sky and the far city
@@ -361,6 +369,16 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     /** How much of the sky is one cloud, and how thick the morning mist is: set by the stage. */
     var cloudiness = 0f
     var mist = 0f
+
+    /**
+     * The y of the street's pavement line (px), and the season, set by the stage: the middle
+     * distance ([MidCity]) fills the band between the horizon and that line, dressed for the
+     * season.
+     */
+    var street = 0f
+    var season: SeasonState = Season.SUMMER
+
+    private val midCity = MidCity(seed)
 
     private var veilKey: Any? = null
     private var veilH = 0f
@@ -1768,17 +1786,23 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         val pool = SceneSprites.vehicles
         val dark = sky.dark
         val lights = Px.smooth(.3f, .8f, dark)
-        val roadY = horizon + 2.6f * d
+        // on the boulevard's lane for its way, as small as that far off
+        val k = midCity.k
+        val roadY =
+            horizon +
+                (if (p.dir > 0f) MidCitySprites.LANE_RIGHT else MidCitySprites.LANE_LEFT) * d * k
         val follow = Ambient.carFollow(seed, p.pass)
-        val s = d / RoadSkySprites.CAR_PX_PER_DP
+        val s = d / RoadSkySprites.CAR_PX_PER_DP * CAR_SIZE * k
         val g = RoadSkySprites.GLOW.toFloat()
         val glow = SceneSprites.glow
-        for (k in 0 until 2) {
-            if (k == 1 && follow <= 0f) break
-            val v = pool[Ambient.vehicle(seed, p.pass, k, pool.size)]
+        for (n in 0 until 2) {
+            if (n == 1 && follow <= 0f) break
+            val v = pool[Ambient.vehicle(seed, p.pass, n, pool.size)]
             val sp = v.sprite
-            val x = (p.x - p.dir * follow * k) * w
-            val bob = if (seconds > 0f) sin(seconds * 9f + k * 2.3f + p.pass) * .14f * d else 0f
+            val x = (p.x - p.dir * follow * n) * w
+            val bob =
+                if (seconds > 0f) sin(seconds * 9f + n * 2.3f + p.pass) * .14f * d * CAR_SIZE * k
+                else 0f
             withTransform({
                 translate(x, roadY + bob)
                 scale(s * p.dir, s, Offset.Zero)
@@ -1873,6 +1897,9 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         }
     }
 }
+
+/** How big the passing car is drawn against its sprite, on the boulevard at full size. */
+private const val CAR_SIZE = .5f
 
 /** How big the airliner is drawn against its sprite: a little smaller, so it reads as far off. */
 /** How far round a plane's middle the clouds are sampled to hide it, in dp. */

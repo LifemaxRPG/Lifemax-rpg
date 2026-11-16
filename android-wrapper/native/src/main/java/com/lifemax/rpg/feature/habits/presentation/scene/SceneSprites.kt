@@ -243,6 +243,15 @@ internal object SceneSprites {
         }
     }
 
+    /** The middle distance's three layers, furthest first ([MidCitySprites]). */
+    val midCity: Array<MidCityImages> by lazy {
+        Array(MidCitySprites.LAYERS.size) {
+            val l = MidCitySprites.generate(it)
+            fun img(s: MidStrip) = MidCityImage(s, image(s.pixels, s.w, s.h))
+            MidCityImages(img(l.body), l.windows?.let(::img), l.glow?.let(::img), img(l.masks))
+        }
+    }
+
     /** The near layer's things ([ForegroundSprites]). */
     val foreground: ForegroundImages by lazy {
         fun img(s: ForegroundSprite) = image(s.pixels, s.w, s.h)
@@ -753,6 +762,7 @@ internal object SceneSprites {
         dusk
 
         skyline
+        midCity
         foreground
         flare
         light
@@ -779,6 +789,7 @@ internal object SceneSprites {
             WeatherSprites.bytes() +
             DuskSprites.bytes() +
             SkylineSprites.bytes() +
+            MidCitySprites.bytes() +
             ForegroundSprites.bytes() +
             LightSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
