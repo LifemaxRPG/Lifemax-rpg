@@ -239,6 +239,20 @@ object HabitsScenarios {
     }
 
     /**
+     * A short building in front (a foundation with nothing on it yet) and a tall one beside it: the
+     * camera stands close, so the sun's lane on the right falls on the tall one's edge, and the sun
+     * stands half behind it (its glare at the edge, SunEdge).
+     */
+    fun edge(): HabitsSave {
+        var s = HabitsSave().stack("After lunch").first
+        val night = s.stack("At lights out").also { s = it.first }.second
+        val phone =
+            s.habit(night, "Phone in bed", fade = true, floors = 14).also { s = it.first }.second
+        val clothes = s.habit(night, "Lay out clothes", "Pick a shirt").also { s = it.first }.second
+        return s.past(phone, 5, 0, 20).past(clothes, 20, 0, 40)
+    }
+
+    /**
      * Moments of the street's own life (seconds since the tab showed, on [TODAY]) that the sky
      * screenshots hold: at night an airplane and a shooting star together, by day an airplane with
      * its contrail and a flock of birds. AmbientTest checks they still show what they say.
@@ -276,6 +290,7 @@ object HabitsScenarios {
             "park" -> park()
             "glass" -> glass()
             "decay" -> decay()
+            "edge" -> edge()
             else -> error("No scenario $name")
         }
 

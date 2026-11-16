@@ -711,6 +711,10 @@ internal class Backdrop(private val seed: Int, day: String = "") {
      */
     var sunClear = 1f
 
+    /** How far a cloud is across the sun now (0 clear to 1), for its glare at a building's edge. */
+    val sunCover: Float
+        get() = moonCover
+
     private var flareKey: Any? = null
     private var streakTint: ColorFilter? = null
     private val ghostTint = arrayOfNulls<ColorFilter>(LensFlare.GHOSTS)

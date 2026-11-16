@@ -418,6 +418,21 @@ class HabitsScreenshotTest {
     @Test fun lobbySpillNight() = snap("tall", hour = 23, ambientAt = 9.6f)
 
     /**
+     * The sun half behind a building's edge: a hot point hugging the edge, a bloom eating the
+     * silhouette, a starburst of thin rays and a backlit rim up the edge; at midday white, in the
+     * late afternoon warm and gold. Over a roof's sign, a sliver: the rays at their sharpest.
+     */
+    @Test fun sunAtEdgeMidday() = snap("edge", hour = 13, ambientAt = 45f)
+
+    @Test fun sunAtEdgeGoldenHour() = snap("edge", hour = 17, minute = 30, ambientAt = 45f)
+
+    @Test
+    fun sunOverSignMidday() =
+        snap("city", hour = 12, minute = 15, ambientAt = 45f) {
+            focus(projection.value!!.stacks[1].id)
+        }
+
+    /**
      * Dusk done properly: at 18:40 the lamps and the shops are on and the homes are coming on one
      * by one (some windows still by the sky's light); at 19:40 the blue hour's cool cast lies over
      * the walls and the pavement against the windows' warmth; at 23:00 a few windows watch
