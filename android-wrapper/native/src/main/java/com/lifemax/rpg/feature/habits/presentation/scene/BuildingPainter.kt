@@ -743,6 +743,44 @@ internal class BuildingPainter {
     private var lampSeconds = 0f
 
     /** A lamp, a tree or a bench on the pavement. */
+    /**
+     * The air under each street lamp's lens lit, fading out with no edge: drawn before the people
+     * on the pavement, so someone walking under a lamp is lit by it ([StreetLifePainter]'s lamp
+     * light) rather than washed over by the glow of the air in front of the post.
+     */
+    fun DrawScope.lampAir(
+        items: List<Furniture>,
+        sky: SkyColors,
+        from: Float,
+        to: Float,
+        seconds: Float,
+    ) {
+        val dark = sky.dark
+        if (dark < .05f) return
+        lampSeconds = seconds
+        val L = LightSprites
+        for (i in items.indices) {
+            val f = items[i]
+            if (f.kind != FurnitureKind.LAMP || f.x < from - 60f || f.x > to + 60f) continue
+            val on = lampOn(f, dark)
+            if (on <= 0f) continue
+            translate(standAt(f.x), 0f) {
+                withTransform({
+                    translate(L.AIR_X0, L.AIR_Y0)
+                    scale((L.AIR_X1 - L.AIR_X0) / L.AIR_W, -L.AIR_Y0 / L.AIR_H, Offset.Zero)
+                }) {
+                    drawImage(
+                        SceneSprites.light.air,
+                        Offset.Zero,
+                        .75f * on,
+                        colorFilter = lampTint,
+                        blendMode = BlendMode.Plus,
+                    )
+                }
+            }
+        }
+    }
+
     fun DrawScope.furniture(f: Furniture, sky: SkyColors, seconds: Float) {
         val dark = sky.dark
         lampSeconds = seconds
@@ -751,22 +789,7 @@ internal class BuildingPainter {
             when (f.kind) {
                 FurnitureKind.LAMP -> {
                     val on = lampOn(f, dark)
-                    if (on > 0f) {
-                        // the air under the lens lit, fading out with no edge
-                        val L = LightSprites
-                        withTransform({
-                            translate(L.AIR_X0, L.AIR_Y0)
-                            scale((L.AIR_X1 - L.AIR_X0) / L.AIR_W, -L.AIR_Y0 / L.AIR_H, Offset.Zero)
-                        }) {
-                            drawImage(
-                                SceneSprites.light.air,
-                                Offset.Zero,
-                                .75f * on,
-                                colorFilter = lampTint,
-                                blendMode = BlendMode.Plus,
-                            )
-                        }
-                    }
+                    // (the air it lights is drawn behind the people: [lampAir])
                     lampPost(on)
                     // the glass lens under the hood, seen a little round with the view: dull by
                     // day with a glint, lit at night

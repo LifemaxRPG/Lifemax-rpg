@@ -797,6 +797,7 @@ private fun StageCanvas(
                             )
                         }
                     }
+                    lampAir(street.furniture, sky, from, to, seconds)
                     with(streetLife) {
                         sweep(sky, layouts, street, from, to, seconds)
                         people(sky, street.furniture, from, to, Silhouettes.lod(f.scale))
