@@ -962,3 +962,41 @@ have mipmaps (`SceneSprites.street`), and they are all made off the main thread 
 JVM about 7 s for the whole set. Tuned from contact sheets (true phone scale over crops of the street references by day
 and at night, 2-3× zooms, heads at 8×), not on a phone; every Habits reference with walkers changes.
 
+### As built: the walkers' legs measured against a gait lab
+
+The owner, after the arms: "the walking could just be a little teensy bit better. Focus on the legs." The leg mechanics
+(`Gait.walkPose`) were sampled for every street look and plotted against the gait lab's sagittal curves (Perry's
+phases, Winter's angles). What was off: the trailing leg never stretched behind the body (thigh at most 1° behind
+vertical, a real walk ~16° at 50 %) because the knee buckled from 40 % (the pelvis height was the lower of the two legs'
+reach, and where it switched legs at 40 % and 90 % the knees and thighs had corners and the pelvis dropped just before
+each contact); the knee was 11–20° bent through the whole stance (real ~5° mid-stance), 53° at toe-off (38°) and 73° in
+the swing (60–62°), snapping straight at 90 % where the swing leg became the one holding the body up; the foot pushed off
+at only −42° and the ankle never plantar-flexed (real −15 to −20° just after toe-off) but dorsi-flexed 21° mid-swing;
+the swing foot rose to ~19 cm at mid-swing (real: the toe clears by 1–2 cm as it passes the other foot); and the step was
+short for the speed (0.29 of the height at 110 steps a minute: small, quick steps).
+
+Now: the planted foot is still fixed (phase from distance). The pelvis rides a smooth wave (broad at the top, lowest just
+after each contact) whose size is the step's own geometry: as high as a straight leg allows over the foot and as low as
+the knee's 14° give as the weight comes on (`Gait.bob`, 2.5–3 % of the leg; a gait lab's 4–5 % comes with a longer step).
+With the heel down the leg is solved to its foot; from 30 % the knee follows a smooth curve (settling to ~4°, folding to
+~10° at the other contact and ~37° at toe-off) and the heel rises exactly as far as that leg needs (a bisection on the
+ball pivot), so the trailing leg reaches −15° behind the body with the heel peeling up, and the foot leaves at −48° and
+rolls on to −63°. The swing follows the lab's curves as Hermite pieces from the exact angles and speeds of toe-off to
+those of contact: knee most bent (61°) at 72 %, the shank hanging plumb at 87 %, a little dip to ~6° at 97 % then giving
+as it lands; the thigh driven forward hardest just after toe-off, to ~25° at 90 % and drawn back to land; the ankle
+running on down after the push, level by mid-swing. Two smooth guards keep the toe 0.35 units over the floor in mid-swing
+and let the heel down from above (no skimming), fading to nothing at both ends so the swing meets the stance without a
+jump. The street looks step 1.1× the standard (`StreetGait.STRIDE`, a third of the height) at the same speed, so 100
+steps a minute instead of 110 (`StreetGait.cadence`); the older looks keep their short steps and the usual rate and get
+`Style.spring` 0.55: a flatter heel strike, knees kept bent, a feebler push, less knee in the swing. The heel and the
+ball now sit level when the foot is flat (as the street's shoes are drawn). The window walk keeps its 16 frames but now
+has a key pose per frame (17 keys, from 9): a spline through 8 keys could not follow the quick toe-off and heel strike
+without the feet skating. Pelvic drop on the swing side was not added: about 0.1 unit in profile, under a pixel.
+
+Frames and memory: still 64 per cycle crossfaded; between neighbouring frames the swing foot moves at most about half a
+unit, so at the slower cadence the crossfade shows only as a faint second edge on the swinging shoe (about a pixel at
+phone scale), not a ghost leg; 96 frames would cost about 9 MB over the 20 MiB walker budget for no visible gain.
+Memory unchanged (walkers ~18.7 MB). Tests: `GaitTest.theStreetWalkFollowsTheGaitLabsCurvesWithNoCorner` pins the
+curves and their smoothness; the head-bob bounds were lowered to 1 % (0.8 % per look) of the height and the walk's key
+count to a key per frame. Tuned from angle charts against the reference and contact sheets at phone scale and 4×, onion
+skins and in-between blends; not on a phone.

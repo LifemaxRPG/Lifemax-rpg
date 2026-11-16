@@ -89,7 +89,16 @@ class StreetMannersTest {
                     StreetLife.speed(look) * StreetManners.tempo(Manner.ELDERLY) /
                         StreetLife.speed(0)
                 assertTrue("elder pace $ratio", ratio in .55f..0.72f)
-            } else assertEquals(1f, StreetGait.style(look).stride, 0f)
+            } else {
+                // the street's own step, a third of the walker's height, at the same speed as
+                // before: fewer steps for it
+                assertEquals(StreetGait.STRIDE, StreetGait.style(look).stride, 0f)
+                assertEquals(
+                    StreetLife.pace(look) * Gait.SPEED / StreetGait.STRIDE,
+                    StreetLife.speed(look),
+                    1e-4f,
+                )
+            }
         }
     }
 

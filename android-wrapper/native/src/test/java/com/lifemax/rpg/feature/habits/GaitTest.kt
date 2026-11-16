@@ -8,6 +8,8 @@ import com.lifemax.rpg.feature.habits.domain.Looks
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.Spline
+import com.lifemax.rpg.feature.habits.domain.StreetGait
+import com.lifemax.rpg.feature.habits.domain.StreetLooks
 import com.lifemax.rpg.feature.habits.domain.Stroll
 import com.lifemax.rpg.feature.habits.domain.Visit
 import com.lifemax.rpg.feature.habits.presentation.scene.PeopleSprites
@@ -26,7 +28,9 @@ class GaitTest {
     @Test
     fun aWalkIsTwoStepsEightKeyPosesSixteenFramesAtOneHundredTenStepsAMinute() {
         assertEquals(16, walk.frames)
-        assertEquals(9, walk.keys.size) // eight key poses and the first again
+        // a key pose for each frame and the first again (the walk's quick toe-off and heel strike
+        // need more than the eight classic poses for a spline between them to keep the feet put)
+        assertEquals(Gait.FRAMES + 1, walk.keys.size)
         assertTrue(walk.smooth)
         assertTrue("cycle ${Gait.CYCLE}", Gait.CYCLE in 1.0f..1.1f)
         val stepsAMinute = 120f / Gait.CYCLE
@@ -140,6 +144,64 @@ class GaitTest {
     }
 
     @Test
+    fun theStreetWalkFollowsTheGaitLabsCurvesWithNoCorner() {
+        // the near leg's thigh (from vertical, forward positive), knee and foot over a cycle from
+        // the heel strike, against Perry's and Winter's sagittal curves for a normal walk
+        val n = 256
+        fun at(i: Int) = (i % n) / n.toFloat()
+        var elderPeak = 0f
+        var elderThigh = 0f
+        var streetPeak = 0f
+        for (look in 0 until StreetLooks.COUNT) {
+            val st = StreetGait.style(look)
+            val p = Array(n) { Gait.walkPose(at(it), st) }
+            val thigh = FloatArray(n) { p[it][K.LN] }
+            val knee = FloatArray(n) { p[it][K.KN] }
+            val foot = FloatArray(n) { p[it][K.LN] - p[it][K.KN] + p[it][K.ANN] }
+            fun max(a: FloatArray, from: Float, to: Float) =
+                (0 until n).filter { at(it) in from..to }.maxOf { a[it] }
+            fun min(a: FloatArray, from: Float, to: Float) =
+                (0 until n).filter { at(it) in from..to }.minOf { a[it] }
+            fun argMin(a: FloatArray, from: Float, to: Float) =
+                at((0 until n).filter { at(it) in from..to }.minBy { a[it] })
+            fun argMax(a: FloatArray) = at(a.indices.maxBy { a[it] })
+            // no corner anywhere: the joints' acceleration stays small from sample to sample
+            for (i in 0 until n) for (a in listOf(thigh, knee)) {
+                val acc = abs(a[(i + 1) % n] - 2 * a[i] + a[(i + n - 1) % n])
+                assertTrue("look $look ${at(i)} acceleration $acc", acc < .8f)
+            }
+            if (StreetLooks.ALL[look].elder) {
+                elderPeak = maxOf(elderPeak, knee.max())
+                elderThigh = minOf(elderThigh, thigh.min())
+                continue
+            }
+            streetPeak = maxOf(streetPeak, knee.max())
+            // the heel lands with the leg nearly straight, the knee gives as the weight comes on
+            assertTrue("look $look contact knee ${knee[0]}", knee[0] < 16f)
+            val give = max(knee, .03f, .18f)
+            assertTrue("look $look loading knee $give", give in 14f..28f)
+            // nearly straight as the body goes over the foot, the thigh carrying on back behind
+            // the body until the other foot lands (the heel rising), then folding to push off
+            assertTrue("look $look mid-stance knee", min(knee, .3f, .5f) < 8f)
+            assertTrue("look $look thigh back ${thigh.min()}", thigh.min() < -10f)
+            assertTrue(argMin(thigh, 0f, 1f) in .44f..0.58f)
+            val off = p[(.62f * n).toInt()]
+            assertTrue("look $look toe-off knee ${off[K.KN]}", off[K.KN] in 28f..46f)
+            assertTrue("look $look toe-off foot", foot[(.62f * n).toInt()] < -35f)
+            // the swing: the knee most bent early (to clear the toe), the foot level by its
+            // middle and toes up to land
+            assertTrue("look $look swing knee ${knee.max()}", knee.max() in 55f..66f)
+            assertTrue("look $look swing knee at ${argMax(knee)}", argMax(knee) in .68f..0.77f)
+            assertTrue(foot[n - 2] > 8f)
+            // the thigh reaches forward to its furthest late in the swing and eases back to land
+            assertTrue(argMax(thigh) in .8f..0.96f && thigh.max() - thigh[0] in 1f..8f)
+        }
+        // an older walker: less knee in the swing, less stretch behind
+        assertTrue("elder $elderPeak street $streetPeak", elderPeak < streetPeak - 4f)
+        assertTrue("elder thigh $elderThigh", elderThigh > -9f)
+    }
+
+    @Test
     fun theHeadBobsAboutTwoAndAHalfPercentOfHeightAndIsLowestAtTheContact() {
         for (l in 0 until Looks.COUNT) {
             val figs =
@@ -150,7 +212,10 @@ class GaitTest {
             val b = FigBuilder.bounds(figs[0].shapes())
             val height = b[3] - b[1]
             val bob = ys.max() - ys.min()
-            assertTrue("look $l bob ${100 * bob / height}%", bob / height in .015f..0.035f)
+            // (worked out from the step's own geometry: the hip vaults over a straight leg and
+            // dips as the knee takes the weight; with a step of under a third of the height that
+            // is a little over one per cent, as a gait lab measures at such a slow pace)
+            assertTrue("look $l bob ${100 * bob / height}%", bob / height in .01f..0.035f)
             // lowest (largest y) at the contact or the down pose of either step
             val lowest = ys.indexOf(ys.max()) % 8
             assertTrue("look $l lowest frame $lowest", lowest in 0..2 || lowest == 7)
@@ -302,7 +367,9 @@ class GaitTest {
             val ys = figs.map { it.joints.headY }
             val b = FigBuilder.bounds(figs[0].shapes())
             val bob = (ys.max() - ys.min()) / (b[3] - b[1])
-            assertTrue("look $l bob $bob", bob in .01f..0.045f)
+            // (the rise and fall is the step's own geometry now, a little over one per cent of
+            // the height: see the head-bob test above)
+            assertTrue("look $l bob $bob", bob in .008f..0.045f)
         }
     }
 
