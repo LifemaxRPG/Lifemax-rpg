@@ -153,8 +153,9 @@ class StreetSpritesTest {
     fun theStreetSetFitsItsBudget() {
         val walkers = StreetSprites.walkerBytes()
         // the walk is the hardest thing on the street to make smooth: it gets the most frames
-        // (six looks, the older two with their own short steps, and the kneel to a shoe)
-        assertTrue("walkers are $walkers bytes", walkers < 8 * 1024 * 1024)
-        assertTrue(StreetSprites.bytes() < 12 * 1024 * 1024)
+        // (six looks, the older two with their own short steps, and the kneel to a shoe), and
+        // they are painted finer than the screen shows them, so they hold up when looked at close
+        assertTrue("walkers are $walkers bytes", walkers < 20 * 1024 * 1024)
+        assertTrue(StreetSprites.bytes() < 25 * 1024 * 1024)
     }
 }

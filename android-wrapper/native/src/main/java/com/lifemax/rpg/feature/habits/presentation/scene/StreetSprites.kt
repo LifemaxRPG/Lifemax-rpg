@@ -31,7 +31,7 @@ internal class WalkerSprite(val sprite: Sprite, val joints: WalkerJoints)
 
 internal object StreetSprites {
     /** Pixels to a street unit for the walkers: what the phone shows at the focus camera, 3x. */
-    const val PPU = 3.6f
+    const val PPU = 6.4f
 
     /** The bicycle's rider is this look. */
     const val RIDER = 3

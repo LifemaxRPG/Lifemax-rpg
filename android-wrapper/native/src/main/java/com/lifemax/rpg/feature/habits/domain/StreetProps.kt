@@ -4,6 +4,7 @@ import kotlin.math.PI
 import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -408,8 +409,8 @@ object CycleRig {
         }
 
         // ---- the rider's body: the torso over the saddle, the pelvis on it, the neck and head
-        val hipW = 2.2f * b
-        val widths = floatArrayOf(hipW, 1.8f * b, 2.15f * b, 1.95f * b)
+        val hipW = 1.8f * b
+        val widths = floatArrayOf(hipW, 1.45f * b, 1.8f * b, 1.65f * b)
         val at = floatArrayOf(0f, .36f, .72f, .95f)
         // the back rounds a little over the bars
         val bow = floatArrayOf(0f, -.2f, -.35f, -.1f)
@@ -612,10 +613,25 @@ object CycleRig {
         val kx = hx + cos(base - k) * th
         val ky = hy + sin(base - k) * th
         val rgb = StreetRig.dim(lk.wear.legs, shade)
+        // the shoe, then the trouser leg over its top: full over the thigh, straight from the knee
+        StreetRig.shoe(out, lk, ax, ay, ffx, ffy, ddx, ddy, shade)
+        val sl = max(1e-3f, sqrt((ax - kx) * (ax - kx) + (ay - ky) * (ay - ky)))
+        val hemX = ax + (ax - kx) / sl * .12f
+        val hemY = ay + (ay - ky) / sl * .12f
         out +=
-            Shape(Shape.BODY, StreetRig.bowed(hx, hy, 1.95f * b, kx, ky, 1.3f * b, .25f), 1f, rgb)
+            Shape(
+                Shape.BODY,
+                StreetRig.limb(hx, hy, kx, ky, StreetRig.THIGH_F, StreetRig.THIGH_B, b),
+                1f,
+                rgb,
+            )
         out +=
-            Shape(Shape.BODY, StreetRig.bowed(kx, ky, 1.25f * b, ax, ay, .85f * b, -.3f), 1f, rgb)
+            Shape(
+                Shape.BODY,
+                StreetRig.limb(kx, ky, hemX, hemY, StreetRig.SHIN_F, StreetRig.SHIN_B, b, true),
+                1f,
+                rgb,
+            )
         // the knee's fold, at the back of the bend
         out +=
             Shape(
@@ -625,22 +641,6 @@ object CycleRig {
                 StreetRig.dim(rgb, .7f),
                 Mat.FLAT,
                 .45f,
-            )
-        StreetRig.shoe(out, lk, ax, ay, ffx, ffy, ddx, ddy, shade)
-        // the trouser's cuff over the shoe's top
-        out +=
-            Shape(
-                Shape.BODY,
-                FigBuilder.ellipse(
-                    ax,
-                    ay - .1f,
-                    1.0f * b,
-                    .7f * b,
-                    atan2(ay - ky, ax - kx) * 57.3f - 90f,
-                    7,
-                ),
-                1f,
-                StreetRig.dim(rgb, .86f),
             )
     }
 
@@ -670,8 +670,18 @@ object CycleRig {
         val ex = sx + cos(base + k) * ua
         val ey = sy + sin(base + k) * ua
         val skin = StreetRig.dim(lk.wear.skin, shade)
-        add(out, StreetRig.bowed(sx, sy, 1.05f * b, ex, ey, .8f * b, 0f), skin, Mat.SKIN)
-        add(out, StreetRig.bowed(ex, ey, .8f * b, hx, hy, .55f * b, .06f), skin, Mat.SKIN)
+        add(
+            out,
+            StreetRig.limb(sx, sy, ex, ey, StreetRig.BARE_UP_F, StreetRig.BARE_UP_B, b),
+            skin,
+            Mat.SKIN,
+        )
+        add(
+            out,
+            StreetRig.limb(ex, ey, hx, hy, StreetRig.BARE_FORE_F, StreetRig.BARE_FORE_B, b),
+            skin,
+            Mat.SKIN,
+        )
         val mx = sx + (ex - sx) * .55f
         val my = sy + (ey - sy) * .55f
         add(
