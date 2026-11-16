@@ -26,7 +26,6 @@ class StreetLifeTest {
     @Test
     fun nobodyAtRestAndEveryoneWithinTheStreetWithValidFramesOtherwise() {
         assertEquals(0, StreetLife.passers(0f, seed, street.start, street.end, out))
-        assertFalse(StreetLife.car(0f, seed, street.start, street.end, CarPass()))
         var t = .25f
         var seen = 0
         val kinds = HashSet<Stroller>()
@@ -213,40 +212,62 @@ class StreetLifeTest {
         assertTrue(NearLight.wallScale() in 1.1f..1.4f)
     }
 
-    @Test
-    fun theNearCarCrossesTheWholeStreetNowAndThenInEitherDirection() {
-        val c = CarPass()
-        var t = .25f
-        var passes = 0
-        var rights = 0
-        var lefts = 0
-        var lastOn = false
-        var lastX = 0f
-        var lastT = 0f
+    /** How many cars set out a minute over three hours at [hour], and checks every moment. */
+    private fun carsAMinute(hour: Float, seen: HashSet<String>): Float {
+        val cars = Array(StreetLife.CAR_MOST) { CarPass() }
+        val busy = StreetLife.traffic(hour)
+        val dt = .25f
+        val length = street.end - street.start + 2f * StreetLife.CAR_MARGIN
+        var t = dt
+        var starts = 0
         while (t < 3 * 3600f) {
-            val on = StreetLife.car(t, seed, street.start, street.end, c)
-            if (on) {
+            val n = StreetLife.cars(t, seed, street.start, street.end, busy, cars)
+            // the pool never fills, so no car is ever dropped mid-pass
+            assertTrue(n < StreetLife.CAR_MOST)
+            for (i in 0 until n) {
+                val c = cars[i]
+                assertTrue(c.on)
                 assertTrue(
                     c.x >= street.start - StreetLife.CAR_MARGIN - 1f &&
                         c.x <= street.end + StreetLife.CAR_MARGIN + 1f
                 )
-                assertTrue(
-                    c.body in 0 until StreetLife.CAR_BODIES &&
-                        c.paint in 0 until StreetLife.CAR_PAINTS
-                )
-                if (lastOn) assertEquals(c.speed * (t - lastT), (c.x - lastX) * c.dir, .01f)
-                if (!lastOn) {
-                    passes++
-                    if (c.dir > 0f) rights++ else lefts++
-                }
-                lastX = c.x
-                lastT = t
+                assertTrue(c.body in 0 until StreetLife.CAR_BODIES)
+                assertTrue(c.paint in 0 until StreetLife.CAR_PAINTS)
+                assertEquals(c.paint == StreetLife.TAXI_PAINT, c.taxi)
+                // the near lane drives right, the far one left; far lane first, to draw in order
+                assertEquals(if (c.lane == 0) 1f else -1f, c.dir)
+                if (i > 0) assertTrue(cars[i - 1].lane >= c.lane)
+                assertTrue(abs(c.bob) < .2f)
+                // the wheels roll the ground covered
+                assertEquals(c.t * length, c.wheel * StreetLife.carWheel(c.body), .05f)
+                if (c.t * length < c.speed * dt) starts++
+                // nobody drives into the car ahead
+                for (j in 0 until i) if (cars[j].lane == c.lane)
+                    assertTrue(abs(cars[j].x - c.x) > 75f)
+                seen.add("body ${c.body}")
+                seen.add("paint ${c.paint}")
+                if (c.rack) seen.add("rack")
             }
-            lastOn = on
-            t += .25f
+            for (i in n until cars.size) assertFalse(cars[i].on)
+            t += dt
         }
-        assertTrue("$passes passes", passes in 90..160)
-        assertTrue(rights > 20 && lefts > 20)
+        return starts / 180f
+    }
+
+    @Test
+    fun carsComeBothWaysSeveralAMinuteByDayFewerAtNightInEveryBodyAndPaint() {
+        val seen = HashSet<String>()
+        val day = carsAMinute(12f, seen)
+        val rush = carsAMinute(8.5f, seen)
+        val night = carsAMinute(23.5f, seen)
+        assertTrue("$day by day", day in 4f..8f)
+        assertTrue("$rush in the rush", rush > day)
+        assertTrue("$night at night", night in .8f..3f)
+        for (b in 0 until StreetLife.CAR_BODIES) assertTrue("body $b", "body $b" in seen)
+        for (p in 0 until StreetLife.CAR_PAINTS) assertTrue("paint $p", "paint $p" in seen)
+        assertTrue("rack" in seen)
+        val cars = Array(StreetLife.CAR_MOST) { CarPass() }
+        assertEquals(0, StreetLife.cars(0f, seed, street.start, street.end, 1f, cars))
     }
 
     @Test
@@ -262,8 +283,19 @@ class StreetLifeTest {
         var mid = false
         for (i in 0 until n) if (out[i].kind == Stroller.WALKER && abs(out[i].x) < 40f) mid = true
         assertTrue("a walker mid-screen", mid)
-        val c = CarPass()
-        assertTrue(StreetLife.car(HabitsScenarios.NEAR_CAR_AT, seed, street.start, street.end, c))
-        assertTrue("the car mid-screen: ${c.x}", abs(c.x) < 40f)
+        // at 23:00, as the screenshot has it: a car in the near lane mid-screen
+        val cars = Array(StreetLife.CAR_MOST) { CarPass() }
+        val m =
+            StreetLife.cars(
+                HabitsScenarios.NEAR_CAR_AT,
+                seed,
+                street.start,
+                street.end,
+                StreetLife.traffic(23f),
+                cars,
+            )
+        var near = false
+        for (i in 0 until m) if (cars[i].lane == 0 && abs(cars[i].x) < 40f) near = true
+        assertTrue("a near car mid-screen", near)
     }
 }

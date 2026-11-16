@@ -50,10 +50,11 @@ import kotlin.math.max
  * at y = 0, the kerb at [BuildingPainter.PAVEMENT].
  */
 internal class StreetLifePainter {
-    /** This frame's passers and car, filled by [update]. */
+    /** This frame's passers and cars (far lane first), filled by [update]. */
     val passers = Array(StreetLife.MOST) { Passer() }
     var count = 0
-    val car = CarPass()
+    val cars = Array(StreetLife.CAR_MOST) { CarPass() }
+    var carCount = 0
 
     /** The key light and where it stands, as [BuildingPainter] has them: set by the stage. */
     var light: KeyLight? = null
@@ -66,7 +67,18 @@ internal class StreetLifePainter {
 
     private val fall = Matrix()
     private val unit = 1f / StreetSprites.PPU
-    private val carUnit = 1f / StreetSprites.CAR_PPU
+    private val carUnit = 1f / CarArt.PPU
+
+    /**
+     * The cars' paints: their grey bodies multiplied by each paint, by day and by night (made
+     * once).
+     */
+    private val dayPaints = Array(StreetLife.CAR_PAINTS) { tintBy(CarArt.PAINTS[it]) }
+    private val nightPaints =
+        Array(StreetLife.CAR_PAINTS) { tintBy(CarArt.nightPaint(CarArt.PAINTS[it])) }
+
+    /** A wheel, a rack or the shadow side of things at night: towards the dark. */
+    private val carNight = ColorFilter.tint(Color(0xFF06080D), BlendMode.SrcIn)
 
     /** The shade a walker throws under a street lamp, and the warmth the lamp lends them. */
     private val lampShadeFilter = ColorFilter.tint(Color(0xFF0A0806), BlendMode.SrcIn)
@@ -218,7 +230,8 @@ internal class StreetLifePainter {
     /** Fills in who is on the street at [seconds]. */
     fun update(seconds: Float, seed: Int, street: StreetLayout) {
         count = StreetLife.passers(seconds, seed, street.start, street.end, passers)
-        StreetLife.car(seconds, seed, street.start, street.end, car)
+        val busy = StreetLife.traffic(painter?.hour ?: 12f)
+        carCount = StreetLife.cars(seconds, seed, street.start, street.end, busy, cars)
     }
 
     /** How much bigger someone [lane] out on the pavement is drawn (nearer the kerb, nearer us). */
@@ -456,16 +469,74 @@ internal class StreetLifePainter {
             if (p.x + near < from || p.x - near > to) continue
             party(p, perspective(p.lane), 1f, filter, KEY)
         }
-        if (car.on && car.x + 120f > from && car.x - 120f < to) {
-            val c = SceneSprites.car(car.body, car.paint)
+        for (i in 0 until carCount) {
+            val car = cars[i]
+            if (car.x + 120f < from || car.x - 120f > to) continue
+            val c = SceneSprites.car(car.body)
+            val sp = c.sprite
+            val s = carSize(car)
             withTransform({
-                translate(car.x, roadY)
+                translate(car.x, carGround(car))
                 transform(fallMatrix(light, car.x))
-                scale(car.dir * carUnit, carUnit, Offset.Zero)
+                scale(car.dir * carUnit * s, carUnit * s, Offset.Zero)
             }) {
-                drawImage(c.day, Offset(-c.sprite.w / 2f, -c.sprite.groundY), colorFilter = filter)
+                drawImage(c.paint, Offset(-sp.w / 2f, -sp.groundY), colorFilter = filter)
+                val wheel = SceneSprites.carWheel
+                val ws = sp.wheelR / StreetLife.CAR_WHEEL
+                for (k in 0..1) {
+                    val wx = if (k == 0) sp.wheelX0 else sp.wheelX1
+                    withTransform({
+                        translate(wx - sp.w / 2f, sp.wheelY - sp.groundY)
+                        scale(ws, ws, Offset.Zero)
+                    }) {
+                        drawImage(
+                            SceneSprites.carWheelImages[sp.rim],
+                            Offset(-wheel.ox, -wheel.oy),
+                            colorFilter = filter,
+                        )
+                    }
+                }
             }
         }
+    }
+
+    /** The road under a car's wheels: the far lane a little further up it. */
+    private fun carGround(c: CarPass): Float =
+        if (c.lane == 0) roadY else roadY - StreetLife.FAR_LANE_UP
+
+    /** How big a car is drawn: the far lane's a little smaller. */
+    private fun carSize(c: CarPass): Float = if (c.lane == 0) 1f else StreetLife.FAR_LANE_SCALE
+
+    private fun tintBy(rgb: Int): ColorFilter {
+        val r = (rgb shr 16 and 255) / 255f
+        val g = (rgb shr 8 and 255) / 255f
+        val b = (rgb and 255) / 255f
+        return ColorFilter.colorMatrix(
+            ColorMatrix(
+                floatArrayOf(
+                    r,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    g,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    b,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    1f,
+                    0f,
+                )
+            )
+        )
     }
 
     private fun fallMatrix(light: KeyLight, x: Float): Matrix {
@@ -701,13 +772,17 @@ internal class StreetLifePainter {
         drawPath(lead, Color(0xFF1C1612), style = leadStroke, alpha = .9f)
     }
 
-    // ------------------------------------------------------------------ the near car
+    // ------------------------------------------------------------------ the front road's cars
+
+    /** Where car [c]'s headlights are along the street. */
+    private fun lampX(c: CarPass): Float =
+        c.x + c.dir * (SceneSprites.car(c.body).sprite.length / 2f - 1.5f) * carSize(c)
 
     /**
-     * The headlights' sweep over the facades at night: a warm wash that slides along the building
-     * fronts ahead of the car, and in it the shadows of the lamp posts and trees thrown up the
-     * walls from the headlights (low, so they are tall and swing as the car passes). Drawn after
-     * the buildings and before what stands in front of them.
+     * The headlights' sweep over the facades at night: for each car on the road a warm wash that
+     * slides along the building fronts ahead of it, and in it the shadows of the lamp posts and
+     * trees thrown up the walls from its headlights (low, so they are tall and swing as the car
+     * passes). Drawn after the buildings and before what stands in front of them.
      */
     fun DrawScope.sweep(
         sky: SkyColors,
@@ -718,63 +793,79 @@ internal class StreetLifePainter {
         seconds: Float,
     ) {
         val dark = sky.dark
-        if (dark <= .2f || !car.on || layouts.isEmpty()) return
-        val c = SceneSprites.car(car.body, car.paint)
-        val lampX = car.x + car.dir * (c.sprite.length / 2f - 1.5f)
-        val spot = NearLight.sweepSpot(lampX, car.dir)
-        if (spot + NearLight.SWEEP_REACH < from || spot - NearLight.SWEEP_REACH > to) return
+        if (dark <= .2f || carCount == 0 || layouts.isEmpty()) return
+        var any = false
+        for (n in 0 until carCount) {
+            val spot = NearLight.sweepSpot(lampX(cars[n]), cars[n].dir)
+            if (spot + NearLight.SWEEP_REACH >= from && spot - NearLight.SWEEP_REACH <= to)
+                any = true
+        }
+        if (!any) return
         var tallest = 0f
         for (i in layouts.indices) tallest = max(tallest, layouts[i].height)
-        val half = B.W / 2f
         drawIntoCanvas { it.saveLayer(Rect(from, -tallest - 10f, to, 0f), sweepPaint) }
         val p = painter
-        for (i in layouts.indices) {
-            val cx = street.centers[i]
-            // the wash covers the front and whichever side face the building shows
-            val shift = p?.shiftAt(cx) ?: B.DX
-            val left = cx + Perspective.left(shift)
-            val right = cx + Perspective.right(shift)
-            if (right < from || left > to) continue
-            val strength = NearLight.sweep(lampX, car.dir, cx)
-            if (strength < .02f) continue
-            val h = layouts[i].height
-            clipRect(left, -h, right, 0f) {
-                translate(spot, -6f) {
-                    scale(NearLight.SWEEP_REACH * .8f, 70f, Offset.Zero) {
-                        drawRect(
-                            wash,
-                            Offset(-1f, -1f),
-                            Size(2f, 2f),
-                            alpha = strength * dark * .9f,
-                        )
-                    }
-                }
-            }
-        }
-        // the shadows of the pavement's furniture up the walls: each scaled about the headlight,
-        // on the wall of each building in view
-        if (p != null) {
-            val scale = NearLight.wallScale()
-            wall.reset()
-            wall.translate(lampX, -NearLight.HEADLIGHT)
-            wall.scale(scale, scale)
-            wall.translate(-lampX, NearLight.HEADLIGHT)
+        for (n in 0 until carCount) {
+            val car = cars[n]
+            val lampX = lampX(car)
+            val spot = NearLight.sweepSpot(lampX, car.dir)
+            if (spot + NearLight.SWEEP_REACH < from || spot - NearLight.SWEEP_REACH > to) continue
+            // the far lane's lamps are a little further from the walls: a touch less light
+            val near = if (car.lane == 0) 1f else .85f
             for (i in layouts.indices) {
                 val cx = street.centers[i]
-                val shift = p.shiftAt(cx)
+                // the wash covers the front and whichever side face the building shows
+                val shift = p?.shiftAt(cx) ?: B.DX
                 val left = cx + Perspective.left(shift)
                 val right = cx + Perspective.right(shift)
                 if (right < from || left > to) continue
-                if (NearLight.sweep(lampX, car.dir, cx) < .02f) continue
-                clipRect(left, -layouts[i].height, right, 0f) {
-                    withTransform({ transform(wall) }) {
-                        for (k in street.furniture.indices) {
-                            val f = street.furniture[k]
-                            if (f.kind == FurnitureKind.BENCH) continue
-                            val strength = NearLight.sweep(lampX, car.dir, f.x)
-                            if (strength < .03f) continue
-                            with(p) {
-                                caster(f, seconds, Color.Black, BlendMode.DstOut, strength * dark)
+                val strength = NearLight.sweep(lampX, car.dir, cx)
+                if (strength < .02f) continue
+                val h = layouts[i].height
+                clipRect(left, -h, right, 0f) {
+                    translate(spot, -6f) {
+                        scale(NearLight.SWEEP_REACH * .8f, 70f, Offset.Zero) {
+                            drawRect(
+                                wash,
+                                Offset(-1f, -1f),
+                                Size(2f, 2f),
+                                alpha = strength * dark * .9f * near,
+                            )
+                        }
+                    }
+                }
+            }
+            // the shadows of the pavement's furniture up the walls: each scaled about the
+            // headlight, on the wall of each building in view
+            if (p != null) {
+                val scale = NearLight.wallScale()
+                wall.reset()
+                wall.translate(lampX, -NearLight.HEADLIGHT)
+                wall.scale(scale, scale)
+                wall.translate(-lampX, NearLight.HEADLIGHT)
+                for (i in layouts.indices) {
+                    val cx = street.centers[i]
+                    val shift = p.shiftAt(cx)
+                    val left = cx + Perspective.left(shift)
+                    val right = cx + Perspective.right(shift)
+                    if (right < from || left > to) continue
+                    if (NearLight.sweep(lampX, car.dir, cx) < .02f) continue
+                    clipRect(left, -layouts[i].height, right, 0f) {
+                        withTransform({ transform(wall) }) {
+                            for (k in street.furniture.indices) {
+                                val f = street.furniture[k]
+                                if (f.kind == FurnitureKind.BENCH) continue
+                                val strength = NearLight.sweep(lampX, car.dir, f.x)
+                                if (strength < .03f) continue
+                                with(p) {
+                                    caster(
+                                        f,
+                                        seconds,
+                                        Color.Black,
+                                        BlendMode.DstOut,
+                                        strength * dark * near,
+                                    )
+                                }
                             }
                         }
                     }
@@ -784,34 +875,100 @@ internal class StreetLifePainter {
         drawIntoCanvas { it.restore() }
     }
 
-    private fun DrawScope.carWheel(sp: CarSprite, wx: Float, deg: Float) {
+    /**
+     * A wheel at [wx] (the sprite's pixels, the car's frame in pixels about its middle on the
+     * road), turned [deg]: the rim design's picture scaled to the body's wheel, the arch's shadow
+     * over it unturned, and at night the dark over both.
+     */
+    private fun DrawScope.carWheel(
+        sp: CarSprite,
+        wx: Float,
+        deg: Float,
+        dark: Float,
+        alpha: Float,
+    ) {
         val wheel = SceneSprites.carWheel
+        val ws = sp.wheelR / StreetLife.CAR_WHEEL
         withTransform({
-            translate((wx - sp.w / 2f) * carUnit, -(sp.groundY - sp.wheelY) * carUnit)
-            rotate(deg, Offset.Zero)
-            scale(carUnit, carUnit, Offset.Zero)
+            translate(wx - sp.w / 2f, sp.wheelY - sp.groundY)
+            scale(ws, ws, Offset.Zero)
         }) {
-            drawImage(SceneSprites.carWheelImage, Offset(-wheel.ox, -wheel.oy))
+            val at = Offset(-wheel.ox, -wheel.oy)
+            rotate(deg, Offset.Zero) {
+                drawImage(SceneSprites.carWheelImages[sp.rim], at, alpha = alpha)
+            }
+            drawImage(SceneSprites.carWheelShade, at, alpha = alpha)
+            if (dark > .01f) {
+                rotate(deg, Offset.Zero) {
+                    drawImage(
+                        SceneSprites.carWheelImages[sp.rim],
+                        at,
+                        alpha = .72f * dark * alpha,
+                        colorFilter = carNight,
+                    )
+                }
+            }
         }
     }
 
     /**
-     * The near car on the front road: its shadow and pool of light on the road, the beam ahead of
-     * it at night, its wheels turning, its body (by day, by night) and its lamps' bloom.
+     * A car's body in the sprite's pixels about its middle on the road: its paint through the
+     * paint's filter and what is not paint over it, by day and (over that, as strong as the dark)
+     * by night; its rack and a taxi's sign.
+     */
+    private fun DrawScope.carBody(c: CarImages, car: CarPass, dark: Float, alpha: Float) {
+        val sp = c.sprite
+        val at = Offset(-sp.w / 2f, -sp.groundY)
+        if (dark < .99f) {
+            drawImage(c.paint, at, alpha = alpha, colorFilter = dayPaints[car.paint])
+            drawImage(c.day, at, alpha = alpha)
+        }
+        if (dark > .01f) {
+            drawImage(c.paint, at, alpha = dark * alpha, colorFilter = nightPaints[car.paint])
+            drawImage(c.night, at, alpha = dark * alpha)
+        }
+        if (car.rack) {
+            val r = Offset(at.x + sp.rackX, at.y + sp.rackY)
+            drawImage(c.rack, r, alpha = alpha)
+            if (dark > .01f)
+                drawImage(c.rack, r, alpha = .6f * dark * alpha, colorFilter = carNight)
+        }
+        if (car.taxi) {
+            val s = SceneSprites.taxiSign
+            val o = Offset(at.x + (sp.roofX0 + sp.roofX1) / 2f - s.ox, at.y + sp.roofY - s.oy)
+            val im = SceneSprites.taxiSignImages
+            if (dark < .99f) drawImage(im[0], o, alpha = alpha)
+            if (dark > .01f) drawImage(im[1], o, alpha = dark * alpha)
+        }
+    }
+
+    /**
+     * The cars on the front road, the far lane's first: each one's pool of light and beam on the
+     * road at night, its reflection in a wet road, its body riding a little on its springs, its
+     * wheels turning, and its lamps' bloom.
      */
     fun DrawScope.car(sky: SkyColors, from: Float, to: Float) {
-        if (!car.on) return
-        val c = SceneSprites.car(car.body, car.paint)
+        for (i in 0 until carCount) car(cars[i], sky, from, to)
+    }
+
+    private fun DrawScope.car(car: CarPass, sky: SkyColors, from: Float, to: Float) {
+        val c = SceneSprites.car(car.body)
         val sp = c.sprite
         val len = sp.length
         if (car.x + len < from - 150f || car.x - len > to + 150f) return
         val dark = sky.dark
         val night = dark > .2f
-        translate(car.x, roadY) {
-            scale(car.dir, 1f, Offset.Zero) {
+        val s = carSize(car)
+        val wet = painter?.weather?.wet ?: 0f
+        // the wheels roll clockwise driving right: the picture is mirrored for the other way
+        val deg = car.wheel * 180f / Math.PI.toFloat()
+        translate(car.x, carGround(car)) {
+            scale(car.dir * s, s, Offset.Zero) {
                 val front = len / 2f - 1.5f
+                val lampUp = (sp.groundY - sp.lampY) / sp.ppu
+                val tailUp = (sp.groundY - sp.tailY) / sp.ppu
                 if (night) {
-                    // the pool ahead on the road, then the beam
+                    // the pool ahead on the road, then the beam, and the tail lamp's red
                     translate(front + 34f, 1.5f) {
                         scale(46f, 9f, Offset.Zero) {
                             drawRect(
@@ -823,7 +980,7 @@ internal class StreetLifePainter {
                             )
                         }
                     }
-                    translate(front, -8f) {
+                    translate(front, -lampUp) {
                         scale(150f, 60f, Offset.Zero) {
                             drawPath(
                                 beam,
@@ -833,7 +990,7 @@ internal class StreetLifePainter {
                             )
                         }
                     }
-                    translate(-front, -8f) {
+                    translate(-front, -tailUp) {
                         scale(9f, 4f, Offset.Zero) {
                             drawRect(
                                 tail,
@@ -845,15 +1002,30 @@ internal class StreetLifePainter {
                         }
                     }
                 }
-                // the wheels, turning
-                val deg = -car.wheel * 180f / Math.PI.toFloat()
-                carWheel(sp, sp.wheelX0, deg)
-                carWheel(sp, sp.wheelX1, deg)
                 scale(carUnit, carUnit, Offset.Zero) {
-                    val at = Offset(-sp.w / 2f, -sp.groundY)
-                    if (dark < .99f) drawImage(c.day, at, alpha = 1f - dark)
-                    if (dark > .01f) drawImage(c.night, at, alpha = dark)
-                    if (night) drawImage(c.lights, at, alpha = dark, blendMode = BlendMode.Plus)
+                    if (wet > .05f) {
+                        // the car upside down in the wet road, faint
+                        scale(1f, -1f, Offset.Zero) {
+                            val a = .3f * wet
+                            carBody(c, car, dark, a)
+                            carWheel(sp, sp.wheelX0, deg, dark, a)
+                            carWheel(sp, sp.wheelX1, deg, dark, a)
+                        }
+                    }
+                    // the body rides its springs over the wheels
+                    translate(0f, -car.bob * sp.ppu) { carBody(c, car, dark, 1f) }
+                    carWheel(sp, sp.wheelX0, deg, dark, 1f)
+                    carWheel(sp, sp.wheelX1, deg, dark, 1f)
+                    if (night) {
+                        translate(0f, -car.bob * sp.ppu) {
+                            drawImage(
+                                c.lights,
+                                Offset(-sp.w / 2f, -sp.groundY),
+                                alpha = dark,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                    }
                 }
             }
         }

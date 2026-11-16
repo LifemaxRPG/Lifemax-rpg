@@ -169,14 +169,17 @@ internal class WalkerImage(
 )
 
 /**
- * The near car's pictures: by day, by night, and the lights to add at night; with the sprite's
+ * A car body's pictures ([CarArt]): its paint's grey shading (drawn through a paint's filter), what
+ * is not paint by day and by night, the lights to add at night and its roof rack; with the sprite's
  * measures.
  */
 internal class CarImages(
     val sprite: CarSprite,
+    val paint: ImageBitmap,
     val day: ImageBitmap,
     val night: ImageBitmap,
     val lights: ImageBitmap,
+    val rack: ImageBitmap,
 )
 
 /**
@@ -425,7 +428,7 @@ internal object SceneSprites {
     private val walkers = arrayOfNulls<WalkerImage>(StreetLooks.COUNT * StreetRig.TOTAL_FRAMES)
     private val dogs = arrayOfNulls<PersonImage>(DogRig.TOTAL_FRAMES)
     private val cycles = arrayOfNulls<PersonImage>(StreetGait.CRANK_FRAMES)
-    private val cars = arrayOfNulls<CarImages>(StreetLife.CAR_BODIES * StreetLife.CAR_PAINTS)
+    private val cars = arrayOfNulls<CarImages>(StreetLife.CAR_BODIES)
     private var streetBytes = 0
 
     /** Street walker [look]'s frame [frame] ([StreetRig.TOTAL_FRAMES]). */
@@ -480,28 +483,47 @@ internal object SceneSprites {
         image(cycleWheel.pixels, cycleWheel.w, cycleWheel.h)
     }
 
-    /** The near car's wheel, centred, at the car's resolution. */
-    val carWheel: Sprite by lazy {
-        StreetSprites.wheel(StreetLife.CAR_WHEEL, StreetSprites.CAR_PPU, 0, .9f, 2.2f, true)
+    /** The cars' wheels, one per rim design, centred, at [StreetLife.CAR_WHEEL]'s radius. */
+    val carWheel: Sprite by lazy { CarArt.wheel(0) }
+    val carWheelImages: Array<ImageBitmap> by lazy {
+        Array(CarArt.RIMS) {
+            val s = CarArt.wheel(it)
+            image(s.pixels, s.w, s.h)
+        }
     }
-    val carWheelImage: ImageBitmap by lazy { image(carWheel.pixels, carWheel.w, carWheel.h) }
 
-    /** The near car [body] in [paint]. */
+    /** The arch's shadow laid over a wheel, unturned. */
+    val carWheelShade: ImageBitmap by lazy {
+        val s = CarArt.wheelShade()
+        image(s.pixels, s.w, s.h)
+    }
+
+    /** A taxi's roof sign by day and by night, its foot's middle at the sprite's origin. */
+    val taxiSign: Sprite by lazy { CarArt.sign(false) }
+    val taxiSignImages: Array<ImageBitmap> by lazy {
+        arrayOf(
+            image(taxiSign.pixels, taxiSign.w, taxiSign.h),
+            CarArt.sign(true).let { image(it.pixels, it.w, it.h) },
+        )
+    }
+
+    /** Car [body]'s pictures (any paint: the painter tints the grey). */
     @Synchronized
-    fun car(body: Int, paint: Int): CarImages {
-        val i = body * StreetLife.CAR_PAINTS + paint
-        cars[i]?.let {
+    fun car(body: Int): CarImages {
+        cars[body]?.let {
             return it
         }
-        val sp = StreetSprites.car(body, paint)
-        streetBytes += sp.w * sp.h * 4 * 3
+        val sp = CarArt.car(body)
+        streetBytes += sp.w * sp.h * 4 * 4 + sp.rackW * sp.rackH * 4
         return CarImages(
                 sp,
+                image(sp.paint, sp.w, sp.h),
                 image(sp.day, sp.w, sp.h),
                 image(sp.night, sp.w, sp.h),
                 image(sp.lights, sp.w, sp.h),
+                image(sp.rack, sp.rackW, sp.rackH),
             )
-            .also { cars[i] = it }
+            .also { cars[body] = it }
     }
 
     /** What the street's people and cars made so far take, in bytes. */
@@ -687,6 +709,11 @@ internal object SceneSprites {
         foreground
         flare
         light
+        // the front road's cars, so none is baked on the main thread when it first drives by
+        for (b in 0 until StreetLife.CAR_BODIES) car(b)
+        carWheelImages
+        carWheelShade
+        taxiSignImages
         for (h in BuildingSpec.HEIGHTS) {
             val rows = if (h >= BuildingSpec.TWO_ROWS) 2 else 1
             val wh = (h - BuildingSpec.BAND_TOP - BuildingSpec.PLAQUE_BAND - 6f * (rows - 1)) / rows

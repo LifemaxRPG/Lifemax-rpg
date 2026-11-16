@@ -78,7 +78,10 @@ class Passer {
     var wheel = 0f
 }
 
-/** The car on the near road this moment, written by [StreetLife.car]. */
+/**
+ * A car on the front road this moment, one of the few [StreetLife.cars] writes: which lane, where
+ * and which way, its body, paint and extras, its wheels' angle and the body's rise on its springs.
+ */
 class CarPass {
     var on = false
 
@@ -88,13 +91,23 @@ class CarPass {
     /** 1 driving right, -1 left. */
     var dir = 1f
 
-    /** Which body and which paint. */
+    /** 0 the near lane, 1 the far one: a little further up the road, drawn a little smaller. */
+    var lane = 0
+
+    /** Which body ([StreetLife.CAR_BODIES]) and which paint ([StreetLife.CAR_PAINTS]). */
     var body = 0
     var paint = 0
+
+    /** A taxi's roof sign, a roof rack. */
+    var taxi = false
+    var rack = false
 
     /** Its speed in street units a second, and its wheels' angle in radians. */
     var speed = 0f
     var wheel = 0f
+
+    /** The body's rise over its wheels on the springs, in street units (up is positive). */
+    var bob = 0f
 
     /** How far through the pass, 0 to 1. */
     var t = 0f
@@ -137,14 +150,36 @@ object StreetLife {
     const val SIDE_BACK = 4.5f
     const val SIDE_OUT = 3f
 
-    /** The near road: a car about every this many seconds, at this speed. */
-    const val CAR_PERIOD = 70f
-    const val CAR_JITTER = 20f
-    const val CAR_CHANCE = .85f
-    const val CAR_SPEED = 95f
+    /**
+     * The front road: two lanes, the near one driving right and the far one left. Each lane has a
+     * slot every [CAR_PERIOD] seconds (starting within [CAR_JITTER] of it) that the hour's
+     * [traffic] fills or not; a filled slot sends one car, or a short bunch of two or three nose to
+     * tail. Speeds vary a little from bunch to bunch, never enough for one to catch another.
+     */
+    const val CAR_PERIOD = 22f
+    const val CAR_JITTER = 8f
+    const val CAR_SPEED = 100f
     const val CAR_MARGIN = 90f
-    const val CAR_BODIES = 3
-    const val CAR_PAINTS = 5
+    const val CAR_LANES = 2
+
+    /**
+     * The most cars kept at once (both lanes, the whole street and its margins): room for two
+     * bunches of three a lane on a long street; the painter draws only those in view.
+     */
+    const val CAR_MOST = 12
+
+    /** Sedan, hatchback, SUV, city car, estate, van. */
+    const val CAR_BODIES = 6
+
+    /**
+     * White, black, silver, gunmetal, navy, red, green, champagne, blue, burgundy and taxi yellow.
+     */
+    const val CAR_PAINTS = 11
+    const val TAXI_PAINT = 10
+
+    /** How much higher up the road the far lane is, and how much smaller its cars are drawn. */
+    const val FAR_LANE_UP = 6f
+    const val FAR_LANE_SCALE = .9f
 
     /** How many slots back a passer can still be walking: a long street takes a few. */
     private const val LOOKBACK = 8
@@ -301,51 +336,110 @@ object StreetLife {
         return a + v * tc + v * (tau / 2f + down / (2f * pi) * sin(pi * tau / down))
     }
 
-    // ---- the near road
+    // ---- the front road
 
-    fun carHappens(seed: Int, k: Int): Boolean = k >= 0 && Ambient.hash(seed, k, 220) < CAR_CHANCE
+    /** How common each body is, and each paint (white the most, then black, the greys...). */
+    private val BODY_SHARE = floatArrayOf(.24f, .2f, .22f, .12f, .11f, .11f)
+    private val PAINT_SHARE =
+        floatArrayOf(.24f, .17f, .14f, .14f, .09f, .08f, .03f, .04f, .04f, .03f)
 
-    fun carStart(seed: Int, k: Int): Float =
-        k * CAR_PERIOD + Ambient.hash(seed, k, 221) * CAR_JITTER
+    /** Each body's wheel radius, in street units. */
+    private val WHEEL_R = floatArrayOf(4.7f, 4.6f, 5.2f, 4.3f, 4.7f, 4.8f)
 
-    fun carDir(seed: Int, k: Int): Float = if (Ambient.hash(seed, k, 222) < .5f) -1f else 1f
+    /** The largest wheel's radius. */
+    const val CAR_WHEEL = 5.2f
 
-    /** The car on the near road at [seconds], driving the street from end to end; false if none. */
-    fun car(seconds: Float, seed: Int, from: Float, to: Float, into: CarPass): Boolean {
-        into.on = false
-        if (seconds <= 0f) return false
-        val length = to - from + 2f * CAR_MARGIN
-        val k0 = floor(seconds / CAR_PERIOD).toInt()
-        var k = k0
-        while (k > k0 - 3) {
-            if (carHappens(seed, k)) {
-                val t = seconds - carStart(seed, k)
-                val speed = CAR_SPEED * (.9f + .25f * Ambient.hash(seed, k, 223))
-                val travel = speed * t
-                if (t >= 0f && travel <= length) {
-                    into.on = true
-                    into.dir = carDir(seed, k)
-                    into.x =
-                        if (into.dir > 0f) from - CAR_MARGIN + travel else to + CAR_MARGIN - travel
-                    into.body =
-                        (Ambient.hash(seed, k, 224) * CAR_BODIES)
-                            .toInt()
-                            .coerceIn(0, CAR_BODIES - 1)
-                    into.paint =
-                        (Ambient.hash(seed, k, 225) * CAR_PAINTS)
-                            .toInt()
-                            .coerceIn(0, CAR_PAINTS - 1)
-                    into.speed = speed
-                    into.wheel = travel / CAR_WHEEL
-                    into.t = travel / length
-                    return true
-                }
-            }
-            k--
-        }
-        return false
+    fun carWheel(body: Int): Float = WHEEL_R[body]
+
+    private val TRAFFIC_AT = floatArrayOf(0f, 5f, 7f, 8.5f, 10f, 13f, 16f, 18f, 20f, 22f, 24f)
+    private val TRAFFIC =
+        floatArrayOf(.24f, .18f, .7f, .95f, .72f, .8f, .82f, .95f, .62f, .4f, .24f)
+
+    /** The share of a lane's slots that send a car at [hour]: busiest in the rush hours. */
+    fun traffic(hour: Float): Float {
+        val h = ((hour % 24f) + 24f) % 24f
+        var i = 0
+        while (i < TRAFFIC_AT.size - 2 && h >= TRAFFIC_AT[i + 1]) i++
+        val u = ((h - TRAFFIC_AT[i]) / (TRAFFIC_AT[i + 1] - TRAFFIC_AT[i])).coerceIn(0f, 1f)
+        return TRAFFIC[i] + (TRAFFIC[i + 1] - TRAFFIC[i]) * u
     }
 
-    /** The near car's wheel radius, in street units. */
-    const val CAR_WHEEL = 4.2f
+    private fun pick(h: Float, shares: FloatArray): Int {
+        var total = 0f
+        for (s in shares) total += s
+        var acc = 0f
+        for (i in shares.indices) {
+            acc += shares[i] / total
+            if (h < acc) return i
+        }
+        return shares.size - 1
+    }
+
+    /** How many cars [slot] sends: mostly one, now and then two or three nose to tail. */
+    fun bunch(seed: Int, slot: Int): Int {
+        val h = Ambient.hash(seed, slot, 226)
+        return if (h < .62f) 1 else if (h < .88f) 2 else 3
+    }
+
+    /**
+     * The cars on the front road at [seconds] between [from] and [to] (and [CAR_MARGIN] beyond),
+     * [busy] ([traffic]) of the slots sending one, written into [out] far lane first (the order to
+     * draw them in); returns how many. Nothing is made: [out]'s cars are refilled.
+     */
+    fun cars(
+        seconds: Float,
+        seed: Int,
+        from: Float,
+        to: Float,
+        busy: Float,
+        out: Array<CarPass>,
+    ): Int {
+        for (c in out) c.on = false
+        if (seconds <= 0f) return 0
+        val length = to - from + 2f * CAR_MARGIN
+        var n = 0
+        val k0 = floor(seconds / CAR_PERIOD).toInt()
+        for (lane in CAR_LANES - 1 downTo 0) {
+            val base = if (lane == 0) CAR_SPEED else CAR_SPEED * .92f
+            // the slots far enough back that their last car may still be on the road
+            val longest = length / (base * .9f) + CAR_JITTER + 8f
+            val back = (longest / CAR_PERIOD).toInt() + 1
+            for (k in k0 - back..k0) {
+                if (k < 0) continue
+                val slot = k * CAR_LANES + lane
+                if (Ambient.hash(seed, slot, 220) >= busy) continue
+                val start = k * CAR_PERIOD + Ambient.hash(seed, slot, 221) * CAR_JITTER
+                val speed = base * (.9f + .2f * Ambient.hash(seed, slot, 223))
+                var gap = 0f
+                for (j in 0 until bunch(seed, slot)) {
+                    if (j > 0) gap += 1.1f + 1.3f * Ambient.hash(seed, slot, 230 + j)
+                    val t = seconds - start - gap
+                    val travel = speed * t
+                    if (t < 0f || travel > length) continue
+                    if (n >= out.size) return n
+                    val c = out[n++]
+                    c.lane = lane
+                    c.speed = speed
+                    c.dir = if (lane == 0) 1f else -1f
+                    c.x = if (c.dir > 0f) from - CAR_MARGIN + travel else to + CAR_MARGIN - travel
+                    c.t = travel / length
+                    dress(c, seed, slot * 4 + j, travel)
+                }
+            }
+        }
+        return n
+    }
+
+    /** Car [id]'s body, paint and extras, its wheels and springs [travel] units along. */
+    private fun dress(c: CarPass, seed: Int, id: Int, travel: Float) {
+        c.on = true
+        c.body = pick(Ambient.hash(seed, id, 224), BODY_SHARE)
+        c.taxi = (c.body == 0 || c.body == 4) && Ambient.hash(seed, id, 227) < .22f
+        c.paint = if (c.taxi) TAXI_PAINT else pick(Ambient.hash(seed, id, 225), PAINT_SHARE)
+        c.rack = c.body != 0 && c.body != 3 && Ambient.hash(seed, id, 228) < .18f
+        c.wheel = travel / WHEEL_R[c.body]
+        // the springs: a slow heave and a quicker patter from the road, out of step car to car
+        val ph = Ambient.hash(seed, id, 229) * 6.28f
+        c.bob = .11f * sin(travel * .095f + ph) + .045f * sin(travel * .31f + 2f * ph)
+    }
 }
