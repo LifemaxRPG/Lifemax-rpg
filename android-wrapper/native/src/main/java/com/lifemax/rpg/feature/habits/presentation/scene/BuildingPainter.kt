@@ -2287,6 +2287,137 @@ internal class BuildingPainter {
     }
 
     /**
+     * Shooting into a low sun the street is exposed for the sky and goes dark ([Backlight.expose]);
+     * a light source does not: drawn after that, over the building as [building] drew it (its
+     * floors moved as they were), its lit windows given back the light the exposure took from them
+     * where they are ([back]'s [Backlight.shadeAt], the building's middle at screen x [sx], the
+     * pavement at [ground], [unit] px to a unit), and what is read and what is lit laid again over
+     * the dark: the floors' name plaques, the selected floor's outline, the next floor's glow, the
+     * lobby sign's letters and its tube, the roof's sign and the "add a floor" outline.
+     */
+    fun DrawScope.relight(
+        art: BuildingArt,
+        motion: BuildingMotion,
+        selected: String?,
+        accent: Color,
+        live: Boolean,
+        detailed: Boolean,
+        sky: SkyColors,
+        back: Backlight,
+        sx: Float,
+        ground: Float,
+        unit: Float,
+    ) {
+        val k = back.amount
+        if (k <= 0f) return
+        val seconds = motion.seconds
+        val half = B.W / 2f
+        val lit = lerp(SceneInk.WindowLitDay, SceneInk.WindowLit, sky.dark)
+        // the lobby's sign: its letters, and its tube when it is lit
+        val top = -B.LOBBY_H
+        if (detailed) {
+            val n = art.lobbyName
+            drawText(
+                n,
+                SceneInk.SignText,
+                Offset(-n.size.width / 2f, top + 11.5f - n.size.height / 2f),
+            )
+        }
+        val tube = Dusk.lightsOn(art.stack.id.hashCode(), hour, Dusk.SIGN) * sky.dark
+        if (tube > .01f)
+            drawRect(
+                SceneInk.Tube,
+                Offset(-half + 13f, top + 16.6f),
+                Size(B.W - 26f, .8f),
+                alpha = tube,
+            )
+        for (fa in art.floors) {
+            val b = fa.block
+            val landing = motion.landing == b.id && fa.piece.kind == PieceKind.FLOOR
+            val adding = motion.adding == b.id
+            val drop = if (adding) (1f - motion.drop) * DROP else 0f
+            val alpha = if (adding) min(1f, motion.drop * 3f) else 1f
+            val squash = if (landing) motion.squash else 0f
+            translate(0f, -drop) {
+                scale(1f + .025f * squash, 1f - .06f * squash, Offset(0f, -fa.piece.bottom)) {
+                    if (fa.piece.kind != PieceKind.RUIN) {
+                        val w = fa.windows
+                        for (j in 0 until fa.windowCount) {
+                            val g = fa.glow[j]
+                            if (g <= 0f) continue
+                            val x = w[j * 4]
+                            val y = fa.top + w[j * 4 + 1]
+                            val ww = w[j * 4 + 2]
+                            val h = w[j * 4 + 3]
+                            val lost =
+                                1f -
+                                    back.shadeAt(
+                                        sx + (x + ww / 2f) * unit,
+                                        ground + (y + h / 2f) * unit,
+                                    )
+                            val a = alpha * g * lost * RELIGHT
+                            if (a < .01f) continue
+                            drawRect(
+                                lit,
+                                Offset(x, y),
+                                Size(ww, h),
+                                alpha = a,
+                                blendMode = BlendMode.Plus,
+                            )
+                        }
+                    }
+                    if (detailed && fa.name != null) plaque(fa, alpha)
+                    if (selected == b.id && fa.piece.labelled) outline(fa.top, fa.bottom, accent)
+                    if (live && art.stack.next == b.id && fa.piece.labelled)
+                        glow(fa.top, fa.bottom, fa.facade.tint, seconds)
+                }
+            }
+        }
+        val s = art.sign
+        if (s != null) {
+            val open = art.stack.claimable || art.stack.claimed
+            val y = -s.top
+            val w = s.width
+            val panel = 24f
+            // a lit board is a light: laid again whole; an unlit one keeps only its words
+            if (open) {
+                drawRect(SceneInk.SignLit, Offset(-w / 2f, y), Size(w, panel))
+                drawRect(
+                    SceneInk.SignFrame,
+                    Offset(-w / 2f, y),
+                    Size(w, panel),
+                    style = frameStroke,
+                )
+            }
+            val words = art.treat
+            if (words != null && detailed)
+                drawText(
+                    words,
+                    if (open) SceneInk.SignLitText else SceneInk.SignOffText,
+                    Offset(-words.size.width / 2f, y + panel / 2f - words.size.height / 2f),
+                )
+        }
+        val g = art.ghost
+        if (g != null && live) {
+            val gh = g.width / 2f
+            drawRoundRect(
+                SceneInk.PlanLine,
+                Offset(-gh, -g.top),
+                Size(g.width, g.height),
+                CornerRadius(6f),
+                style = ghostLine,
+            )
+            val words = art.ghostWords
+            if (words != null && detailed)
+                drawText(
+                    words,
+                    SceneInk.PlanText,
+                    Offset(-words.size.width / 2f, -g.middle - words.size.height / 2f),
+                )
+        }
+    }
+
+    /**
      * At night the street lamps near a building throw their warm light on its walls: a soft pool
      * round each lamp's lens, over the building's front and side only.
      */
@@ -5190,5 +5321,11 @@ internal class BuildingPainter {
         private val LAMP_SIDES = floatArrayOf(-1f, 1f)
         private val LETTER_HALO =
             arrayOf(Offset(.6f, 0f), Offset(-.6f, 0f), Offset(0f, .6f), Offset(0f, -.6f))
+
+        /**
+         * How much of the light the exposure took from a lit window it gives back, added (a little
+         * over all of it: a lit room against a dark silhouette reads brighter).
+         */
+        const val RELIGHT = .85f
     }
 }

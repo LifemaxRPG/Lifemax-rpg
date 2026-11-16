@@ -763,6 +763,64 @@ from the reference pictures, not rendered here: CI renders them. Tuned from soft
 crops at several shares shown, not on a phone. `SunEdgeTest` covers the shares, the peek, the sweep, the open sky
 round a hidden sun, the strengths and the ray sprite.
 
+### As built: shooting into the sun
+
+The owner put our dusk street (build 560) beside the photo of the sun rising behind the Empire State Building: "really
+underwhelming". Ours was evenly lit (every frame, label and colour crisp, as if the sun were not behind them) under a
+violet sky with a small pale sun; the photo is exposed for the sun: the buildings near-black silhouettes with only
+their edges glowing, the sky round the sun blown out to white-gold, the whole frame drenched in warm haze and soft
+shafts of light. A whole-scene "contre-jour" look, built on the sunburst above (kept, and strengthened under it).
+
+How far the camera looks into the sun (`domain/Backlit.factor`, pure, 0 to 1): `low(up)` from the sun's height in its
+arc (about 1 from sunrise to 7:00 and from 19:00 to sunset, a third at 8:00 and 18:00, nothing from 8:30 to 17:30) times
+how much of the sun is in the sky (`SunLook.up`, 0 at night), the weather (overcast x0.1, a cloud across the sun x0.35,
+mist x0.5), how near the buildings it is (`near`: 1 at an edge or behind one, falling to 0.62 ten radii clear, from
+`SunEdge.gap`, the distance to the nearest building box, continuous as the street scrolls), less zoomed out (x0.65)
+and nothing once its glow leaves the picture (`inView`). Every input moves continuously with the hour and the scroll;
+the only stepped inputs (the disc's share shown and the shafts' openness) are eased frame to frame as the glare's is.
+
+What it does (`presentation/scene/Backlight`, new file), in three passes round the street, all scaled by the factor:
+- `sky`, over the backdrop: the sky warmed through the frame (amber overhead, orange, gold at the horizon, laid over
+  it), the far city and the far ground washed into a bright gold haze along the horizon, and the sun overpowering
+  it: its wide sky layer added in gold at up to 2.1x, its bloom added white-gold at up to 3.8x, a white-hot core laid
+  over at up to 2.1x.
+- `expose`, inside the street's layer (the street is put in a layer of its own while the factor is on, as it already
+  was under the heading's fade): one full-screen rectangle multiplied over it (`Modulate`, so the sky behind is not
+  touched) with a radial brush centred on the sun: warm dark (0.24, 0.15, 0.13) at the sun, (0.32, 0.21, 0.18) a third
+  of the way out, (0.52, 0.42, 0.46) at 0.95 of the picture's diagonal, never black. The buildings (fronts, sides,
+  roofs), the furniture, the trees, the people, the cars and the pavement all go to silhouettes together. Its strength
+  is a colour filter over the brush (towards white), kept in 64 steps. Then `BuildingPainter.relight` gives the lights
+  back over the dark, under the same transforms (a floor dropping in or landing included): each lit window (its
+  `glow` as the floor drew it) has 0.85 of the light the exposure took from it at its place (`Backlight.shadeAt`)
+  added back, and what is read or lit is laid again: the name plaques, the selected floor's outline, the next floor's
+  glow, the lobby sign's letters and tube, a lit roof sign (an unlit one keeps its words) and the "add a floor"
+  outline and words.
+- `air`, over the whole picture after the near foreground and before the glare: a warm haze centred on the sun
+  (screen, 0.26 at the sun to 0.04 at the diagonal), the gold bloom wrapping over the silhouettes' edges where the sun
+  shows (small at the edge when it is hidden), 28 soft shafts fanning from the sun, each as open as the air along it
+  is (8 points along it from 1.4 to 17 radii tried against the building boxes, the near ones counting more) and
+  standing out against the shut ones beside it (`Backlit.shaftStrength`), drawn from one baked sprite (`ShaftSprites`,
+  160x40, a beam widening and fading, its root faded in, dithered; 25 KB) rotated and scaled, the fan drifting slowly;
+  and 34 motes of dust drifting and glinting within 210 dp of the sun. Not clipped under the heading: the haze and the
+  shafts are air, and a clip would cut them along a line; the heading's words are drawn over them.
+- The sunburst (`SunGlare.glare(boost)`): bloom x1.7, rays 1.75x longer, the backlit rim x2.4 and reaching 1.7x
+  further along the edges. The lens flare (`Backdrop.backlit`): x2.2, its streak 1.5x longer.
+
+Cost while the factor is on: one full-screen layer (as under the heading's fade), one modulated rectangle, three
+full-screen gradient rectangles, five sun-layer images, up to 28 shaft images and 34 dots, and per building in view a
+rectangle per lit window and its plaques again; the brushes are made once per sky in unit space and drawn under
+transforms, the colour filters once per step, the openness in arrays written in place: nothing allocated per frame.
+Off (factor 0: midday, night, overcast) nothing of it runs and the picture is exactly as before.
+
+Screenshots: `backlitSunset` (the `edge` scenario at 19:00) and `backlitSunrise` (the city at 6:45) added; every dusk
+and early-morning picture changes (`streetDusk`, `cloudsDusk`, `cloudsAndTreesDusk`, `farCityDusk`, `brandNewBuilding`,
+`duskLightsComingOn`, `blueHour`, `shadowsMorning`, `mistMorning` and the like). Tuned from software composites over CI
+reference crops (the sun at a building's edge, in a gap, higher, in the open, hidden) with the passes' arithmetic
+repeated in Python, not on a phone: the blend modes (`Modulate`, `Screen`) under layoutlib and on a device, the exact
+look of the relit windows over their rooms and the cost on a real phone are for CI and the owner to see.
+`BacklitTest` covers the factor (by the hour, smooth minute to minute, the weather, the gap, the picture's edge), the
+exposure's stops, the shafts' openness, the motes, the shaft's sprite and `SunEdge.gap`.
+
 ### As built: the walkers rebuilt as painted figures
 
 The owner: the people "still are not" at the standard of the rest of the street, and they are inspected zoomed in. This

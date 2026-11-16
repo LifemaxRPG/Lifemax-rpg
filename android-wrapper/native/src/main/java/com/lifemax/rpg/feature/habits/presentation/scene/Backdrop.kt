@@ -749,6 +749,12 @@ internal class Backdrop(private val seed: Int, day: String = "") {
      */
     var sunClear = 1f
 
+    /**
+     * How far the camera looks into the sun ([Backlight.amount]), set by the stage: the flare
+     * stronger, its streak longer.
+     */
+    var backlit = 0f
+
     /** How far a cloud is across the sun now (0 clear to 1), for its glare at a building's edge. */
     val sunCover: Float
         get() = moonCover
@@ -773,7 +779,8 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 SunLook.up(sky.dark) *
                 (1f - cloudiness.coerceIn(0f, 1f)) *
                 (1f - moonCover) *
-                (1f - moonCover)
+                (1f - moonCover) *
+                (1f + 1.2f * backlit.coerceIn(0f, 1f))
         if (k < .01f) return
         if (flareKey !== sky) {
             val base = lerp(sky.halo.copy(alpha = 1f), Color.White, .35f)
@@ -788,7 +795,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         val f = SceneSprites.flare
         val sp = f.sprite
         clipRect(0f, top, w, h) {
-            val s = d / sp.streakPpd * 1.4f
+            val s = d / sp.streakPpd * 1.4f * (1f + .5f * backlit.coerceIn(0f, 1f))
             withTransform({
                 translate(orb.x, orb.y)
                 scale(s, s * .85f, Offset.Zero)
@@ -1400,7 +1407,8 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         val k = d * BLIMP_SIZE
         // its lane: the upper fin clear of the heading's band, the cabin clear of the roofs
         val high = top + 13f * k
-        val low = CloudLayout.floor(horizon, ceiling, d) - 11f * k
+        // and clear of the "add a floor" ghost that stands on the tallest roof, not only the roof
+        val low = CloudLayout.floor(horizon, ceiling, d) - 11f * k - GHOST_CLEAR * d
         if (low < high - 16f * d) return
         val y = if (low > high) high + (low - high) * p.y else high
         val bob = sin(seconds * .9f + p.pass) * 1.4f
@@ -1882,6 +1890,9 @@ private const val PLANE_SIZE = .55f
 
 /** The blimp is drawn this much smaller than its sprite's dp: an airship far off. */
 private const val BLIMP_SIZE = .82f
+
+/** How far above the roofs the blimp keeps, for the "add a floor" ghost standing on them, in dp. */
+private const val GHOST_CLEAR = 52f
 
 /** The stars' colours: blue-white, white, pale yellow, gold, orange. */
 private val STAR_INK =

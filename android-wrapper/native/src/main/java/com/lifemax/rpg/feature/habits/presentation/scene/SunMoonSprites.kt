@@ -95,11 +95,13 @@ internal class SunLook {
         tint[RAYS] = mixArgb(mixArgb(haloC, WHITE, .5f), 0xFFFFB070.toInt(), w)
         // the low sun's limb a bright orange, its middle paler and brighter, the light round it
         // warmer and redder outward: never a darker rim
-        tint[DISC] = mixArgb(0xFFFFC060.toInt(), 0xFFFFA44C.toInt(), w)
+        tint[DISC] = mixArgb(0xFFFFC060.toInt(), 0xFFFFB050.toInt(), w)
         tint[HUG] = mixArgb(0xFFFFA050.toInt(), 0xFFFF7A3A.toInt(), w)
-        tint[DISC_LIGHT] = mixArgb(0xFFFFF2CC.toInt(), 0xFFFFE6A0.toInt(), w)
-        tint[BLOOM] = mixArgb(mixArgb(orb, WHITE, .7f), 0xFFFFB878.toInt(), w)
-        tint[CORE] = mixArgb(WHITE, 0xFFFFE6B0.toInt(), w)
+        // even low, the sun is far brighter than anything else: its middle burns out near white and
+        // its bloom spills over the limb, so it shines rather than sitting there as a flat disc
+        tint[DISC_LIGHT] = mixArgb(0xFFFFF2CC.toInt(), 0xFFFFF2C4.toInt(), w)
+        tint[BLOOM] = mixArgb(mixArgb(orb, WHITE, .7f), 0xFFFFDCA4.toInt(), w)
+        tint[CORE] = mixArgb(WHITE, 0xFFFFF8E6.toInt(), w)
         tint[VEIL] = mixArgb(0xFFFFFBF0.toInt(), 0xFFFFD8B0.toInt(), w)
     }
 
@@ -123,7 +125,7 @@ internal class SunLook {
         grow[BAND] = 1f
         bandDrop = .55f
         // the bloom's light added (its energy), then laid over (its whiteness)
-        alpha[GLOW] = k * Px.mix(.2f, .3f, w) * (1f - .4f * c)
+        alpha[GLOW] = k * Px.mix(.2f, .38f, w) * (1f - .4f * c)
         grow[GLOW] = Px.mix(1.15f, .8f, w)
         alpha[RAYS] = k * Px.mix(.1f, .07f, w) * clear * (1f - .6f * m)
         grow[RAYS] = Px.mix(1f, .8f, w)
@@ -132,12 +134,12 @@ internal class SunLook {
         alpha[HUG] = k * body * .75f * (1f - .8f * c)
         grow[HUG] = 2.3f
         alpha[DISC] = k * body * (1f - .9f * c) * (1f - .5f * m)
-        alpha[DISC_LIGHT] = alpha[DISC] * .85f
+        alpha[DISC_LIGHT] = alpha[DISC] * .95f
         grow[DISC] = 1.3f
         grow[DISC_LIGHT] = 1.3f
-        alpha[BLOOM] = k * Px.mix(.92f, 0f, body) * (1f - .45f * c - .25f * m)
+        alpha[BLOOM] = k * Px.mix(.92f, .55f, body) * (1f - .45f * c - .25f * m)
         grow[BLOOM] = 1f
-        alpha[CORE] = k * Px.mix(1f, .12f, body) * (1f - .7f * c - .35f * m)
+        alpha[CORE] = k * Px.mix(1f, .88f, body) * (1f - .7f * c - .35f * m)
         grow[CORE] = Px.mix(1f, .85f, w)
         // over the overcast's veil: the sun a pale diffuse brightness through it
         alpha[VEIL] = k * c * Px.mix(.24f, .2f, w)

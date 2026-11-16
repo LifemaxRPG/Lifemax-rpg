@@ -110,6 +110,33 @@ class SunEdge {
     }
 
     /**
+     * How far ([x], [y]) (px) is from the nearest box, its sweep included (its front and its swept
+     * copy tried as rectangles), 0 behind one, and infinite with no box: for how near the buildings
+     * the sun stands ([Backlit.near]). Continuous as the boxes move.
+     */
+    fun gap(x: Float, y: Float): Float {
+        var best = Float.POSITIVE_INFINITY
+        for (i in 0 until count) {
+            if (insideBox(i, x, y)) return 0f
+            val sx = sweepX[i]
+            val sy = sweepY[i]
+            best = min(best, rectGap(x, y, left[i], top[i], right[i], bottom[i]))
+            best =
+                min(best, rectGap(x, y, left[i] + sx, top[i] - sy, right[i] + sx, bottom[i] - sy))
+        }
+        return best
+    }
+
+    private fun rectGap(x: Float, y: Float, l: Float, t: Float, r: Float, b: Float): Float {
+        // the part above the ceiling is not drawn
+        val tt = max(t, ceiling)
+        if (b <= tt) return Float.POSITIVE_INFINITY
+        val dx = max(max(l - x, x - r), 0f)
+        val dy = max(max(tt - y, y - b), 0f)
+        return kotlin.math.sqrt(dx * dx + dy * dy)
+    }
+
+    /**
      * Looks at a sun at ([x], [y]) of radius [r] (px): how much of its disc shows ([visible]) and
      * where ([peekX], [peekY]), and how open the sky round it is ([near], [nearX], [nearY]).
      */

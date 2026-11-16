@@ -436,6 +436,17 @@ class HabitsScreenshotTest {
 
     @Test fun sunAtEdgeGoldenHour() = snap("edge", hour = 17, minute = 30, ambientAt = 45f)
 
+    /**
+     * Shooting into the low sun: exposed for the sky, the buildings, the lamps and the people go to
+     * warm dark silhouettes (their lit windows, the plaques and the signs still bright), the sun
+     * blows the sky round it out to white-gold, the frame is drenched in a warm haze, and soft
+     * shafts of light fan out from it past the buildings, motes of dust in them. At sunset beside a
+     * tall neighbour, and at sunrise on the other side of the street.
+     */
+    @Test fun backlitSunset() = snap("edge", hour = 19, ambientAt = 45f)
+
+    @Test fun backlitSunrise() = snap("city", hour = 6, minute = 45, ambientAt = 45f)
+
     @Test
     fun sunOverSignMidday() =
         snap("city", hour = 12, minute = 15, ambientAt = 45f) {
