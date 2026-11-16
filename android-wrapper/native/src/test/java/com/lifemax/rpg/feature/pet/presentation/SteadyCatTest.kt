@@ -121,7 +121,7 @@ class SteadyCatTest {
         assertEquals(1, plan.bands(s, bands))
         val h = FRAME_H + RigCompose.MARGIN_TOP + RigCompose.MARGIN_BOTTOM
         assertArrayEquals(
-            intArrayOf(0, h, (1 - feet - RigCompose.MARGIN_TOP) * s, h * s),
+            intArrayOf(0, h, (1 - feet - RigCompose.MARGIN_TOP) * s, h * s, 0, plan.width),
             bands.copyOf(SpritePlan.BAND),
         )
         assertEquals(-(FRAME_W / 2 + RigCompose.MARGIN_LEFT), plan.left)

@@ -138,12 +138,14 @@ internal fun DrawScope.drawSpriteAt(
     }) {
         for (b in 0 until count) {
             val i = b * SpritePlan.BAND
+            val col = bands[i + 4]
+            val cols = bands[i + 5] - col
             drawImage(
                 image,
-                srcOffset = IntOffset(srcX, srcY + bands[i]),
-                srcSize = IntSize(plan.width, bands[i + 1] - bands[i]),
-                dstOffset = IntOffset(plan.left * s, bands[i + 2]),
-                dstSize = IntSize(plan.width * s, bands[i + 3]),
+                srcOffset = IntOffset(srcX + col, srcY + bands[i]),
+                srcSize = IntSize(cols, bands[i + 1] - bands[i]),
+                dstOffset = IntOffset((plan.left + col) * s, bands[i + 2]),
+                dstSize = IntSize(cols * s, bands[i + 3]),
                 colorFilter = filter,
                 filterQuality = FilterQuality.None,
             )

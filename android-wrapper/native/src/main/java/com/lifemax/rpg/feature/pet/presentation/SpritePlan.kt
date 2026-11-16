@@ -3,8 +3,10 @@ package com.lifemax.rpg.feature.pet.presentation
 import com.lifemax.rpg.feature.pet.art.CatLightKey
 import com.lifemax.rpg.feature.pet.art.RigCompose
 import com.lifemax.rpg.feature.pet.art.RigFrames
+import com.lifemax.rpg.feature.pet.art.RigMorph
 import com.lifemax.rpg.feature.pet.art.RigSet
 import com.lifemax.rpg.feature.pet.body.CatPose
+import kotlin.math.floor
 
 /**
  * What [drawSpriteAt] draws for one cat at one instant, decided without touching a canvas (so the
@@ -16,9 +18,12 @@ import com.lifemax.rpg.feature.pet.body.CatPose
  * whole device pixels; the turn, squash and stretch and the rig's grid point are the cat's
  * [SpriteSteady] steps, so they only change when the springs have moved a real step; and the breath
  * is not a scale of the whole picture (which would re-sample a different few rows of the coat every
- * frame) but a lift of the rows above [cut] by [rise] whole device pixels, the row at the cut
- * stretching to close the gap. A resting cat therefore draws the very same pixels from one frame to
- * the next, and changes only when the art's frame, a breath step or a rig step changes.
+ * frame) but a lift of the back: the rows above [cut] behind the head ([head]) rise by [rise] whole
+ * device pixels, the few rows just above the cut sharing the stretch and the few columns next to
+ * the head lifting less, while the head, the face, the ears and everything under the cut keep their
+ * very pixels. A resting cat therefore draws the very same pixels from one frame to the next,
+ * changes only when the art's frame, a breath step or a rig step changes, and a breath step moves
+ * only the back.
  */
 internal class SpritePlan {
     /** The rig slot of [RigFrames] to draw, or -1 for the sheet's own frame. */
@@ -70,6 +75,13 @@ internal class SpritePlan {
         private set
 
     /**
+     * The first picture column of the head, which stays still while the cat breathes (the art faces
+     * right; mirroring is the transform's): [width] when the art does not say where the head is.
+     */
+    var head = 0
+        private set
+
+    /**
      * Decide the drawing of [pose] with [steady] (read here), at [s] device pixels to an art pixel,
      * for a cat with [rig] (or none: the sheet is drawn as it is) whose clip's paws are on frame
      * row [feet] of a [frameWidth] x [frameHeight] frame; rig pictures come from [frames]. With
@@ -103,44 +115,113 @@ internal class SpritePlan {
         scaleY = steady.scaleY
         rise = steady.rise
         cut = (SpriteSteady.cutRow(pose.clip, feet) + marginTop).coerceIn(1, height - 1)
+        head = headOf(pose, rig, frameWidth, marginLeft)
+    }
+
+    private fun headOf(pose: CatPose, rig: RigSet?, frameWidth: Int, marginLeft: Int): Int {
+        if (rig == null || !rig.has(pose.clip)) return width
+        val morph = if (slot >= 0) rig.morph else RigMorph.NEUTRAL
+        val column = RigCompose.headColumn(rig.rigFrame(pose.clip, pose.frame), morph, frameWidth)
+        if (column < 0) return width
+        return (column - SteadyTuning.HEAD_BACK_COLUMNS + marginLeft).coerceIn(0, width)
     }
 
     /**
-     * The bands of the picture to draw, in order, at [s] device pixels to an art pixel, into [out]
-     * ([BAND] numbers each: the first picture row, the row after the band, the band's top in device
-     * pixels below the paws before the transform, and its height in device pixels); returns how
-     * many. A breath that has not risen is the whole picture in one band, as it always was.
+     * The pieces of the picture to draw, at [s] device pixels to an art pixel, into [out] ([BAND]
+     * numbers each: the first picture row, the row after the piece, the piece's top in device
+     * pixels below the paws before the transform, its height in device pixels, its first picture
+     * column and the column after it); returns how many. A breath that has not risen is the whole
+     * picture in one piece, as it always was. Otherwise the pieces are side by side and one above
+     * the other without overlapping, so their order does not matter: the head's columns and the
+     * rows under the cut in one piece each, unmoved; the back in a piece lifted [rise] pixels over
+     * a few rows that share the stretch ([SteadyTuning.BREATH_EASE_ROWS]); and between back and
+     * head a few one-column strips lifted less and less ([SteadyTuning.BREATH_EASE_COLUMNS]). Every
+     * piece of more than one row is moved, never stretched, so it draws the art's own pixels.
      */
     fun bands(s: Int, out: IntArray): Int {
         val y0 = top * s
         if (rise == 0) {
-            out.put(0, 0, height, y0, height * s)
+            out.put(0, 0, height, y0, height * s, 0, width)
             return 1
         }
-        out.put(0, cut, height, y0 + cut * s, (height - cut) * s)
-        if (rise < 0) {
-            out.put(1, 0, cut, y0 - rise, cut * s)
-            return 2
+        var n = 0
+        val still = head.coerceIn(0, width)
+        val ease = minOf(SteadyTuning.BREATH_EASE_COLUMNS, still)
+        val back = still - ease
+        if (still > 0) n = out.put(n, cut, height, y0 + cut * s, (height - cut) * s, 0, still)
+        if (back > 0) n = lifted(n, s, out, 0, back, 1.0)
+        for (k in 0 until ease) {
+            val c = back + k
+            n = lifted(n, s, out, c, c + 1, (ease - k).toDouble() / (ease + 1))
         }
-        // the row above the cut stretches over the gap the lifted rows leave
-        out.put(1, cut - 1, cut, y0 + (cut - 1) * s - rise, s + rise)
-        out.put(2, 0, cut - 1, y0 - rise, (cut - 1) * s)
-        return MAX_BANDS
+        if (still < width) n = out.put(n, 0, height, y0, height * s, still, width)
+        return n
     }
 
-    private fun IntArray.put(band: Int, from: Int, to: Int, dstTop: Int, dstHeight: Int) {
+    /**
+     * The rows above the cut of columns [from] until [to], lifted [share] of the breath: the rows
+     * above the eased ones in one piece, then each eased row on its own.
+     */
+    private fun lifted(n0: Int, s: Int, out: IntArray, from: Int, to: Int, share: Double): Int {
+        val rows = minOf(SteadyTuning.BREATH_EASE_ROWS, cut)
+        val full = cut - rows
+        var n = n0
+        if (full > 0) n = out.piece(n, s, 0, full, from, to, share, rows)
+        for (r in full until cut) n = out.piece(n, s, r, r + 1, from, to, share, rows)
+        return n
+    }
+
+    private fun IntArray.piece(
+        n: Int,
+        s: Int,
+        rowFrom: Int,
+        rowTo: Int,
+        from: Int,
+        to: Int,
+        share: Double,
+        rows: Int,
+    ): Int {
+        val up = lift(rowFrom, share, rows)
+        val dstHeight = (rowTo - rowFrom) * s + up - lift(rowTo, share, rows)
+        if (dstHeight <= 0) return n
+        return put(n, rowFrom, rowTo, (top + rowFrom) * s - up, dstHeight, from, to)
+    }
+
+    /** Device pixels the top edge of picture row [edge] rises in a column lifted [share]. */
+    private fun lift(edge: Int, share: Double, rows: Int): Int {
+        val ease = if (rows == 0) 1.0 else ((cut - edge).toDouble() / rows).coerceIn(0.0, 1.0)
+        val v = rise * share * ease
+        return (if (v >= 0) floor(v + HALF) else -floor(-v + HALF)).toInt()
+    }
+
+    /** Write piece [band]; returns the next piece's number. */
+    private fun IntArray.put(
+        band: Int,
+        from: Int,
+        to: Int,
+        dstTop: Int,
+        dstHeight: Int,
+        colFrom: Int,
+        colTo: Int,
+    ): Int {
         val i = band * BAND
         this[i] = from
         this[i + 1] = to
         this[i + 2] = dstTop
         this[i + 3] = dstHeight
+        this[i + 4] = colFrom
+        this[i + 5] = colTo
+        return band + 1
     }
 
     companion object {
-        /** Numbers per band in [bands]. */
-        const val BAND = 4
+        /** Numbers per piece in [bands]. */
+        const val BAND = 6
 
-        /** The most bands a drawing has. */
-        const val MAX_BANDS = 3
+        /** The most pieces a drawing has: under the cut, the head, and the back's eased strips. */
+        const val MAX_BANDS =
+            2 + (1 + SteadyTuning.BREATH_EASE_COLUMNS) * (1 + SteadyTuning.BREATH_EASE_ROWS)
+
+        private const val HALF = 0.5
     }
 }

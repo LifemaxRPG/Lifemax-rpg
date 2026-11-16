@@ -509,6 +509,26 @@ class RigCompose(private val frameWidth: Int, private val frameHeight: Int) {
         private const val EAR_STEP = 0.05
         private const val WIDTH_TABLE = 64
 
+        /**
+         * The column where the head of [frame] begins, in the frame's own columns as composed for a
+         * cat of [morph] (add [MARGIN_LEFT] for the composed picture; pass [RigMorph.NEUTRAL] for
+         * the sheet's own frame): the back ear's first column, moved by the torso stretch as the
+         * composer moves it. The art always faces right, so everything from here on is the head and
+         * the face. -1 when the frame has no ears (a cat seen from behind or in front).
+         */
+        fun headColumn(frame: RigFrame, morph: RigMorph, frameWidth: Int): Int {
+            var x = Int.MAX_VALUE
+            for (ear in frame.ears) for (p in ear.px) x = min(x, p % frameWidth)
+            if (x == Int.MAX_VALUE) return -1
+            val sBody = if (frame.stretchBody) quantise(morph.body) else 1.0
+            if (frame.torsoFrom < 0 || sBody == 1.0 || x < frame.torsoFrom) return x
+            val len = frame.torsoTo - frame.torsoFrom
+            val cols = max(1, jsRound(len * sBody))
+            return if (x < frame.torsoTo)
+                frame.torsoFrom + floor((x - frame.torsoFrom).toDouble() * cols / len).toInt()
+            else x + cols - len
+        }
+
         /** JavaScript's `Math.round`: halves go up. */
         internal fun jsRound(v: Double): Int = floor(v + 0.5).toInt()
 
