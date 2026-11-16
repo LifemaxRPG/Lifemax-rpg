@@ -3,7 +3,6 @@ package com.lifemax.rpg.feature.habits.presentation.scene
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -297,16 +296,11 @@ internal class BuildingPainter {
             close()
         }
 
-    /** A lamp post: a base, a tapering pole with a highlight, a curved arm, a hood. */
-    private val lampBase =
-        Path().apply {
-            moveTo(-5f, 0f)
-            lineTo(5f, 0f)
-            lineTo(3.4f, -5f)
-            lineTo(-3.4f, -5f)
-            close()
-            addRoundRect(RoundRect(-3.2f, -8.4f, 3.2f, -5f, 1f, 1f))
-        }
+    /**
+     * A lamp post: a stepped plinth (boxes, [box]), a tapering round pole, a curved arm, a hood.
+     * The pole's silhouette (for its shadows) is [lampPole]; it is painted as [poleBands], strips
+     * down its length each lit as its part of a cylinder ([StreetVolume.cylinder]).
+     */
     private val lampPole =
         Path().apply {
             moveTo(-2.2f, -8f)
@@ -315,13 +309,18 @@ internal class BuildingPainter {
             lineTo(-1.25f, -88f)
             close()
         }
-    private val lampPoleLit =
-        Path().apply {
-            moveTo(-2.2f, -8f)
-            lineTo(-.8f, -8f)
-            lineTo(-.45f, -88f)
-            lineTo(-1.25f, -88f)
-            close()
+    private val poleBands =
+        Array(POLE_U.size - 1) { k ->
+            // each strip a hair over the one before it, so no seam shows between them
+            val u0 = POLE_U[k] - if (k > 0) .06f else 0f
+            val u1 = POLE_U[k + 1]
+            Path().apply {
+                moveTo(u0 * 2.2f, -8f)
+                lineTo(u1 * 2.2f, -8f)
+                lineTo(u1 * 1.25f, -88f)
+                lineTo(u0 * 1.25f, -88f)
+                close()
+            }
         }
     private val lampArm =
         Path().apply {
@@ -337,7 +336,32 @@ internal class BuildingPainter {
             close()
         }
     private val armStroke = Stroke(2f, cap = StrokeCap.Round)
+    private val armLit = Stroke(.7f, cap = StrokeCap.Round)
     private val rim = Stroke(.8f)
+
+    /** The furniture's depth ([StreetVolume]): its place, its boxes' faces, its round posts. */
+    private val volume = com.lifemax.rpg.feature.habits.domain.StreetVolume
+
+    /** One path, refilled for each face of a box as it is drawn (nothing is made per frame). */
+    private val facePath = Path()
+
+    /**
+     * The frame's light on the furniture's iron and wood: the side it comes from (-1 to 1), how
+     * hard it is (0 to 1, softened by cloud), and the lit colours (bluer under the moon). Set as
+     * each piece is drawn ([furnitureLight]).
+     */
+    private var keyFrom = -1f
+    private var keyLight = 0f
+    private var ironLit = IronLit
+    private var woodLit = WoodLit
+
+    /** The side the piece of furniture being drawn shows ([Perspective.side]) and its skew. */
+    private var furnSide = 0f
+    private var furnSkew = 0f
+
+    /** The wind's lean and the view's turn on a tree's back leaves (kept, like [shear]). */
+    private val backShear = Matrix()
+    private val backLeaves = ColorFilter.tint(BackLeaves, BlendMode.Modulate)
 
     /** Which side the light falls from: -1 the left (the trees are lit on it), 1 the right. */
     var lightFrom = -1f
@@ -479,6 +503,12 @@ internal class BuildingPainter {
     /** The shown side's shift for a building at [x] along the street. */
     internal fun shiftAt(x: Float): Float =
         Perspective.shift(Perspective.sideAt(x, viewX, lightSpan, perspectiveK))
+
+    /**
+     * Where the furniture at [x] along the street is drawn: it stands on the pavement in front of
+     * the facades, so a touch further from the middle of the view than they are ([StreetVolume]).
+     */
+    internal fun standAt(x: Float): Float = x + volume.near(shiftAt(x))
 
     /** A facade's light and shade across it, unit brushes drawn under a transform. */
     private val litWash =
@@ -667,7 +697,7 @@ internal class BuildingPainter {
             if (on <= 0f) continue
             // a bright middle under the lens and a long soft tail along the pavement
             withTransform({
-                translate(f.x + LightSprites.LENS_X - 64f, PAVEMENT * .55f - 15f)
+                translate(standAt(f.x) + LightSprites.LENS_X - 64f, PAVEMENT * .55f - 15f)
                 scale(128f / LightSprites.POOL_W, 30f / LightSprites.POOL_H, Offset.Zero)
             }) {
                 drawImage(
@@ -703,7 +733,8 @@ internal class BuildingPainter {
     fun DrawScope.furniture(f: Furniture, sky: SkyColors, seconds: Float) {
         val dark = sky.dark
         lampSeconds = seconds
-        translate(f.x, 0f) {
+        furnitureLight(f.x)
+        translate(standAt(f.x), 0f) {
             when (f.kind) {
                 FurnitureKind.LAMP -> {
                     val on = lampOn(f, dark)
@@ -723,15 +754,12 @@ internal class BuildingPainter {
                             )
                         }
                     }
-                    drawPath(lampBase, SceneInk.Lamp)
-                    drawPath(lampPole, SceneInk.Lamp)
-                    drawPath(lampPoleLit, SceneInk.Highlight, alpha = .5f)
-                    drawPath(lampArm, SceneInk.Lamp, style = armStroke)
-                    drawPath(lampHood, SceneInk.Lamp)
-                    // the glass lens: dull by day with a glint, lit at night
+                    lampPost(on)
+                    // the glass lens under the hood, seen a little round with the view: dull by
+                    // day with a glint, lit at night
                     drawRoundRect(
                         lerp(Color(0xFF8A90A0), SceneInk.LampLight, on),
-                        Offset(6f, -91.8f),
+                        Offset(6f + furnSide * .6f, -91.8f),
                         Size(11f, 2.6f),
                         CornerRadius(1.2f, 1.2f),
                     )
@@ -760,25 +788,185 @@ internal class BuildingPainter {
                             }
                         }
                 }
-                FurnitureKind.TREE -> tree(0f, f.seed, seconds, 1f, sky)
-                FurnitureKind.BENCH -> {
-                    // a soft shadow, cast-iron ends, wooden slats lit along their top edges
-                    drawOval(SceneInk.Shadow, Offset(-15f, -1.4f), Size(30f, 4f), alpha = .5f)
-                    drawRect(SceneInk.Lamp, Offset(-12.6f, -9f), Size(1.9f, 9f))
-                    drawRect(SceneInk.Lamp, Offset(10.7f, -9f), Size(1.9f, 9f))
-                    drawRect(SceneInk.Lamp, Offset(-12.8f, -19f), Size(1.6f, 10.5f))
-                    drawRect(SceneInk.Lamp, Offset(11.2f, -19f), Size(1.6f, 10.5f))
-                    drawRect(SceneInk.Lamp, Offset(-14.2f, -12.2f), Size(3.2f, 1.2f))
-                    drawRect(SceneInk.Lamp, Offset(11f, -12.2f), Size(3.2f, 1.2f))
-                    for (y in BENCH_SLATS) {
-                        drawRect(SceneInk.Bench, Offset(-14f, y), Size(28f, 1.9f))
-                        drawRect(SceneInk.Highlight, Offset(-14f, y), Size(28f, .6f), alpha = .45f)
-                        drawRect(SceneInk.Occlusion, Offset(-14f, y + 1.5f), Size(28f, .4f))
-                    }
-                    if (season.snow > .01f) snowBench(sky)
-                }
+                FurnitureKind.TREE -> tree(0f, f.seed, seconds, 1f, sky, f.x)
+                FurnitureKind.BENCH -> bench(sky)
             }
         }
+    }
+
+    /**
+     * Sets the light and the view for the piece of furniture at [x]: which side of it shows
+     * ([furnSide], [furnSkew]), where the key light comes from and how hard, and the lit colours of
+     * iron and wood under it.
+     */
+    private fun furnitureLight(x: Float) {
+        furnSide = Perspective.sideAt(x, viewX, lightSpan, perspectiveK)
+        furnSkew = volume.skew(furnSide)
+        keyFrom = lightFrom
+        val l = light
+        keyLight = if (l == null) 0f else l.strength * (1f - .7f * l.flat)
+        val cool = l?.cool ?: 0f
+        ironLit = lerp(IronLit, IronMoon, cool)
+        woodLit = lerp(WoodLit, WoodMoon, cool)
+    }
+
+    private fun iron(l: Float): Color = lerp(IronDeep, ironLit, l)
+
+    private fun wood(l: Float): Color = lerp(WoodDeep, woodLit, l)
+
+    /** The light on an upright face turned [theta] from the street, as [StreetVolume.face]. */
+    private fun faceLight(theta: Float): Float = volume.face(theta, keyFrom, keyLight)
+
+    /**
+     * Fills [facePath] with the quadrilateral through four points, the street's way up (y down).
+     */
+    private fun quad(
+        ax: Float,
+        ay: Float,
+        bx: Float,
+        by: Float,
+        cx: Float,
+        cy: Float,
+        dx: Float,
+        dy: Float,
+    ): Path {
+        facePath.reset()
+        facePath.moveTo(ax, ay)
+        facePath.lineTo(bx, by)
+        facePath.lineTo(cx, cy)
+        facePath.lineTo(dx, dy)
+        facePath.close()
+        return facePath
+    }
+
+    /**
+     * A box of the furniture: [x0] to [x1] across, [y0] to [y1] up from the pavement (up positive)
+     * and [z0] to [z1] back (back positive, 0 the piece's own middle), seen with the frame's skew
+     * ([furnSkew]): the side away from the middle of the view, the top, the front, each in its own
+     * light. [wooden] picks the wood's colours, otherwise iron.
+     */
+    private fun DrawScope.box(
+        x0: Float,
+        x1: Float,
+        y0: Float,
+        y1: Float,
+        z0: Float,
+        z1: Float,
+        wooden: Boolean,
+    ) {
+        val sx = furnSkew
+        val r = volume.RISE
+        if (abs(sx) > .02f) {
+            val x = if (sx > 0f) x1 else x0
+            val l = faceLight(if (sx > 0f) volume.RIGHT else -volume.RIGHT)
+            drawPath(
+                quad(
+                    x + sx * z0,
+                    -y0 - r * z0,
+                    x + sx * z0,
+                    -y1 - r * z0,
+                    x + sx * z1,
+                    -y1 - r * z1,
+                    x + sx * z1,
+                    -y0 - r * z1,
+                ),
+                if (wooden) wood(l) else iron(l),
+            )
+        }
+        val top = volume.top(keyLight)
+        drawPath(topFace(x0, x1, y1, z0, z1), if (wooden) wood(top) else iron(top))
+        val front = faceLight(volume.FRONT)
+        drawRect(
+            if (wooden) wood(front) else iron(front),
+            Offset(x0 + sx * z0, -y1 - r * z0),
+            Size(x1 - x0, y1 - y0),
+        )
+    }
+
+    /** The top of a box ([box]) as [facePath]: [y] up, [x0] to [x1], [z0] to [z1] back. */
+    private fun topFace(x0: Float, x1: Float, y: Float, z0: Float, z1: Float): Path {
+        val sx = furnSkew
+        val r = volume.RISE
+        return quad(
+            x0 + sx * z0,
+            -y - r * z0,
+            x1 + sx * z0,
+            -y - r * z0,
+            x1 + sx * z1,
+            -y - r * z1,
+            x0 + sx * z1,
+            -y - r * z1,
+        )
+    }
+
+    /**
+     * A lamp post with [on] its light: a stepped plinth with its top and a side, a round pole lit
+     * as a cylinder turning with the view, a collar where the arm leaves it, a tubular arm lit
+     * along its top, and a domed hood whose highlight sits on the light's side and slides round
+     * with the view, its dark lip underneath.
+     */
+    private fun DrawScope.lampPost(on: Float) {
+        box(-4.4f, 4.4f, 0f, 4.2f, -4.4f, 4.4f, false)
+        box(-3.2f, 3.2f, 4.2f, 7.6f, -3.2f, 3.2f, false)
+        for (k in poleBands.indices) {
+            val u = (POLE_U[k] + POLE_U[k + 1]) / 2f
+            drawPath(poleBands[k], iron(volume.cylinder(u, furnSide, keyFrom, keyLight)))
+        }
+        box(-1.75f, 1.75f, 84.4f, 86.4f, -1.75f, 1.75f, false)
+        drawPath(lampArm, iron(.12f), style = armStroke)
+        translate(0f, -.55f) {
+            drawPath(lampArm, iron(volume.top(keyLight)), alpha = .8f, style = armLit)
+        }
+        drawPath(lampHood, iron(faceLight(volume.FRONT) * .7f))
+        clipPath(lampHood) {
+            // the dome's lit crown towards the light, the far side in shade; both turn with the
+            // view
+            val turn = furnSide * 1.8f
+            drawOval(
+                iron(volume.top(keyLight) + .15f),
+                Offset(6.5f + keyFrom * 3f + turn, -101f),
+                Size(10f, 4.6f),
+                alpha = .9f,
+            )
+            drawOval(
+                iron(0f),
+                Offset(13.5f - keyFrom * 8f + turn, -98.5f),
+                Size(8f, 7f),
+                alpha = .6f,
+            )
+            // the lip's underside, out of the light
+            drawRect(iron(0f), Offset(3f, -92.9f), Size(18f, 1.1f), alpha = .8f)
+        }
+    }
+
+    /**
+     * A bench: cast-iron ends with their thickness, a seat of three slats showing their tops, a
+     * back of three slats and the arms, each a box seen from the frame's side, with a soft shadow
+     * under it.
+     */
+    private fun DrawScope.bench(sky: SkyColors) {
+        val sx = furnSkew
+        val r = volume.RISE
+        drawOval(
+            SceneInk.Shadow,
+            Offset(-15f + sx * 2f, -1.6f - r * 2f),
+            Size(30f, 4.4f),
+            alpha = .5f,
+        )
+        // the back's slats, furthest back, then the ends, the seat over them, the arms on top
+        for (k in 0 until 3) {
+            val y = 12f + k * 2.5f
+            box(-14f, 14f, y, y + 1.9f, 4.6f, 5.3f, true)
+        }
+        box(-13f, -11.2f, 0f, 12.2f, 0f, 5.3f, false)
+        box(11.2f, 13f, 0f, 12.2f, 0f, 5.3f, false)
+        for (k in 2 downTo 0) {
+            val z = k * 1.8f
+            box(-14f, 14f, 7.4f, 9f, z, z + 1.55f, true)
+        }
+        box(-14.6f, -10.8f, 12.2f, 13.2f, -.4f, 5.3f, false)
+        box(10.8f, 14.6f, 12.2f, 13.2f, -.4f, 5.3f, false)
+        if (season.snow > .01f) snowBench(sky)
     }
 
     /**
@@ -787,8 +975,20 @@ internal class BuildingPainter {
      * rimming it warm at night), mirrored for a light from the right. With motion on it leans in
      * the wind by a vertical shear (the foot stays put), so nothing is redrawn. Which variant it is
      * comes from [seed].
+     *
+     * It has depth as the street scrolls: standing at [at] along the street, its crown slides a
+     * little out from the middle of the view with the trunk (the leaves in front) while a darker
+     * copy of it behind (the leaves at the back, [backLeaves]) slides a little the other way, so
+     * the far side of the crown shows as a band of shade on the side the buildings show theirs.
      */
-    private fun DrawScope.tree(x: Float, seed: Int, seconds: Float, size: Float, sky: SkyColors) {
+    private fun DrawScope.tree(
+        x: Float,
+        seed: Int,
+        seconds: Float,
+        size: Float,
+        sky: SkyColors,
+        at: Float = buildingX + x,
+    ) {
         val variant = Trees.variant(seed)
         val sp = SceneSprites.trees[variant].sprite
         val lean = if (seconds > 0f) Ambient.sway(seed, seconds) else 0f
@@ -801,9 +1001,37 @@ internal class BuildingPainter {
         TreeDress.plan(season, variant, dress)
         val snow = season.snow
         if (snow > .01f) snowInk(sky)
+        // the view's turn as a shear about the foot (in the mirrored picture's own sense): the
+        // crown's middle slides by its share of the side face, the foot stays where it stands
+        val shift = shiftAt(at)
+        val turn = -lightFrom * shift / (Trees.shapes[variant].height * .7f)
+        val wind = -tan(lean * (PI.toFloat() / 180f))
         shear.reset()
-        shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
+        shear[0, 1] = wind + turn * TREE_FRONT
         val u = size / sp.ppu
+        if (abs(shift) > .5f) {
+            backShear.reset()
+            backShear[0, 1] = wind - turn * TREE_BACK
+            withTransform({
+                translate(x, 0f)
+                scale(u * -lightFrom, u, Offset.Zero)
+                transform(backShear)
+            }) {
+                val foot = Offset(-sp.footX, -sp.footY)
+                for (s in TreeDress.ORDER) {
+                    val a = dress[s.ordinal]
+                    if (a <= .01f) continue
+                    drawImage(
+                        SceneSprites.tree(variant, s).looks[under],
+                        foot,
+                        // a soft darker mass, not an outline: the back leaves are in shade, not
+                        // black
+                        alpha = a * .6f,
+                        colorFilter = backLeaves,
+                    )
+                }
+            }
+        }
         withTransform({
             translate(x, 0f)
             scale(u * -lightFrom, u, Offset.Zero)
@@ -888,21 +1116,23 @@ internal class BuildingPainter {
         }
     }
 
-    /** Snow along a lamp's hood and on its base. */
+    /** Snow along a lamp's hood and on the tops of its plinth (as [lampPost] lays them). */
     private fun DrawScope.snowLamp(sky: SkyColors) {
         val a = season.snow
         snowInk(sky)
         drawPath(lampSnow, snowInk, alpha = a, style = snowStroke)
-        cap(-3.4f, -9.3f, 6.8f, 1.5f, a)
+        drawPath(topFace(-4.4f, 4.4f, 4.6f, -4.4f, 4.4f), snowInk, alpha = a)
+        drawPath(topFace(-3.2f, 3.2f, 8f, -3.2f, 3.2f), snowInk, alpha = a)
     }
 
-    /** Snow on a bench's slats. */
+    /** Snow on a bench's seat, along its back and on its arms (as [bench] lays them). */
     private fun DrawScope.snowBench(sky: SkyColors) {
         val a = season.snow
         snowInk(sky)
-        for (y in BENCH_SLATS) cap(-14.2f, y - 1f, 28.4f, 1.6f, a)
-        cap(-14.4f, -13.2f, 3.6f, 1.3f, a)
-        cap(10.8f, -13.2f, 3.6f, 1.3f, a)
+        drawPath(topFace(-14.2f, 14.2f, 9.4f, 0f, 5.15f), snowInk, alpha = a)
+        drawPath(topFace(-14.2f, 14.2f, 19.3f, 4.5f, 5.3f), snowInk, alpha = a)
+        drawPath(topFace(-14.7f, -10.7f, 13.6f, -.4f, 5.3f), snowInk, alpha = a)
+        drawPath(topFace(10.7f, 14.7f, 13.6f, -.4f, 5.3f), snowInk, alpha = a)
     }
 
     /** The park's grass under snow and its fence rail capped. */
@@ -1041,13 +1271,16 @@ internal class BuildingPainter {
         for (k in street.furniture.indices) {
             val f = street.furniture[k]
             if (f.x + near < from || f.x - near > to) continue
+            // from the foot where the piece is drawn ([standAt]), so the shadow stays on it
+            val fx = standAt(f.x)
             when (f.kind) {
-                FurnitureKind.TREE -> treeSilhouette(f.x, f.seed, seconds, 1f, tint, light)
+                FurnitureKind.TREE -> treeSilhouette(fx, f.seed, seconds, 1f, tint, light)
                 FurnitureKind.LAMP ->
                     withTransform({
-                        translate(f.x, 0f)
+                        translate(fx, 0f)
                         transform(fallMatrix(light, f.x))
                     }) {
+                        drawRect(tint, Offset(-4.4f, -7.6f), Size(8.8f, 7.6f))
                         drawPath(lampPole, tint)
                         drawPath(lampArm, tint, style = armStroke)
                         drawPath(lampHood, tint)
@@ -1055,13 +1288,13 @@ internal class BuildingPainter {
                     }
                 FurnitureKind.BENCH ->
                     withTransform({
-                        translate(f.x, 0f)
+                        translate(fx, 0f)
                         transform(fallMatrix(light, f.x))
                     }) {
-                        drawRect(tint, Offset(-12.6f, -9f), Size(1.9f, 9f))
-                        drawRect(tint, Offset(10.7f, -9f), Size(1.9f, 9f))
-                        drawRect(tint, Offset(-14f, -9.6f), Size(28f, 4.3f))
-                        drawRect(tint, Offset(-14f, -18.6f), Size(28f, 6.4f))
+                        drawRect(tint, Offset(-13f, -12.2f), Size(1.8f, 12.2f))
+                        drawRect(tint, Offset(11.2f, -12.2f), Size(1.8f, 12.2f))
+                        drawRect(tint, Offset(-14f, -9f), Size(28f, 1.6f))
+                        drawRect(tint, Offset(-14f, -18.9f), Size(28f, 6.9f))
                     }
             }
         }
@@ -1129,7 +1362,7 @@ internal class BuildingPainter {
     ) {
         when (f.kind) {
             FurnitureKind.LAMP ->
-                translate(f.x, 0f) {
+                translate(standAt(f.x), 0f) {
                     drawPath(lampPole, color, alpha = alpha, blendMode = blend)
                     drawPath(lampArm, color, alpha = alpha, style = armStroke, blendMode = blend)
                     drawPath(lampHood, color, alpha = alpha, blendMode = blend)
@@ -1149,7 +1382,7 @@ internal class BuildingPainter {
                 shear[0, 1] = -tan(lean * (PI.toFloat() / 180f))
                 val u = 1f / sp.ppu
                 withTransform({
-                    translate(f.x, 0f)
+                    translate(standAt(f.x), 0f)
                     scale(u * -lightFrom, u, Offset.Zero)
                     transform(shear)
                 }) {
@@ -1457,11 +1690,12 @@ internal class BuildingPainter {
         for (k in street.furniture.indices) {
             val f = street.furniture[k]
             if (f.x < from - 40f || f.x > to + 40f) continue
+            val fx = standAt(f.x)
             when (f.kind) {
-                FurnitureKind.TREE -> treeReflection(f.x + ox, f.seed, 1f, a)
+                FurnitureKind.TREE -> treeReflection(fx + ox, f.seed, 1f, a)
                 FurnitureKind.LAMP -> {
                     withTransform({
-                        translate(f.x + ox, 0f)
+                        translate(fx + ox, 0f)
                         scale(1f, -SQUASH, Offset.Zero)
                     }) {
                         drawPath(lampPole, SceneInk.Lamp, alpha = a * .6f)
@@ -1488,7 +1722,7 @@ internal class BuildingPainter {
                     if (dark > .2f)
                     // the lens's light runs long down the road
                     withTransform({
-                            translate(f.x + 11.5f + ox, 0f)
+                            translate(fx + 11.5f + ox, 0f)
                             scale(6f, 91.8f * SQUASH, Offset.Zero)
                         }) {
                             drawRect(
@@ -1502,7 +1736,7 @@ internal class BuildingPainter {
                 }
                 FurnitureKind.BENCH ->
                     withTransform({
-                        translate(f.x + ox, 0f)
+                        translate(fx + ox, 0f)
                         scale(1f, -SQUASH, Offset.Zero)
                     }) {
                         drawRect(
@@ -1746,7 +1980,7 @@ internal class BuildingPainter {
             for (i in lamps.indices) {
                 val f = lamps[i]
                 if (f.kind != FurnitureKind.LAMP || f.x + 40f < from || f.x - 20f > to) continue
-                translate(f.x, 0f) {
+                translate(standAt(f.x), 0f) {
                     clipPath(cone) {
                         streaks(
                             images,
@@ -4724,8 +4958,27 @@ internal class BuildingPainter {
         private val SnowDay = Color(0xFFF6F8FF)
         private val SnowNight = Color(0xFF8FA4C8)
 
-        /** The seat and back slats of a bench, from the pavement line up. */
-        val BENCH_SLATS = floatArrayOf(-9.6f, -7.2f, -18.6f, -16.1f, -13.6f)
+        /**
+         * The furniture's iron and wood ([box]): the deep shade, the lit colour by day and under
+         * the moon. A tree's back leaves are its own picture through [BackLeaves] (multiplied).
+         */
+        private val IronDeep = Color(0xFF11141B)
+        private val IronLit = Color(0xFF9AA6BC)
+        private val IronMoon = Color(0xFF46557A)
+        private val WoodDeep = Color(0xFF2E1C10)
+        private val WoodLit = Color(0xFFB88A5C)
+        private val WoodMoon = Color(0xFF5E5A6E)
+        private val BackLeaves = Color(0xFF7E8C80)
+
+        /** Where a lamp pole's lit strips part, across it from its left edge (-1) to its right. */
+        private val POLE_U = floatArrayOf(-1f, -.74f, -.44f, -.12f, .2f, .52f, .8f, 1f)
+
+        /**
+         * How far a tree's front leaves (with the trunk) and its back leaves slide about its middle
+         * as the view turns, as shares of a building's side face at its place.
+         */
+        const val TREE_FRONT = .03f
+        const val TREE_BACK = .05f
 
         /**
          * The architecture's inks ([DetailInk]) and which of them are white or shade by the light
