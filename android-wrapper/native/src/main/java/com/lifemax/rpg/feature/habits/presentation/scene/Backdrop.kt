@@ -8,10 +8,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
@@ -41,7 +44,9 @@ import com.lifemax.rpg.feature.habits.domain.starsShown
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.ln
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -66,6 +71,19 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     private val rows: Array<Array<Building>> =
         Array(SkylineSprites.ROWS.size) { SkylineSprites.buildings(it).toTypedArray() }
     private val clouds = Ambient.clouds(seed).toTypedArray()
+
+    /**
+     * Each star's colour (most blue-white or white, some pale yellow, a few gold and orange, as the
+     * real ones are), and the tint of the soft glow round the bright ones.
+     */
+    private val starKind = IntArray(starField.size) { starKindOf(Ambient.hash(seed, it, 31)) }
+    private val starGlow = Array(STAR_INK.size) { ColorFilter.tint(STAR_INK[it], BlendMode.SrcIn) }
+
+    /**
+     * The dust of faint stars, made once in units of the view's width (drawn scaled to it): three
+     * groups by colour, more than half of them thick along the Milky Way's band.
+     */
+    private val dust: Array<List<Offset>> = dust(seed)
 
     /**
      * Where the latest frame's clouds are, for the shadows they throw on the street: the middle and
@@ -168,6 +186,10 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     private val tintShade = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
     private val tintMid = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
     private val tintLit = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
+    private val tintUnder = arrayOfNulls<ColorFilter>(Ambient.CLOUDS)
+
+    /** How strongly the clouds' bellies are lit from below this hour (0 by day). */
+    private var underAlpha = 0f
     private var airGlow: Brush? = null
 
     // the tints of the hour for the plane's, the contrail's and the blimp's layers, and how
@@ -197,8 +219,14 @@ internal class Backdrop(private val seed: Int, day: String = "") {
     private var moonFilter: ColorFilter? = null
     private var moonHalo: ColorFilter? = null
 
+    // ---- the sky itself ([SkyDome]): a small picture painted again in place when the hour or the
+    // sun's side changes, stretched over the view
+    private val domePx = IntArray(SkyDome.W * SkyDome.H)
+    private var dome: ImageBitmap? = null
+    private var domeKey: Any? = null
+    private var domeRight = false
+
     // ---- brushes that follow the horizon, the orb and the density
-    private var skyBrush: Brush? = null
     private var glowBrush: Brush? = null
     private var haloBrush: Brush? = null
     private var haloWide: Brush? = null
@@ -229,21 +257,40 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         val w = size.width
         brushes(sky, horizon, orb)
         unitBrushes(sky)
-        drawRect(skyBrush!!)
+        dome(sky, horizon, orb.x > w / 2f)
         val tone = skyTone(hour)
         val starAlpha = starsShown(tone)
         val band = (horizon - top).coerceAtLeast(40f * d)
         if (starAlpha > .01f) {
+            if (starAlpha > .3f) milkyWay(w, horizon, starAlpha)
+            val g = RoadSkySprites.GLOW.toFloat()
             for (i in starField.indices) {
                 val s = starField[i]
-                val at = Offset(s.x * w, s.y * horizon * .9f)
-                val a = s.alpha * starAlpha * Ambient.twinkle(s, seconds)
-                drawCircle(SceneInk.Star, s.r * d, at, a)
+                val down = s.y * .9f
+                val at = Offset(s.x * w, down * horizon)
+                // the low sky is washed by the city's light: fewer, fainter stars near the horizon
+                val low = 1f - .72f * Px.smooth(.42f, .83f, down)
+                val a = s.alpha * starAlpha * Ambient.twinkle(s, seconds) * low
+                val ink = STAR_INK[starKind[i]]
+                drawCircle(ink, s.r * d, at, a)
                 if (s.r >= 1.3f) {
-                    // the bright ones: a cross-shaped glint
+                    // the bright ones: a soft glow in their colour, and a cross-shaped glint
+                    val k = (5f + s.r * 3f) * d / g
+                    withTransform({
+                        translate(at.x, at.y)
+                        scale(k, k, Offset.Zero)
+                    }) {
+                        drawImage(
+                            SceneSprites.glow,
+                            Offset(-g / 2f, -g / 2f),
+                            a * .5f,
+                            colorFilter = starGlow[starKind[i]],
+                            blendMode = BlendMode.Plus,
+                        )
+                    }
                     val arm = (3.4f + s.r * 2.2f) * d
                     drawLine(
-                        SceneInk.Star,
+                        ink,
                         Offset(at.x - arm, at.y),
                         Offset(at.x + arm, at.y),
                         .8f * d,
@@ -251,7 +298,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                         alpha = a * .6f,
                     )
                     drawLine(
-                        SceneInk.Star,
+                        ink,
                         Offset(at.x, at.y - arm),
                         Offset(at.x, at.y + arm),
                         .8f * d,
@@ -386,19 +433,9 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 brushH == horizon &&
                 brushOrb == orb &&
                 brushD == density &&
-                skyBrush != null
+                glowBrush != null
         )
             return
-        // four stops, the two middle ones blended in, so the gradient has no visible band in it
-        skyBrush =
-            Brush.verticalGradient(
-                0f to sky.sky[0],
-                .32f to lerp(sky.sky[0], sky.sky[1], .72f),
-                .66f to lerp(sky.sky[1], sky.sky[2], .3f),
-                1f to sky.sky[2],
-                startY = 0f,
-                endY = horizon,
-            )
         glowBrush =
             Brush.verticalGradient(
                 listOf(Color.Transparent, sky.glow),
@@ -450,7 +487,15 @@ internal class Backdrop(private val seed: Int, day: String = "") {
 
     private fun unitBrushes(sky: SkyColors) {
         if (skyKey === sky) return
-        // each cloud's three tints: the hour's, thinned into the horizon's haze the further it is
+        // each cloud's four tints: the hour's, thinned into the horizon's haze the further it is.
+        // At night its moonlit rims are as bright as the moon is; its belly is lit from below by
+        // the sun gone under the horizon at dusk (coral and gold) and by the city's glow at night
+        // (a dusty warm grey)
+        val dusk = Px.smooth(.04f, .42f, sky.dark) * (1f - Px.smooth(.7f, .97f, sky.dark))
+        val night = Px.smooth(.6f, 1f, sky.dark)
+        val under = lerp(lerp(sky.glow.copy(alpha = 1f), UNDER_DUSK, .45f), UNDER_CITY, night)
+        underAlpha = (.85f * dusk + .6f * night).coerceAtMost(.85f)
+        val lit = lerp(sky.cloudLit, sky.cloudBody, night * (1f - moonLit) * .7f)
         for (i in clouds.indices) {
             val c = clouds[i]
             val haze = c.haze * .55f
@@ -459,7 +504,8 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 ColorFilter.tint(lerp(col, horizon, (haze * k).coerceIn(0f, 1f)), BlendMode.SrcIn)
             tintShade[i] = tint(sky.cloudShade, 1f)
             tintMid[i] = tint(sky.cloudBody, .8f)
-            tintLit[i] = tint(sky.cloudLit, .55f)
+            tintLit[i] = tint(lit, .55f)
+            tintUnder[i] = tint(under, .6f)
         }
         airTints(sky)
         airGlow =
@@ -777,21 +823,85 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         if (sky.phase != SkyPhase.NIGHT) return
         val at = (orb.y / horizon.coerceAtLeast(1f)).coerceIn(0f, 1f)
         if (moonFilter != null && abs(at - moonAt) < .02f) return
-        moonLook.colours(moonLit, moonWarm, skyAt(sky, at).toArgb(), sky.halo.toArgb())
+        moonLook.colours(moonLit, moonWarm, skyAt(at).toArgb(), sky.halo.toArgb())
         moonFilter = ColorFilter.colorMatrix(ColorMatrix(moonLook.matrix.copyOf()))
         moonHalo = ColorFilter.tint(Color(moonLook.haloTint), BlendMode.SrcIn)
         moonAt = at
     }
 
-    /** The sky's colour [at] a share of the way down to the horizon, as [skyBrush] paints it. */
-    private fun skyAt(sky: SkyColors, at: Float): Color {
-        val c = sky.sky
-        val b = lerp(c[0], c[1], .72f)
-        val m = lerp(c[1], c[2], .3f)
-        return when {
-            at < .32f -> lerp(c[0], b, at / .32f)
-            at < .66f -> lerp(b, m, (at - .32f) / .34f)
-            else -> lerp(m, c[2], (at - .66f) / .34f)
+    /** The sky's colour [at] a share of the way down to the horizon, as [dome] paints it. */
+    private fun skyAt(at: Float): Color = Color(SkyDome.at(domePx, at))
+
+    /**
+     * The sky ([SkyDome]): painted again only when the sky of the hour or the sun's side changes,
+     * into the same small picture, and stretched (smoothly) from the top of the view to the
+     * horizon.
+     */
+    private fun DrawScope.dome(sky: SkyColors, horizon: Float, right: Boolean) {
+        val image = dome ?: ImageBitmap(SkyDome.W, SkyDome.H).also { dome = it }
+        if (domeKey !== sky || domeRight != right) {
+            SkyDome.paint(
+                domePx,
+                sky.sky[0].toArgb(),
+                sky.sky[1].toArgb(),
+                sky.sky[2].toArgb(),
+                sky.glow.toArgb(),
+                sky.halo.toArgb(),
+                sky.dark,
+                right,
+            )
+            image.asAndroidBitmap().setPixels(domePx, 0, SkyDome.W, 0, 0, SkyDome.W, SkyDome.H)
+            domeKey = sky
+            domeRight = right
+        }
+        drawImage(
+            image,
+            IntOffset.Zero,
+            IntSize(SkyDome.W, SkyDome.H),
+            IntOffset.Zero,
+            IntSize(ceil(size.width).toInt(), ceil(horizon).toInt() + 1),
+            filterQuality = FilterQuality.Low,
+        )
+    }
+
+    /**
+     * The Milky Way on a dark clear night: its band ([MilkyWay]) turned across the upper sky, added
+     * faintly over it, and the dust of faint stars thick along it, all of it less under a bright
+     * moon, gone in cloud or mist; the dust is kept off the low sky the city's light washes out.
+     */
+    private fun DrawScope.milkyWay(w: Float, horizon: Float, starAlpha: Float) {
+        val k =
+            starAlpha *
+                starAlpha *
+                (1f - cloudiness).coerceIn(0f, 1f) *
+                (1f - mist).coerceIn(0f, 1f) *
+                (1f - .55f * moonLit)
+        if (k < .02f) return
+        val d = density
+        val s = MW_SPAN * w / MilkyWay.W
+        withTransform({
+            translate(w * MW_X, min(w * MW_Y, horizon * .38f))
+            rotate(MW_TURN, Offset.Zero)
+            scale(s, s * 1.1f, Offset.Zero)
+        }) {
+            drawImage(
+                SceneSprites.milkyWay,
+                Offset(-MilkyWay.W / 2f, -MilkyWay.H / 2f),
+                alpha = .5f * k,
+                blendMode = BlendMode.Plus,
+            )
+        }
+        clipRect(0f, 0f, w, horizon * .8f) {
+            scale(w, w, Offset.Zero) {
+                for (g in dust.indices) drawPoints(
+                    dust[g],
+                    PointMode.Points,
+                    DUST_INK[g],
+                    strokeWidth = 1.15f * d / w,
+                    cap = StrokeCap.Round,
+                    alpha = DUST_ALPHA[g] * k,
+                )
+            }
         }
     }
 
@@ -966,6 +1076,8 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 drawImage(images.shade, at, a, colorFilter = tintShade[i])
                 drawImage(images.mid, at, a, colorFilter = tintMid[i])
                 drawImage(images.lit, at, a, colorFilter = tintLit[i])
+                if (underAlpha > .01f)
+                    drawImage(images.under, at, a * underAlpha, colorFilter = tintUnder[i])
             }
         }
     }
@@ -1683,3 +1795,67 @@ internal class Backdrop(private val seed: Int, day: String = "") {
 
 /** How big the airliner is drawn against its sprite: a little smaller, so it reads as far off. */
 private const val PLANE_SIZE = .55f
+
+/** The stars' colours: blue-white, white, pale yellow, gold, orange. */
+private val STAR_INK =
+    arrayOf(
+        Color(0xFFBCCBFF),
+        Color(0xFFE6ECFF),
+        Color(0xFFFFF3DC),
+        Color(0xFFFFE0B0),
+        Color(0xFFFFC49A),
+    )
+
+/** Which colour a star is, from a hash 0 to 1: most cool or white, a few warm. */
+private fun starKindOf(h: Float): Int =
+    when {
+        h < .2f -> 0
+        h < .64f -> 1
+        h < .85f -> 2
+        h < .95f -> 3
+        else -> 4
+    }
+
+/** The faint dust of stars: cool, white and warm, and how bright each group is drawn. */
+private val DUST_INK = arrayOf(Color(0xFFC4D2FF), Color(0xFFF2F4FF), Color(0xFFFFE9CC))
+private val DUST_ALPHA = floatArrayOf(.42f, .5f, .34f)
+private const val DUST = 180
+
+/**
+ * The Milky Way's place: its middle (shares of the view's width across and down), its length
+ * (shares of the width) and its slope (degrees: rising to the right).
+ */
+private const val MW_X = .56f
+private const val MW_Y = .42f
+private const val MW_SPAN = 1.7f
+private const val MW_TURN = -34f
+
+/** The bellies of clouds lit from below: by the sun under the horizon, by the city at night. */
+private val UNDER_DUSK = Color(0xFFFF6E4E)
+private val UNDER_CITY = Color(0xFF5E4A4E)
+
+/**
+ * The faint stars' places, in widths of the view: more than half scattered along the Milky Way's
+ * band (normally about its line), the rest anywhere in the sky.
+ */
+private fun dust(seed: Int): Array<List<Offset>> {
+    val groups = Array(3) { ArrayList<Offset>() }
+    val turn = MW_TURN * PI.toFloat() / 180f
+    val ax = cos(turn)
+    val ay = sin(turn)
+    for (i in 0 until DUST) {
+        val h = Ambient.hash(seed, i, 41)
+        val p =
+            if (h < .58f) {
+                val t = (Ambient.hash(seed, i, 42) - .5f) * MW_SPAN * .8f
+                // a normal spread across the band (Box-Muller)
+                val u1 = Ambient.hash(seed, i, 43).coerceAtLeast(1e-4f)
+                val u2 = Ambient.hash(seed, i, 44)
+                val n = sqrt(-2f * ln(u1)) * cos(2f * PI.toFloat() * u2) * .07f
+                Offset(MW_X + ax * t - ay * n, MW_Y + ay * t + ax * n)
+            } else Offset(Ambient.hash(seed, i, 45), Ambient.hash(seed, i, 46) * 1.3f)
+        val c = Ambient.hash(seed, i, 47)
+        groups[if (c < .3f) 0 else if (c < .82f) 1 else 2].add(p)
+    }
+    return Array(3) { groups[it] }
+}

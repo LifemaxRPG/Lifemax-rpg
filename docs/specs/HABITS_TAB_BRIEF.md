@@ -506,3 +506,22 @@ hub flange and a reflector. The painter draws the cyclist's contact shadow (`cyc
 each tyre and a soft shade under the bike) and at night its lamps (`cycleLamps`: a cool white glow
 and pool ahead, the red tail); its key-light and lamp shadows already came through `party`. Bytes:
 street set 8.71 MB to 8.66 MB, walkers 5.50 MB to 4.65 MB (no glow round them).
+
+### As built: the sky refresh
+
+The sky is no longer a four-stop vertical gradient. `SkyDome` paints a 24 by 160 picture per sky
+(one quadratic curve through the hour's three colours, mixed squared so blue to orange passes
+through violet and rose, not grey), re-painted in place only when the `SkyColors` or the sun's side
+changes, and stretched bilinear to the horizon (the film grain hides banding). By day: a deeper
+zenith, a milky haze low down, brighter on the sun's side. At dusk: a warm band hottest under the
+sun, gold round where it set, a rose Belt of Venus over the blue-grey earth shadow opposite, a cool
+violet zenith. At night: a near-black zenith, the city's warm dusty glow up from the horizon, a
+faint brightening on the moon's side and very wide faint unevenness. The moon's tint samples it
+(`SkyDome.at`). Night adds `MilkyWay` (a 320 by 96 band with star clouds and a dust rift, drawn
+added, turned -34 degrees, scaled by stars shown squared, cloud, mist and the moon's brightness)
+and 180 dust stars (points made once in view widths, thick along the band, clipped off the low
+sky). The 72 stars now have colours (blue-white to orange), the bright ones a soft glow, and fade
+towards the horizon. Clouds gain a fourth baked layer, `under` (the belly lit from below), tinted
+coral and gold at dusk and a dusty city grey at night; night cloud colours are darker, their lit rims
+dimmed with the moon's phase. Bytes: clouds +0.90 MB (4 layers, 3.59 MB), Milky Way 0.12 MB, the
+dome 15 KB per Backdrop.

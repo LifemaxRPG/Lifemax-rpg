@@ -28,7 +28,7 @@ class SpritesTest {
         CloudSprites.SPECS.indices.map { CloudSprites.generate(it) }
     }
 
-    private fun layers(c: CloudSprite) = listOf(c.shade, c.mid, c.lit)
+    private fun layers(c: CloudSprite) = listOf(c.shade, c.mid, c.lit, c.under)
 
     @Test
     fun cloudSpritesAreTheSameEveryTime() {
@@ -38,6 +38,7 @@ class SpritesTest {
             assertArrayEquals(a.shade, b.shade)
             assertArrayEquals(a.mid, b.mid)
             assertArrayEquals(a.lit, b.lit)
+            assertArrayEquals(a.under, b.under)
         }
         // and they are all different clouds
         for (i in clouds.indices) for (j in i + 1 until clouds.size) {
@@ -196,8 +197,8 @@ class SpritesTest {
     fun theWholePoolFitsItsMemoryBudget() {
         val bytes = CloudSprites.bytes() + TreeSprites.bytes() + Grain.SIZE * Grain.SIZE * 4
         assertTrue("pool is $bytes bytes", bytes < 8 * 1024 * 1024)
-        // clouds: three layers; trees: three looks
-        assertEquals(clouds.sumOf { it.w * it.h * 12 }, CloudSprites.bytes())
+        // clouds: four layers; trees: three looks
+        assertEquals(clouds.sumOf { it.w * it.h * 16 }, CloudSprites.bytes())
     }
 
     @Test

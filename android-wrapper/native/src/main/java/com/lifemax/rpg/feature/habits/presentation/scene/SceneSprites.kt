@@ -22,12 +22,13 @@ import com.lifemax.rpg.feature.habits.domain.StreetRig
 import com.lifemax.rpg.feature.habits.domain.Trees
 import com.lifemax.rpg.feature.habits.domain.WalkerJoints
 
-/** A cloud sprite's three layers, as images. */
+/** A cloud sprite's four layers, as images. */
 internal class CloudImages(
     val sprite: CloudSprite,
     val shade: ImageBitmap,
     val mid: ImageBitmap,
     val lit: ImageBitmap,
+    val under: ImageBitmap,
 )
 
 /** A far-road vehicle's two pictures as images, by day and by night. */
@@ -200,7 +201,13 @@ internal object SceneSprites {
     val clouds: Array<CloudImages> by lazy {
         Array(CloudSprites.SPECS.size) {
             val s = CloudSprites.generate(it)
-            CloudImages(s, image(s.shade, s.w, s.h), image(s.mid, s.w, s.h), image(s.lit, s.w, s.h))
+            CloudImages(
+                s,
+                image(s.shade, s.w, s.h),
+                image(s.mid, s.w, s.h),
+                image(s.lit, s.w, s.h),
+                image(s.under, s.w, s.h),
+            )
         }
     }
 
@@ -217,6 +224,9 @@ internal object SceneSprites {
     val glow: ImageBitmap by lazy {
         image(RoadSkySprites.glow(), RoadSkySprites.GLOW, RoadSkySprites.GLOW)
     }
+
+    /** The Milky Way's band ([MilkyWay]). */
+    val milkyWay: ImageBitmap by lazy { image(MilkyWay.pixels(), MilkyWay.W, MilkyWay.H) }
 
     /** The far city's three rows, furthest first ([SkylineSprites]). */
     val skyline: Array<SkylineImages> by lazy {
@@ -648,6 +658,7 @@ internal object SceneSprites {
         glow
         beam
         streak
+        milkyWay
         grain
         plane
         contrail
@@ -680,6 +691,7 @@ internal object SceneSprites {
             ForegroundSprites.bytes() +
             LightSprites.bytes() +
             Grain.SIZE * Grain.SIZE * 4 +
+            MilkyWay.BYTES +
             peopleBytes() +
             seasonBytes() +
             streetBytes() +

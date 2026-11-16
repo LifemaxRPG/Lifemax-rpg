@@ -8,12 +8,14 @@ import kotlin.math.min
 import kotlin.math.sqrt
 
 /**
- * One cloud, painted once: three white ARGB layers whose alpha is the cloud's own light. [shade] is
+ * One cloud, painted once: four white ARGB layers whose alpha is the cloud's own light. [shade] is
  * the whole cloud (its density, feathered at the edges), [mid] the part of it that catches light
- * and [lit] the part that catches a lot (a rim on the sun's side, the crowns of the heaps). Each is
- * drawn with the tint of the hour, so the same sprite is a white afternoon cumulus, a peach dusk
- * one or a moonlit night one. The light comes from the upper left; draw the sprite mirrored for a
- * sun on the right. Sizes are pixels; [dpW] and [dpH] what they come to in dp.
+ * and [lit] the part that catches a lot (a rim on the sun's side, the crowns of the heaps); [under]
+ * is its belly and base, the part lit from below (by a sun already under the horizon at dusk, by
+ * the city's glow at night), brightest along the thin lower edges. Each is drawn with the tint of
+ * the hour, so the same sprite is a white afternoon cumulus, a peach dusk one or a moonlit night
+ * one. The light comes from the upper left; draw the sprite mirrored for a sun on the right. Sizes
+ * are pixels; [dpW] and [dpH] what they come to in dp.
  */
 internal class CloudSprite(
     val w: Int,
@@ -23,6 +25,7 @@ internal class CloudSprite(
     val shade: IntArray,
     val mid: IntArray,
     val lit: IntArray,
+    val under: IntArray,
 )
 
 /**
@@ -75,8 +78,8 @@ internal object CloudSprites {
     /** The sprites of a [kind], by their index in [SPECS] (kept, so asking allocates nothing). */
     fun of(kind: CloudKind): IntArray = BY_KIND[kind.ordinal]
 
-    /** Bytes the whole pool holds (three ARGB layers each). */
-    fun bytes(): Int = SPECS.sumOf { it.w * it.h * 4 * 3 }
+    /** Bytes the whole pool holds (four ARGB layers each). */
+    fun bytes(): Int = SPECS.sumOf { it.w * it.h * 4 * 4 }
 
     // the sun's direction in the picture (up and to the left), and the light the sky gives
     // everywhere
@@ -312,6 +315,7 @@ internal object CloudSprites {
         val shade = IntArray(w * h)
         val mid = IntArray(w * h)
         val lit = IntArray(w * h)
+        val under = IntArray(w * h)
         // the extent of the cloud, to tell its crowns from its belly
         var top = h
         var bottom = 0
@@ -363,9 +367,17 @@ internal object CloudSprites {
                 val t = Px.smooth(.52f, .94f, l)
                 mid[i] = Px.argbF(alpha * m, 1f, 1f, 1f)
                 lit[i] = Px.argbF(alpha * t * (if (thin) .8f else .96f), 1f, 1f, 1f)
+                // lit from below: the lower part of the cloud, most where there is little cloud
+                // under the point (a short look down), in uneven patches along the base
+                val below = sample(dens, w, h, x.toFloat(), y + 6f)
+                val low = Px.smooth(.25f, 1f, 1f - height)
+                val thinUnder = Px.smooth(1.1f, .1f, below)
+                val patch = .65f + .35f * Noise.fbm(x * .07f, y * .07f, seed + 12, 3)
+                val u = low * (.45f + .55f * thinUnder) * patch * (if (thin) .7f else 1f)
+                under[i] = Px.argbF(alpha * Px.clamp01(u), 1f, 1f, 1f)
             }
         }
-        return CloudSprite(w, h, spec.dpW, spec.dpH, shade, mid, lit)
+        return CloudSprite(w, h, spec.dpW, spec.dpH, shade, mid, lit, under)
     }
 }
 
