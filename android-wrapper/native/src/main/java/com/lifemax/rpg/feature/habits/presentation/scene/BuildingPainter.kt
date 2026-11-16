@@ -316,10 +316,10 @@ internal class BuildingPainter {
      */
     private val lampPole =
         Path().apply {
-            moveTo(-2.2f, -8f)
-            lineTo(2.2f, -8f)
-            lineTo(1.25f, -88f)
-            lineTo(-1.25f, -88f)
+            moveTo(POLE_X - 2.2f, -8f)
+            lineTo(POLE_X + 2.2f, -8f)
+            lineTo(POLE_X + 1.25f, -88f)
+            lineTo(POLE_X - 1.25f, -88f)
             close()
         }
     private val poleBands =
@@ -328,18 +328,29 @@ internal class BuildingPainter {
             val u0 = POLE_U[k] - if (k > 0) .06f else 0f
             val u1 = POLE_U[k + 1]
             Path().apply {
-                moveTo(u0 * 2.2f, -8f)
-                lineTo(u1 * 2.2f, -8f)
-                lineTo(u1 * 1.25f, -88f)
-                lineTo(u0 * 1.25f, -88f)
+                moveTo(POLE_X + u0 * 2.2f, -8f)
+                lineTo(POLE_X + u1 * 2.2f, -8f)
+                lineTo(POLE_X + u1 * 1.25f, -88f)
+                lineTo(POLE_X + u0 * 1.25f, -88f)
                 close()
             }
         }
+
+    /**
+     * The arm's silhouette for the lamp's shadows: up from the pole and into the head, which hangs
+     * over the pole as the arm reaches out over the street ([lampPost] draws the arm live).
+     */
     private val lampArm =
         Path().apply {
-            moveTo(0f, -86f)
-            quadraticBezierTo(0f, -95.5f, 9f, -95.2f)
+            moveTo(POLE_X, -86f)
+            quadraticBezierTo(POLE_X, -97f, POLE_X, -97.4f)
         }
+
+    /** The arm as [lampPost] draws it this frame, refilled (nothing is made per frame). */
+    private val armPath = Path()
+
+    /** How far the lamp being drawn holds its head to the side ([lampPost]), for its lens. */
+    private var headDx = 0f
     private val lampHood =
         Path().apply {
             moveTo(3.5f, -94.6f)
@@ -518,10 +529,11 @@ internal class BuildingPainter {
         Perspective.shift(Perspective.sideAt(x, viewX, lightSpan, perspectiveK))
 
     /**
-     * Where the furniture at [x] along the street is drawn: it stands on the pavement in front of
-     * the facades, so a touch further from the middle of the view than they are ([StreetVolume]).
+     * Where the furniture at [x] along the street is drawn: where it stands. The pavement it stands
+     * on moves with the facades, so a lamp or a tree must too; a parallax of its own made it glide
+     * over the paving as the street scrolled. Its depth shows in its own faces and shading instead.
      */
-    internal fun standAt(x: Float): Float = x + volume.near(shiftAt(x))
+    internal fun standAt(x: Float): Float = x
 
     /** A facade's light and shade across it, unit brushes drawn under a transform. */
     private val litWash =
@@ -792,18 +804,19 @@ internal class BuildingPainter {
                     // (the air it lights is drawn behind the people: [lampAir])
                     lampPost(on)
                     // the glass lens under the hood, seen a little round with the view: dull by
-                    // day with a glint, lit at night
+                    // day with a glint, lit at night; the head where the arm holds it out
+                    val hx = headDx
                     drawRoundRect(
                         lerp(Color(0xFF8A90A0), SceneInk.LampLight, on),
-                        Offset(6f + furnSide * .6f, -91.8f),
+                        Offset(6f + hx + furnSide * .6f, -91.8f),
                         Size(11f, 2.6f),
                         CornerRadius(1.2f, 1.2f),
                     )
-                    if (season.snow > .01f) snowLamp(sky)
+                    if (season.snow > .01f) translate(hx, 0f) { snowLamp(sky) }
                     if (on == 0f)
-                        drawRect(Color.White, Offset(7.2f, -91.4f), Size(4f, .7f), alpha = .6f)
+                        drawRect(Color.White, Offset(7.2f + hx, -91.4f), Size(4f, .7f), alpha = .6f)
                     else
-                        translate(11.5f, -89.5f) {
+                        translate(11.5f + hx, -89.5f) {
                             scale(26f, 26f, Offset.Zero) {
                                 drawCircle(
                                     halo,
@@ -942,17 +955,31 @@ internal class BuildingPainter {
      * with the view, its dark lip underneath.
      */
     private fun DrawScope.lampPost(on: Float) {
-        box(-4.4f, 4.4f, 0f, 4.2f, -4.4f, 4.4f, false)
-        box(-3.2f, 3.2f, 4.2f, 7.6f, -3.2f, 3.2f, false)
+        val px = POLE_X
+        box(px - 4.4f, px + 4.4f, 0f, 4.2f, -4.4f, 4.4f, false)
+        box(px - 3.2f, px + 3.2f, 4.2f, 7.6f, -3.2f, 3.2f, false)
         for (k in poleBands.indices) {
             val u = (POLE_U[k] + POLE_U[k + 1]) / 2f
             drawPath(poleBands[k], iron(volume.cylinder(u, furnSide, keyFrom, keyLight)))
         }
-        box(-1.75f, 1.75f, 84.4f, 86.4f, -1.75f, 1.75f, false)
-        drawPath(lampArm, iron(.12f), style = armStroke)
+        box(px - 1.75f, px + 1.75f, 84.4f, 86.4f, -1.75f, 1.75f, false)
+        // the arm reaches out over the street, towards us: seen from the front it rises from the
+        // pole and bends forward into the head, which leans a little to the side of the view the
+        // street is seen from (as the buildings show a side), so the lamp faces the road
+        val hx = -furnSkew * HEAD_REACH
+        headDx = hx
+        armPath.rewind()
+        armPath.moveTo(px, -86f)
+        armPath.cubicTo(px, -95f, px + hx * .5f, -99.5f, px + hx, -97.4f)
+        drawPath(armPath, iron(.12f), style = armStroke)
         translate(0f, -.55f) {
-            drawPath(lampArm, iron(volume.top(keyLight)), alpha = .8f, style = armLit)
+            drawPath(armPath, iron(volume.top(keyLight)), alpha = .8f, style = armLit)
         }
+        translate(hx, 0f) { lampHead() }
+    }
+
+    /** The lamp's hood, as [lampPost] holds it out: its dome, the dome's light, its lip. */
+    private fun DrawScope.lampHead() {
         drawPath(lampHood, iron(faceLight(volume.FRONT) * .7f))
         clipPath(lampHood) {
             // the dome's lit crown towards the light, the far side in shade; both turn with the
@@ -5074,6 +5101,14 @@ internal class BuildingPainter {
          */
         const val TREE_FRONT = .03f
         const val TREE_BACK = .05f
+
+        /**
+         * A lamp's pole stands under its head (the lens, where its light is worked out from: the
+         * pools, the lit air, the light on walkers), and its arm reaches this far out over the
+         * street, towards the view, so the head leans that much times the skew to the side.
+         */
+        const val POLE_X = LightSprites.LENS_X
+        const val HEAD_REACH = 9f
 
         /**
          * The architecture's inks ([DetailInk]) and which of them are white or shade by the light
