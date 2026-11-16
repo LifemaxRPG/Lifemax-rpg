@@ -594,3 +594,26 @@ cracks fainter at night. No new sprites (0 bytes); paths are baked with the floo
 frame. `FloorDecayTest` covers determinism, escalation, bounds, cracks off the windows and in the brick joints, and
 the `decay` scenario; screenshot tests `decayDay` and `decayNight` (every Habits reference with a missed floor
 changes).
+
+### As built: street walkers do things with their hands
+
+The owner: "people just walk and swing their arms robotically ... vary what they do with their arms, check their phone,
+scratch their face". The walker is now drawn in layers (`StreetLayers`): `StreetRig.body` bakes the legs, torso, bag and
+the neck's root for every walk frame (no arms, no head), and the arms (upper arm and forearm each; the forearm in an
+open, gripping or pocketed hand, baked with a stub above the elbow for its shading and then cut back to the elbow's
+round so the joint shows no edge), the head (in profile, or glanced round towards us), a ponytail, a phone, a coffee
+cup and the handbag are baked once per look and turned about their joints at draw time. Draw order: far arm (and what
+it holds) behind the body, body (frame plus its neighbour, or the settle), ponytail, head, near arm with its prop over
+everything. The legs and their frames are exactly as before. `StreetActs.at(seed, slot, who, t, look, busy)` works out
+from the walk's start what each walker is doing: relaxed walking most of the time (gaps of 3 to 8.5 s), then one of
+reading the phone (head bowed 24 degrees, walking 16% slower: `Gesture.lost` is the time lost, subtracted from the
+metered travel so the feet still never slide), typing with both hands, a call, scratching the jaw, rubbing the head, a
+hand to the hair or a tug at the cap or beanie, a look at the watch, a small wave, a glance round, both hands in the
+pockets, a hand on the bag's strap; about a fifth carry a coffee the whole walk and sip it now and then. Each walker
+weights the acts by a factor of their own, so people have habits. A busy near hand (the dog's lead, the handbag, the
+cup) leaves the far-hand phone or watch and the glance. Acts ease in and out over 0.32 to 0.5 s in the joints' angles
+(hands reach by two-bone IK, an arm rising to the head folds its elbow on the way), so nothing pops. Memory went down:
+walkers 3.82 MB (from about 4.65 MB) plus 43 KB of layers; the budgets are unchanged. Draw cost is 7 to 9 drawImage per
+walker per pass instead of 2, no per-frame allocation. `StreetActsTest` covers determinism, smooth envelopes and
+slowing, how often they act, busy hands, smooth arm motion and the call's hand at the head. Not checked on a device:
+the dusk crossfade and lamp shadows draw the layers each at partial alpha, so overlaps are a little darker there.

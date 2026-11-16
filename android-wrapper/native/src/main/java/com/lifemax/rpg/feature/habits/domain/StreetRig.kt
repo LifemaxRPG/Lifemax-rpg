@@ -187,6 +187,25 @@ class WalkerJoints {
     var handNX = 0f
     var handNY = 0f
     var top = 0f
+
+    /**
+     * What the layers are hung on ([StreetLayers]): the near and the far shoulder, the neck's pivot
+     * (the head layer turns about it, the bob's lag in it), the head's angle from upright, the
+     * arms' angles as the walk has them (as [K.AN], [K.EN], [K.AF], [K.EF]) and the ponytail's
+     * swing (-1 to 1).
+     */
+    var shNX = 0f
+    var shNY = 0f
+    var shFX = 0f
+    var shFY = 0f
+    var neckX = 0f
+    var neckY = 0f
+    var headA = 0f
+    var an = 0f
+    var en = 0f
+    var af = 0f
+    var ef = 0f
+    var tail = 0f
 }
 
 /** The shapes of one street walker in one pose, with where its joints are. */
@@ -267,6 +286,157 @@ object StreetRig {
     const val TOTAL_FRAMES = StreetGait.FRAMES + SETTLE_FRAMES
 
     /**
+     * Frame [frame] of [look] as the street bakes it, in layers: the body alone (the legs, the
+     * torso, the bag, the neck's root), the arms and the head left off and their anchors and angles
+     * in the joints, so that the arms and the head can do something other than walk
+     * ([StreetLayers]) while the legs keep the walk's every frame.
+     */
+    fun body(look: Int, frame: Int): StreetFigure {
+        val p =
+            if (frame < StreetGait.FRAMES)
+                StreetGait.pose(frame / StreetGait.FRAMES.toFloat(), look)
+            else settleOf(look)[frame - StreetGait.FRAMES]
+        val phi =
+            if (frame < StreetGait.FRAMES) frame / StreetGait.FRAMES.toFloat() else Gait.PASSING
+        return build(StreetLooks.ALL[look], p, phi, false)
+    }
+
+    private val JOINTS: Array<Array<WalkerJoints>?> = arrayOfNulls(StreetLooks.COUNT)
+
+    /** The joints of [look]'s every frame (as [body] has them), worked out once. */
+    fun joints(look: Int): Array<WalkerJoints> =
+        JOINTS[look] ?: Array(TOTAL_FRAMES) { body(look, it).joints }.also { JOINTS[look] = it }
+
+    // ---- the layers hung on the body: each in its own frame, turned about its joint when drawn
+
+    /**
+     * Which hand a forearm layer ends in: open and relaxed, closed round something, in a pocket.
+     */
+    const val OPEN = 0
+    const val GRIP = 1
+    const val POCKET = 2
+
+    /**
+     * How far above the elbow (and below the neck's pivot) a layer's limb runs on for its shading.
+     */
+    private const val STUB = 1.6f
+
+    /**
+     * The upper arm of [look] ([near] or far), hanging from the shoulder at 0, 0 down +y: turned
+     * about the shoulder by its angle when drawn.
+     */
+    fun upperArm(look: Int, near: Boolean): List<Shape> {
+        val l = StreetLooks.ALL[look]
+        val o = Out()
+        armShapes(o, WalkerJoints(), l, 0f, 0f, 0f, 0f, near, ARM_UPPER, OPEN)
+        return o.shapes
+    }
+
+    /**
+     * The forearm and the [hand] of [look] ([near] or far), from the elbow at 0, 0 down +y. The
+     * limb is shaded as if it ran on [STUB] above the elbow, so the joint shows no edge; [cut]
+     * takes that part off again (everything above the elbow outside its round).
+     */
+    fun forearm(look: Int, near: Boolean, hand: Int): List<Shape> {
+        val l = StreetLooks.ALL[look]
+        val o = Out()
+        // the shoulder above the elbow, so the elbow is at 0, 0
+        val sy = -upperLength(look)
+        armShapes(o, WalkerJoints(), l, 0f, sy, 0f, 0f, near, ARM_FORE or ARM_STUB, hand)
+        return o.shapes
+    }
+
+    /** The radius of [look]'s elbow (what [forearm]'s stub is cut to), in units. */
+    fun elbowR(look: Int): Float {
+        val l = StreetLooks.ALL[look]
+        return .82f * l.build * thick(l)
+    }
+
+    /** How far above the elbow a [forearm] layer's stub runs, in units. */
+    const val FORE_STUB = STUB
+
+    private fun thick(l: StreetLook) = if (l.coat != Coat.NONE) 1.12f else 1f
+
+    /**
+     * The head of [look] upright, the neck's pivot at 0, 0 (the neck itself stays on the body): the
+     * face in profile, or [glance]d round towards us. A ponytail is left off ([tail]): it swings on
+     * its own.
+     */
+    fun head(look: Int, glance: Boolean): List<Shape> {
+        val l = StreetLooks.ALL[look]
+        val o = Out()
+        val hgt = l.height
+        val rx = 1.35f * hgt * l.head
+        val ry = 1.65f * hgt * l.head
+        val neck = 1.0f * hgt
+        val hy = -(neck * .6f + ry * .92f)
+        head(o, l.wear, l.hair, 0f, hy, rx, ry, 0f, .94f, glance)
+        hair(o, l.hair, l.wear, 0f, hy, rx, ry, 0f, hgt, 0f, false)
+        return o.shapes
+    }
+
+    /** Where [look]'s ponytail hangs from in [head]'s frame, x then y. */
+    fun tailRootX(look: Int): Float {
+        val l = StreetLooks.ALL[look]
+        return -1.35f * l.height * l.head * .95f
+    }
+
+    fun tailRootY(look: Int): Float {
+        val l = StreetLooks.ALL[look]
+        val ry = 1.65f * l.height * l.head
+        return -(l.height * .6f + ry * .92f) - ry * .3f
+    }
+
+    /** [look]'s ponytail hanging from its root at 0, 0: turned by its swing when drawn. */
+    fun tail(look: Int): List<Shape> {
+        val l = StreetLooks.ALL[look]
+        val o = Out()
+        if (l.hair == StreetHair.PONY) ponytail(o, l.wear.hair, 0f, 0f, 0f, l.height, 0f)
+        return o.shapes
+    }
+
+    /** How far a ponytail's swing turns the whole tail, in degrees, for a swing of 1. */
+    const val TAIL_SWING = 20f
+
+    /** A phone held in the hand at 0, 0, its top up -y, the screen on its back (-x) side. */
+    fun phone(): List<Shape> {
+        val o = Out()
+        o.add(box(0f, -.55f, .3f, 1.05f, 0f), 0x24262C, Mat.LEATHER)
+        o.add(FigBuilder.capsule(-.2f, -1.45f, .09f, -.2f, .35f, .09f, 3), 0xA8C4DC, Mat.FLAT, .85f)
+        return o.shapes
+    }
+
+    /** A takeaway coffee held in the hand at 0, 0, upright: the paper cup, its sleeve, the lid. */
+    fun cup(): List<Shape> {
+        val o = Out()
+        val top = -1.15f
+        val bottom = .75f
+        o.add(
+            FigBuilder.chaikin(floatArrayOf(-.62f, top, .62f, top, .48f, bottom, -.48f, bottom), 1),
+            0xEEE9E0,
+        )
+        o.add(
+            FigBuilder.chaikin(floatArrayOf(-.6f, -.55f, .6f, -.55f, .54f, .3f, -.54f, .3f), 1),
+            0xA0703F,
+        )
+        o.add(FigBuilder.capsule(-.66f, top - .08f, .17f, .66f, top - .08f, .17f, 3), 0x2B2A2A)
+        o.add(FigBuilder.capsule(-.36f, top - .32f, .14f, .36f, top - .32f, .14f, 3), 0x2B2A2A)
+        return o.shapes
+    }
+
+    /** [look]'s handbag hanging from the hand at 0, 0 down +y (it swings as it is drawn). */
+    fun handbag(look: Int): List<Shape> {
+        val l = StreetLooks.ALL[look]
+        val o = Out()
+        val j = WalkerJoints()
+        handbag(o, l.wear, j, l.height, l.build, 0f)
+        return o.shapes
+    }
+
+    /** How far a handbag's swing turns it, degrees, for a trail of 1. */
+    const val BAG_SWING = 9f
+
+    /**
      * How tall [look] stands, in units, at the rig's size: from the pavement to the top of the
      * head.
      */
@@ -282,7 +452,16 @@ object StreetRig {
         }
     }
 
-    private fun build(look: StreetLook, p: FloatArray, phi: Float): StreetFigure {
+    /**
+     * The figure of [look] in the pose [p] at [phi]: [whole], or the body alone with the arms' and
+     * the head's anchors in the joints ([body]).
+     */
+    private fun build(
+        look: StreetLook,
+        p: FloatArray,
+        phi: Float,
+        whole: Boolean = true,
+    ): StreetFigure {
         val o = Out()
         val j = WalkerJoints()
         val f = phi - kotlin.math.floor(phi)
@@ -293,8 +472,6 @@ object StreetRig {
         val neck = 1.0f * hgt
         val headRy = 1.65f * hgt * hs
         val headRx = 1.35f * hgt * hs
-        val ua = 4.1f * hgt
-        val fa = 3.7f * hgt
         val th = THIGH * hgt
         val sh = SHIN * hgt
         val turn = p[K.TURN]
@@ -317,20 +494,8 @@ object StreetRig {
 
         // ---- the far arm, the far leg, then the near leg (a coat is drawn over the thighs after)
         val farTone = FAR
-        arm(
-            o,
-            j,
-            sx - nx * sw,
-            sy - ny * sw,
-            ua,
-            fa,
-            b * thick,
-            p[K.AF],
-            p[K.EF],
-            farTone,
-            false,
-            look,
-        )
+        val arms = if (whole) ARM_UPPER or ARM_FORE else 0
+        armShapes(o, j, look, sx - nx * sw, sy - ny * sw, p[K.AF], p[K.EF], false, arms, OPEN)
         leg(o, j, px - hw, py, th, sh, b, hgt, p[K.LF], p[K.KF], p[K.ANF], farTone, false, look)
         if (look.bag == Bag.BACKPACK)
             backpack(o, look.wear, px, py, sx, sy, nx, ny, ux, uy, b, hgt, trail2)
@@ -511,7 +676,30 @@ object StreetRig {
         val drop = StreetGait.headDrop(f) * 24f * hgt
         val hx = nkx + hux * (neck * .6f + headRy * .92f)
         val hy = nky + huy * (neck * .6f + headRy * .92f) + drop
-        o.add(FigBuilder.capsule(sx, sy, 1.05f * b, hx, hy + .3f, .9f * b, 6), w.skin, Mat.SKIN)
+        if (whole)
+            o.add(FigBuilder.capsule(sx, sy, 1.05f * b, hx, hy + .3f, .9f * b, 6), w.skin, Mat.SKIN)
+        else {
+            // the neck as far as the jaw: the head layer turns over its top (its nape shows
+            // behind a head bowed over a phone)
+            val l = 1.1f
+            o.add(
+                FigBuilder.capsule(sx, sy, 1.05f * b, nkx + hux * l, nky + huy * l, .92f * b, 6),
+                w.skin,
+                Mat.SKIN,
+            )
+        }
+        j.neckX = nkx
+        j.neckY = nky + drop
+        j.headA = headA
+        j.tail = trail2
+        j.shNX = sx + nx * sw
+        j.shNY = sy + ny * sw
+        j.shFX = sx - nx * sw
+        j.shFY = sy - ny * sw
+        j.an = p[K.AN]
+        j.en = p[K.EN]
+        j.af = p[K.AF]
+        j.ef = p[K.EF]
         if (coat != Coat.NONE) {
             // a collar over the neck's root
             o.add(
@@ -525,8 +713,10 @@ object StreetRig {
                 dim(w.top, .85f),
             )
         }
-        head(o, w, look.hair, hx, hy, headRx, headRy, headA, turn)
-        hair(o, look.hair, w, hx, hy, headRx, headRy, headA, hgt, trail2)
+        if (whole) {
+            head(o, w, look.hair, hx, hy, headRx, headRy, headA, turn, false)
+            hair(o, look.hair, w, hx, hy, headRx, headRy, headA, hgt, trail2, true)
+        }
         j.top = hy - headRy * 1.08f
 
         // ---- the bag, then the near arm over everything
@@ -535,8 +725,8 @@ object StreetRig {
             Bag.BACKPACK -> straps(o, w, sx, sy, nx, ny, ux, uy, b, hgt, shoulderW)
             else -> {}
         }
-        arm(o, j, sx + nx * sw, sy + ny * sw, ua, fa, b * thick, p[K.AN], p[K.EN], 1f, true, look)
-        if (look.bag == Bag.HAND) handbag(o, w, j, hgt, b, trail)
+        armShapes(o, j, look, sx + nx * sw, sy + ny * sw, p[K.AN], p[K.EN], true, arms, OPEN)
+        if (whole && look.bag == Bag.HAND) handbag(o, w, j, hgt, b, trail)
 
         ground(o, j, p[K.LIFT])
         return StreetFigure(o.shapes, j)
@@ -586,6 +776,9 @@ object StreetRig {
         j.footFH = -(j.footFH + dy)
         j.handNY += dy
         j.top += dy
+        j.shNY += dy
+        j.shFY += dy
+        j.neckY += dy
     }
 
     /**
@@ -752,20 +945,37 @@ object StreetRig {
             -.5f,
         )
 
-    private fun arm(
+    /** Which parts of an arm [armShapes] draws: the upper arm, the forearm and hand, its stub. */
+    private const val ARM_UPPER = 1
+    private const val ARM_FORE = 2
+    private const val ARM_STUB = 4
+
+    /** The upper arm's and the forearm's lengths for [look], in units. */
+    fun upperLength(look: Int): Float = 4.1f * StreetLooks.ALL[look].height
+
+    fun foreLength(look: Int): Float = 3.7f * StreetLooks.ALL[look].height
+
+    /**
+     * An arm of [look] from the shoulder at ([sx], [sy]), [a] degrees from hanging (forward
+     * positive) with the elbow bent [e] more: the [parts] asked for, ending in [hand]; the near
+     * hand's joint either way.
+     */
+    private fun armShapes(
         o: Out,
         j: WalkerJoints,
+        look: StreetLook,
         sx: Float,
         sy: Float,
-        ua: Float,
-        fa: Float,
-        b: Float,
         a: Float,
         e: Float,
-        shade: Float,
         near: Boolean,
-        look: StreetLook,
+        parts: Int,
+        hand: Int,
     ) {
+        val ua = 4.1f * look.height
+        val fa = 3.7f * look.height
+        val b = look.build * thick(look)
+        val shade = if (near) 1f else FAR
         val ex = sx + sin(rad(a)) * ua
         val ey = sy + cos(rad(a)) * ua
         val fa0 = a + e
@@ -773,42 +983,63 @@ object StreetRig {
         val wy = ey + cos(rad(fa0)) * fa
         val w = look.wear
         val skin = dim(w.skin, shade)
+        val upper = parts and ARM_UPPER != 0
+        val fore = parts and ARM_FORE != 0
+        // the stub: the limb run on above the elbow, so the forearm's shading carries on through
+        // the joint (it is cut off again once baked)
+        val stx = ex - sin(rad(fa0)) * STUB
+        val sty = ey - cos(rad(fa0)) * STUB
+        val stub = parts and ARM_STUB != 0
         if (look.coat == Coat.NONE) {
             // a bare arm, the tee's short sleeve over its top half
-            o.add(bowed(sx, sy, 1.1f * b, ex, ey, .82f * b, 0f), skin, Mat.SKIN)
-            o.add(bowed(ex, ey, .82f * b, wx, wy, .55f * b, .08f), skin, Mat.SKIN)
-            val mx = sx + (ex - sx) * .55f
-            val my = sy + (ey - sy) * .55f
-            o.add(
-                FigBuilder.hull(bowed(sx, sy, 1.22f * b, mx, my, 1.02f * b, 0f)),
-                dim(w.top, shade),
-            )
+            if (upper) o.add(bowed(sx, sy, 1.1f * b, ex, ey, .82f * b, 0f), skin, Mat.SKIN)
+            if (fore) {
+                if (stub) o.add(bowed(stx, sty, .82f * b, ex, ey, .82f * b, 0f), skin, Mat.SKIN)
+                o.add(bowed(ex, ey, .82f * b, wx, wy, .55f * b, .08f), skin, Mat.SKIN)
+            }
+            if (upper) {
+                val mx = sx + (ex - sx) * .55f
+                val my = sy + (ey - sy) * .55f
+                o.add(
+                    FigBuilder.hull(bowed(sx, sy, 1.22f * b, mx, my, 1.02f * b, 0f)),
+                    dim(w.top, shade),
+                )
+            }
         } else {
             // the upper arm bows a little outward, the forearm a little in; a cuff at the wrist
             val sleeve = dim(w.coat, shade)
-            o.add(bowed(sx, sy, 1.1f * b, ex, ey, .82f * b, 0f), sleeve)
-            o.add(bowed(ex, ey, .82f * b, wx, wy, .62f * b, .08f), sleeve)
-            val cx = ex + (wx - ex) * .84f
-            val cy = ey + (wy - ey) * .84f
-            o.add(FigBuilder.capsule(cx, cy, .66f * b, wx, wy, .64f * b, 4), dim(sleeve, .78f))
+            if (upper) o.add(bowed(sx, sy, 1.1f * b, ex, ey, .82f * b, 0f), sleeve)
+            if (fore) {
+                if (stub) o.add(bowed(stx, sty, .82f * b, ex, ey, .82f * b, 0f), sleeve)
+                o.add(bowed(ex, ey, .82f * b, wx, wy, .62f * b, .08f), sleeve)
+                val cx = ex + (wx - ex) * .84f
+                val cy = ey + (wy - ey) * .84f
+                o.add(FigBuilder.capsule(cx, cy, .66f * b, wx, wy, .64f * b, 4), dim(sleeve, .78f))
+            }
         }
         // the hand: a relaxed hand hangs curled a little forward of the wrist, the thumb a small
-        // lobe on its front
-        val ha = fa0 + 16f
-        val hx = wx + sin(rad(ha)) * .75f
-        val hy = wy + cos(rad(ha)) * .75f
-        val hand = FigBuilder.ellipse(hx, hy, .5f * b, .85f * b, ha, 8)
-        val thumb =
-            FigBuilder.ellipse(
-                hx + cos(rad(ha)) * .45f * b - sin(rad(ha)) * .1f,
-                hy - sin(rad(ha)) * .45f * b - cos(rad(ha)) * .1f,
-                .22f * b,
-                .42f * b,
-                ha - 25f,
-                6,
-            )
-        o.add(hand, skin, Mat.SKIN)
-        o.add(thumb, dim(skin, .9f), Mat.SKIN)
+        // lobe on its front; a hand holding something closes round it, the thumb over the top
+        val ha = fa0 + if (hand == GRIP) 6f else 16f
+        val reach = if (hand == GRIP) .62f else .75f
+        val hx = wx + sin(rad(ha)) * reach
+        val hy = wy + cos(rad(ha)) * reach
+        if (fore && hand != POCKET) {
+            val palm =
+                if (hand == GRIP) FigBuilder.ellipse(hx, hy, .6f * b, .7f * b, ha, 8)
+                else FigBuilder.ellipse(hx, hy, .5f * b, .85f * b, ha, 8)
+            val tl = if (hand == GRIP) .5f else .45f
+            val thumb =
+                FigBuilder.ellipse(
+                    hx + cos(rad(ha)) * tl * b - sin(rad(ha)) * (if (hand == GRIP) .3f else .1f),
+                    hy - sin(rad(ha)) * tl * b - cos(rad(ha)) * (if (hand == GRIP) .3f else .1f),
+                    .22f * b,
+                    .42f * b,
+                    ha - 25f,
+                    6,
+                )
+            o.add(palm, skin, Mat.SKIN)
+            o.add(thumb, dim(skin, .9f), Mat.SKIN)
+        }
         if (near) {
             j.handNX = hx + sin(rad(ha)) * .9f * b
             j.handNY = hy + cos(rad(ha)) * .9f * b
@@ -910,8 +1141,12 @@ object StreetRig {
         ry: Float,
         ang: Float,
         turn: Float,
+        glance: Boolean,
     ) {
         o.add(headShape(cx, cy, rx, ry, ang, turn), w.skin, Mat.SKIN)
+        // glanced round towards us: the face comes round, so the ear moves back, both eyes show
+        // and the mouth widens; the profile's outline stays (the hair and the hat do not move)
+        val g = if (glance) 1f else 0f
         val ca = cos(rad(ang))
         val sa = sin(rad(ang))
         // a point of the head: [lx] forward, [ly] down, in its radii
@@ -942,14 +1177,21 @@ object StreetRig {
             )
         if (hair != StreetHair.LONG)
             o.add(
-                FigBuilder.ellipse(hx(-.12f, .08f), hy(-.12f, .08f), .34f * rx, .3f * ry, ang, 8),
+                FigBuilder.ellipse(
+                    hx(-.12f - .3f * g, .08f),
+                    hy(-.12f - .3f * g, .08f),
+                    (.34f - .1f * g) * rx,
+                    .3f * ry,
+                    ang,
+                    8,
+                ),
                 dim(w.skin, .8f),
                 Mat.SKIN,
             )
         o.add(
             FigBuilder.capsule(
-                hx(.4f, -.34f),
-                hy(.4f, -.34f),
+                hx(.4f - .22f * g, -.34f),
+                hy(.4f - .22f * g, -.34f),
                 .13f,
                 hx(.82f, -.31f),
                 hy(.82f, -.31f),
@@ -961,15 +1203,29 @@ object StreetRig {
             .8f,
         )
         o.add(
-            FigBuilder.ellipse(hx(.62f, -.1f), hy(.62f, -.1f), .2f, .24f, ang, 6),
+            FigBuilder.ellipse(
+                hx(.62f - .24f * g, -.1f),
+                hy(.62f - .24f * g, -.1f),
+                .2f,
+                .24f,
+                ang,
+                6,
+            ),
             EYE,
             Mat.FLAT,
             .9f,
         )
+        if (glance)
+            o.add(
+                FigBuilder.ellipse(hx(.8f, -.1f), hy(.8f, -.1f), .13f, .22f, ang, 6),
+                EYE,
+                Mat.FLAT,
+                .85f,
+            )
         o.add(
             FigBuilder.capsule(
-                hx(.7f, .5f),
-                hy(.7f, .5f),
+                hx(.7f - .22f * g, .5f),
+                hy(.7f - .22f * g, .5f),
                 .09f,
                 hx(.86f, .48f),
                 hy(.86f, .48f),
@@ -992,7 +1248,7 @@ object StreetRig {
         val hgt = look.height
         val rx = 1.35f * hgt * look.head
         val ry = 1.65f * hgt * look.head
-        head(o, w, StreetHair.CROP, hx, hy, rx, ry, ang, 0f)
+        head(o, w, StreetHair.CROP, hx, hy, rx, ry, ang, 0f, false)
         o.add(cap(hx, hy, rx, ry, ang, -.1f, -.6f, 1.06f, 0f, -.08f), w.hair, Mat.HAIR)
         val ca = cos(rad(ang))
         val sa = sin(rad(ang))
@@ -1131,6 +1387,7 @@ object StreetRig {
         ang: Float,
         hgt: Float,
         trail2: Float,
+        tail: Boolean,
     ) {
         val ux = sin(rad(ang))
         val uy = -cos(rad(ang))
@@ -1159,15 +1416,7 @@ object StreetRig {
                 // the tail swings behind the bob
                 val x0 = hx - fx * rx * .95f + ux * ry * .3f
                 val y0 = hy - fy * rx * .95f + uy * ry * .3f
-                val swing = 14f * trail2
-                val a1 = ang + 205f + swing
-                val a2 = a1 + 18f + swing * .8f
-                val x1 = x0 + sin(rad(a1)) * 2.0f * hgt
-                val y1 = y0 - cos(rad(a1)) * 2.0f * hgt
-                val x2 = x1 + sin(rad(a2)) * 2.6f * hgt
-                val y2 = y1 - cos(rad(a2)) * 2.6f * hgt
-                o.add(FigBuilder.capsule(x0, y0, .9f, x1, y1, .85f, 6), hair, Mat.HAIR)
-                o.add(FigBuilder.capsule(x1, y1, .85f, x2, y2, .3f, 6), hair, Mat.HAIR)
+                if (tail) ponytail(o, hair, x0, y0, ang, hgt, trail2)
                 o.add(cap(hx, hy, rx, ry, ang, .36f, -.3f, 1.1f, .03f, -.05f), hair, Mat.HAIR)
                 // the band round the tail
                 o.add(
@@ -1226,6 +1475,29 @@ object StreetRig {
                 )
             }
         }
+    }
+
+    /**
+     * A ponytail from its root ([x0], [y0]), the head at [ang], swinging [trail2] behind the bob.
+     */
+    private fun ponytail(
+        o: Out,
+        hair: Int,
+        x0: Float,
+        y0: Float,
+        ang: Float,
+        hgt: Float,
+        trail2: Float,
+    ) {
+        val swing = 14f * trail2
+        val a1 = ang + 205f + swing
+        val a2 = a1 + 18f + swing * .8f
+        val x1 = x0 + sin(rad(a1)) * 2.0f * hgt
+        val y1 = y0 - cos(rad(a1)) * 2.0f * hgt
+        val x2 = x1 + sin(rad(a2)) * 2.6f * hgt
+        val y2 = y1 - cos(rad(a2)) * 2.6f * hgt
+        o.add(FigBuilder.capsule(x0, y0, .9f, x1, y1, .85f, 6), hair, Mat.HAIR)
+        o.add(FigBuilder.capsule(x1, y1, .85f, x2, y2, .3f, 6), hair, Mat.HAIR)
     }
 
     private fun shoulderBag(

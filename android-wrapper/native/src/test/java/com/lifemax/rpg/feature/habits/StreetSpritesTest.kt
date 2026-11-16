@@ -28,9 +28,10 @@ class StreetSpritesTest {
             // the picture stands on its feet: the origin is at its bottom, within its width
             assertTrue(a.h - a.oy < 4f && a.h - a.oy > -1f)
             assertTrue(a.ox > 0f && a.ox < a.w)
+            // the body's frames stop at the neck: the head is a layer of its own
             assertTrue(
                 "height ${a.h}",
-                a.h in (24f * StreetSprites.PPU).toInt()..(31f * StreetSprites.PPU).toInt(),
+                a.h in (20f * StreetSprites.PPU).toInt()..(28f * StreetSprites.PPU).toInt(),
             )
             assertTrue("width ${a.w}", a.w < 22f * StreetSprites.PPU)
         }

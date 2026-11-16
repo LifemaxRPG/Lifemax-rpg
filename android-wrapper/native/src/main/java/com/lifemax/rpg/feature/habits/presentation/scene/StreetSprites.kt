@@ -2,6 +2,7 @@ package com.lifemax.rpg.feature.habits.presentation.scene
 
 import com.lifemax.rpg.feature.habits.domain.CycleRig
 import com.lifemax.rpg.feature.habits.domain.DogRig
+import com.lifemax.rpg.feature.habits.domain.Part
 import com.lifemax.rpg.feature.habits.domain.Shape
 import com.lifemax.rpg.feature.habits.domain.StreetGait
 import com.lifemax.rpg.feature.habits.domain.StreetLife
@@ -74,8 +75,57 @@ internal object StreetSprites {
      * the rig.
      */
     fun walker(look: Int, frame: Int): WalkerSprite {
-        val fig = StreetRig.frame(look, frame)
+        val fig = StreetRig.body(look, frame)
         return WalkerSprite(bake(fig.shapes, StreetLife.SIZE, PPU), fig.joints)
+    }
+
+    /**
+     * Walker [look]'s layer [part] ([Part]): its joint at the sprite's origin, hanging down (a head
+     * upright), to be turned about it as it is drawn ([StreetLayers]). A forearm is cut round the
+     * elbow, so it closes over the upper arm with no edge.
+     */
+    fun part(look: Int, part: Int): Sprite {
+        val shapes =
+            when (part) {
+                Part.UPPER_N -> StreetRig.upperArm(look, true)
+                Part.UPPER_F -> StreetRig.upperArm(look, false)
+                Part.HEAD -> StreetRig.head(look, false)
+                Part.HEAD_GLANCE -> StreetRig.head(look, true)
+                Part.TAIL -> StreetRig.tail(look)
+                Part.HANDBAG -> StreetRig.handbag(look)
+                Part.PHONE -> StreetRig.phone()
+                Part.CUP -> StreetRig.cup()
+                else -> {
+                    val near = part < Part.UPPER_F
+                    val hand = part - if (near) Part.FORE_N else Part.FORE_F
+                    return cut(
+                        bake(StreetRig.forearm(look, near, hand), StreetLife.SIZE, PPU),
+                        StreetRig.elbowR(look) * StreetLife.SIZE * PPU,
+                    )
+                }
+            }
+        if (shapes.isEmpty()) return Sprite(1, 1, StreetLife.SIZE * PPU, 0f, 0f, IntArray(1))
+        return bake(shapes, StreetLife.SIZE, PPU)
+    }
+
+    /**
+     * [s] with what is above its origin and outside a round of [r] pixels about it taken off,
+     * softly: a forearm's stub, cut back to the elbow.
+     */
+    private fun cut(s: Sprite, r: Float): Sprite {
+        val px = s.pixels.copyOf()
+        for (y in 0 until s.h) for (x in 0 until s.w) {
+            val dy = y + .5f - s.oy
+            if (dy >= 0f) continue
+            val dx = x + .5f - s.ox
+            val d = sqrt(dx * dx + dy * dy)
+            val k = (r - d + .5f).coerceIn(0f, 1f)
+            if (k >= 1f) continue
+            val i = y * s.w + x
+            val a = ((px[i] ushr 24) * k).toInt()
+            px[i] = if (a <= 0) 0 else (a shl 24) or (px[i] and 0xFFFFFF)
+        }
+        return PeopleSprites.crop(Sprite(s.w, s.h, s.ppu, s.ox, s.oy, px))
     }
 
     /** The dog's frame [frame] ([DogRig.TOTAL_FRAMES]). */
@@ -434,11 +484,7 @@ internal object StreetSprites {
 
     /** What the whole street set would take, every frame baked, in bytes. */
     fun bytes(): Int {
-        var total = 0
-        for (l in 0 until StreetLooks.COUNT) for (f in 0 until StreetRig.TOTAL_FRAMES) {
-            val s = walker(l, f).sprite
-            total += s.w * s.h * 4
-        }
+        var total = walkerBytes()
         for (f in 0 until DogRig.TOTAL_FRAMES) dog(f).let { total += it.w * it.h * 4 }
         for (f in 0 until StreetGait.CRANK_FRAMES) cycle(f).let { total += it.w * it.h * 4 }
         for (bd in 0 until StreetLife.CAR_BODIES) {
@@ -451,9 +497,15 @@ internal object StreetSprites {
     /** What the walkers alone take, every frame of every look baked, in bytes. */
     fun walkerBytes(): Int {
         var total = 0
-        for (l in 0 until StreetLooks.COUNT) for (f in 0 until StreetRig.TOTAL_FRAMES) {
-            val s = walker(l, f).sprite
-            total += s.w * s.h * 4
+        for (l in 0 until StreetLooks.COUNT) {
+            for (f in 0 until StreetRig.TOTAL_FRAMES) {
+                val s = walker(l, f).sprite
+                total += s.w * s.h * 4
+            }
+            for (p in 0 until Part.COUNT) {
+                val s = part(l, p)
+                total += s.w * s.h * 4
+            }
         }
         return total
     }
