@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.habits.presentation.scene
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -8,11 +9,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -261,12 +264,11 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 shootingStar(pass, w, top, band, starAlpha)
         }
         moonCover =
-            if (sky.phase == SkyPhase.NIGHT)
-                cover(sky, orb, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds, density)
-            else 0f
+            cover(sky, orb, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds, density)
         heavenlyBody(sky, hour, orb, horizon, seconds)
         lensFlare(sky, orb, top, shift)
         clouds(sky, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds)
+        occultation(sky, orb, w, top, horizon, ceiling, orb.x > w / 2f, shift, seconds)
         if (tone > 1.6f && Ambient.blimp(seconds, seed, pass))
             blimp(pass, sky, w, top, band, seconds)
         if (Ambient.plane(seconds, seed, pass)) plane(pass, sky, w, top, band, seconds, tone)
@@ -616,7 +618,19 @@ internal class Backdrop(private val seed: Int, day: String = "") {
 
     /** One of the sun's layers, as [sunLook] has it now. */
     private fun DrawScope.sunLayer(image: ImageBitmap, l: SkyLayer, layer: Int) {
-        val a = sunLook.alpha[layer]
+        // behind a cloud the disc goes first, its bloom and rays less; the wide glow stays
+        val clear = 1f - moonCover
+        val hide =
+            when (layer) {
+                SunLook.DISC,
+                SunLook.DISC_LIGHT,
+                SunLook.CORE,
+                SunLook.HUG -> clear * clear
+                SunLook.BLOOM,
+                SunLook.RAYS -> .25f + .75f * clear
+                else -> 1f
+            }
+        val a = sunLook.alpha[layer] * hide
         if (a < .004f) return
         val g = sunLook.grow[layer]
         val blend = if (SunLook.added(layer)) BlendMode.Plus else BlendMode.SrcOver
@@ -669,7 +683,9 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         val k =
             LensFlare.strength(sky.dark, sunClear) *
                 SunLook.up(sky.dark) *
-                (1f - cloudiness.coerceIn(0f, 1f))
+                (1f - cloudiness.coerceIn(0f, 1f)) *
+                (1f - moonCover) *
+                (1f - moonCover)
         if (k < .01f) return
         if (flareKey !== sky) {
             val base = lerp(sky.halo.copy(alpha = 1f), Color.White, .35f)
@@ -982,6 +998,166 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         placeA = (strength * breathe * room * (1f - .28f * c.haze)).coerceIn(0f, 1f)
     }
 
+    /** The silver lining's layer: added, its alpha raised (the edge field peaks at a quarter). */
+    private val liningPaint =
+        Paint().apply {
+            blendMode = BlendMode.Plus
+            colorFilter =
+                ColorFilter.colorMatrix(
+                    ColorMatrix(
+                        floatArrayOf(
+                            1f,
+                            0f,
+                            0f,
+                            0f,
+                            0f,
+                            0f,
+                            1f,
+                            0f,
+                            0f,
+                            0f,
+                            0f,
+                            0f,
+                            1f,
+                            0f,
+                            0f,
+                            0f,
+                            0f,
+                            0f,
+                            3.2f,
+                            0f,
+                        )
+                    )
+                )
+        }
+    private val whiteTint = ColorFilter.tint(Color.White, BlendMode.SrcIn)
+    private val sunLiningTint = ColorFilter.tint(Color(0xFFFFF3D6), BlendMode.SrcIn)
+    private val moonLiningTint = ColorFilter.tint(Color(0xFFDDE6FF), BlendMode.SrcIn)
+    private val coronaTint = ColorFilter.tint(Color(0xFFE9E2FF), BlendMode.SrcIn)
+
+    /**
+     * The light of the sun or the moon round the clouds passing over it, drawn over the clouds: the
+     * cloud's thin edges near the light glow (its silver lining: the light scatters through the
+     * thin cloud and bends round it, while the thick middle stays dark); with the sun partly hidden
+     * its rays fan out through the gaps; with the moon behind thin cloud its light spreads into a
+     * soft corona.
+     */
+    private fun DrawScope.occultation(
+        sky: SkyColors,
+        orb: Offset,
+        w: Float,
+        top: Float,
+        horizon: Float,
+        ceiling: Float,
+        mirror: Boolean,
+        shift: Float,
+        seconds: Float,
+    ) {
+        val night = sky.phase == SkyPhase.NIGHT
+        val presence = if (night) moonLook.body else SunLook.up(sky.dark)
+        if (presence < .02f) return
+        val d = density
+        val reach = (if (night) 70f else 110f) * d
+        val dark = sky.dark > .8f
+        val count = if (dark) 3 else if (sky.dark > .3f) 4 else Ambient.CLOUDS
+        val strength = if (sky.phase == SkyPhase.DAY) 1f else if (dark) .8f else .94f
+        val room = CloudLayout.room(top, horizon, ceiling, d)
+        if (room <= 0f) return
+        val pool = SceneSprites.clouds
+        // which clouds come near the light
+        var near = false
+        for (i in 0 until count) {
+            val sp = pool[CloudSprites.of(clouds[i].kind)[clouds[i].variant]].sprite
+            place(i, w, top, horizon, ceiling, shift, seconds, strength, room, d)
+            val hw = sp.w * placeS / 2f + reach
+            val cy = placeBase - sp.h * placeS * .36f
+            if (abs(orb.x - placeX) < hw && abs(orb.y - cy) < sp.h * placeS / 2f + reach) {
+                near = true
+                break
+            }
+        }
+        if (!near) return
+        val tint = if (night) moonLiningTint else sunLiningTint
+        liningPaint.alpha = (presence * (if (night) .9f else .75f)).coerceIn(0f, 1f)
+        drawIntoCanvas {
+            it.saveLayer(
+                Rect(orb.x - reach, orb.y - reach, orb.x + reach, orb.y + reach),
+                liningPaint,
+            )
+        }
+        // the clouds' coverage A, then A taken away as much as it covers: A(1 - A), the edges
+        for (pass in 0..1) {
+            val blend = if (pass == 0) BlendMode.SrcOver else BlendMode.DstOut
+            for (i in 0 until count) {
+                val c = clouds[i]
+                val images = pool[CloudSprites.of(c.kind)[c.variant]]
+                val sp = images.sprite
+                place(i, w, top, horizon, ceiling, shift, seconds, strength, room, d)
+                val sx = if (mirror) -placeS else placeS
+                withTransform({
+                    translate(placeX, placeBase)
+                    scale(sx, placeS, Offset.Zero)
+                }) {
+                    val at = Offset(-sp.w / 2f, -sp.h * .86f)
+                    val f = if (pass == 0) tint else whiteTint
+                    drawImage(images.shade, at, placeA, colorFilter = f, blendMode = blend)
+                    drawImage(images.mid, at, placeA, colorFilter = f, blendMode = blend)
+                    drawImage(images.lit, at, placeA, colorFilter = f, blendMode = blend)
+                }
+            }
+        }
+        // only near the light: brightest round it, gone by [reach]
+        val n = LightSprites.POINT.toFloat()
+        val k = 2f * reach / n
+        withTransform({
+            translate(orb.x, orb.y)
+            scale(k, k, Offset.Zero)
+        }) {
+            drawImage(
+                SceneSprites.light.point,
+                Offset(-n / 2f, -n / 2f),
+                blendMode = BlendMode.DstIn,
+            )
+        }
+        drawIntoCanvas { it.restore() }
+        // partly hidden: most of all half way
+        val part = 4f * moonCover * (1f - moonCover)
+        if (part < .02f) return
+        if (night) {
+            // the moon's corona in thin cloud: its light spread into a soft ring round it
+            val m = SceneSprites.moon
+            translate(orb.x, orb.y) {
+                orbLayer(
+                    m.halo,
+                    m.sprite.halo,
+                    d,
+                    3.2f,
+                    3.2f,
+                    .35f * part * presence,
+                    coronaTint,
+                    BlendMode.Plus,
+                )
+            }
+        } else {
+            // the sun's rays through the gaps, fanning wide over the clouds
+            val sun = SceneSprites.sun
+            translate(orb.x, orb.y) {
+                rotate(seconds * SunLook.RAY_TURN * .5f, Offset.Zero) {
+                    orbLayer(
+                        sun.rays,
+                        sun.sprite.rays,
+                        d,
+                        2.2f,
+                        2.2f,
+                        .55f * part * presence,
+                        sunLiningTint,
+                        BlendMode.Plus,
+                    )
+                }
+            }
+        }
+    }
+
     /** How much of the moon the clouds in front of it hide this frame, 0 to 1 ([cover]). */
     private var moonCover = 0f
 
@@ -1008,7 +1184,10 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         val room = CloudLayout.room(top, horizon, ceiling, d)
         if (room <= 0f) return 0f
         val pool = SceneSprites.clouds
-        val r = SunMoonSprites.MOON_R * d * .7f
+        val r =
+            (if (sky.phase == SkyPhase.NIGHT) SunMoonSprites.MOON_R else SunMoonSprites.SUN_R) *
+                d *
+                .7f
         var through = 1f
         for (i in 0 until count) {
             val c = clouds[i]

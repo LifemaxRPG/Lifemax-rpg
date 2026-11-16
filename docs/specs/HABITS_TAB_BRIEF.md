@@ -467,3 +467,13 @@ head takes back 95% of the body's rocking. Each street look walks in its own `St
 (arm swing, one arm often less, bob, lean, roll, hips; the stride kept standard so the feet do not
 slide), its settle frames starting from its own passing pose. The street walk is baked at 64 frames a
 cycle (`StreetGait.FRAMES`); the street set's budget is 10 MB, the walkers' 6 MB (about 5.5 MB used).
+
+### As built: clouds over the sun and moon
+
+`Backdrop.cover` samples each cloud sprite's opacity at the sun's or moon's disc (middle and four rim
+points) as the clouds are placed this frame (`place`, shared with `clouds`), so a thick cloud hides
+the body (disc layers by clear², bloom and rays less, the lens flare by clear²). `occultation`, drawn
+over the clouds near the light: the clouds' coverage A, then DstOut by A again, leaves A(1-A), the
+thin edges, masked by `LightSprites.point` round the light and added with the alpha raised (the
+silver lining); half hidden (4·c·(1-c)) the sun's rays fan wide over the clouds and the moon's halo
+spreads into a soft corona.
