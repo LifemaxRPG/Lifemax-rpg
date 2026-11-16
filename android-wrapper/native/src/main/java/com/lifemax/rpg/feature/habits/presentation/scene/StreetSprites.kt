@@ -2,7 +2,6 @@ package com.lifemax.rpg.feature.habits.presentation.scene
 
 import com.lifemax.rpg.feature.habits.domain.CycleRig
 import com.lifemax.rpg.feature.habits.domain.DogRig
-import com.lifemax.rpg.feature.habits.domain.FigBuilder
 import com.lifemax.rpg.feature.habits.domain.Shape
 import com.lifemax.rpg.feature.habits.domain.StreetGait
 import com.lifemax.rpg.feature.habits.domain.StreetLife
@@ -12,7 +11,6 @@ import com.lifemax.rpg.feature.habits.domain.WalkerJoints
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
@@ -61,33 +59,15 @@ internal object StreetSprites {
     /** Pixels to a unit for the near car (it is big). */
     const val CAR_PPU = 3f
 
-    /** Pixels left round a figure for its glow, and round the car for its lamps' bloom. */
-    private const val PAD = 3
+    /** Pixels left round the car for its lamps' bloom. */
     private const val CAR_PAD = 20
 
     /** The bicycle's rider is this look. */
     const val RIDER = 3
 
-    private fun bake(shapes: List<Shape>, size: Float, ppu: Float): Sprite {
-        val b = FigBuilder.bounds(shapes)
-        val x0 = floor(b[0] * size * ppu).toInt() - PAD
-        val y0 = floor(b[1] * size * ppu).toInt() - PAD
-        val x1 = ceil(b[2] * size * ppu).toInt() + PAD
-        val y1 = ceil(b[3] * size * ppu).toInt() + PAD
-        val full =
-            PeopleRaster.figure(
-                shapes,
-                x1 - x0,
-                y1 - y0,
-                size * ppu,
-                -x0.toFloat(),
-                -y0.toFloat(),
-                emptyList(),
-                false,
-                PeopleRaster.STREET,
-            )
-        return PeopleSprites.crop(full)
-    }
+    /** The shapes in their own colours ([StreetRaster]), at [size] times the rig. */
+    private fun bake(shapes: List<Shape>, size: Float, ppu: Float): Sprite =
+        StreetRaster.bake(shapes, size * ppu)
 
     /**
      * Walker [look]'s frame [frame] ([StreetRig.TOTAL_FRAMES] of them), at [StreetLife.SIZE] times
@@ -133,21 +113,42 @@ internal object StreetSprites {
             }
             c.fill(0x14171E) { x, y -> circle(x, y, cx, cy, .35f * ppu) }
         } else {
-            for (i in 0 until spokes) {
-                val a = i / spokes.toFloat() * Math.PI.toFloat()
-                c.fill(0xB8BEC8, .85f) { x, y ->
+            // twice [spokes] fine spokes, laced as a real wheel is: each leaves the hub's flange
+            // to one side of the line to its spot on the rim, so they cross
+            val rim = R - tyre * ppu - .45f * ppu
+            val n = spokes * 2
+            for (i in 0 until n) {
+                val a = i / n.toFloat() * 2f * Math.PI.toFloat()
+                val h = a + (if (i % 2 == 0) .55f else -.55f)
+                c.fill(0xAEB4BE, .6f) { x, y ->
                     segment(
                         x,
                         y,
-                        cx - cos(a) * (R - tyre * ppu),
-                        cy - sin(a) * (R - tyre * ppu),
-                        cx + cos(a) * (R - tyre * ppu),
-                        cy + sin(a) * (R - tyre * ppu),
-                        .12f * ppu,
+                        cx + cos(h) * hubR * ppu * .8f,
+                        cy + sin(h) * hubR * ppu * .8f,
+                        cx + cos(a) * rim,
+                        cy + sin(a) * rim,
+                        .07f * ppu,
                     )
                 }
             }
-            c.fill(0x3A3F4A) { x, y -> circle(x, y, cx, cy, hubR * ppu) }
+            // the rim's inner, darker lip and the hub's flange
+            c.fill(0x5A606A) { x, y -> ring(x, y, cx, cy, rim + .05f * ppu, rim - .16f * ppu) }
+            c.fill(0x8E949E) { x, y -> circle(x, y, cx, cy, hubR * ppu) }
+            c.fill(0x3A3F4A) { x, y -> circle(x, y, cx, cy, hubR * ppu * .55f) }
+            // a reflector clipped to two spokes, so the turning reads (and it catches a lamp)
+            val ra = .3f
+            c.fill(0xD8862A, .9f) { x, y ->
+                roundRect(
+                    x,
+                    y,
+                    cx + cos(ra) * rim * .62f - .45f * ppu,
+                    cy + sin(ra) * rim * .62f - .3f * ppu,
+                    cx + cos(ra) * rim * .62f + .45f * ppu,
+                    cy + sin(ra) * rim * .62f + .3f * ppu,
+                    .15f * ppu,
+                )
+            }
         }
         return Sprite(n, n, ppu, cx, cy, c.argb())
     }

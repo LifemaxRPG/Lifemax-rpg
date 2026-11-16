@@ -80,70 +80,73 @@ internal class StreetLifePainter {
     private val dayRimFilter = ColorFilter.tint(Color(0xFFF2F5FA), BlendMode.SrcIn)
 
     /**
-     * A walker by day: the figures are baked warm and glowing for lamp-lit nights; in daylight a
-     * person in the street is a cool, flat, dark shape with only a little modelling, so their tones
-     * are taken to cool greys by brightness and the baked glow round them is cut away.
+     * The people are baked in their own colours, lit from above ([StreetRaster]). By day they are
+     * shown as they are, the faintest cool grade taking the edge off the paint against the daylit
+     * street.
      */
+    private val dayFigure =
+        ColorFilter.colorMatrix(
+            ColorMatrix(
+                floatArrayOf(
+                    .97f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    .98f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    1f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    1f,
+                    0f,
+                )
+            )
+        )
+
     /**
-     * A walker at night: the same flattening as by day, darker and a touch bluer (a figure out of
-     * the lamp's pool is a dark shape against the lit street), so nobody glows orange; the lamps
-     * only lend a faint warm edge and a little warmth over them.
+     * At night: the same people as the eye sees them out of the lamps' pools: about two fifths as
+     * bright, cooler, their colours muted by about two fifths but still there, never warm (the
+     * lamps lend their own warmth over them, [lampsOn]). Each row takes the colour towards its
+     * brightness (Rec. 709 weights) and scales it, the blue the least; the offsets are the night
+     * air's faint blue.
      */
     private val nightFigure =
         ColorFilter.colorMatrix(
             ColorMatrix(
                 floatArrayOf(
-                    .07f,
-                    .14f,
-                    .027f,
+                    .26f,
+                    .109f,
+                    .011f,
+                    0f,
+                    3f,
+                    .036f,
+                    .372f,
+                    .012f,
+                    0f,
+                    5f,
+                    .043f,
+                    .143f,
+                    .315f,
                     0f,
                     10f,
-                    .075f,
-                    .15f,
-                    .03f,
-                    0f,
-                    12f,
-                    .09f,
-                    .18f,
-                    .035f,
-                    0f,
-                    20f,
                     0f,
                     0f,
                     0f,
-                    1.7f,
-                    -178f,
+                    1f,
+                    0f,
                 )
             )
         )
 
-    private val dayFigure =
-        ColorFilter.colorMatrix(
-            ColorMatrix(
-                floatArrayOf(
-                    .105f,
-                    .206f,
-                    .039f,
-                    0f,
-                    20f,
-                    .114f,
-                    .224f,
-                    .042f,
-                    0f,
-                    24f,
-                    .135f,
-                    .266f,
-                    .05f,
-                    0f,
-                    32f,
-                    0f,
-                    0f,
-                    0f,
-                    1.7f,
-                    -178f,
-                )
-            )
-        )
     private val moonRimFilter = ColorFilter.tint(Color(0xFFC9D6FF), BlendMode.SrcIn)
 
     /** A foot's soft contact shadow: a unit disc fading out. */
@@ -176,6 +179,14 @@ internal class StreetLifePainter {
     private val tail =
         Brush.radialGradient(
             listOf(Color(0xFFFF4A30).copy(alpha = .55f), Color.Transparent),
+            Offset.Zero,
+            1f,
+        )
+
+    /** A bicycle's head lamp: a cool white unit disc, drawn additively. */
+    private val bikeLamp =
+        Brush.radialGradient(
+            listOf(Color(0xFFF2F6FF), Color(0xFFDDE6FF).copy(alpha = .35f), Color.Transparent),
             Offset.Zero,
             1f,
         )
@@ -521,8 +532,9 @@ internal class StreetLifePainter {
                     val s = NearLight.lampFall(d) * dark
                     if (s > lamp) lamp = s
                 }
-            // the feet's contact shadows (the walker's; a bicycle and a dog have their own)
-            if (p.kind != Stroller.CYCLIST) contacts(p, p.look, p.frame, p.x, p.lane, persp)
+            // the feet's contact shadows, or the bicycle's under its tyres and frame
+            if (p.kind == Stroller.CYCLIST) cycleContacts(p, persp)
+            else contacts(p, p.look, p.frame, p.x, p.lane, persp)
             if (p.kind == Stroller.PAIR)
                 contacts(
                     p,
@@ -553,6 +565,7 @@ internal class StreetLifePainter {
             if (day > .01f) party(p, persp, day, dayFigure, PLAIN)
             // the street lamps' light on them, falling off across them from each lens
             if (dark > .2f) lampsOn(p, persp, lamps, dark)
+            if (dark > .2f && p.kind == Stroller.CYCLIST) cycleLamps(p, persp, dark)
             if (p.kind == Stroller.DOG_WALKER) lead(p, persp)
         }
     }
@@ -613,6 +626,53 @@ internal class StreetLifePainter {
         val s = StreetLife.SIZE * persp
         foot(x + p.dir * j.footNX * s, y, j.footNH * s)
         foot(x + p.dir * j.footFX * s, y, j.footFH * s)
+    }
+
+    /**
+     * The bicycle's shadow where it meets the pavement: a dark patch under each tyre and a soft
+     * shade under the whole of it, deepest under the cranks.
+     */
+    private fun DrawScope.cycleContacts(p: Passer, persp: Float) {
+        val s = StreetLife.SIZE * persp
+        val half = CycleRig.WHEELBASE / 2f * s
+        translate(p.x + p.dir * CycleRig.BB_X * s, p.lane) {
+            scale(half + StreetGait.WHEEL_R * s * .7f, 1.5f, Offset.Zero) {
+                drawCircle(contact, 1f, Offset.Zero, alpha = .55f)
+            }
+        }
+        foot(p.x - half, p.lane, 0f)
+        foot(p.x + half, p.lane, 0f)
+    }
+
+    /**
+     * The bicycle's lamps at night: the head lamp's cool white glow and the little pool it throws
+     * on the pavement ahead, and the tail lamp's red.
+     */
+    private fun DrawScope.cycleLamps(p: Passer, persp: Float, dark: Float) {
+        val s = StreetLife.SIZE * persp
+        val hx = p.x + p.dir * (CycleRig.LAMP_X + .5f) * s
+        val hy = p.lane + CycleRig.LAMP_Y * s
+        translate(hx, hy) {
+            scale(2.2f * s, 2.2f * s, Offset.Zero) {
+                drawCircle(bikeLamp, 1f, Offset.Zero, alpha = dark, blendMode = BlendMode.Plus)
+            }
+        }
+        translate(hx + p.dir * 9f * s, p.lane) {
+            scale(8f * s, 1.4f * s, Offset.Zero) {
+                drawCircle(
+                    bikeLamp,
+                    1f,
+                    Offset.Zero,
+                    alpha = .3f * dark,
+                    blendMode = BlendMode.Plus,
+                )
+            }
+        }
+        translate(p.x + p.dir * (CycleRig.TAIL_X - .3f) * s, p.lane + CycleRig.TAIL_Y * s) {
+            scale(1.6f * s, 1.6f * s, Offset.Zero) {
+                drawCircle(tail, 1f, Offset.Zero, alpha = dark, blendMode = BlendMode.Plus)
+            }
+        }
     }
 
     private fun DrawScope.foot(x: Float, y: Float, lift: Float) {
