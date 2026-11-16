@@ -79,6 +79,7 @@ import com.lifemax.rpg.feature.habits.domain.centred
 import com.lifemax.rpg.feature.habits.domain.focusCamera
 import com.lifemax.rpg.feature.habits.domain.hit
 import com.lifemax.rpg.feature.habits.domain.lerp
+import com.lifemax.rpg.feature.habits.domain.orbAt
 import com.lifemax.rpg.feature.habits.domain.orbSpot
 import com.lifemax.rpg.feature.habits.domain.position
 import com.lifemax.rpg.feature.habits.domain.rubberBand
@@ -328,6 +329,7 @@ private fun StageCanvas(
     val seasonFall = remember { SeasonFall() }
     val foregroundPainter = remember { ForegroundPainter() }
     val sunGlare = remember { SunGlare() }
+    val backlight = remember { Backlight() }
     val sky = remember(p.hour) { skyColors(p.hour) }
     // the day's weather at this hour (or the one a test forces), and the key light under it
     val forced = WeatherOverride.forced
@@ -754,6 +756,30 @@ private fun StageCanvas(
         val ceiling =
             if (layouts.isEmpty()) f.ground - reach * f.unit
             else lerp(still, f.ground - reach * f.unit, f.zoom)
+        val fades = layouts.isNotEmpty() && f.ground - reach * f.unit < f.top + TOP_FADE * d
+        // the buildings' outlines round the sun, for its glare where it peeks past an edge: none
+        // over the heading, nor where the fade under it has rubbed them out (half way down it)
+        sunEdge(sunGlare.edge, layouts, arts, street, f, from, to)
+        sunGlare.edge.ceiling = if (fades) f.top + TOP_FADE * d * .5f else f.top
+        val sunR = SunMoonSprites.SUN_R * d
+        val sunAt = Offset(orb.first * d, orb.second * d)
+        sunGlare.edge.measure(sunAt.x, sunAt.y, sunR)
+        // how far the camera looks into the sun (the cloud across it as last drawn)
+        backlight.update(
+            sky,
+            orbAt(p.hour).second,
+            weather.cloudiness,
+            backdrop.sunCover,
+            weather.mist,
+            sunAt,
+            sunR,
+            sunGlare.edge,
+            f.zoom,
+            this.size.width,
+            this.size.height,
+            seconds,
+        )
+        backdrop.backlit = backlight.amount
         with(backdrop) {
             backdrop(
                 p.hour,
@@ -766,14 +792,12 @@ private fun StageCanvas(
                 seconds,
             )
         }
-        val fades = layouts.isNotEmpty() && f.ground - reach * f.unit < f.top + TOP_FADE * d
-        // the buildings' outlines round the sun, for its glare where it peeks past an edge: none
-        // over the heading, nor where the fade under it has rubbed them out (half way down it)
-        sunEdge(sunGlare.edge, layouts, arts, street, f, from, to)
-        sunGlare.edge.ceiling = if (fades) f.top + TOP_FADE * d * .5f else f.top
-        val sunR = SunMoonSprites.SUN_R * d
-        sunGlare.edge.measure(orb.first * d, orb.second * d, sunR)
-        if (fades)
+        // shooting into a low sun: the sky warmed and blown out round it
+        with(backlight) { sky(sky, sunAt, horizon) }
+        // the street in a layer of its own when the top fades out under the heading, or when it
+        // is exposed for the sky behind it
+        val layered = fades || backlight.amount > 0f
+        if (layered)
             drawIntoCanvas { it.saveLayer(Rect(0f, 0f, this.size.width, this.size.height), layer) }
         clipRect(0f, f.top, this.size.width, this.size.height) {
             withTransform({
@@ -848,6 +872,37 @@ private fun StageCanvas(
                 }
             }
             cloudShade(light, backdrop, layouts, street, f, horizon, d, shadePath, shadeBrush)
+            if (backlight.amount > 0f) {
+                // exposed for the sky: the street dark in front of it, then its lights given back
+                with(backlight) { expose(sky) }
+                withTransform({
+                    translate(this@Canvas.size.width / 2f - f.middle * f.unit, f.ground)
+                    scale(f.unit, f.unit, Offset.Zero)
+                }) {
+                    with(painter) {
+                        val detailed = f.scale > .55f
+                        for (i in layouts.indices) {
+                            val l = street.lefts[i]
+                            if (l + layouts[i].lot + B.DX < from || l - 20f > to) continue
+                            translate(street.centers[i], 0f) {
+                                relight(
+                                    arts[i],
+                                    if (i == focus) lively else rest.still(seconds),
+                                    ui.selected.takeIf { i == focus && f.zoom == 0f },
+                                    accent,
+                                    live,
+                                    detailed,
+                                    sky,
+                                    backlight,
+                                    f.screenX(street.centers[i]),
+                                    f.ground,
+                                    f.unit,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
         if (fades) {
             // rub the layer out above the window, and ever less over the fade under it
@@ -858,8 +913,8 @@ private fun StageCanvas(
                 Size(this.size.width, end),
                 blendMode = BlendMode.DstOut,
             )
-            drawIntoCanvas { it.restore() }
         }
+        if (layered) drawIntoCanvas { it.restore() }
         // the near layer: a few dark, soft things between the camera and the street, sliding
         // faster than it
         with(foregroundPainter) {
@@ -879,16 +934,20 @@ private fun StageCanvas(
                 seconds,
             )
         }
+        // shooting into a low sun: the light over the silhouettes' edges, the warm haze, the
+        // shafts and the dust in them
+        with(backlight) { air(sky, sunAt, sunGlare.edge, seconds) }
         // the sun at a building's edge: its glare over the silhouette that hides part of it
         with(sunGlare) {
             glare(
                 sky,
-                Offset(orb.first * d, orb.second * d),
+                sunAt,
                 sunR,
                 weather.cloudiness,
                 backdrop.sunCover,
                 weather.mist,
                 f.skyTop,
+                backlight.amount,
             )
         }
         // the finish: a very faint vignette (the corners a little deeper) and fine film grain over

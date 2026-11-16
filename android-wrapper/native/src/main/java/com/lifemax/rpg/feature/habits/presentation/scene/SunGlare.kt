@@ -109,7 +109,9 @@ internal class SunGlare {
     /**
      * The glare for the sun at [orb] (px), radius [r] (px), as [edge] measured it; [cloud] the
      * overcast's share, [cover] how far a cloud is across the sun, [mist] the morning fog's share,
-     * never over the heading (clipped under [top]).
+     * never over the heading (clipped under [top]). [boost] is how far the camera looks into the
+     * sun ([Backlight.amount]): the bloom fuller, the rays longer, the rim hotter and reaching
+     * further along the edges.
      */
     fun DrawScope.glare(
         sky: SkyColors,
@@ -119,6 +121,7 @@ internal class SunGlare {
         cover: Float,
         mist: Float,
         top: Float,
+        boost: Float = 0f,
     ) {
         if (sky.phase == SkyPhase.NIGHT) return
         // the share shown moves in steps of one sample of the disc as the street scrolls; eased
@@ -134,9 +137,11 @@ internal class SunGlare {
         val m = mist.coerceIn(0f, 1f)
         val sharp = up * (1f - c) * open * open
         val soft = up * (1f - .8f * c) * open
+        val b = boost.coerceIn(0f, 1f)
         val spikes = SunEdge.spikes(v) * sharp * (1f - .7f * m)
-        val bloom = SunEdge.bloom(v) * soft
-        val rim = SunEdge.rim(v, edge.near) * soft * (1f - .4f * m)
+        val bloom = SunEdge.bloom(v) * soft * (1f + .7f * b)
+        val rim = SunEdge.rim(v, edge.near) * soft * (1f - .4f * m) * (1f + 1.4f * b)
+        rimReach = 1f + .7f * b
         if (spikes < .01f && bloom < .01f && rim < .01f) return
         tints(sky)
         val d = density
@@ -159,11 +164,11 @@ internal class SunGlare {
             val at = Offset(edge.peekX, edge.peekY)
             // the warm haze, then the bloom added over the silhouette's edge (eating it)
             layer(sun.sky, p.sky, at, .42f, .2f * bloom * (1f + .6f * m), hazeTint)
-            layer(sun.bloom, p.bloom, at, 1f + .35f * bloom, .62f * bloom, bloomTint)
+            layer(sun.bloom, p.bloom, at, 1f + .35f * bloom + .8f * b, .62f * bloom, bloomTint)
             layer(sun.core, p.core, at, 1.05f, .45f * max(bloom, spikes), coreTint)
             if (spikes >= .01f) {
                 val turn = SunEdge.turn(at.x, at.y, size.width, size.height)
-                val reach = (40f + 64f * spikes) * d
+                val reach = (40f + 64f * spikes) * (1f + .75f * b) * d
                 val img = GlareSprites.image
                 for (k in SunEdge.RAY_ANGLE.indices) {
                     val len = reach * SunEdge.RAY_LENGTH[k]
@@ -223,8 +228,8 @@ internal class SunGlare {
     private fun DrawScope.rim(orb: Offset, r: Float, k: Float) {
         val e = edge
         val d = density
-        val reach = r * RIM_REACH
-        val fall = r * RIM_FALL
+        val reach = r * RIM_REACH * rimReach
+        val fall = r * RIM_FALL * rimReach
         val piece = max(2f, r * .45f)
         for (i in 0 until e.count) {
             if (!e.nearBox(i, orb.x, orb.y, reach)) continue
@@ -321,6 +326,9 @@ internal class SunGlare {
             }
         }
     }
+
+    /** How much further than [RIM_REACH] the rim reaches this frame (shooting into the sun). */
+    private var rimReach = 1f
 
     private val hx = FloatArray(6)
     private val hy = FloatArray(6)

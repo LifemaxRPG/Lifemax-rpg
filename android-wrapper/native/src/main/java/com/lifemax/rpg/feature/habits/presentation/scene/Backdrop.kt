@@ -723,6 +723,12 @@ internal class Backdrop(private val seed: Int, day: String = "") {
      */
     var sunClear = 1f
 
+    /**
+     * How far the camera looks into the sun ([Backlight.amount]), set by the stage: the flare
+     * stronger, its streak longer.
+     */
+    var backlit = 0f
+
     /** How far a cloud is across the sun now (0 clear to 1), for its glare at a building's edge. */
     val sunCover: Float
         get() = moonCover
@@ -747,7 +753,8 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 SunLook.up(sky.dark) *
                 (1f - cloudiness.coerceIn(0f, 1f)) *
                 (1f - moonCover) *
-                (1f - moonCover)
+                (1f - moonCover) *
+                (1f + 1.2f * backlit.coerceIn(0f, 1f))
         if (k < .01f) return
         if (flareKey !== sky) {
             val base = lerp(sky.halo.copy(alpha = 1f), Color.White, .35f)
@@ -762,7 +769,7 @@ internal class Backdrop(private val seed: Int, day: String = "") {
         val f = SceneSprites.flare
         val sp = f.sprite
         clipRect(0f, top, w, h) {
-            val s = d / sp.streakPpd * 1.4f
+            val s = d / sp.streakPpd * 1.4f * (1f + .5f * backlit.coerceIn(0f, 1f))
             withTransform({
                 translate(orb.x, orb.y)
                 scale(s, s * .85f, Offset.Zero)
