@@ -2,7 +2,6 @@ package com.lifemax.rpg.feature.habits.presentation.scene
 
 import kotlin.math.abs
 import kotlin.math.exp
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -68,13 +67,16 @@ internal object RoadSkySprites {
     /** Pixels in a dp of the light sprites and the streak. */
     const val PX_PER_DP = 2f
 
-    /** The vehicles of the far road: three cars of different shapes and colours, and a van. */
+    /**
+     * The vehicles of the far road: three cars of different shapes and colours, and a people
+     * carrier, each the front road's car of that shape made small ([generate]).
+     */
     val VEHICLES: List<VehicleSpec> =
         listOf(
-            VehicleSpec(VehicleKind.HATCH, 44, 20, 0xD23B30),
-            VehicleSpec(VehicleKind.SEDAN, 48, 20, 0xDCE1E8),
-            VehicleSpec(VehicleKind.SUV, 44, 22, 0x2E63A6),
-            VehicleSpec(VehicleKind.VAN, 56, 26, 0xE8DEC4),
+            VehicleSpec(VehicleKind.HATCH, 44, 20, 0xA3201F),
+            VehicleSpec(VehicleKind.SEDAN, 48, 20, 0xD2D6DB),
+            VehicleSpec(VehicleKind.SUV, 48, 22, 0x2A4E80),
+            VehicleSpec(VehicleKind.VAN, 52, 24, 0xE6E4DE),
         )
 
     /** The soft round glow: a light's bloom, a pool on the road, a sparkle. Square. */
@@ -95,127 +97,6 @@ internal object RoadSkySprites {
             BEAM_W * BEAM_H * 4 +
             STREAK_W * STREAK_H * 4 * 2
 
-    // ---- a small painter: float RGBA, composited over, anti-aliased shapes from signed distances
-
-    private class Canvas(val w: Int, val h: Int) {
-        val px = FloatArray(w * h * 4)
-
-        fun over(i: Int, r: Float, g: Float, b: Float, a: Float) {
-            if (a <= 0f) return
-            val k = i * 4
-            val da = px[k + 3]
-            val oa = a + da * (1f - a)
-            if (oa <= 0f) return
-            px[k] = (r * a + px[k] * da * (1f - a)) / oa
-            px[k + 1] = (g * a + px[k + 1] * da * (1f - a)) / oa
-            px[k + 2] = (b * a + px[k + 2] * da * (1f - a)) / oa
-            px[k + 3] = oa
-        }
-
-        /** Paints [rgb] wherever [sdf] (in pixels, negative inside) says so, [alpha] strong. */
-        fun fill(
-            rgb: Int,
-            alpha: Float = 1f,
-            shade: ((Float, Float) -> Float)? = null,
-            sdf: (Float, Float) -> Float,
-        ) {
-            val r = (rgb shr 16 and 255) / 255f
-            val g = (rgb shr 8 and 255) / 255f
-            val b = (rgb and 255) / 255f
-            for (y in 0 until h) for (x in 0 until w) {
-                val cx = x + .5f
-                val cy = y + .5f
-                val cov = Px.clamp01(.5f - sdf(cx, cy))
-                if (cov <= 0f) continue
-                val s = shade?.invoke(cx, cy) ?: 1f
-                over(
-                    y * w + x,
-                    Px.clamp01(r * s),
-                    Px.clamp01(g * s),
-                    Px.clamp01(b * s),
-                    cov * alpha,
-                )
-            }
-        }
-
-        /** A soft (unfeathered) alpha field of one colour: [field] is the alpha at a pixel. */
-        fun soft(rgb: Int, field: (Float, Float) -> Float) {
-            val r = (rgb shr 16 and 255) / 255f
-            val g = (rgb shr 8 and 255) / 255f
-            val b = (rgb and 255) / 255f
-            for (y in 0 until h) for (x in 0 until w) {
-                val a = Px.clamp01(field(x + .5f, y + .5f))
-                if (a > 0f) over(y * w + x, r, g, b, a)
-            }
-        }
-
-        fun argb(): IntArray =
-            IntArray(w * h) {
-                val k = it * 4
-                val a = px[k + 3]
-                if (a <= 0f) 0 else Px.argbF(a, px[k], px[k + 1], px[k + 2])
-            }
-    }
-
-    private fun roundRect(
-        x: Float,
-        y: Float,
-        x0: Float,
-        y0: Float,
-        x1: Float,
-        y1: Float,
-        r: Float,
-    ): Float {
-        val cx = (x0 + x1) / 2f
-        val cy = (y0 + y1) / 2f
-        val qx = abs(x - cx) - ((x1 - x0) / 2f - r)
-        val qy = abs(y - cy) - ((y1 - y0) / 2f - r)
-        val ox = max(qx, 0f)
-        val oy = max(qy, 0f)
-        return sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0f) - r
-    }
-
-    private fun circle(x: Float, y: Float, cx: Float, cy: Float, r: Float): Float {
-        val dx = x - cx
-        val dy = y - cy
-        return sqrt(dx * dx + dy * dy) - r
-    }
-
-    /**
-     * A convex polygon ([xs], [ys] clockwise on a y-down canvas): the greatest of the distances to
-     * its edges' lines, exact along the edges and near enough at the corners for anti-aliasing.
-     */
-    private fun poly(x: Float, y: Float, xs: FloatArray, ys: FloatArray): Float {
-        var d = -1e9f
-        val n = xs.size
-        for (i in 0 until n) {
-            val j = (i + 1) % n
-            val ex = xs[j] - xs[i]
-            val ey = ys[j] - ys[i]
-            val len = sqrt(ex * ex + ey * ey)
-            // the outward normal of a clockwise edge on a y-down canvas
-            val nx = ey / len
-            val ny = -ex / len
-            d = max(d, (x - xs[i]) * nx + (y - ys[i]) * ny)
-        }
-        return d
-    }
-
-    /**
-     * A trapezoid standing on [yb] with its top at [yt]: bottom from [bx0] to [bx1], top from [tx0]
-     * to [tx1].
-     */
-    private fun trapezoid(
-        x: Float,
-        y: Float,
-        bx0: Float,
-        bx1: Float,
-        yb: Float,
-        tx0: Float,
-        tx1: Float,
-        yt: Float,
-    ): Float = poly(x, y, floatArrayOf(tx0, tx1, bx1, bx0), floatArrayOf(yt, yt, yb, yb))
-
     private fun mix(a: Int, b: Int, t: Float): Int {
         fun ch(s: Int) = Px.mix((a shr s and 255).toFloat(), (b shr s and 255).toFloat(), t).toInt()
         return (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
@@ -224,223 +105,55 @@ internal object RoadSkySprites {
     // ---- the vehicles
 
     /**
-     * The shape of a vehicle, in dp from its left edge, the road at y = 0 and up positive: the body
-     * (a rounded box from [x0] to [x1], [bodyBottom] to [bodyTop]), the cabin (a trapezoid standing
-     * on the body, from [cab0] to [cab1] at its foot and [roof0] to [roof1] at [roofY]), the wheels
-     * (centres [wheel0] and [wheel1], radius [wheelR]) and whether the cabin's back is a panel (a
-     * van) or glass.
+     * Pixels a street unit the far road's vehicles are made at: about a fifth of the near car's.
      */
-    private class Shape(
-        val x0: Float,
-        val x1: Float,
-        val bodyBottom: Float,
-        val bodyTop: Float,
-        val cab0: Float,
-        val cab1: Float,
-        val roof0: Float,
-        val roof1: Float,
-        val roofY: Float,
-        val wheel0: Float,
-        val wheel1: Float,
-        val wheelR: Float,
-        val panelBack: Boolean,
-    )
+    private const val SMALL_PPU = .62f
 
-    private fun shape(kind: VehicleKind): Shape =
+    /** The near road's body ([CarArt]) each far one is made from. */
+    private fun body(kind: VehicleKind): Int =
         when (kind) {
-            VehicleKind.HATCH ->
-                Shape(
-                    .7f,
-                    9.6f,
-                    .55f,
-                    1.95f,
-                    2.6f,
-                    7.9f,
-                    3.2f,
-                    6.5f,
-                    3.35f,
-                    2.5f,
-                    7.8f,
-                    .58f,
-                    false,
-                )
-            VehicleKind.SEDAN ->
-                Shape(.7f, 10.6f, .55f, 1.8f, 3.1f, 8.6f, 4.3f, 7.1f, 3.1f, 2.6f, 8.6f, .58f, false)
-            VehicleKind.SUV ->
-                Shape(.7f, 9.8f, .7f, 2.3f, 2.3f, 8.6f, 2.8f, 7.4f, 3.75f, 2.5f, 8.0f, .66f, false)
-            VehicleKind.VAN ->
-                Shape(
-                    .7f,
-                    12.6f,
-                    .6f,
-                    2.3f,
-                    1.2f,
-                    12.1f,
-                    1.5f,
-                    11.0f,
-                    4.5f,
-                    2.8f,
-                    10.4f,
-                    .62f,
-                    true,
-                )
+            VehicleKind.HATCH -> 1
+            VehicleKind.SEDAN -> 0
+            VehicleKind.SUV -> 2
+            VehicleKind.VAN -> 5
         }
 
+    /**
+     * Vehicle [index] of [VEHICLES]: the front road's car of that shape, in its paint, made small
+     * (each pixel the average of the full-size picture under it), with its lenses marked so they
+     * read at this size; by night the paint is mostly the night's blue and the lenses are lit.
+     */
     fun generate(index: Int): VehicleSprite {
         val spec = VEHICLES[index]
-        val s = shape(spec.kind)
-        val day = paint(spec, s, false)
-        val night = paint(spec, s, true)
-        val k = CAR_PX_PER_DP
-        val roadY = spec.h - 4f
-        val lightY = roadY - (s.bodyBottom + (s.bodyTop - s.bodyBottom) * .55f) * k
-        return VehicleSprite(
-            spec.w,
-            spec.h,
-            day.argb(),
-            night.argb(),
-            frontX = s.x1 * k - 1.5f,
-            backX = s.x0 * k + 1.5f,
-            lightY = lightY,
-            roadY = roadY,
-        )
-    }
-
-    private fun paint(spec: VehicleSpec, s: Shape, night: Boolean): Canvas {
+        val b = body(spec.kind)
         val w = spec.w
         val h = spec.h
-        val c = Canvas(w, h)
-        val k = CAR_PX_PER_DP
         val roadY = h - 4f
-        // from dp above the road to pixels down the picture
-        fun py(up: Float) = roadY - up * k
-        fun pxl(dp: Float) = dp * k
-        val body = if (night) 0x121830 else spec.paint
-        val glass = if (night) 0x0A0E1C else mix(0x2A3A58, spec.paint, .12f)
-        val tyre = if (night) 0x07090F else 0x1A1D24
-        val hub = if (night) 0x262B3A else 0x7A808C
-        val light = if (night) 0.38f else 1f
+        val cx = w / 2f
+        val half = CarArt.length(b) / 2f * SMALL_PPU
+        val lightY = roadY - CarArt.lampUp(b) * SMALL_PPU
+        val frontX = cx + half - 1.5f
+        val backX = cx - half + 1.5f
+        val day = CarArt.small(b, spec.paint, false, SMALL_PPU, w, h, cx, roadY)
+        val night =
+            CarArt.small(b, mix(spec.paint, 0x0B0E18, .82f), true, SMALL_PPU, w, h, cx, roadY)
+        // the same shape by night as by day, to the pixel
+        for (i in night.indices) night[i] = (day[i] and -0x1000000) or (night[i] and 0xFFFFFF)
+        lens(day, w, frontX, lightY, 0xFFF1C8, .9f)
+        lens(day, w, backX, lightY, 0xB8302A, .9f)
+        lens(night, w, frontX, lightY, 0xFFF8E6, 1f)
+        lens(night, w, backX, lightY, 0xFF5A48, 1f)
+        return VehicleSprite(w, h, day, night, frontX, backX, lightY, roadY)
+    }
 
-        // the contact shadow: a soft dark ellipse under the car, deeper under its middle
-        val mid = pxl((s.x0 + s.x1) / 2f)
-        val half = pxl((s.x1 - s.x0) / 2f) - 1f
-        c.soft(0x060812) { x, y ->
-            val ex = (x - mid) / half
-            val ey = (y - roadY) / pxl(.55f)
-            val r = sqrt(ex * ex + ey * ey)
-            .5f * Px.smooth(1f, .25f, r) * Px.smooth(roadY + pxl(.7f), roadY - pxl(.3f), y)
-        }
-        // the body: a rounded box, lighter along its top where the sky lights it, darker at its
-        // sill
-        val bTop = py(s.bodyTop)
-        val bBottom = py(s.bodyBottom)
-        c.fill(
-            body,
-            shade = { _, y ->
-                val t = Px.clamp01((y - bTop) / (bBottom - bTop))
-                (if (night) 1.25f - .5f * t else 1.22f - .42f * t) * light.coerceAtLeast(.85f)
-            },
-        ) { x, y ->
-            roundRect(x, y, pxl(s.x0), bTop, pxl(s.x1), bBottom, pxl(.42f))
-        }
-        // the cabin, a little set in from the body's sides, with its roof lit
-        c.fill(
-            body,
-            shade = { _, y ->
-                val t = Px.clamp01((y - py(s.roofY)) / (bTop - py(s.roofY)))
-                (if (night) 1.35f - .45f * t else 1.3f - .32f * t)
-            },
-        ) { x, y ->
-            trapezoid(
-                x,
-                y,
-                pxl(s.cab0),
-                pxl(s.cab1),
-                bTop + 1f,
-                pxl(s.roof0),
-                pxl(s.roof1),
-                py(s.roofY),
-            )
-        }
-        // the glass: the cabin's inside, less its pillars; split by the B pillar; a van's back is
-        // panel
-        val pillar = pxl(.22f)
-        val gBottom = bTop - pxl(.12f)
-        val gTop = py(s.roofY) + pxl(.26f)
-        val span = s.cab1 - s.cab0
-        val bPillar = pxl(s.cab0 + span * (if (s.panelBack) .62f else .5f))
-        val glassFrom = if (s.panelBack) bPillar + pillar * .5f else pxl(s.cab0) + pillar
-        c.fill(
-            glass,
-            shade = { x, y ->
-                // the sky in the glass: brighter towards the top left, a diagonal glint across it
-                val u = (x - glassFrom) / (pxl(s.cab1) - glassFrom)
-                val v = Px.clamp01((y - gTop) / (gBottom - gTop))
-                val glint = Px.smooth(.18f, 0f, abs(u * .7f + v * .5f - .42f))
-                (if (night) .9f + .5f * (1f - v) + glint * .7f
-                else 1f + .55f * (1f - v) - .25f * u + glint * .9f)
-            },
-        ) { x, y ->
-            val cab =
-                trapezoid(
-                    x,
-                    y,
-                    glassFrom,
-                    pxl(s.cab1) - pillar,
-                    gBottom,
-                    max(glassFrom, pxl(s.roof0) + pillar),
-                    pxl(s.roof1) - pillar,
-                    gTop,
-                )
-            // the B pillar is a slot of body between the windows
-            max(cab, -(abs(x - bPillar) - pillar * .55f))
-        }
-        // the crease of light along the body's top edge
-        c.soft(0xFFFFFF) { x, y ->
-            val inside =
-                roundRect(x, y, pxl(s.x0) + 1f, bTop, pxl(s.x1) - 1f, bBottom, pxl(.4f)) < 0f
-            if (!inside) 0f
-            else (if (night) .22f else .5f) * Px.smooth(1.4f, 0f, abs(y - bTop - .9f))
-        }
-        // the wheels: tyres with a hub, set under the body
-        for (wx in floatArrayOf(s.wheel0, s.wheel1)) {
-            val cx = pxl(wx)
-            val cy = roadY - pxl(s.wheelR)
-            c.fill(tyre) { x, y -> circle(x, y, cx, cy, pxl(s.wheelR)) }
-            c.fill(hub) { x, y -> circle(x, y, cx, cy, pxl(s.wheelR) * .42f) }
-        }
-        // the lenses: a pale headlight at the nose, a red tail-light at the back
-        val lensY = py(s.bodyBottom + (s.bodyTop - s.bodyBottom) * .55f)
-        c.fill(if (night) 0xFFF8E6 else 0xFFF1C8, alpha = if (night) 1f else .9f) { x, y ->
-            roundRect(
-                x,
-                y,
-                pxl(s.x1) - pxl(.55f),
-                lensY - pxl(.2f),
-                pxl(s.x1) - pxl(.12f),
-                lensY + pxl(.2f),
-                pxl(.12f),
-            )
-        }
-        c.fill(if (night) 0xFF5A48 else 0xB8302A, alpha = if (night) 1f else .9f) { x, y ->
-            roundRect(
-                x,
-                y,
-                pxl(s.x0) + pxl(.12f),
-                lensY - pxl(.18f),
-                pxl(s.x0) + pxl(.5f),
-                lensY + pxl(.18f),
-                pxl(.1f),
-            )
-        }
-        // nothing touches the border (the sprite is drawn scaled and must stay clean at its edge)
-        for (y in 0 until h) for (x in 0 until w) if (
-            x == 0 || y == 0 || x == w - 1 || y == h - 1
-        ) {
-            val i = (y * w + x) * 4
-            c.px[i + 3] = 0f
-        }
-        return c
+    /** A lens of [rgb] laid over the pixel at ([x], [y]) where the body already is. */
+    private fun lens(px: IntArray, w: Int, x: Float, y: Float, rgb: Int, a: Float) {
+        val i = y.toInt() * w + x.toInt()
+        val p = px[i]
+        val pa = p ushr 24
+        if (pa == 0) return
+        val q = mix(p and 0xFFFFFF, rgb, a)
+        px[i] = (pa shl 24) or q
     }
 
     // ---- the lights

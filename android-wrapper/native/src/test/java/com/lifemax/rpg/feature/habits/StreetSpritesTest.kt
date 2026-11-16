@@ -8,6 +8,7 @@ import com.lifemax.rpg.feature.habits.domain.StreetGait
 import com.lifemax.rpg.feature.habits.domain.StreetLife
 import com.lifemax.rpg.feature.habits.domain.StreetLooks
 import com.lifemax.rpg.feature.habits.domain.StreetRig
+import com.lifemax.rpg.feature.habits.presentation.scene.CarArt
 import com.lifemax.rpg.feature.habits.presentation.scene.StreetSprites
 import kotlin.math.abs
 import org.junit.Assert.assertArrayEquals
@@ -104,10 +105,11 @@ class StreetSpritesTest {
     @Test
     fun theNearCarsArePaintedWithLitLensesAtNightAndNothingOnTheBorder() {
         for (body in 0 until StreetLife.CAR_BODIES) {
-            val c = StreetSprites.car(body, body)
-            assertTrue(c.length in 55f..72f)
+            val c = CarArt.car(body)
+            assertTrue(c.length in 50f..74f)
             assertTrue(c.wheelX0 < c.wheelX1)
-            for (layer in listOf(c.day, c.night, c.lights)) {
+            assertEquals(StreetLife.carWheel(body), c.wheelR, 1e-6f)
+            for (layer in listOf(c.paint, c.day, c.night, c.lights)) {
                 for (x in 0 until c.w) {
                     assertEquals(0, layer[x] ushr 24)
                     assertEquals(0, layer[(c.h - 1) * c.w + x] ushr 24)
@@ -121,10 +123,29 @@ class StreetSpritesTest {
             val lampI = (c.lampY.toInt()) * c.w + (c.frontX - 2f * c.ppu).toInt()
             fun lum(p: Int) = (p shr 16 and 255) + (p shr 8 and 255) + (p and 255)
             assertTrue(lum(c.night[lampI]) > lum(c.day[lampI]))
-            val bodyI = (c.groundY - 5f * c.ppu).toInt() * c.w + c.w / 2
-            assertTrue(lum(c.night[bodyI]) < lum(c.day[bodyI]))
-            assertArrayEquals(c.day, StreetSprites.car(body, body).day)
+            // the body is the whole silhouette in the grey, lighter up the flank than at the
+            // sill; a paint by night is darker than by day
+            val bodyI = (c.groundY - 8f * c.ppu).toInt() * c.w + c.w / 2
+            val sillI = (c.groundY - 5f * c.ppu).toInt() * c.w + c.w / 2
+            assertEquals(255, c.paint[bodyI] ushr 24)
+            assertTrue(lum(c.paint[bodyI]) > lum(c.paint[sillI]))
+            for (p in CarArt.PAINTS) assertTrue(lum(CarArt.nightPaint(p)) < lum(p) || lum(p) < 90)
+            assertArrayEquals(c.day, CarArt.car(body).day)
         }
+    }
+
+    @Test
+    fun theWheelsTurnRoundTheirMiddleAndEveryDesignIsDifferent() {
+        val seen = HashSet<Int>()
+        for (rim in 0 until CarArt.RIMS) {
+            val w = CarArt.wheel(rim)
+            assertEquals(w.w / 2f, w.ox, 1e-6f)
+            assertEquals(w.h / 2f, w.oy, 1e-6f)
+            // the tyre is round: opaque at its edge all the way round, clear in the corners
+            assertEquals(0, w.pixels[0] ushr 24)
+            seen.add(w.pixels.contentHashCode())
+        }
+        assertEquals(CarArt.RIMS, seen.size)
     }
 
     @Test

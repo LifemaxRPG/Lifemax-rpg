@@ -617,3 +617,35 @@ walkers 3.82 MB (from about 4.65 MB) plus 43 KB of layers; the budgets are uncha
 walker per pass instead of 2, no per-frame allocation. `StreetActsTest` covers determinism, smooth envelopes and
 slowing, how often they act, busy hands, smooth arm motion and the call's hand at the head. Not checked on a device:
 the dusk crossfade and lamp shadows draw the layers each at partial alpha, so overlaps are a little darker there.
+
+### As built: real cars, and real traffic
+
+The owner: "make our cars look better, more realistic ... some variation, and improve the frequency". `CarArt.kt`
+(new; the car code left `StreetSprites`) paints six bodies side on at 3 px a unit (about 14 units to the metre, a
+walker being 27 tall): saloon, hatchback, SUV, city car, estate, people carrier. Each is hand-set points (outline,
+side glass, pillars, shut lines, handles, lamps) through a centripetal Catmull-Rom, drawn as anti-aliased signed
+distances. A body is baked once as grey paint shading (lit shoulder, a crease with the flank darker under it, the
+outline's edges rolled by its normal) that the painter multiplies by a paint (`ColorMatrix` filters made once: 11
+paints, white the most, then black, silver, gunmetal, navy, red, green, champagne, blue, burgundy, taxi yellow), and
+once in colour for the rest, by day and by night: tinted glass with the sky in it and headrests behind, gloss-black
+pillars and seals, a chrome window trim on two bodies, shut lines with a lit edge, recessed handles, mirror, fuel
+flap, side repeater, aerial fin, black bumper lips, SUV cladding, wheel wells, the sky and horizon reflections along
+the side, lamps (projector and running light by day, lit at night) and the contact shadow; plus a lights layer.
+Four rim designs (twin five-spoke, ten-spoke, steel with trim, broad five-spoke) turn under an unturned arch-shadow
+overlay; a taxi sign and roof bars are overlays. All cars take 2.18 MB (the old three bodies × five paints took 2.60
+MB); the street set is 8.25 MB (< 10 MB). `SceneSprites.warm` bakes them off the main thread.
+
+`StreetLife.cars` fills a fixed pool of `CAR_MOST` (12) `CarPass`es, far lane first: two lanes (the near one drives
+right, the far one left, 6 units up the road and drawn at 0.9); a slot every 22 ± 8 s per lane, filled at
+`traffic(hour)` (0.18 at 5:00, 0.95 at the rush hours, 0.24 at midnight); a slot sends one car or a bunch of two or
+three 1.1–2.4 s apart; speeds vary ±10 % by bunch, never enough to close up (tested). On the city street that is
+about 6.4 cars a minute at noon, 7.8 at the rush hours, 2.7 at 23:00 and 1.8 at 3:00, at most 4 near the middle of
+the view at once. Body, paint, a taxi (22 % of saloons and estates) and a roof rack (18 % of hatchbacks, SUVs, estates
+and people carriers) come from the car's seed; its wheels turn with the ground covered (clockwise driving right; the
+old ones turned backwards) and its body rides a small two-frequency bob over them. `StreetLifePainter` draws every
+car (beam, pool and tail glow from its own lamp heights, a faint upside-down copy on a wet road), its key-light
+shadow (body and wheels), and every car's headlight wash and wall shadows in one Plus layer. The far road's four
+vehicles (`RoadSkySprites.generate`) are now these cars made small (a 4×4 box average at 0.62 px a unit) with their
+lenses marked. `NEAR_CAR_AT` is now 49.3 (a navy saloon mid-screen at 23:00, a people carrier ahead). Tuned from
+contact sheets composited onto the CI references, not on a phone; every Habits reference with ambient time now
+shows more cars.

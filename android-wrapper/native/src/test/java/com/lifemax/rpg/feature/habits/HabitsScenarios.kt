@@ -253,9 +253,10 @@ object HabitsScenarios {
     const val STREET_WALKER_AT = 301.55f
 
     /**
-     * The near car passing the middle of the city street's first building (StreetLifeTest checks).
+     * At 23:00, a saloon in the near lane passing the middle of the city street's first building, a
+     * people carrier ahead of it (StreetLifeTest checks).
      */
-    const val NEAR_CAR_AT = 283.9f
+    const val NEAR_CAR_AT = 49.3f
 
     /**
      * A moment at 23:00 in the tall scenario when one window's television is dim and another's is
