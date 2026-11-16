@@ -199,13 +199,13 @@ internal class DuskImages(val puffs: Array<ImageBitmap>, val pigeon: Array<Image
 internal class FacadeImages(val tile: WallTile, val brush: Brush)
 
 /**
- * What glass mirrors ([GlassSprites]): the sky and the street across it as brushes repeating
- * sideways and clamped up and down, the sun's glint as a brush clamped all round (its rim is
- * clear), and the rooms' blinds and curtains seen through some panes.
+ * What glass mirrors ([GlassSprites]): the sky and the land the street looks out on as brushes
+ * repeating sideways and clamped up and down, the sun's glint as a brush clamped all round (its rim
+ * is clear), and the rooms' blinds and curtains seen through some panes.
  */
 internal class GlassImages(
     val sky: Brush,
-    val street: Brush,
+    val land: Brush,
     val glint: Brush,
     val interiors: Array<ImageBitmap>,
 )
@@ -745,18 +745,14 @@ internal object SceneSprites {
     /** What glass mirrors, made the first time a pane is drawn. */
     val glass: GlassImages by lazy {
         val sky = GlassSprites.sky()
-        val street = GlassSprites.street()
+        val land = GlassSprites.land()
         val glint = GlassSprites.glint()
         GlassImages(
             ShaderBrush(
                 ImageShader(image(sky.pixels, sky.w, sky.h), TileMode.Repeated, TileMode.Clamp)
             ),
             ShaderBrush(
-                ImageShader(
-                    image(street.pixels, street.w, street.h),
-                    TileMode.Repeated,
-                    TileMode.Clamp,
-                )
+                ImageShader(image(land.pixels, land.w, land.h), TileMode.Repeated, TileMode.Clamp)
             ),
             ShaderBrush(
                 ImageShader(image(glint.pixels, glint.w, glint.h), TileMode.Clamp, TileMode.Clamp)

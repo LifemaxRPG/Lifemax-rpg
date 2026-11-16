@@ -59,7 +59,6 @@ import com.lifemax.rpg.feature.habits.domain.WindowCast
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
-import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -2230,7 +2229,13 @@ internal class BuildingPainter {
         sideShift = shiftAt(x)
         fresnel = FRESNEL_FACE + (1f - FRESNEL_FACE) * abs(Perspective.sideAt(x, viewX, lightSpan))
         mirrorPhase = (art.stack.id.hashCode() and 0xFFFF) * .37f
-        glassSeconds = seconds
+        landShift = GlassMap.landShift(mirrorPhase, x, viewX)
+        skyShift = GlassMap.skyShift(x, viewX, seconds)
+        glintX = GlassMap.glintX(lightX, viewX) - x
+        glintY = -GlassMap.glintZ(key?.down ?: 0f)
+        glintA =
+            if (key == null) 0f
+            else key.strength * (1f - key.cool) * (1f - .7f * key.flat) * GLINT_BRIGHT
         park(art, selected, accent, seconds, sky)
         // the building's shadow on the pavement, under its front and its shown side
         val l0 = Perspective.left(sideShift)
@@ -2480,16 +2485,21 @@ internal class BuildingPainter {
      * What the glass mirrors ([GlassSprites], [GlassMap]): the strips' weights turned into the
      * hour's colours (kept per sky), the place in them of the pane being drawn (reused), how much
      * more the glass of the building being drawn mirrors for standing to the side of the view (a
-     * Fresnel term: glass seen at a slant is a better mirror), its own slide along the mirrored
-     * street, and the clock the clouds in it drift by.
+     * Fresnel term: glass seen at a slant is a better mirror), its own slice of the mirrored view,
+     * the shifts that lay the land and the sky over its front as one sheet ([GlassMap.place]), and
+     * where on its front the sun's glint falls (building units) and how bright it is.
      */
     private var skyFilter: ColorFilter? = null
-    private var streetFilter: ColorFilter? = null
+    private var landFilter: ColorFilter? = null
     private val glassColours = FloatArray(24)
-    private val glassAt = FloatArray(5)
+    private val glassAt = FloatArray(4)
     private var fresnel = 1f
     private var mirrorPhase = 0f
-    private var glassSeconds = 0f
+    private var landShift = 0f
+    private var skyShift = 0f
+    private var glintX = 0f
+    private var glintY = 0f
+    private var glintA = 0f
 
     /**
      * The awnings' colour filters by [AWNINGS] colour, and the night's tint over the roof's
@@ -2522,7 +2532,7 @@ internal class BuildingPainter {
         hazeInk = lerp(sky.sky[2], sky.far[0], .4f)
         GlassMap.colours(sky, glassColours)
         skyFilter = weights(glassColours, 0)
-        streetFilter = weights(glassColours, 12)
+        landFilter = weights(glassColours, 12)
         val night = NIGHT_DEPTH * Px.smooth(.25f, 1f, sky.dark)
         nightInk = lerp(Color.White, NightAmbient, night)
         nightOn = night > .01f
@@ -2550,10 +2560,11 @@ internal class BuildingPainter {
 
     /**
      * What the glass at ([x], [y]), [w] by [h] mirrors, at [a]: the hour's sky with its clouds
-     * drifting through it, and the buildings, windows and lamps across the street, placed for the
-     * pane ([GlassMap.place]: [seed] its own tilt, [z] its height over the pavement, [sx] where
-     * along the street it stands), then the sun's glint on it at [spec]. [unit] is how many of the
-     * drawing's lengths a scene unit is (a side face draws in its tile's pixels).
+     * drifting through it, and the land the street looks out on, from one sheet laid over the whole
+     * face ([GlassMap.place]: [fx] is the pane's left edge across the face and [top] its top over
+     * the pavement, both in units, [land] and [skyAt] the face's shifts), then the sun's glint on
+     * it at [spec]. [ux] and [uy] are how many of the drawing's lengths a unit is across and up (a
+     * side face draws in its tile's pixels).
      */
     private fun DrawScope.mirrorSky(
         x: Float,
@@ -2561,38 +2572,49 @@ internal class BuildingPainter {
         w: Float,
         h: Float,
         a: Float,
-        seed: Int,
         spec: Float = 1f,
-        z: Float = -(y + h / 2f),
-        sx: Float = buildingX + x + w / 2f,
-        unit: Float = 1f,
+        fx: Float = x,
+        top: Float = -y,
+        ux: Float = 1f,
+        uy: Float = 1f,
+        land: Float = landShift,
+        skyAt: Float = skyShift,
     ) {
         if (a < .01f) return
         val g = SceneSprites.glass
         val at = glassAt
-        GlassMap.place(sx, z, w / unit, h / unit, seed, viewX, mirrorPhase, glassSeconds, at)
-        val k = at[0] * unit
-        val sw = w / k
-        val sh = h / k
-        val us = at[2]
-        val v0 = at[3]
+        GlassMap.place(fx, top, land, skyAt, at)
+        val sx = ux * GlassMap.K_SKY_X
+        val sy = uy * GlassMap.K_SKY_Y
         withTransform({
             translate(x, y)
-            scale(k, k, Offset.Zero)
-            translate(-us, -v0)
+            scale(sx, sy, Offset.Zero)
+            translate(-at[2], -at[3])
         }) {
-            drawRect(g.sky, Offset(us, v0), Size(sw, sh), alpha = a, colorFilter = skyFilter)
+            drawRect(
+                g.sky,
+                Offset(at[2], at[3]),
+                Size(w / sx, h / sy),
+                alpha = a,
+                colorFilter = skyFilter,
+            )
         }
-        val u0 = at[1]
-        val vs = v0 - GlassSprites.STREET_AT
+        val lx = ux * GlassMap.K_LAND
+        val ly = uy * GlassMap.K_LAND
         withTransform({
             translate(x, y)
-            scale(k, k, Offset.Zero)
-            translate(-u0, -vs)
+            scale(lx, ly, Offset.Zero)
+            translate(-at[0], -at[1])
         }) {
-            drawRect(g.street, Offset(u0, vs), Size(sw, sh), alpha = a, colorFilter = streetFilter)
+            drawRect(
+                g.land,
+                Offset(at[0], at[1]),
+                Size(w / lx, h / ly),
+                alpha = a,
+                colorFilter = landFilter,
+            )
         }
-        if (spec > 0f) glint(x, y, w, h, a * spec, at[4], GlassMap.lift(seed))
+        if (spec > 0f) glint(x, y, w, h, a * spec)
     }
 
     /**
@@ -2677,18 +2699,22 @@ internal class BuildingPainter {
                             alpha = alpha * .25f,
                         )
                         drawRect(glass, Offset(sx, wy), Size(sw, wh), alpha = alpha * .9f)
-                        // seen at a slant, the side's glass is nearly a mirror
+                        // seen at a slant, the side's glass is nearly a mirror: of its own view,
+                        // one sheet down the face
+                        val turn = if (sideShift > 0f) SIDE_TURN else -SIDE_TURN
                         mirrorSky(
                             sx,
                             wy,
                             sw,
                             wh,
                             alpha * min(1f, FacadeLook.reflection(0f, inkDark) * 1.08f),
-                            fa.seed * 31 + 40 + (u * 16f).toInt(),
                             0f,
-                            -(fa.top + fa.windows[1] + fa.windows[3] / 2f),
-                            buildingX + (if (sideShift > 0f) 1f else -1f) * (B.W / 2f + 20f * u),
+                            sx / ppu,
+                            -(fa.top + fa.windows[1]),
                             ppu,
+                            ppu,
+                            landShift + turn,
+                            skyShift + turn,
                         )
                         drawRect(
                             f.trim,
@@ -3008,33 +3034,19 @@ internal class BuildingPainter {
     }
 
     /**
-     * The sun's glint on a pane of glass at ([x], [y]), [w] by [h]: a hot spot where the sun's
-     * reflection falls for a pane this far to the side of the light, turned a hair by the pane's
-     * [tilt] (so it jumps from pane to pane as the street scrolls and travels across each) and
-     * raised by its [lift]; clipped to the pane by the brush itself. By day, in a clear sky only.
+     * The sun's glint on the pane of glass at ([x], [y]), [w] by [h]: the sun's mirror image falls
+     * on one spot of the building's front ([glintX], [glintY]; [GlassMap.glintX], fixed in the view
+     * as the sun is, so the street slides under it), and the pane that covers it shows it, clipped
+     * to the pane by the brush itself: a mullion cuts it like any other reflection. By day, in a
+     * clear sky only.
      */
-    private fun DrawScope.glint(
-        x: Float,
-        y: Float,
-        w: Float,
-        h: Float,
-        alpha: Float,
-        tilt: Float,
-        lift: Float,
-    ) {
-        val key = light ?: return
-        val o = offset(buildingX + x + w / 2f) + tilt * GLINT_TILT
-        val a =
-            alpha *
-                key.strength *
-                (1f - key.cool) *
-                (1f - .7f * key.flat) *
-                .9f *
-                exp(-(o / GLINT_SPREAD) * (o / GLINT_SPREAD))
+    private fun DrawScope.glint(x: Float, y: Float, w: Float, h: Float, alpha: Float) {
+        val a = alpha * glintA
         if (a < .02f) return
-        val gx = x + w * (.5f - o * 5f).coerceIn(.1f, .9f)
-        val gy = y + h * (.22f + .1f * lift)
-        val r = min(w, 16f) * .8f
+        val r = GLINT_R
+        val gx = glintX
+        val gy = glintY
+        if (gx < x - r || gx > x + w + r || gy < y - r || gy > y + h + r) return
         val k = 2f * r / GlassSprites.GLINT
         withTransform({
             translate(gx - r, gy - r)
@@ -3154,7 +3166,7 @@ internal class BuildingPainter {
         val reflect = FacadeLook.reflection(lit, sky.dark) * .62f
         for (side in 0..1) {
             val x0 = if (side == 0) -half + 9f else BuildingDetail.SHOP_X
-            mirrorSky(x0, w0, shopW, shopH, reflect * fresnel, lobbySeed + side * 13, .5f)
+            mirrorSky(x0, w0, shopW, shopH, reflect * fresnel, .5f)
         }
         inks(art.lobbyOver, lobbyFacade, 1f, detailed, SceneInk.LobbyReveal, SceneInk.ShopFrame)
         awning(art, top, sky, seconds)
@@ -3286,7 +3298,7 @@ internal class BuildingPainter {
         val glassLit = lerp(SceneInk.Shop, SceneInk.ShopLit, .2f + .8f * lit)
         // the transom light
         drawRect(glassLit, Offset(-6.5f, w0 + 1f), Size(13f, 5.4f))
-        mirrorSky(-6.5f, w0 + 1f, 13f, 5.4f, reflect, 71, 0f)
+        mirrorSky(-6.5f, w0 + 1f, 13f, 5.4f, reflect, 0f)
         drawRect(Color.Black, Offset(-6.5f, w0 + 1f), Size(13f, .6f), alpha = .3f)
         drawRect(SceneInk.ShopFrame, Offset(-dx, w0 + 6.4f), Size(2f * dx, 1f))
         drawRect(faceLit, Offset(-dx, w0 + 6.4f), Size(2f * dx, .3f), alpha = .25f)
@@ -3294,7 +3306,7 @@ internal class BuildingPainter {
         val pw = dx - 2.2f
         for (lx in floatArrayOf(-dx + 1.5f, .7f)) {
             drawRect(glassLit, Offset(lx, w0 + 8.6f), Size(pw, 5.4f))
-            mirrorSky(lx, w0 + 8.6f, pw, 5.4f, reflect, 72 + lx.toInt(), 0f)
+            mirrorSky(lx, w0 + 8.6f, pw, 5.4f, reflect, 0f)
             drawRect(Color.Black, Offset(lx, w0 + 8.6f), Size(pw, .6f), alpha = .35f)
             drawRect(Color.Black, Offset(lx, w0 + 8.6f), Size(.5f, 5.4f), alpha = .25f)
             drawRect(SceneInk.Brass, Offset(lx, -4.8f), Size(pw, 2.4f), alpha = .35f)
@@ -3638,7 +3650,6 @@ internal class BuildingPainter {
                             ww,
                             h,
                             alpha * .4f * FacadeLook.reflection(0f, sky.dark),
-                            fa.seed * 31 + k,
                             .4f,
                         )
                     }
@@ -3765,9 +3776,9 @@ internal class BuildingPainter {
                         alpha = alpha * lamp * .45f,
                     )
                 } else {
-                    // an unlit pane: dark glass, a dim room behind some (blinds, curtains), and
-                    // over it all what the glass mirrors, more of it the more the pane is seen at
-                    // a slant, each pane a hair differently turned
+                    // an unlit pane: dark glass, a dim room behind some (blinds, curtains, a blind
+                    // pulled down), and over it all the facade's one reflection, more of it the
+                    // more the pane is seen at a slant, each pane a hair brighter or duller
                     val pane = fa.seed * 31 + k
                     drawRect(glass, Offset(x, y), Size(ww, h), alpha = alpha)
                     val room = if (detailed) GlassMap.interior(pane) else -1
@@ -3779,14 +3790,13 @@ internal class BuildingPainter {
                             Size(ww * .4f, h * .45f),
                             alpha = alpha * (.1f + .14f * sky.dark),
                         )
-                    val mirror = fresnel * (1f + PANE_FRESNEL * GlassMap.tilt(pane))
+                    val mirror = fresnel * GlassMap.sheen(pane)
                     mirrorSky(
                         x,
                         y,
                         ww,
                         h,
-                        alpha * min(1f, FacadeLook.reflection(0f, sky.dark) * mirror),
-                        pane,
+                        alpha * min(1f, FacadeLook.reflection(0f, sky.dark) * mirror) * PANE_MIRROR,
                     )
                 }
             }
@@ -3872,7 +3882,6 @@ internal class BuildingPainter {
                     ww,
                     h,
                     alpha * .5f * fresnel * FacadeLook.reflection(g, sky.dark),
-                    fa.seed * 31 + k,
                     .3f,
                 )
                 if (!glassFloor && sky.dark > .2f && detailed)
@@ -4347,7 +4356,7 @@ internal class BuildingPainter {
             if (kit.skylight) {
                 drawRect(SceneInk.Iron, Offset(-10f, base - 4.4f), Size(20f, 4.4f))
                 drawRect(glass, Offset(-9f, base - 3.8f), Size(18f, 2.6f))
-                mirrorSky(-9f, base - 3.8f, 18f, 2.6f, .8f * (1f - .3f * sky.dark), 91, .6f)
+                mirrorSky(-9f, base - 3.8f, 18f, 2.6f, .8f * (1f - .3f * sky.dark), .6f)
                 drawRect(SceneInk.IronLight, Offset(-10f, base - 4.4f), Size(20f, .4f), alpha = .5f)
                 drawRect(SceneInk.Iron, Offset(-.3f, base - 3.8f), Size(.6f, 2.6f))
             }
@@ -5465,21 +5474,24 @@ internal class BuildingPainter {
         const val NIGHT_DEPTH = .86f
 
         /**
-         * Glass seen face on mirrors this much of what glass at a full slant does ([fresnel]), and
-         * each pane's tilt moves its share by up to this much either way.
+         * Glass seen face on mirrors this much of what glass at a full slant does ([fresnel]); an
+         * unlit pane mirrors this share of that, so the room behind it reads through.
          */
         const val FRESNEL_FACE = .74f
+        const val PANE_MIRROR = .85f
 
         /** The planters by the shopfront stand this far in from the lobby's ends. */
         const val PLANTER_IN = 16f
 
         /** The side of a sign's raised letters: their face's cream in shade. */
         private val LetterSide = Color(0xFF8C7A5E)
-        const val PANE_FRESNEL = .24f
 
-        /** The sun's glint: how far a pane's tilt turns it and how narrow its reach across. */
-        const val GLINT_TILT = .05f
-        const val GLINT_SPREAD = .07f
+        /** The sun's glint: its reach round the sun's mirror image (units), and its brightness. */
+        const val GLINT_R = 9f
+        const val GLINT_BRIGHT = .9f
+
+        /** A side face's glass mirrors the view this far round from its front's (units). */
+        const val SIDE_TURN = 337f
 
         /** A wet wall: what it is multiplied by. */
         private val WetWall = Color(0xFF8590AA)

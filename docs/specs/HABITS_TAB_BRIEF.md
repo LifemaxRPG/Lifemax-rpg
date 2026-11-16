@@ -426,21 +426,38 @@ details should be "more AAA".
 Glass (`GlassSprites.kt`, `GlassMap`; `BuildingPainter.mirrorSky`, `glint`, `interior`): the flat streaks
 (`FloorArt.reflect`, `SceneInk.Reflection`, the lobby's two white lines, the old line `glint`) and the far-city mirror
 strip (`FacadeSprites.mirror`) are gone. Every unlit pane, lit pane (faintly), side-face slit, shop window, door light
-and skylight now mirrors the street behind the viewer from two baked panoramas, 512 px round: the sky (soft blurred
-cumulus) and the buildings across the street (rooflines with water tanks, cornices, windows, shopfronts, lamp posts,
-the street at the foot). Their channels are weights, not colours: a colour matrix per sky (`GlassMap.colours`, made in
-`glassTints` when the sky changes) turns them into the hour's zenith, horizon, cloud tops and undersides, the buildings'
-dark, their windows' glass, the windows lit at night and the lamps' lenses, so one bake serves day, dusk and night (at
-night: dark glass with warm lit windows and lamps in it). `GlassMap.place` puts each pane's view in the strips: the
-mirrored street slides 1.5× the facade's rate against the view (it moves as the street is panned), a higher pane sees
-higher (the far roofs low in it, more sky), each pane is turned and raised a hair by its seed so reflections break
-between panes, and the clouds drift with the clock at their own slower pan. Fresnel: face-on glass mirrors .74 of what
-glass at the view's edge does (`FRESNEL_FACE`, by the building's place across the view), ±12 % per pane; the side
-faces' slits mirror most. About half the panes show a dim room through the glass (blinds half down, curtains drawn back,
-a roller blind over a dim room, a net). The sun's glint is a baked hot spot with a faint star, drawn additively and
-clipped by its brush to the pane, on panes near the sun's place across the view, jumping pane to pane and travelling
-across each as the street scrolls. Cost: two transformed rects per pane (plus the room on some, the glint on few); no
-per-frame allocation.
+and skylight mirrors what the street faces, from two baked strips whose channels are weights, not colours (a colour
+matrix per sky, `GlassMap.colours`, made in `glassTints` when the sky changes, so one bake serves day, dusk and night).
+
+Revised after the owner's S25 Ultra test ("reflections don't line up between windows"; "far too dense, every pane full
+of buildings"):
+- One sheet per facade. `GlassMap.place(fx, top, land, sky)` maps a pane by its own position on the facade (`fx` its
+  left edge across the face, `top` its height over the pavement, both in units) plus one shift per facade
+  (`landShift`: the building's own slice of the view, `mirrorPhase`, minus the pan × `LAND_SLIDE` .5; `skyShift`: the
+  street position minus the pan × `SKY_SLIDE` .8, plus the clouds' drift, so the sky is one sky down the street). The
+  in-pane scale and the pane-to-pane spacing are the same (`K_LAND` .65 units a land pixel; the sky `K_SKY_X` 1.25 by
+  `K_SKY_Y` 3.5), so the reflection slides as one sheet and the frames and mullions only cut it. The per-pane tilt,
+  lift, scale jitter and per-floor sky weighting are gone. The mirrored horizon sits at `HORIZON_Z` 84 units over the
+  pavement on every facade (in the first floor's panes); higher floors see sky, and then the clear zenith, only
+  because they are higher. Side faces mirror their own sheet (`SIDE_TURN` 337 units round, the slits at their depth
+  across the face).
+- Per pane, only: brightness within ±3 % (`GlassMap.sheen`); about 48 % show a room through the reflection (blinds,
+  curtains, a roller blind, a net), and 7 % a blind pulled all the way down (`GlassSprites.BLIND`, a fifth interior).
+  The reflection is drawn over the room at `PANE_MIRROR` .85 of its old strength, so the rooms read through it.
+- What is mirrored (`GlassSprites.land`, 1024 × 64, round, baked at 2× and averaged down): mostly open sky over a low
+  horizon with gaps, and spaced-out landmarks: a far ridge of hills with two towers further off, a waterfront with a
+  suspension bridge (pylons, cables, hangers, deck lamps, their reflections in the water), a park's tree line with two
+  poplars, a church with a lit clock and a spire, a row of low houses, two lamps on the near bank. One facade's front
+  spans about a quarter of it (one to three features), and each building faces its own part. Weights: red the haze on
+  far things (moonlit at night), green the lights (warm at night), blue the water, the rest the near dark. The sky
+  (`GlassSprites.sky`, 256 × 48) is grouped soft cumulus with long open stretches, baked wide so a heap is round in the
+  glass. Opaque; red lit tops, green shaded undersides, blue the horizon band, the rest the zenith.
+- The sun's glint is a point on the facade: `GlassMap.glintX` (the view's middle plus .45 of the way toward the sun's
+  place, so it is fixed in the view as the sun is and the street slides under it) at `glintZ` (higher for a higher
+  sun). Whichever pane covers it shows it, clipped to the pane by the clamped brush; by day in a clear sky only.
+
+Cost: two transformed rects per pane (plus the room on some, the glint on the one or two near its spot); no per-frame
+allocation.
 
 Awning (`AwningArt.kt`): canvas baked once at 4 px a unit as two pictures (canopy, valance) whose alpha is the cloth and
 whose channels are weights (the shop's colour, the stripes' cream, the light); `awningFilter` turns them into each of
@@ -460,10 +477,12 @@ planters of clipped box at the shopfront's ends. The railing has posts on base p
 and throws a shadow; the skylight mirrors the sky; the lobby sign's letters have depth. Everything takes the night
 through one `Modulate` filter kept per sky.
 
-Memory: glass 360 KB, awning 241 KB, roof 223 KB (about 825 KB; `FacadeSprites` lost the cloth tile and the mirror
-strip, about 60 KB). `GlassAndRoofArtTest` covers the bakes (determinism, seams, weights, clear edges for clamped
-brushes, the tower lit from each side), the panes' placement (slides with the view, higher sees higher, tilt, the
-clouds' drift) and the night's colours. Tuned from JVM composites at phone scale and 4× (not on a phone); every Habits
+Memory: glass 353 KB (was 360 KB before the revision), awning 241 KB, roof 223 KB (`FacadeSprites` lost the cloth
+tile and the mirror strip, about 60 KB). `GlassAndRoofArtTest` covers the bakes (determinism, seams, weights, clear
+edges for clamped brushes, mostly sky with open stretches of horizon, the tower lit from each side), the panes'
+placement (two neighbouring panes sample the mirrored world exactly their facade spacing apart and on the same rows;
+a floor up is a floor's height up the sheet; the horizon at one height; slides with the pan; the clouds' drift; the
+per-pane sheen, rooms and blinds; the glint) and the night's colours. Tuned from JVM composites at phone scale and 4× (not on a phone); every Habits
 reference with buildings changes.
 
 ## As built: the middle distance (the city between the street and the skyline)
