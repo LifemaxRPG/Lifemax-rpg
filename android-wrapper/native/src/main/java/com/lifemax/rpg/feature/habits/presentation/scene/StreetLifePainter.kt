@@ -234,6 +234,35 @@ internal class StreetLifePainter {
             endX = 1f,
         )
 
+    /** The layer [whole] lays a figure down in: its strength and how it meets what is under it. */
+    private val wholePaint = Paint()
+
+    /**
+     * Passer [p] drawn solid in [filter] into a layer, and the layer laid over the street at
+     * [alpha] with [mode]: the figure's pieces cover each other as they should and the whole is
+     * faded (or multiplied) once, never piece by piece.
+     */
+    private fun DrawScope.whole(
+        p: Passer,
+        persp: Float,
+        alpha: Float,
+        filter: ColorFilter,
+        mode: BlendMode,
+        how: Int = PLAIN,
+        reach: Float = 0f,
+    ) {
+        wholePaint.alpha = alpha
+        wholePaint.blendMode = mode
+        drawIntoCanvas {
+            it.saveLayer(
+                Rect(p.x - 70f - reach, p.lane - 70f, p.x + 70f + reach, p.lane + 14f + reach),
+                wholePaint,
+            )
+        }
+        party(p, persp, 1f, filter, how)
+        drawIntoCanvas { it.restore() }
+    }
+
     /** The layer the headlights' wash and the shadows in it are drawn in, added over the walls. */
     private val sweepPaint = Paint().apply { blendMode = BlendMode.Plus }
     private val lead = Path()
@@ -607,7 +636,16 @@ internal class StreetLifePainter {
                 val strength = NearLight.lampFall(p.x - lensX)
                 if (strength < .02f) continue
                 this@StreetLifePainter.lensX = lensX
-                party(p, perspective(p.lane), .6f * dark * strength, lampShadeFilter, LAMP)
+                // the shadow as one shape, faded once (its pieces would darken where they cross)
+                whole(
+                    p,
+                    perspective(p.lane),
+                    .6f * dark * strength,
+                    lampShadeFilter,
+                    BlendMode.SrcOver,
+                    LAMP,
+                    260f,
+                )
             }
         }
     }
@@ -673,22 +711,28 @@ internal class StreetLifePainter {
                 nudgeX = 0f
                 nudgeY = 0f
             }
+            // a figure is drawn in pieces (body, arms, head, what they carry) laid over each other:
+            // drawn at part strength the pieces would show through each other, a ghost. So each
+            // look is laid down whole and solid, and only the whole is faded: the night look solid,
+            // the day look over it in a layer faded by the hour
             if (day < .99f) {
                 phoneGlow = (1f - day) * PHONE_GLOW
-                party(p, persp, 1f - day, nightFigure, PLAIN)
+                party(p, persp, 1f, nightFigure, PLAIN)
                 phoneGlow = 0f
             }
-            if (day > .01f) party(p, persp, day, dayFigure, PLAIN)
+            if (day > .01f) {
+                if (day < .99f) whole(p, persp, day, dayFigure, BlendMode.SrcOver)
+                else party(p, persp, 1f, dayFigure, PLAIN)
+            }
             // in a building's shade they are darker and a little cooler, as the pavement is: the
-            // shade's depth where they stand, laid over them by multiplying
+            // shade's depth where they stand, laid over the whole of them once by multiplying
             val shaded = painter?.shadeAt(p.x, p.lane) ?: 0f
             if (shaded > .01f)
-                party(
+                whole(
                     p,
                     persp,
                     (shaded * SHADE_ON_FIGURE).coerceAtMost(1f),
                     figureShade,
-                    PLAIN,
                     BlendMode.Multiply,
                 )
             // the street lamps' light on them, falling off across them from each lens
