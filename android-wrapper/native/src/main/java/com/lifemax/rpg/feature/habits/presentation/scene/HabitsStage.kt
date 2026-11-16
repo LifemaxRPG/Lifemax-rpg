@@ -340,6 +340,7 @@ private fun StageCanvas(
     val scope = rememberCoroutineScope()
     // the painted skies and trees are made once, off the main thread (a still frame waits for them)
     LaunchedEffect(Unit) { withContext(Dispatchers.Default) { SceneSprites.warm() } }
+    LaunchedEffect(Unit) { withContext(Dispatchers.Default) { SceneSprites.warmStreet() } }
     LaunchedEffect(season) { withContext(Dispatchers.Default) { SceneSprites.warm(season) } }
     val still = p.reducedMotion
     val zoomedOut = ui.city

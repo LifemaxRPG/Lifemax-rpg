@@ -432,19 +432,20 @@ internal object SceneSprites {
     private val cars = arrayOfNulls<CarImages>(StreetLife.CAR_BODIES)
     private var streetBytes = 0
 
-    /** Street walker [look]'s frame [frame] ([StreetRig.TOTAL_FRAMES]). */
-    @Synchronized
+    /**
+     * Street walker [look]'s frame [frame] ([StreetRig.TOTAL_FRAMES]). The street's people are
+     * painted finely and take a moment each to make, so they are made outside the lock (a frame the
+     * main thread asks for never waits on another being made) and, in the app, all ahead of time
+     * off the main thread ([warmStreet]).
+     */
     fun walker(look: Int, frame: Int): WalkerImage {
         val i = look * StreetRig.TOTAL_FRAMES + frame
-        walkers[i]?.let {
+        held(walkers, i)?.let {
             return it
         }
         val w = StreetSprites.walker(look, frame)
         val sp = w.sprite
-        streetBytes += sp.w * sp.h * 4
-        return WalkerImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy, w.joints).also {
-            walkers[i] = it
-        }
+        return keep(walkers, i, WalkerImage(street(sp), -sp.ox, -sp.oy, w.joints), sp)
     }
 
     private val walkerParts = arrayOfNulls<PersonImage>(StreetLooks.COUNT * Part.COUNT)
@@ -453,39 +454,65 @@ internal object SceneSprites {
      * Street walker [look]'s layer [part] ([Part]): an arm, the head, what a hand holds; its
      * top-left from its joint.
      */
-    @Synchronized
     fun walkerPart(look: Int, part: Int): PersonImage {
         val i = look * Part.COUNT + part
-        walkerParts[i]?.let {
+        held(walkerParts, i)?.let {
             return it
         }
         val sp = StreetSprites.part(look, part)
-        streetBytes += sp.w * sp.h * 4
-        return PersonImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy).also {
-            walkerParts[i] = it
-        }
+        return keep(walkerParts, i, PersonImage(street(sp), -sp.ox, -sp.oy), sp)
     }
 
     /** The dog's frame [frame] ([DogRig.TOTAL_FRAMES]). */
-    @Synchronized
     fun dog(frame: Int): PersonImage {
-        dogs[frame]?.let {
+        held(dogs, frame)?.let {
             return it
         }
         val sp = StreetSprites.dog(frame)
-        streetBytes += sp.w * sp.h * 4
-        return PersonImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy).also { dogs[frame] = it }
+        return keep(dogs, frame, PersonImage(street(sp), -sp.ox, -sp.oy), sp)
     }
 
     /** The bicycle and its rider at crank frame [frame]. */
-    @Synchronized
     fun cycle(frame: Int): PersonImage {
-        cycles[frame]?.let {
+        held(cycles, frame)?.let {
             return it
         }
         val sp = StreetSprites.cycle(frame)
+        return keep(cycles, frame, PersonImage(street(sp), -sp.ox, -sp.oy), sp)
+    }
+
+    @Synchronized private fun <T> held(pool: Array<T?>, i: Int): T? = pool[i]
+
+    /** Keeps [made] at [i] of [pool], unless another thread got there first: then theirs. */
+    @Synchronized
+    private fun <T> keep(pool: Array<T?>, i: Int, made: T, sp: Sprite): T {
+        pool[i]?.let {
+            return it
+        }
         streetBytes += sp.w * sp.h * 4
-        return PersonImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy).also { cycles[frame] = it }
+        pool[i] = made
+        return made
+    }
+
+    /**
+     * A street person's picture, with its mipmaps: they are baked finer than the screen shows them,
+     * and drawn smaller they stay smooth.
+     */
+    private fun street(sp: Sprite): ImageBitmap =
+        Bitmap.createBitmap(sp.pixels, sp.w, sp.h, Bitmap.Config.ARGB_8888)
+            .apply { setHasMipMap(true) }
+            .asImageBitmap()
+
+    /**
+     * Makes now (off the main thread) every frame of the street's people, the dog and the bicycle.
+     */
+    fun warmStreet() {
+        for (l in 0 until StreetLooks.COUNT) {
+            for (p in 0 until Part.COUNT) walkerPart(l, p)
+            for (f in 0 until StreetRig.TOTAL_FRAMES) walker(l, f)
+        }
+        for (f in 0 until DogRig.TOTAL_FRAMES) dog(f)
+        for (f in 0 until StreetGait.CRANK_FRAMES) cycle(f)
     }
 
     /** The bicycle's wheel, centred, at the walkers' resolution and size. */

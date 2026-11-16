@@ -51,6 +51,16 @@ object Mat {
     const val RUBBER = 5
     /** Painted as it is, unlit: a seam, a fold, a glint, a lamp's lens. */
     const val FLAT = 6
+    /** Jeans: a faint diagonal twill in the cloth. */
+    const val DENIM = 7
+    /** A wool coat or trousers: matte, a soft sheen at the turning edges. */
+    const val WOOL = 8
+    /** A nylon jacket: a broad, soft sheen. */
+    const val NYLON = 9
+    /** A knitted hat: its ribs. */
+    const val KNIT = 10
+    /** Tweed: flecks of other colours in the weave. */
+    const val TWEED = 11
 }
 
 /** Hair, from a bare crown to a cap. */

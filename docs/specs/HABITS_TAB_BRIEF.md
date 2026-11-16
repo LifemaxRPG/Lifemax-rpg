@@ -762,3 +762,50 @@ city's second building in front at 12:15, the sun over the first one's sign boar
 from the reference pictures, not rendered here: CI renders them. Tuned from software composites over CI reference
 crops at several shares shown, not on a phone. `SunEdgeTest` covers the shares, the peek, the sweep, the open sky
 round a hidden sun, the strengths and the ray sprite.
+
+### As built: the walkers rebuilt as painted figures
+
+The owner: the people "still are not" at the standard of the rest of the street, and they are inspected zoomed in. This
+pass changes how the figures are built and shaded; looks, palettes, motion, layers, joints and frame counts are kept.
+
+Shading (`StreetRaster`, rewritten): each run of one colour and stuff is a form. Its distance in from its own outline
+(a squared distance transform at the supersampled resolution) against how thick it is there (a max filter of that
+distance) gives a surface normal, so limbs and the torso shade as cylinders and the head as a dome, not as a flat fill
+with pillowed edges. Key light from above and a little in front with a soft wrapped terminator, a cool sky fill on the
+shadow side, a warm bounce under, a thin cool rim on the back edge. Materials (`Mat`, new `DENIM`, `WOOL`, `NYLON`,
+`KNIT`, `TWEED`): skin warms and reddens in its terminator; hair has fine strands combed back and a sheen across them;
+leather and metal a tight highlight, nylon a broad one; wool a sheen at its turning edges; denim a twill; the beanie
+its ribs; the flat cap tweed flecks; bags are flat with rounded edges. Every form throws a soft shadow down and a
+little back onto what is already painted (a coat's hem on the legs, a collar on the neck, a hat and hair on the face,
+the near leg on the far) plus a close contact shade, and the flat details (seams, folds, eyes) take the light of the
+form under them instead of being painted flat.
+
+Construction (`StreetRig`): a side profile for the torso (`BODY_T/F/B`: seat, small of the back, chest, shoulder
+blades, root of the neck; a woman's waist, bust and hips), lerped to front widths by `turn`. Clothes have their own
+fall: a tee tucked at the belt; a jacket hanging straight from the chest and the shoulder blades (the nylon one
+quilted with a zip of teeth and a pull, the wool one fitted at the waist with buttons and a seam); long coats from the
+shoulder blades to below the knee with lapels as a raised form, the shirt's V, belt and buckle, buttons, a pocket
+flap, soft folds and a swinging hem. Limbs are `StreetRig.limb`, an outline with its own front and back at stations:
+trouser legs full over the thigh, falling straight from the knee and cut at the hem over the shoe (a side seam, a
+pressed crease or, on jeans, gold stitching and a turned hem, folds where the hem breaks), legs in tights with knee,
+calf and ankle, sleeves easing to the cuff, bare arms with deltoid, triceps and forearm; slimmer than before
+(thigh depth about 3 units at the top). Heads: a real profile (forehead, brow over the eye's hollow, nose, lips, chin,
+jaw to its angle) per face (`Face`: nose, tip, lips, chin, brow, age); an ear standing off the skull with its rim and
+hollow; the eye's white, iris, lid and lashes, crease and a catchlight; brows, a nostril, the line to the mouth, the
+lips' rose and line; a beard for the beanie look, reading glasses for the older woman, lines of age for both elders,
+a shave's shadow for the young men. Hair has a real hairline (forehead, temple, sideburn, over the ear, the nape). The
+cap's and flat cap's peaks are shorter and thinner. Hands: a relaxed hand with fingers that curl at the ends, their
+gaps and a nail's light, a thumb; a fist with knuckles and the thumb over. Bags: a slimmer strap and smaller shoulder
+bag with a brass buckle; a nylon backpack with a carry loop and zip pull, padded straps with stitched edges. The
+rider (`CycleRig`) uses the same limbs and a slimmer torso.
+
+Resolution: on a phone the focus camera shows at most 1.2 dp a unit (`CAMERA_MAX`) and the near lane 1.06×; at a
+density of 3.5 to 3.75 that is up to about 4.8 px a street unit, so the old bake (`StreetSprites.PPU` 3.6) was being
+enlarged. `PPU` is now 6.4: 1.35× the largest on-screen size and about 1.8× a typical one (1.0 to 1.2 dp at density
+about 2.8), so the figures stay crisp scaled down and hold detail in a zoomed screenshot. The street people's bitmaps
+have mipmaps (`SceneSprites.street`), and they are all made off the main thread when the street opens
+(`SceneSprites.warmStreet`, from `HabitsStage`); each is made outside the pool's lock. Memory: walkers 18.7 MB (from
+6.18; budget raised to 20 MiB), street set about 25.5 MB with the cars (budget 25 MiB, from 12). Bake time on a desktop
+JVM about 7 s for the whole set. Tuned from contact sheets (true phone scale over crops of the street references by day
+and at night, 2-3× zooms, heads at 8×), not on a phone; every Habits reference with walkers changes.
+
