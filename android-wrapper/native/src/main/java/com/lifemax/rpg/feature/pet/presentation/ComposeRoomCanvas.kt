@@ -158,8 +158,10 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
     }
 
     /**
-     * A depth strip of a piece: placed at the device pixel nearest its house position (with the
-     * nudge), so it moves a device pixel at a time while its own pixels stay whole art pixels.
+     * A depth strip of a piece: placed at the device pixel nearest its house position, plus the
+     * nudge rounded on its own ([RoomCanvas.stripX]), so every strip of a piece moves with the same
+     * device pixel as the camera pans and only the angle spreads them; its own pixels stay whole
+     * art pixels.
      */
     override fun stack(
         image: ArgbImage,
@@ -172,7 +174,7 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
         dx: Float,
         dy: Float,
     ) {
-        val x = (originX + (dx + nudge) * scale).roundToInt()
+        val x = RoomCanvas.stripX(originX, scale, nudge, dx)
         // most of the house is off the screen: its strips are not drawn at all
         if (x >= scope.size.width || x + sw * scale <= 0) return
         if (stacks[slot] == null || stackVersions[slot] != version) {
@@ -183,7 +185,7 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
             stacks[slot]!!,
             srcOffset = IntOffset(sx, sy),
             srcSize = IntSize(sw, sh),
-            dstOffset = IntOffset(x, (originY + dy * scale).roundToInt()),
+            dstOffset = IntOffset(x, originY + (dy * scale).roundToInt()),
             dstSize = IntSize(sw * scale, sh * scale),
             filterQuality = FilterQuality.None,
         )
