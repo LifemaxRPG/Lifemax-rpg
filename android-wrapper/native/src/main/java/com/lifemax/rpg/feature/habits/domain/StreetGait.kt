@@ -14,8 +14,11 @@ import kotlin.math.sin
  * Pure arithmetic, no allocation except the pose arrays made while baking.
  */
 object StreetGait {
-    /** Frames baked for one cycle of the street walk: twice the window walk's, for the close-up. */
-    const val FRAMES = 32
+    /**
+     * Frames baked for one cycle of the street walk: four times the window walk's, for the
+     * close-up, where a walk shows every jump between poses.
+     */
+    const val FRAMES = 64
 
     /**
      * The phase of the street walk [travel] units along, for a walker drawn [size] times the rig.
