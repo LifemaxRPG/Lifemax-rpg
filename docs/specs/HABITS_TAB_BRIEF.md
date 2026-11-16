@@ -682,3 +682,27 @@ now 8 MB and 12 MB. Draw cost: one more layer for the stick, a shear for the lea
 are cached in the `Passer`). `StreetMannersTest` covers planted feet for every manner, paces, shares, determinism,
 stops easing in and out on the passing pose, the stick planted with the far foot and the kneel. Tuned from contact
 sheets, not on a phone; every Habits reference with walkers changes.
+
+### As built: a final polish on the walkers
+
+The owner liked the walkers' baseline and asked for "a final polish on all of the character models". Identity,
+colours, proportions, motion and layers are unchanged; the finish is raised in `StreetRig` (shapes only, mostly
+`Mat.FLAT` touches so they add no pillow edges of their own). Faces: a slightly firmer nose and a chin point in the
+profile, a jaw shade, a warm cheek, the ear's hollow, a hint of white in front of the eye and a lid line, a shade
+under the nose, lips in a rosy skin tone; the cap, flat cap and beanie no longer cut their hair line across the eye,
+so those three faces show again (the beanie's beard stays). Hair and hats: a sheen along the crown, three combed
+strands on bare hair, knit ribs on the beanie's brim, a lit edge and crown seam on the cap. Hands: fingers past a
+knuckle line, the light on the back of the hand. Clothes: the shade under a collar or neckline, the jaw's shadow on
+the neck, a soft shade round the near shoulder, folds below a coat sleeve's elbow, the tee sleeve's hem and tuck
+folds above the belt, a jacket's welt pocket and zip pull, a pressed crease down trousers and folds behind a bent
+knee, a fuller skirt (hem 1.22× the hips, from 1.15×) with a second fold and a lit hem. Shoes (`Shoe`, a new
+`StreetLook.shoes`): leather lace-ups (toe cap seam, heel counter, shine), trainers (toe bumper, side stripe, laces),
+ankle boots for the skirt look (shaft, top edge, zip) and flat strap shoes for the older woman, all with a lit sole
+edge; the rider shares them. Props: the phone's lit screen edge and spill and the case's edge, and at night
+(`StreetLifePainter.phoneGlow`) the phone layer is added once more in a cool tint, 0.45 of the night grade; the cup's
+sleeve band, edges and lit side, the lid's rim and sip hole; stitching on both bags' flaps and a lit shoulder strap;
+the stick's polished crook, a light down the shaft and a brass collar. The rider's helmet has a lit crown. Seam: the
+upper arm layer is now shaded as if it ran on into the shoulder and cut back to its round (`StreetRig.shoulderR`,
+as the forearm already was at the elbow). Memory: walkers 6.18 MB (from 6.17), street set 9.78 MB. Tuned from contact
+sheets with the day and night grades and an approximate lamp, not on a phone; every Habits reference with walkers
+changes.

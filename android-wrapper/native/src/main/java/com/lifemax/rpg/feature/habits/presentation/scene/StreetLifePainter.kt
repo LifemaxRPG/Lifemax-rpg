@@ -31,6 +31,7 @@ import com.lifemax.rpg.feature.habits.domain.Gesture
 import com.lifemax.rpg.feature.habits.domain.KeyLight
 import com.lifemax.rpg.feature.habits.domain.Layers
 import com.lifemax.rpg.feature.habits.domain.NearLight
+import com.lifemax.rpg.feature.habits.domain.Part
 import com.lifemax.rpg.feature.habits.domain.Passer
 import com.lifemax.rpg.feature.habits.domain.PeopleLod
 import com.lifemax.rpg.feature.habits.domain.Perspective
@@ -164,6 +165,12 @@ internal class StreetLifePainter {
 
     private val moonRimFilter = ColorFilter.tint(Color(0xFFC9D6FF), BlendMode.SrcIn)
 
+    /** A phone's screen in the dark: its cool light, added over it ([phoneGlow]). */
+    private val phoneGlowFilter = ColorFilter.tint(Color(0xFFBFD8FF), BlendMode.SrcIn)
+
+    /** How much a phone in someone's hand glows as the walkers are drawn (at night only). */
+    private var phoneGlow = 0f
+
     /** A foot's soft contact shadow: a unit disc fading out. */
     private val contact =
         Brush.radialGradient(
@@ -289,6 +296,15 @@ internal class StreetLifePainter {
                     colorFilter = filter,
                     blendMode = blend,
                 )
+                // a lit screen shows in the dark
+                if (part == Part.PHONE && phoneGlow > .01f)
+                    drawImage(
+                        im.image,
+                        Offset(im.dx, im.dy),
+                        a * phoneGlow,
+                        colorFilter = phoneGlowFilter,
+                        blendMode = BlendMode.Plus,
+                    )
             }
         }
     }
@@ -654,7 +670,11 @@ internal class StreetLifePainter {
                 nudgeX = 0f
                 nudgeY = 0f
             }
-            if (day < .99f) party(p, persp, 1f - day, nightFigure, PLAIN)
+            if (day < .99f) {
+                phoneGlow = (1f - day) * PHONE_GLOW
+                party(p, persp, 1f - day, nightFigure, PLAIN)
+                phoneGlow = 0f
+            }
             if (day > .01f) party(p, persp, day, dayFigure, PLAIN)
             // the street lamps' light on them, falling off across them from each lens
             if (dark > .2f) lampsOn(p, persp, lamps, dark)
@@ -1057,3 +1077,6 @@ internal class StreetLifePainter {
 
 /** How strongly a street lamp lights a walker right under it, through its fall-off. */
 private const val LAMP_ON_FIGURE = 1f
+
+/** How strongly a phone's screen glows over its night grade, fully dark. */
+private const val PHONE_GLOW = .45f
