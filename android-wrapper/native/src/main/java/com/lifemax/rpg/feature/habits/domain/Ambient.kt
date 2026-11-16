@@ -85,7 +85,7 @@ object Ambient {
     const val SHOOT_PERIOD = 37f
     const val SHOOT_SECONDS = 1.6f
     const val PLANE_PERIOD = 110f
-    const val PLANE_SECONDS = 34f
+    const val PLANE_SECONDS = 46f
     const val BIRD_PERIOD = 70f
     const val BIRD_SECONDS = 19f
     const val BLIMP_PERIOD = 210f

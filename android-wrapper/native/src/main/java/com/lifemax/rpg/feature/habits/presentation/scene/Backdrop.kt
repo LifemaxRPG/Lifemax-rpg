@@ -1682,4 +1682,4 @@ internal class Backdrop(private val seed: Int, day: String = "") {
 }
 
 /** How big the airliner is drawn against its sprite: a little smaller, so it reads as far off. */
-private const val PLANE_SIZE = .75f
+private const val PLANE_SIZE = .55f
