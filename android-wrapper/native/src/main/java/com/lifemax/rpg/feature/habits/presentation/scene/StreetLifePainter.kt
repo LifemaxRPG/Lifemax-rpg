@@ -27,16 +27,18 @@ import com.lifemax.rpg.feature.habits.domain.CycleRig
 import com.lifemax.rpg.feature.habits.domain.DogRig
 import com.lifemax.rpg.feature.habits.domain.Furniture
 import com.lifemax.rpg.feature.habits.domain.FurnitureKind
+import com.lifemax.rpg.feature.habits.domain.Gesture
 import com.lifemax.rpg.feature.habits.domain.KeyLight
+import com.lifemax.rpg.feature.habits.domain.Layers
 import com.lifemax.rpg.feature.habits.domain.NearLight
 import com.lifemax.rpg.feature.habits.domain.Passer
 import com.lifemax.rpg.feature.habits.domain.PeopleLod
 import com.lifemax.rpg.feature.habits.domain.Perspective
 import com.lifemax.rpg.feature.habits.domain.SceneLight
 import com.lifemax.rpg.feature.habits.domain.StreetGait
+import com.lifemax.rpg.feature.habits.domain.StreetLayers
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
 import com.lifemax.rpg.feature.habits.domain.StreetLife
-import com.lifemax.rpg.feature.habits.domain.StreetRig
 import com.lifemax.rpg.feature.habits.domain.Stroller
 import kotlin.math.abs
 import kotlin.math.max
@@ -229,7 +231,18 @@ internal class StreetLifePainter {
 
     // ------------------------------------------------------------------ the figures
 
-    /** A walker's frame and the one beside it at the current origin (the feet), [alpha] strong. */
+    /** The layers of the walker being drawn ([StreetLayers]), filled anew for each. */
+    private val layers = Layers()
+
+    /** Pixels in a walker's sprites to a unit of the rig. */
+    private val partScale = StreetLife.SIZE * StreetSprites.PPU
+
+    /**
+     * A walker at the current origin (the feet), [alpha] strong: the walk's frame and the one
+     * beside it (or the settle to a stand), with the arms and the head doing what [g] says, each
+     * layer turned about its joint: the far arm behind the body, the head, then the near arm and
+     * what it holds in front.
+     */
     private fun DrawScope.walkerFrames(
         p: Passer,
         look: Int,
@@ -238,43 +251,32 @@ internal class StreetLifePainter {
         mix: Float,
         alpha: Float,
         filter: ColorFilter?,
+        g: Gesture,
     ) {
-        val a = SceneSprites.walker(look, frame)
-        if (p.still > .01f) {
-            // settling to a stand: the settle frames over the walk's passing frame
-            val q = p.still * StreetRig.SETTLE_FRAMES
-            val i = q.toInt().coerceIn(0, StreetRig.SETTLE_FRAMES - 1)
-            val t = q - i
-            val from = if (i == 0) a else SceneSprites.walker(look, StreetGait.FRAMES + i - 1)
-            val to = SceneSprites.walker(look, StreetGait.FRAMES + i)
-            drawImage(
-                from.image,
-                Offset(from.dx, from.dy),
-                alpha,
-                colorFilter = filter,
-                blendMode = blend,
-            )
-            if (t > .03f)
+        val l = layers
+        StreetLayers.lay(look, frame, next, mix, p.still, g, l)
+        for (i in 0 until l.count) {
+            val part = l.part[i]
+            val a = alpha * l.alpha[i]
+            if (part < 0) {
+                val w = SceneSprites.walker(look, l.body(i))
+                drawImage(w.image, Offset(w.dx, w.dy), a, colorFilter = filter, blendMode = blend)
+                continue
+            }
+            val im = SceneSprites.walkerPart(look, part)
+            withTransform({
+                translate(l.x[i] * partScale, l.y[i] * partScale)
+                rotate(l.deg[i], Offset.Zero)
+            }) {
                 drawImage(
-                    to.image,
-                    Offset(to.dx, to.dy),
-                    alpha * t,
+                    im.image,
+                    Offset(im.dx, im.dy),
+                    a,
                     colorFilter = filter,
                     blendMode = blend,
                 )
-            return
+            }
         }
-        if (next != frame && mix > .03f) {
-            val b = SceneSprites.walker(look, next)
-            drawImage(
-                b.image,
-                Offset(b.dx, b.dy),
-                alpha * mix,
-                colorFilter = filter,
-                blendMode = blend,
-            )
-        }
-        drawImage(a.image, Offset(a.dx, a.dy), alpha, colorFilter = filter, blendMode = blend)
     }
 
     private fun DrawScope.dogFrames(p: Passer, alpha: Float, filter: ColorFilter?) {
@@ -363,7 +365,7 @@ internal class StreetLifePainter {
     private fun DrawScope.figure(p: Passer, alpha: Float, filter: ColorFilter?) {
         when (p.kind) {
             Stroller.CYCLIST -> cycleFrames(p, alpha, filter)
-            else -> walkerFrames(p, p.look, p.frame, p.next, p.mix, alpha, filter)
+            else -> walkerFrames(p, p.look, p.frame, p.next, p.mix, alpha, filter, p.act)
         }
     }
 
@@ -433,7 +435,7 @@ internal class StreetLifePainter {
                     )
                 }) {
                     scale(p.dir * s2, s2, Offset.Zero) {
-                        walkerFrames(p, p.look2, p.frame2, p.next2, p.mix2, alpha, filter)
+                        walkerFrames(p, p.look2, p.frame2, p.next2, p.mix2, alpha, filter, p.act2)
                     }
                 }
             }
@@ -688,10 +690,11 @@ internal class StreetLifePainter {
 
     /** The dog's lead, from the walker's near hand to the dog's collar, sagging a little. */
     private fun DrawScope.lead(p: Passer, persp: Float) {
-        val j = SceneSprites.walker(p.look, p.frame).joints
+        // the near hand where the layers put it this moment
+        StreetLayers.lay(p.look, p.frame, p.next, p.mix, p.still, p.act, layers)
         val s = StreetLife.SIZE * persp
-        val hx = p.x + p.dir * j.handNX * s
-        val hy = p.lane + j.handNY * s
+        val hx = p.x + p.dir * layers.handX * s
+        val hy = p.lane + layers.handY * s
         val ds = StreetLife.DOG_SIZE * persp
         val cx = p.dogX + p.dir * 3.3f * ds
         val cy = p.lane - 7.2f * ds + (if (p.sniff > 0f) 2.5f * ds * p.sniff else 0f)

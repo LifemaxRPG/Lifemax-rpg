@@ -76,6 +76,10 @@ class Passer {
     /** A [Stroller.CYCLIST]'s cranks and wheels, in radians. */
     var crank = 0f
     var wheel = 0f
+
+    /** What the walker's hands and head are doing ([StreetActs]), and their companion's. */
+    val act = Gesture()
+    val act2 = Gesture()
 }
 
 /** The car on the near road this moment, written by [StreetLife.car]. */
@@ -236,6 +240,12 @@ object StreetLife {
             }
             else -> travel = v * t
         }
+        // what they do with their hands as they go (a cyclist keeps them on the bars); reading a
+        // phone slows them a little, so the ground covered is the time less what that lost
+        val busy = kind == Stroller.DOG_WALKER || StreetLooks.ALL[look].bag == Bag.HAND
+        if (kind == Stroller.CYCLIST) p.act.clear()
+        else StreetActs.at(seed, k, 0, t, look, busy, p.act)
+        if (kind == Stroller.WALKER || kind == Stroller.PAIR) travel = v * (t - p.act.lost)
         if (travel > length) return false
         p.on = true
         p.kind = kind
@@ -271,6 +281,15 @@ object StreetLife {
                     (look + 1 + (Ambient.hash(seed, k, 207) * (StreetLooks.COUNT - 1)).toInt()) %
                         StreetLooks.COUNT
                 p.size2 = pace(p.look2)
+                StreetActs.at(
+                    seed,
+                    k,
+                    1,
+                    t,
+                    p.look2,
+                    StreetLooks.ALL[p.look2].bag == Bag.HAND,
+                    p.act2,
+                )
                 val phase =
                     StreetGait.phase(travel, p.size2, Gait.PASSING + Ambient.hash(seed, k, 208))
                 p.frame2 = Gait.nearest(phase, StreetGait.FRAMES)

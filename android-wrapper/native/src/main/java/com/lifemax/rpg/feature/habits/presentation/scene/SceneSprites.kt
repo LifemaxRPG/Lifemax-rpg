@@ -12,6 +12,7 @@ import com.lifemax.rpg.feature.habits.domain.BuildingSpec
 import com.lifemax.rpg.feature.habits.domain.DogRig
 import com.lifemax.rpg.feature.habits.domain.HabitMaterial
 import com.lifemax.rpg.feature.habits.domain.Looks
+import com.lifemax.rpg.feature.habits.domain.Part
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.SeasonState
@@ -440,6 +441,25 @@ internal object SceneSprites {
         streetBytes += sp.w * sp.h * 4
         return WalkerImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy, w.joints).also {
             walkers[i] = it
+        }
+    }
+
+    private val walkerParts = arrayOfNulls<PersonImage>(StreetLooks.COUNT * Part.COUNT)
+
+    /**
+     * Street walker [look]'s layer [part] ([Part]): an arm, the head, what a hand holds; its
+     * top-left from its joint.
+     */
+    @Synchronized
+    fun walkerPart(look: Int, part: Int): PersonImage {
+        val i = look * Part.COUNT + part
+        walkerParts[i]?.let {
+            return it
+        }
+        val sp = StreetSprites.part(look, part)
+        streetBytes += sp.w * sp.h * 4
+        return PersonImage(image(sp.pixels, sp.w, sp.h), -sp.ox, -sp.oy).also {
+            walkerParts[i] = it
         }
     }
 
