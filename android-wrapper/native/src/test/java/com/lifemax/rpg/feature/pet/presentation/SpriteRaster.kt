@@ -22,10 +22,18 @@ internal class Raster(val x0: Int, val y0: Int, val w: Int, val h: Int, val px: 
 }
 
 /**
- * One horizontal band of a picture drawn by one `drawImage`: picture rows [srcFrom] until [srcTo]
- * into the local rows [dstTop] until [dstTop] + [dstHeight] (device pixels before the transform).
+ * One piece of a picture drawn by one `drawImage`: picture rows [srcFrom] until [srcTo] of the
+ * columns [colFrom] until [colTo] into the local rows [dstTop] until [dstTop] + [dstHeight] (device
+ * pixels before the transform), the columns where they always lie.
  */
-internal class Band(val srcFrom: Int, val srcTo: Int, val dstTop: Int, val dstHeight: Int)
+internal class Band(
+    val srcFrom: Int,
+    val srcTo: Int,
+    val dstTop: Int,
+    val dstHeight: Int,
+    val colFrom: Int = 0,
+    val colTo: Int = Int.MAX_VALUE,
+)
 
 /**
  * What one cat's drawing asks of the canvas: a picture of [srcW] x [srcH] pixels whose left edge
@@ -62,7 +70,9 @@ internal class SpriteDraw(
                 a.srcFrom == b.srcFrom &&
                     a.srcTo == b.srcTo &&
                     a.dstTop == b.dstTop &&
-                    a.dstHeight == b.dstHeight
+                    a.dstHeight == b.dstHeight &&
+                    a.colFrom == b.colFrom &&
+                    a.colTo == b.colTo
             } &&
             src.contentEquals(other.src)
 }
@@ -129,6 +139,7 @@ internal object SpriteRaster {
                 val col = floor((lx - d.left) / d.s).toInt()
                 if (col !in 0 until d.srcW) continue
                 for (b in d.bands) {
+                    if (col < b.colFrom || col >= b.colTo) continue
                     val v = ly - b.dstTop
                     if (v < 0 || v >= b.dstHeight) continue
                     val row = b.srcFrom + floor(v * (b.srcTo - b.srcFrom) / b.dstHeight).toInt()

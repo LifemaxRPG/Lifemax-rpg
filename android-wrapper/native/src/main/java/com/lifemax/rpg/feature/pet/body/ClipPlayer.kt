@@ -7,10 +7,10 @@ import kotlin.math.floor
  * the clip it replaces), never on a global clock. Looping clips wrap; one-shot clips hold their
  * last frame and report [finished].
  *
- * Clips that blink (the sitting rows) keep their eyes open, holding one open frame for
- * [Tuning.Blink.OPEN_HOLD_S] before the next (a sitting cat's head must not change many times a
- * second), and run a blink every few seconds, drawn from the cat's own random stream, like the
- * web's petBlinkFrame.
+ * Clips that hold (the sitting, loafing and sleeping rows) keep one frame, holding each of their
+ * open frames for [Tuning.Blink.OPEN_HOLD_S] before the next (a resting cat's head must not change
+ * many times a second); those that blink (the sitting and loafing rows) run a blink every few
+ * seconds, drawn from the cat's own random stream, like the web's petBlinkFrame.
  */
 internal class ClipPlayer(private val rng: Rng) {
     var clip: Clip = Clips.IDLE_SIT
@@ -74,7 +74,7 @@ internal class ClipPlayer(private val rng: Rng) {
             phase = ALMOST_ONE
             finished = true
         }
-        if (clip.blinks) advanceBlink(dt)
+        if (clip.holds) advanceBlink(dt)
     }
 
     /** Advance at the clip's own base rate, scaled by [rate]. */
@@ -82,7 +82,7 @@ internal class ClipPlayer(private val rng: Rng) {
 
     /** The frame to draw. */
     val frame: Int
-        get() = if (clip.blinks) blinkFrame() else plainFrame()
+        get() = if (clip.holds) blinkFrame() else plainFrame()
 
     /** How far through the current frame we are, `0..1`. */
     val framePhase: Float
@@ -111,6 +111,7 @@ internal class ClipPlayer(private val rng: Rng) {
             return
         }
         openClock += dt
+        if (!clip.blinks) return
         nextBlinkIn -= dt
         if (nextBlinkIn <= 0f) blinkClock = 0f
     }

@@ -39,7 +39,8 @@ enum class Posture {
  *   clips that are not locomotion. Playing at `speed / stridePx` cycles per second means no slip.
  * @property shadowHalfWidth half width of the ground shadow in art pixels.
  * @property cheapBeat true when letting the clip finish is a short, natural beat.
- * @property openFrames for clips that blink: the frames with open eyes, held one after another.
+ * @property openFrames for clips that blink or hold: the frames with open eyes (or, for a sleeping
+ *   cat, its one resting frame), held one after another.
  * @property blinkFrames for clips that blink: the frames of one blink.
  */
 class Clip(
@@ -69,6 +70,10 @@ class Clip(
 
     val blinks: Boolean
         get() = blinkFrames.isNotEmpty()
+
+    /** True for clips that hold their [openFrames] instead of playing through their frames. */
+    val holds: Boolean
+        get() = openFrames.isNotEmpty()
 
     /** Seconds for one pass at the base frame rate. */
     val seconds: Float
@@ -100,6 +105,16 @@ object Clips {
     private val SIT_BLINK = intArrayOf(3, 4, 5)
     private val SIT_W_OPEN = intArrayOf(0, 6, 7, 1)
     private val SIT_W_BLINK = intArrayOf(2, 3, 4, 5)
+
+    /**
+     * The resting rows hold one frame: the art's four frames are a breath drawn by hand that also
+     * moves the ears, the eyes, the paws and the tail's tip by a pixel each frame, so cycling them
+     * made a sleeping cat's head and tail flicker. The breath is native ([CatPose.breath], drawn as
+     * a lift of the back only); a loafing cat's half-closed and closed frames are its blink.
+     */
+    private val REST_HOLD = intArrayOf(0)
+    private val LOAF_BLINK = intArrayOf(2, 3, 2)
+    private val LOAF_W_BLINK = intArrayOf(2, 3)
 
     private val list = ArrayList<Clip>()
     private val byName = HashMap<String, Clip>()
@@ -180,8 +195,21 @@ object Clips {
             speed = RUN_SPEED,
             contacts = halfCycle(6),
         )
-    val SLEEP = add("sleep", 3, 4, 2f, 47, Posture.LIE, 0.6f, shadow = WIDE_SHADOW)
-    val LOAF = add("loaf", 4, 4, 2f, 47, Posture.LOAF, 0.72f, shadow = WIDE_SHADOW)
+    val SLEEP =
+        add("sleep", 3, 4, 2f, 47, Posture.LIE, 0.6f, shadow = WIDE_SHADOW, open = REST_HOLD)
+    val LOAF =
+        add(
+            "loaf",
+            4,
+            4,
+            2f,
+            47,
+            Posture.LOAF,
+            0.72f,
+            shadow = WIDE_SHADOW,
+            open = REST_HOLD,
+            blink = LOAF_BLINK,
+        )
     val GROOM = action("groom", 5, 8, 5f, 47, 0.95f)
     val EAT = action("eat", 6, 6, 5f, 46, 0.9f)
     val PLAY = action("play", 7, 6, 9f, 47, 0.95f)
@@ -207,8 +235,21 @@ object Clips {
             speed = WEAK_SPEED,
             contacts = halfCycle(8),
         )
-    val LOAF_W = add("loaf_w", 18, 4, 1.5f, 47, Posture.LOAF, 0.7f, shadow = WIDE_SHADOW)
-    val SLEEP_W = add("sleep_w", 19, 4, 1.5f, 47, Posture.LIE, 0.6f, shadow = WIDE_SHADOW)
+    val LOAF_W =
+        add(
+            "loaf_w",
+            18,
+            4,
+            1.5f,
+            47,
+            Posture.LOAF,
+            0.7f,
+            shadow = WIDE_SHADOW,
+            open = REST_HOLD,
+            blink = LOAF_W_BLINK,
+        )
+    val SLEEP_W =
+        add("sleep_w", 19, 4, 1.5f, 47, Posture.LIE, 0.6f, shadow = WIDE_SHADOW, open = REST_HOLD)
     val CROUCH = add("crouch", 20, 3, 7f, 47, Posture.ACTION, 0.8f, loop = false)
     val SCRATCH = action("scratch", 21, 8, 7f, 46, 1.05f)
     val SCRATCH_IN = once("scratch_in", 22, 3, 7f, 47, 1f)

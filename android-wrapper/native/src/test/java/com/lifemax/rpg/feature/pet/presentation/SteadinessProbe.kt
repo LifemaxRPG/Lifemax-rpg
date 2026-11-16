@@ -137,6 +137,19 @@ internal object SteadinessProbe {
         /** Pixels per step that went back to the colour they had two frames before (a, b, a). */
         val flicker = ArrayList<Int>()
 
+        /**
+         * Of [changed], the pixels outside the breathing back (steady renderer, upright cat only):
+         * on the head's columns ([SpritePlan.head]) or under the breath's cut ([SpritePlan.cut]),
+         * where the face, the ears, the paws and the tail lie.
+         */
+        val offBack = ArrayList<Int>()
+
+        // the steady plan's geometry of the frame drawn last (picture columns and rows)
+        private var head = Int.MAX_VALUE
+        private var cut = Int.MAX_VALUE
+        private var left = 0
+        private var top = 0
+
         /** Device pixel moves of the paws up or down that were undone on the next frame. */
         var bounces = 0
 
@@ -203,6 +216,7 @@ internal object SteadinessProbe {
             causes.add(cause)
             if (draw.sameUpToTranslation(prevDraw)) {
                 changed.add(0)
+                offBack.add(0)
                 coat.add(0)
                 flicker.add(0)
                 return
@@ -212,6 +226,7 @@ internal object SteadinessProbe {
             var inner = 0
             var all = 0
             var flick = 0
+            var off = 0
             val x0 = minOf(now.x0, prev.x0 + dx)
             val y0 = minOf(now.y0, prev.y0 + dy)
             val x1 = maxOf(now.x0 + now.w, prev.x0 + dx + prev.w)
@@ -222,6 +237,7 @@ internal object SteadinessProbe {
                 if (a == b) continue
                 all++
                 if (a ushr 24 != 0 && b ushr 24 != 0) inner++
+                if (!onBack(draw, x, y)) off++
                 if (older != null) {
                     val ox = draw.footX - older.second.footX
                     val oy = draw.footY - older.second.footY
@@ -231,6 +247,7 @@ internal object SteadinessProbe {
             changed.add(all)
             coat.add(inner)
             flicker.add(flick)
+            offBack.add(off)
             trace?.append(
                 "${changed.size} ${pose.clipName}#${pose.frame} foot ${draw.footX},${draw.footY} " +
                     "$cause changed $all coat $inner " +
@@ -333,6 +350,16 @@ internal object SteadinessProbe {
             }
         }
 
+        /** True if device pixel ([x], [y]) lies, unlifted, on the back of an upright cat. */
+        private fun onBack(draw: SpriteDraw, x: Int, y: Int): Boolean {
+            if (renderer != Renderer.STEADY || draw.turnDeg != 0.0 || draw.scaleY != 1.0)
+                return false
+            val lx = (x + HALF - draw.footX) / draw.scaleX
+            val col = Math.floorDiv(Math.floor(lx).toInt() - left * s, s)
+            val row = Math.floorDiv(Math.floor(y + HALF - draw.footY).toInt() - top * s, s)
+            return col < head && row < cut
+        }
+
         private fun steady(
             pose: CatPose,
             footX: Int,
@@ -343,6 +370,10 @@ internal object SteadinessProbe {
             val light = lightOf?.invoke(pose, drawnFrames++ / HZ.toDouble()) ?: 0
             lights.add(light)
             plan.plan(pose, rig, feet, FRAME_W, FRAME_H, steady, frames, s, motion = true, light)
+            head = plan.head
+            cut = plan.cut
+            left = plan.left
+            top = plan.top
             keys[K_LIGHT] = light.toLong()
             keys[K_ART] = artKey(pose)
             keys[K_RIG] = steady.grid.key()
@@ -358,7 +389,14 @@ internal object SteadinessProbe {
             val bands =
                 List(n) {
                     val i = it * SpritePlan.BAND
-                    Band(bandOut[i], bandOut[i + 1], bandOut[i + 2], bandOut[i + 3])
+                    Band(
+                        bandOut[i],
+                        bandOut[i + 1],
+                        bandOut[i + 2],
+                        bandOut[i + 3],
+                        bandOut[i + 4],
+                        bandOut[i + 5],
+                    )
                 }
             return SpriteDraw(
                 pixels,
@@ -412,6 +450,7 @@ internal object SteadinessProbe {
     const val FRAME_W = RigFrames.FRAME_WIDTH
     const val FRAME_H = RigFrames.FRAME_HEIGHT
     private const val HISTORY = 3
+    private const val HALF = 0.5
     private const val FRAME_SPAN = 64L
     private const val KEYS = 5
     private const val K_ART = 0

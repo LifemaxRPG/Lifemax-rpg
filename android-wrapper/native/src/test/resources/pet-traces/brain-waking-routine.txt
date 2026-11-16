@@ -47,25 +47,25 @@
   11.50 turn        f2 bed      x=  36.00 z= 35.0 y=128.00
   11.75 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
   12.00 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
-  12.25 loaf        f1 bed      x=  36.00 z= 35.0 y=128.00
-  12.50 loaf        f1 bed      x=  36.00 z= 35.0 y=128.00
-  12.75 loaf        f2 bed      x=  36.00 z= 35.0 y=128.00
-  13.00 loaf        f2 bed      x=  36.00 z= 35.0 y=128.00
-  13.25 loaf        f3 bed      x=  36.00 z= 35.0 y=128.00
-  13.50 loaf        f3 bed      x=  36.00 z= 35.0 y=128.00
+  12.25 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
+  12.50 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
+  12.75 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
+  13.00 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
+  13.25 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
+  13.50 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
   13.75 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
   14.00 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
-  14.25 loaf        f1 bed      x=  36.00 z= 35.0 y=128.00
-  14.50 loaf        f1 bed      x=  36.00 z= 35.0 y=128.00
-  14.75 loaf        f2 bed      x=  36.00 z= 35.0 y=128.00
-  15.00 loaf        f2 bed      x=  36.00 z= 35.0 y=128.00
+  14.25 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
+  14.50 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
+  14.75 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
+  15.00 loaf        f0 bed      x=  36.00 z= 35.0 y=128.00
   15.25 sleep       f0 bed      x=  36.00 z= 35.0 y=128.00
   15.50 sleep       f0 bed      x=  36.00 z= 35.0 y=128.00
   15.75 sleep       f0 bed      x=  36.00 z= 35.0 y=128.00
-  16.00 sleep       f1 bed      x=  36.00 z= 35.0 y=128.00
-  16.25 sleep       f1 bed      x=  36.00 z= 35.0 y=128.00
+  16.00 sleep       f0 bed      x=  36.00 z= 35.0 y=128.00
+  16.25 sleep       f0 bed      x=  36.00 z= 35.0 y=128.00
   16.50 # waking routine @ bed (after sleep)
-  16.50 sleep       f2 bed      x=  36.00 z= 35.0 y=128.00
+  16.50 sleep       f0 bed      x=  36.00 z= 35.0 y=128.00
   16.75 yawn        f1 bed      x=  36.00 z= 35.0 y=128.00
   17.00 yawn        f3 bed      x=  36.00 z= 35.0 y=128.00
   17.25 yawn        f4 bed      x=  36.00 z= 35.0 y=128.00

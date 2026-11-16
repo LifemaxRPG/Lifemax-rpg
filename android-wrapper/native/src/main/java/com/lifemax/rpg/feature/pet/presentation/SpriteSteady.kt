@@ -42,6 +42,22 @@ internal object SteadyTuning {
      * above it rise and sink as one by whole device pixels, and the row at the cut stretches.
      */
     const val BREATH_CUT_SHARE = 0.35
+
+    /**
+     * Art rows just above the cut that share the breath's stretch, each a little taller (or
+     * shorter) than the last, so no single row of the coat is doubled; the rows above them move as
+     * one.
+     */
+    const val BREATH_EASE_ROWS = 3
+
+    /**
+     * Art columns between the breathing back and the still head, each lifted a little less than the
+     * one behind it, so the back bends down to the head instead of stepping.
+     */
+    const val BREATH_EASE_COLUMNS = 3
+
+    /** Art columns behind the back ear that still belong to the head (the back of the skull). */
+    const val HEAD_BACK_COLUMNS = 1
 }
 
 /**
