@@ -1319,14 +1319,15 @@ internal class BuildingPainter {
             val spread = lean * h + 80f
             if (left + l.lot + spread < from || left - spread > to) continue
             val cx = street.centers[i]
-            // the block of shade is the front plus whichever side shows
-            val s = shiftAt(cx)
-            val l0 = Perspective.left(s)
+            // the block of shade is the building's own width, its front's: the side face shows only
+            // because of where the camera stands (it runs back from the street, so its shade falls
+            // in the gap behind, not on the pavement), and shading it too made the light between
+            // two buildings narrower than the gap
             withTransform({
                 translate(cx, 0f)
                 transform(fallMatrix(light, cx))
             }) {
-                softBlock(tint, l0, Perspective.right(s), h, light.strength)
+                softBlock(tint, -B.W / 2f, B.W / 2f, h, light.strength)
             }
             for (t in l.trees) treeSilhouette(cx + t.x, t.id.hashCode(), seconds, .8f, tint, light)
         }
