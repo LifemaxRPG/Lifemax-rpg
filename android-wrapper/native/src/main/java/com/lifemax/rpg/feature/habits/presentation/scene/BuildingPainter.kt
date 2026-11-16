@@ -727,7 +727,7 @@ internal class BuildingPainter {
                             drawImage(
                                 SceneSprites.light.air,
                                 Offset.Zero,
-                                .5f * on,
+                                .75f * on,
                                 colorFilter = lampTint,
                                 blendMode = BlendMode.Plus,
                             )
@@ -2881,7 +2881,7 @@ internal class BuildingPainter {
                 drawImage(
                     SceneSprites.light.spill,
                     Offset.Zero,
-                    .5f * dark,
+                    .95f * dark,
                     colorFilter = spillTint,
                     blendMode = BlendMode.Plus,
                 )
