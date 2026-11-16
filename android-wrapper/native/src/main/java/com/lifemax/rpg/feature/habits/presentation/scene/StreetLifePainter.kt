@@ -91,7 +91,7 @@ internal class StreetLifePainter {
     private val lampLitFilter = ColorFilter.tint(Color(0xFFFFC994), BlendMode.SrcIn)
 
     /** The colour a building's shade multiplies a walker by: the cool of the sky's fill light. */
-    private val figureShade = ColorFilter.tint(Color(0xFF55607A), BlendMode.SrcIn)
+    private val figureShade = ColorFilter.tint(Color(0xFF6E7A94), BlendMode.SrcIn)
     private val lampPaint = Paint().apply { blendMode = BlendMode.Plus }
 
     /** How the figure's images are laid down ([party] sets it for one call). */
@@ -1141,4 +1141,4 @@ private const val LAMP_ON_FIGURE = 1f
 private const val PHONE_GLOW = .45f
 
 /** How much of a building's shade (its depth on the pavement) darkens a walker standing in it. */
-private const val SHADE_ON_FIGURE = 1.5f
+private const val SHADE_ON_FIGURE = 1f
