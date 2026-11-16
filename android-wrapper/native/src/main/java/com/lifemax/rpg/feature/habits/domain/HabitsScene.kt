@@ -767,31 +767,3 @@ class Dice(key: String) {
         const val FNV = -2128831035 // 2166136261 as a 32-bit integer
     }
 }
-
-/**
- * A crack (or the seam left by coming back) on a floor's front, its own shape for each [key]:
- * points as (how far across the front, 0 to 1; how far down it, 0 to 1). It starts on the top edge
- * somewhere in the right-hand half (the plaque is on the left), zigzags down and stops inside the
- * floor, so it never meets the crack of the floor under it; a [tall] floor's has more turns.
- */
-fun crackLine(key: String, tall: Boolean): List<Pair<Float, Float>> {
-    val dice = Dice(key + "c")
-    val n = (if (tall) 4 else 3) + if (dice.next() < .5f) 0 else 1
-    val start = CRACK_LEFT + .09f + dice.next() * (CRACK_RIGHT - CRACK_LEFT - .18f)
-    val depth = .5f + dice.next() * (CRACK_DEPTH - .5f)
-    var side = if (dice.next() < .5f) -1f else 1f
-    return List(n + 1) { i ->
-        if (i == 0) start to 0f
-        else {
-            val u = start + side * (.03f + dice.next() * .06f)
-            side = -side
-            // the turns are not evenly spaced either
-            u to depth * (i - .4f + dice.next() * .4f) / n
-        }
-    }
-}
-
-/** A crack keeps between these across its front, and never goes deeper than [CRACK_DEPTH] of it. */
-const val CRACK_LEFT = .52f
-const val CRACK_RIGHT = .94f
-const val CRACK_DEPTH = .84f

@@ -23,7 +23,6 @@ import com.lifemax.rpg.feature.habits.domain.PieceKind
 import com.lifemax.rpg.feature.habits.domain.RuinWindow
 import com.lifemax.rpg.feature.habits.domain.Silhouettes
 import com.lifemax.rpg.feature.habits.domain.WindowCast
-import com.lifemax.rpg.feature.habits.domain.crackLine
 import com.lifemax.rpg.feature.habits.domain.floorWindows
 import com.lifemax.rpg.feature.habits.domain.lightOrder
 import com.lifemax.rpg.feature.habits.domain.occupancy
@@ -107,7 +106,7 @@ internal class InkPaths(val fill: Array<Path?>, val stroke: Array<Path?>) {
 /**
  * One storey worked out once, when the habits change, so a frame only draws: its wall's material,
  * its architecture as paths, its windows, which of them light and who is in them, its plaque's
- * words, its crack.
+ * words, its decay.
  */
 internal class FloorArt(
     val piece: Piece,
@@ -142,7 +141,8 @@ internal class FloorArt(
     val count: TextLayoutResult?,
     val plaqueW: Float,
     val plaqueH: Float,
-    val crack: Path?,
+    /** What a missed floor has suffered, or the mend of a come-back ([FloorDecay]). */
+    val decay: DecayArt?,
     /** The storey of a habit being broken (0 the lowest), and how many it has. */
     val storey: Int,
     val storeys: Int,
@@ -157,6 +157,32 @@ internal class FloorArt(
 
     /** How lit each window's room is right now, 0 to 1 (scratch the painter fills per frame). */
     val glow = FloatArray(windows.size / 4)
+}
+
+/**
+ * A floor's decay as paths, one per [DecayInk] (null where it has nothing), moved down to the
+ * floor's top, and its streaks ([DecayPlan.stains], y from the building's origin).
+ */
+internal class DecayArt(val paths: Array<Path?>, val stains: Array<FloatArray>) {
+    companion object {
+        fun of(plan: DecayPlan, top: Float): DecayArt {
+            val paths = arrayOfNulls<Path>(DecayInk.entries.size)
+            for (ink in DecayInk.entries) {
+                val shapes = plan.of(ink)
+                if (shapes.isEmpty()) continue
+                val path = Path()
+                for (pts in shapes) {
+                    path.moveTo(pts[0], top + pts[1])
+                    for (i in 1 until pts.size / 2) path.lineTo(pts[i * 2], top + pts[i * 2 + 1])
+                    if (ink.width <= 0f) path.close()
+                }
+                paths[ink.ordinal] = path
+            }
+            val stains =
+                Array(plan.stains.size) { plan.stains[it].copyOf().also { s -> s[1] += top } }
+            return DecayArt(paths, stains)
+        }
+    }
 }
 
 /** A building worked out once: its storeys and the words on its lobby and its roof. */
@@ -297,7 +323,6 @@ private fun floorArt(
     val f = facade(if (ruin) HabitMaterial.FADE else b.material)
     val top = -p.top
     val bottom = -p.bottom
-    val half = B.W / 2f
     // the plaque, in the band under the windows: the name, and the count beside it where it fits
     val labelled = p.labelled
     val room = B.W - 2 * B.PLAQUE_X - 10f
@@ -380,20 +405,10 @@ private fun floorArt(
         overShapes,
         escape,
     )
-    val crack =
-        if (!ruin && labelled && (b.miss >= 1 || b.scar))
-            Path().apply {
-                val pts = crackLine(b.id, p.height > 60f)
-                pts.forEachIndexed { i, (u, v) ->
-                    val x = -half + u * B.W
-                    val y = top + v * p.height
-                    if (i == 0) moveTo(x, y) else lineTo(x, y)
-                }
-                val turn = pts.size / 2
-                val (u, v) = pts[turn]
-                val away = if (pts[turn + 1].first > u) -1f else 1f
-                moveTo(-half + u * B.W, top + v * p.height)
-                lineTo(-half + u * B.W + away * 9f, top + v * p.height + 6f)
+    val decay =
+        if (!ruin && labelled)
+            FloorDecay.plan(b.material, key, b.miss, b.scar, p.height, spots)?.let {
+                DecayArt.of(it, top)
             }
         else null
     return FloorArt(
@@ -418,7 +433,7 @@ private fun floorArt(
         count,
         plaqueW,
         plaqueH,
-        crack,
+        decay,
         storey,
         storeys,
     )

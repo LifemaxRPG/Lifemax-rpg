@@ -570,3 +570,27 @@ buildings show theirs and the back leaves move less than the front. No sprite by
 The street people's lamp light (`StreetLifePainter`, `NearLight.LAMP_LENS`) still reads the lamp's
 street x, so it can sit up to 3.5 units off the drawn lens at the view's edge; the falling leaves
 (`SeasonFall`) likewise.
+
+### As built: decay instead of the scribbled crack
+
+The owner: "the crack looks pretty bad ... have the building break down like it would naturally". The single dark
+zigzag (`crackLine`, removed with its constants and test), the glowing seam and the pulsing warning triangle
+(`attention`) are gone. `FloorDecay.plan(material, key, miss, scar, height, windows)` works a floor's decay out once,
+as geometry per `DecayInk` (`DecayPlan`; `DecayArt` in `BuildingArt` turns it into one path per ink), seeded by the
+floor's key and started from a window on the right-hand bottom row (clear of the plaque). Stage 1 (`miss` 1): a
+hairline from under a sill's end, stepped along the real brick joints of the wall tile (a fine fracture through the
+blocks on stone and gold), a faint lit lip under it, one pane cracked (a star on a curtain wall), a damp streak.
+Stage 2: the crack wider and branched, a near-upright crack down the pier, a brick face or a stone chip gone (dark
+core with a shaded top edge and lit lip; lighter fresh stone for a chip), the sill's end chipped, rust run down
+(`FacadeSprites.drip` through a rust tint), a pane broken with the room dark through it and taped across; the tape
+is the diegetic replacement for the triangle. Stage 3+ (`miss` 3 to 30): more pieces gone, the other sill end
+cracked, the window boarded with a notice stapled on, the lintel dropped, rubble (or glass shards) at the floor's
+foot, the next pane broken and taped. A come-back (`scar`, `miss` 0) shows the first crack filled with pale gold
+mortar and a brick or two put back (a new glazing bead on glass); `scar` has no date, so the mend does not fade.
+`BuildingPainter.decayWall` draws the wall inks before `grade()` (night Multiply, ground grade and wet wall go
+over them like the wall), clipped to the floor, hairlines, edges and streaks up close only; `decayWindows` draws the
+glass, boards, tape and notice after the windows, the boards, tape and paper multiplied by the night ink, the glass
+cracks fainter at night. No new sprites (0 bytes); paths are baked with the floor art, nothing is allocated per
+frame. `FloorDecayTest` covers determinism, escalation, bounds, cracks off the windows and in the brick joints, and
+the `decay` scenario; screenshot tests `decayDay` and `decayNight` (every Habits reference with a missed floor
+changes).

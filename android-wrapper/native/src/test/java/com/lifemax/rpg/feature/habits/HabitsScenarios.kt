@@ -59,6 +59,9 @@ class TestClock(
  * - `fresh`: a brand-new building, two habits stacked today. `park`: a habit broken for good, its
  *   building only a lobby with a park beside it. `glass`: a young building, five habits all still
  *   glass (the steel frame and its curtain wall), three of them done today.
+ * - `decay`: one foundation whose floors show each stage of a missed habit's decay, from the ground
+ *   up: brick picked back up today after a missed day (the mend), brick missed once, stone missed
+ *   twice, brick missed four days running, glass missed three.
  */
 object HabitsScenarios {
     const val TODAY = "2026-03-02"
@@ -209,6 +212,24 @@ object HabitsScenarios {
         return s
     }
 
+    /** Each stage of a missed floor's decay, and a mend, stacked on one foundation. */
+    fun decay(): HabitsSave {
+        var (s, home) = HabitsSave(who = "someone getting back on track").stack("After dinner")
+        listOf(
+                Triple("Wash up", 24 to 1, true),
+                Triple("Floss", 14 to 1, false),
+                Triple("Walk 20 min", 40 to 2, false),
+                Triple("Practise piano", 18 to 4, false),
+                Triple("Stretch", 4 to 3, false),
+            )
+            .forEach { (name, past, today) ->
+                val (next, id) = s.habit(home, name)
+                s = next.past(id, past.first, past.second, past.first + past.second + 2)
+                if (today) s = HabitsRules.lay(s, TODAY, id)!!
+            }
+        return s
+    }
+
     /** A habit broken for good: the building has its lobby and a park with a tree beside it. */
     fun park(): HabitsSave {
         var (s, night) = HabitsSave().stack("At lights out")
@@ -253,6 +274,7 @@ object HabitsScenarios {
             "fresh" -> fresh()
             "park" -> park()
             "glass" -> glass()
+            "decay" -> decay()
             else -> error("No scenario $name")
         }
 

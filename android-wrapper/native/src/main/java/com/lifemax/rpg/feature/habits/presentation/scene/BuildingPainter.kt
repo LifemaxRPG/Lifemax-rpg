@@ -122,9 +122,22 @@ internal class BuildingPainter {
     private val glowWide = Stroke(9f, join = StrokeJoin.Round)
     private val glowMid = Stroke(4.5f, join = StrokeJoin.Round)
     private val glowEdge = Stroke(1.8f, join = StrokeJoin.Round)
-    private val crackStroke = Stroke(1.7f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    private val seamGlow = Stroke(5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    private val seam = Stroke(2f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+    /**
+     * A missed floor's decay ([DecayInk]): each ink's colour and, for the stroked ones, its line.
+     */
+    private val decayInk = Array(DECAY_INKS.size) { Color(DECAY_INKS[it].argb) }
+    private val decayLine =
+        Array(DECAY_INKS.size) {
+            val ink = DECAY_INKS[it]
+            if (ink.width <= 0f) null
+            else
+                Stroke(
+                    ink.width,
+                    cap = if (ink == DecayInk.TAPE) StrokeCap.Butt else StrokeCap.Round,
+                    join = StrokeJoin.Round,
+                )
+        }
+    private val rustFilter = ColorFilter.tint(Color(FloorDecay.RUST), BlendMode.SrcIn)
     private val ghostLine = Stroke(1.4f, pathEffect = dash)
     private val ring = Stroke(2f)
     private val selection = Stroke(2.6f, join = StrokeJoin.Round)
@@ -3235,6 +3248,7 @@ internal class BuildingPainter {
         }
         inks(fa.detail, f, alpha, detailed)
         if (!ruin) grime(fa, alpha)
+        decayWall(fa, alpha, detailed)
         grade(fa, alpha)
         blueHour(-half, top, B.W, fa.bottom - top, .42f * alpha)
         if (!ruin && detailed && b.material != HabitMaterial.GLASS) stains(fa, top, alpha)
@@ -3544,6 +3558,7 @@ internal class BuildingPainter {
                 )
             }
         }
+        decayWindows(fa, alpha, detailed, sky)
         // what stands in front of the windows: an air conditioner, a balcony, a tag on the boards
         if (detailed) inks(fa.front, f, alpha, true, night = true)
         drawLine(
@@ -3553,19 +3568,9 @@ internal class BuildingPainter {
             1.5f,
             alpha = alpha,
         )
-        val crack = fa.crack
-        if (crack != null)
-            clipRect(-half, top, half, fa.bottom) {
-                if (b.miss >= 1) drawPath(crack, SceneInk.Crack, alpha = alpha, style = crackStroke)
-                else {
-                    drawPath(crack, SceneInk.SeamGlow, alpha = alpha, style = seamGlow)
-                    drawPath(crack, SceneInk.Seam, alpha = alpha, style = seam)
-                }
-            }
         if (season.snow > .01f) snowFloor(fa, alpha, sky)
         haze(fa, alpha)
         if (detailed && fa.name != null) plaque(fa, alpha)
-        if (live && !done && b.miss >= 2 && !ruin) attention(half - 16f, top + 6f, seconds)
         val isNext = live && art.stack.next == b.id && fa.piece.labelled
         if (isNext) glow(top, if (ruin) fa.bottom else fa.bottom, f.tint, seconds)
         if (landing && motion.burst < 1f)
@@ -3739,17 +3744,84 @@ internal class BuildingPainter {
         )
     }
 
-    /** Missed twice: a small warning sign hung on the floor, breathing with motion on. */
-    private fun DrawScope.attention(x: Float, y: Float, seconds: Float) {
-        val pulse = if (seconds > 0f) .8f + .2f * sin(seconds * 3f) else 1f
-        path.rewind()
-        path.moveTo(x, y)
-        path.lineTo(x + 7f, y + 12f)
-        path.lineTo(x - 7f, y + 12f)
-        path.close()
-        drawPath(path, SceneInk.Attention, alpha = pulse)
-        drawRect(SceneInk.AttentionInk, Offset(x - .8f, y + 3.5f), Size(1.6f, 4.8f))
-        drawRect(SceneInk.AttentionInk, Offset(x - .8f, y + 9.4f), Size(1.6f, 1.6f))
+    /**
+     * A missed floor's decay on its wall ([FloorDecay]): the cracks in its joints, the pieces of
+     * its face come away, the rubble at its foot, the damp and the rust run down from them; or the
+     * pale gold mortar of a mend. Drawn before the night and the ground's grade go over the wall,
+     * so it takes the scene's light as the wall does; the hairlines and streaks only up close.
+     */
+    private fun DrawScope.decayWall(fa: FloorArt, alpha: Float, detailed: Boolean) {
+        val d = fa.decay ?: return
+        clipRect(-B.W / 2f, fa.top, B.W / 2f, fa.bottom) {
+            for (i in DECAY_INKS.indices) {
+                val ink = DECAY_INKS[i]
+                if (!ink.wall || (ink.fine && !detailed)) continue
+                val p = d.paths[i] ?: continue
+                val c = if (ink.argb == 0L) fa.facade.wallBottom else decayInk[i]
+                val line = decayLine[i]
+                if (line != null) drawPath(p, c, alpha = alpha * ink.alpha, style = line)
+                else drawPath(p, c, alpha = alpha * ink.alpha)
+            }
+            if (!detailed) return@clipRect
+            val ppu = FacadeSprites.PPU
+            val wet = .75f + .25f * weather.wet
+            for (s in d.stains) {
+                val len = min(s[2], fa.bottom - s[1] - .5f)
+                if (len < 2f) continue
+                val rust = s[3] > 0f
+                withTransform({
+                    translate(s[0] - FacadeSprites.DRIP_W / 2f, s[1])
+                    scale(1f / ppu, len / FacadeSprites.DRIP_H / ppu, Offset.Zero)
+                }) {
+                    drawImage(
+                        SceneSprites.drip,
+                        Offset.Zero,
+                        alpha =
+                            alpha *
+                                wet *
+                                if (rust) FloorDecay.RUST_ALPHA else FloorDecay.DAMP_ALPHA,
+                        colorFilter = if (rust) rustFilter else null,
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * A missed floor's decay over its windows: a cracked pane, one broken and taped across, one
+     * boarded with a notice on it, a curtain wall's new glazing bead. The cracks in the glass catch
+     * less light at night; the boards, the tape and the paper take the night as the wall does.
+     */
+    private fun DrawScope.decayWindows(
+        fa: FloorArt,
+        alpha: Float,
+        detailed: Boolean,
+        sky: SkyColors,
+    ) {
+        val d = fa.decay ?: return
+        clipRect(-B.W / 2f, fa.top, B.W / 2f, fa.bottom) {
+            for (i in DECAY_INKS.indices) {
+                val ink = DECAY_INKS[i]
+                if (ink.wall || (ink.fine && !detailed)) continue
+                val p = d.paths[i] ?: continue
+                val a =
+                    alpha * ink.alpha * if (ink == DecayInk.PANE_CRACK) 1f - .5f * sky.dark else 1f
+                val line = decayLine[i]
+                if (line != null) drawPath(p, decayInk[i], alpha = a, style = line)
+                else drawPath(p, decayInk[i], alpha = a)
+                if (ink.night && nightOn) {
+                    if (line != null)
+                        drawPath(
+                            p,
+                            nightInk,
+                            alpha = a,
+                            style = line,
+                            blendMode = BlendMode.Multiply,
+                        )
+                    else drawPath(p, nightInk, alpha = a, blendMode = BlendMode.Multiply)
+                }
+            }
+        }
     }
 
     /** A tower crane on the roof of a building being taken down. */
@@ -4985,6 +5057,7 @@ internal class BuildingPainter {
          * ([FacadeLook]).
          */
         private val INKS = DetailInk.entries.toTypedArray()
+        private val DECAY_INKS = DecayInk.entries.toTypedArray()
         private val INK_COUNT = INKS.size
         private val INK_SIGNED = BooleanArray(INK_COUNT) { FacadeLook.signed(INKS[it]) }
 

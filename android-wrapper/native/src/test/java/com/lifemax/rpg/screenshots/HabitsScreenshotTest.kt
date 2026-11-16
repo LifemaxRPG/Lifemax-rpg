@@ -129,8 +129,8 @@ class HabitsScreenshotTest {
 
     /**
      * The street by day with the coffee building in front: two floors lit today (gold with all its
-     * windows and people, stone with its gold seam), a cracked floor with a flickering light as the
-     * next, one missed twice with its warning sign, the rooftop sign dark (locked); the lights-out
+     * windows and people, stone with its gold mend), a floor with a hairline crack as the next, one
+     * missed twice with a broken pane taped across, the rooftop sign dark (locked); the lights-out
      * building and the empty lot beside it.
      */
     @Test fun streetDay() = snap("city")
@@ -162,6 +162,17 @@ class HabitsScreenshotTest {
     @Test fun roomsDay() = snap("tall", hour = 15, ambientAt = 21.4f)
 
     @Test fun roomsNight() = snap("tall", hour = 22, ambientAt = 21.4f)
+
+    /**
+     * A missed floor's decay, stage by stage, by day and at night: a floor picked back up with its
+     * crack filled with pale gold mortar; missed once, a hairline stepped along the brick joints
+     * from a sill's end and a cracked pane; twice, the crack opened and branched, a brick face and
+     * a chip of sill gone, rust run down, a pane broken and taped; four days, a window boarded with
+     * a notice, its lintel dropped, rubble at its foot; a curtain wall missed three times.
+     */
+    @Test fun decayDay() = snap("decay", ambientAt = 45f)
+
+    @Test fun decayNight() = snap("decay", hour = 22, ambientAt = 45f)
 
     /** A brand-new building at dusk: steel and glass with scaffolding, one window, one person. */
     @Test fun brandNewBuilding() = snap("fresh", hour = 19)
