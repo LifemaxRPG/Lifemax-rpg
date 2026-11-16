@@ -409,6 +409,21 @@ object Ambient {
     fun carFollow(seed: Int, pass: Int): Float =
         if (hash(seed, pass, 64) < .3f) .045f + .035f * hash(seed, pass, 65) else 0f
 
+    /** A train on the elevated line comes most of these periods (s), taking this long to cross. */
+    const val TRAIN_PERIOD = 64f
+    const val TRAIN_SECONDS = 24f
+
+    /**
+     * The elevated train across the middle distance at [seconds]: [Pass.x] is where its front is,
+     * as a share of the width, from well past one edge (it is long) to past the other.
+     */
+    fun train(seconds: Float, seed: Int, out: Pass): Boolean {
+        if (!pass(seconds, seed, 70, TRAIN_PERIOD, TRAIN_SECONDS, .85f, out)) return false
+        out.x = if (out.dir > 0f) -.05f + 1.6f * out.t else 1.05f - 1.6f * out.t
+        out.y = 0f
+        return true
+    }
+
     /**
      * Where cloud [i] (of a few) is across the view at [seconds]: they drift right at their own
      * slow speeds and come round again. At 0 seconds they stand where they always stand.
