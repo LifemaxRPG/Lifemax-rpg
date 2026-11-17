@@ -174,7 +174,8 @@ class SeasonSpritesTest {
                 TreeSprites.bytes(TreeSeason.AUTUMN)
         assertTrue("autumn adds $autumn", autumn < 3_600_000)
         assertTrue(TreeSprites.bytes(TreeSeason.BARE) + TreeSprites.snowBytes() < 1_800_000)
-        assertTrue(SeasonSprites.bytes() < 16_000)
+        // the falling leaves are drawn at 32 px for a sharp phone screen: still tiny
+        assertTrue(SeasonSprites.bytes() < 40_000)
         assertTrue(FlareSprites.bytes() < 48_000)
         assertEquals(TreeSprites.bytes(), TreeSprites.bytes(TreeSeason.SUMMER))
     }
@@ -186,7 +187,7 @@ class SeasonSpritesTest {
         assertArrayEquals(leaves[1], SeasonSprites.leaves()[1])
         for ((i, l) in leaves.withIndex()) {
             assertEquals(SeasonSprites.LEAF * SeasonSprites.LEAF, l.size)
-            assertTrue(l.count { alpha(it) > 128 } in 20..150)
+            assertTrue("leaf $i", l.count { alpha(it) > 128 } in 80..600)
             for (k in 0 until SeasonSprites.LEAF) assertEquals(0, alpha(l[k]))
             // amber and red tell apart: the red ones have less green
             val g = l.filter { alpha(it) > 128 }.map { (it shr 8) and 255 }.average()

@@ -183,6 +183,10 @@ internal class SeasonFall {
         val a: Float
         // carried by the air as it blew since this one let go, and (lying) as it blows over it
         val start = t - local
+        // it lets go only when the wind tugs at it harder than it holds on: none in still air, a
+        // flurry as a gust comes down the street (each slot's grip its own, so a strong gust takes
+        // many and a breeze the odd loose one); the still picture keeps its scatter
+        if (wind.moving && wind.push(start - x0 / Wind.SPEED) < GRIP_LOW + GRIP_SPAN * h(11)) return
         if (local < period) {
             val u = local / period
             val flap = sin(u * rate + phase)
@@ -283,6 +287,13 @@ internal class SeasonFall {
          */
         const val CARRY = 4.5f
         const val SLIDE = 1.2f
+
+        /**
+         * How hard the wind must push ([Wind.push], 0 to [Wind.MAX]) to pull a leaf or a petal off,
+         * the loosest slot to the tightest: a breeze's gusts take a few, a storm's most.
+         */
+        const val GRIP_LOW = .16f
+        const val GRIP_SPAN = .55f
 
         /** How long a fallen leaf lies before its slot falls again, in seconds. */
         const val REST = 2.6f
