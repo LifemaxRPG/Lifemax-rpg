@@ -2527,9 +2527,13 @@ internal class BuildingPainter {
         sx: Float,
         ground: Float,
         unit: Float,
+        x: Float,
     ) {
         val k = back.amount
         if (k <= 0f) return
+        // the side face shown is this building's own (the outlines below follow it), not the one
+        // the last building drawn left behind
+        sideShift = shiftAt(x)
         val seconds = motion.seconds
         val half = B.W / 2f
         val lit = lerp(SceneInk.WindowLitDay, SceneInk.WindowLit, sky.dark)

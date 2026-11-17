@@ -907,6 +907,7 @@ private fun StageCanvas(
                                     f.screenX(street.centers[i]),
                                     f.ground,
                                     f.unit,
+                                    street.centers[i],
                                 )
                             }
                         }
