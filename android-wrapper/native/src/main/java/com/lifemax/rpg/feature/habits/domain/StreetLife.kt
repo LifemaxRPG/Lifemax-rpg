@@ -104,6 +104,11 @@ class Passer {
     val stopH = FloatArray(StreetLife.MOST_STOPS)
     val stopHalt = Array(StreetLife.MOST_STOPS) { Halt.NONE }
 
+    /**
+     * The nearest the wall they may step aside to this moment (out past the crew, [StreetCrew]).
+     */
+    internal var floor = 7f
+
     /** Which walk the plan is for (worked out once, not every frame). */
     internal var planK = Int.MIN_VALUE
     internal var planSeed = 0
@@ -225,7 +230,7 @@ object StreetLife {
      * The scale of [look]'s stride: everyone is about as tall as the street's people are, their
      * legs as long as they are tall, and an older look's steps are short ([StreetGait.style]).
      */
-    fun pace(look: Int): Float = SIZE * StreetLooks.ALL[look].height * StreetGait.style(look).stride
+    fun pace(look: Int): Float = SIZE * StreetLooks.of(look).height * StreetGait.style(look).stride
 
     /**
      * How fast [look] walks at their own cadence ([StreetGait.cadence]), in street units a second.
@@ -257,7 +262,9 @@ object StreetLife {
     /**
      * Everyone on the pavement at [seconds] on a street from [from] to [to] (its buildings' middles
      * at [shops], for those who stop at a window), written into [out]; how many there are. At rest
-     * ([seconds] 0) nobody.
+     * ([seconds] 0) nobody. With [crew], the crew too when they are walking ([StreetCrew.at],
+     * messing about unless [goof] is false): the others pass them on the kerb side and they close
+     * up a little to let them.
      */
     fun passers(
         seconds: Float,
@@ -266,9 +273,12 @@ object StreetLife {
         to: Float,
         out: Array<Passer>,
         shops: List<Float>? = null,
+        crew: Crew? = null,
+        goof: Boolean = true,
     ): Int {
         var n = 0
         for (p in out) p.on = false
+        if (crew != null) StreetCrew.at(seconds, seed, from, to, crew, goof)
         if (seconds <= 0f) return 0
         val k0 = floor(seconds / PERIOD).toInt()
         var k = k0
@@ -279,7 +289,7 @@ object StreetLife {
             }
             k--
         }
-        makeWay(out, n)
+        makeWay(out, n, crew)
         return n
     }
 
@@ -664,8 +674,27 @@ object StreetLife {
      * other, or two coming the other way) step apart across the pavement: each moves half of what
      * keeps a little room between them, easing in as they draw near and out once past.
      */
-    private fun makeWay(out: Array<Passer>, n: Int) {
-        for (i in 0 until n) out[i].lane = out[i].lane0
+    private fun makeWay(out: Array<Passer>, n: Int, crew: Crew? = null) {
+        for (i in 0 until n) {
+            out[i].lane = out[i].lane0
+            out[i].floor = LANE_MIN
+        }
+        if (crew != null && crew.on) {
+            // the crew take the wall side: anyone near them keeps out past them, easing out as they
+            // draw near, and they close up towards the wall to let them by
+            var squeeze = 0f
+            for (i in 0 until n) {
+                val a = out[i]
+                val gap = max(crew.lo - hi(a), lo(a) - crew.hi)
+                val w = 1f - smooth((gap - 2f) / 14f)
+                if (w <= 0f) continue
+                squeeze = max(squeeze, w)
+                val want = max(a.lane0, StreetCrew.passLane())
+                a.lane = a.lane0 + (want - a.lane0) * w
+                a.floor = max(LANE_MIN, a.lane)
+            }
+            StreetCrew.lanes(crew, squeeze)
+        }
         // a few rounds, so that someone against the wall or the kerb leaves the moving to the other
         for (round in 0 until 3) for (i in 0 until n) for (j in i + 1 until n) {
             val a = out[i]
@@ -681,7 +710,7 @@ object StreetLife {
             val want = max(base, base + (2f * BAND + ROOM + outer(low) - base) * w)
             val short = want - (high.lane - low.lane)
             if (short <= 0f) continue
-            val downRoom = max(0f, low.lane - LANE_MIN)
+            val downRoom = max(0f, low.lane - low.floor)
             val upRoom = max(0f, laneMax(high) - high.lane)
             var down = min(short / 2f, downRoom)
             val up = min(short - down, upRoom)

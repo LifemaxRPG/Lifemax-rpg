@@ -183,7 +183,7 @@ object StreetLayers {
     fun lay(look: Int, frame: Int, next: Int, mix: Float, still: Float, g: Gesture, out: Layers) {
         out.count = 0
         val js = StreetRig.joints(look)
-        val l = StreetLooks.ALL[look]
+        val l = StreetLooks.of(look)
         // ---- the body's frames, and the joints between them
         var bodyA: Int
         var bodyB: Int
@@ -233,9 +233,11 @@ object StreetLayers {
         var propAlpha = 0f
         var nearSwing = 1f
         var farSwing = 1f
+        // how far a laugh bobs the head up
+        var lift = 0f
         // the head: where it will be, so a hand can reach it
-        val rx = 1.35f * hgt * l.head
-        val ry = 1.65f * hgt * l.head
+        val rx = 1.35f * hgt * l.head * (l.face?.skullWidth ?: 1f)
+        val ry = 1.65f * hgt * l.head * (l.face?.skullHeight ?: 1f)
         val headUp = hgt * .6f + ry * .92f
         when (act) {
             Act.PHONE,
@@ -277,11 +279,31 @@ object StreetLayers {
                 glance = if (g.vary < .6f) .75f * w else .2f * w
                 tilt = 3f * w * sin(2f * PI.toFloat() * 1.1f * t)
             }
+            Act.SHOVE -> tilt = 5f * w
+            Act.BACKHAND -> {
+                // looking back at the one he shoves
+                glance = w
+                tilt = -2f * w
+            }
+            Act.CATCH -> tilt = -7f * w
+            Act.LAUGH -> {
+                // the head thrown back a little and bobbing with it, turned half round to the
+                // others
+                val s = sin(2f * PI.toFloat() * 3.1f * t)
+                tilt = (-8f + 5f * s) * w
+                lift = .16f * w * (.5f + .5f * s)
+                glance = ((g.vary - .5f) * 1.1f * w).coerceIn(-1f, 1f)
+            }
+            Act.STORY -> {
+                tilt = (2.5f * sin(2f * PI.toFloat() * 1.4f * t + 3f * g.vary) - 1.5f) * w
+                glance = .35f * w
+            }
+            Act.JOG -> tilt = 3f * w
             else -> {}
         }
         val hA = headA + tilt
         val hcx = neckX + sin(rad(hA)) * headUp
-        val hcy = neckY - cos(rad(hA)) * headUp
+        val hcy = neckY - lift - cos(rad(hA)) * headUp
         // a point on the head, [fx] forward and [fy] down in its radii
         fun headX(fx: Float, fy: Float) = hcx + fx * rx * cos(rad(hA)) - fy * ry * sin(rad(hA))
         fun headY(fx: Float, fy: Float) = hcy + fx * rx * sin(rad(hA)) + fy * ry * cos(rad(hA))
@@ -340,7 +362,8 @@ object StreetLayers {
             Act.HAIR -> {
                 nearW = w
                 when (l.hair) {
-                    StreetHair.CAP -> {
+                    StreetHair.CAP,
+                    StreetHair.LONG_CAP -> {
                         // a tug at the peak
                         val s = .2f * smooth((t - .35f) / .3f) * (1f - smooth((t - .8f) / .3f))
                         reach(
@@ -425,13 +448,66 @@ object StreetLayers {
                     nearE = 98f + 14f * s2
                 }
             }
+            Act.SHOVE -> {
+                // both hands thrust forward, open, into the back of the one ahead
+                nearW = w
+                farW = w
+                reach(look, out, true, shNX + 5.6f * hgt, shNY + 1.5f * hgt)
+                reach(look, out, false, shFX + 5.4f * hgt, shFY + 1.7f * hgt)
+            }
+            Act.BACKHAND -> {
+                // the near arm swung back, nearly straight (set by angle: a reach behind would bend
+                // the elbow the wrong way)
+                nearW = w
+                nearA = -50f
+                nearE = 12f
+                farSwing = 1f - .5f * w
+            }
+            Act.CATCH -> {
+                // flung out for balance, a little wave in them as he finds his feet
+                val s = sin(pi2 * 2.4f * t)
+                nearW = w
+                farW = w
+                nearA = 62f + 12f * s
+                nearE = 38f
+                farA = -38f + 10f * sin(pi2 * 2.4f * t + 1.3f)
+                farE = 30f
+            }
+            Act.LAUGH -> {
+                // a hand at the belly, the other arm hardly swinging
+                nearW = .65f * w
+                nearA = 6f + 3f * sin(pi2 * 3.1f * t)
+                nearE = 100f
+                farSwing = 1f - .5f * w
+            }
+            Act.STORY -> {
+                // both arms going, out of step with each other: big shapes in the air
+                val v = g.vary
+                nearW = w
+                farW = w
+                nearA = 55f + 38f * sin(pi2 * .95f * t + 6f * v)
+                nearE = 45f + 30f * sin(pi2 * 1.3f * t + 2f + 4f * v)
+                farA = 48f + 34f * sin(pi2 * .8f * t + 1f + 5f * v)
+                farE = 50f + 28f * sin(pi2 * 1.1f * t + 3f * v)
+            }
+            Act.JOG -> {
+                nearSwing = 1f + .8f * w
+                farSwing = 1f + .8f * w
+            }
             else -> {}
         }
-        if (nearW > 0f && act != Act.WAVE && act != Act.SCRATCH && act != Act.TALK) {
+        // the acts that set the arms by their angles, not by a reach
+        val angled =
+            act == Act.TALK ||
+                act == Act.BACKHAND ||
+                act == Act.CATCH ||
+                act == Act.LAUGH ||
+                act == Act.STORY
+        if (nearW > 0f && act != Act.WAVE && act != Act.SCRATCH && !angled) {
             nearA = out.nA
             nearE += out.nE
         }
-        if (farW > 0f && act != Act.TALK) {
+        if (farW > 0f && !angled) {
             farA = out.fA
             farE = out.fE
         }
@@ -469,9 +545,11 @@ object StreetLayers {
         // a hand on its way up to the head folds the elbow as it goes (it does not reach out
         // straight in front on the way)
         val fold = if (nearA > 60f) 70f * 4f * nearW * (1f - nearW) else 0f
-        val nE = lerp(nearRestE, nearE, nearW) + fold
+        // jogging, the elbows bend to pump the arms
+        val jog = if (act == Act.JOG) w else 0f
+        val nE = lerp(lerp(nearRestE, nearE, nearW) + fold, 85f, jog)
         val fA = lerp(af * farSwing * g.swing, farA, farW)
-        val fE = lerp(ef, farE, farW)
+        val fE = lerp(lerp(ef, farE, farW), 85f, jog)
         if (g.cup) {
             nearHand = StreetRig.GRIP
             nearProp = Part.CUP
@@ -502,9 +580,10 @@ object StreetLayers {
         }
         // the face comes round: the glanced head over the one in profile (their outlines are
         // the same, only the features move)
-        if (abs(glance) < .98f) out.add(Part.HEAD, neckX, neckY, hA, 1f)
-        if (glance > 0f) out.add(Part.HEAD_GLANCE, neckX, neckY, hA, smooth(glance))
-        else if (glance < 0f) out.add(Part.HEAD_AWAY, neckX, neckY, hA, smooth(-glance))
+        val headAt = neckY - lift
+        if (abs(glance) < .98f) out.add(Part.HEAD, neckX, headAt, hA, 1f)
+        if (glance > 0f) out.add(Part.HEAD_GLANCE, neckX, headAt, hA, smooth(glance))
+        else if (glance < 0f) out.add(Part.HEAD_AWAY, neckX, headAt, hA, smooth(-glance))
         if (l.stick) out.add(Part.STICK, stickX, stickY, stickDeg, 1f)
         arm(look, out, true, shNX, shNY, nA, nE, nearHand, handW, nearProp, propDeg, propAlpha, g)
         if (l.bag == Bag.HAND)
@@ -584,7 +663,7 @@ object StreetLayers {
             out.add(fore + hand, ex, ey, -f0, 1f)
         }
         if (near) {
-            val b = StreetLooks.ALL[look].build
+            val b = StreetLooks.of(look).build
             val ha = f0 + 16f
             out.handX = wx + sin(rad(ha)) * (.75f + .9f * b)
             out.handY = wy + cos(rad(ha)) * (.75f + .9f * b)

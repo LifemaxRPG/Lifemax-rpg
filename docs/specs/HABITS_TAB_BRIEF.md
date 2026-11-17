@@ -1088,3 +1088,57 @@ for every variant and season about 0.4 s on a desktop JVM. A street tree draws a
 masses (5 to 7), the valance 16 strips. Tuned from software previews (the parts posed with the same arithmetic, every
 variant in every season and look, a tree and an awning through a gust, 4× crops), not on a phone; every Habits
 reference with trees or awnings changes.
+
+### As built: the crew (GU1–GU5) walking the street together
+
+Five special pedestrians, GU1–GU5 (`StreetCameos`), were authored on another branch against an older baseline
+(`docs/gu-pedestrians/README.md`). The rig, gait and painter files had not changed since that baseline, so the
+opt-in additions to `StreetRig` (tee cuts and patterns, shorts and cargo pockets, sandals, plain trainers, face
+profiles with beards, the five new hairstyles, the canvas bag, arm, chest, neck and hand scales, and a per-look
+`walkStyle`) apply unchanged; every one defaults to the old behaviour, and the scenario tests prove the ordinary six
+looks draw byte-for-byte as before. The preview tool stayed out of the app repository.
+
+Indexing: the crew's looks follow the ordinary ones (`StreetLooks.CREW_AT` = 6 onwards, `StreetLooks.of`); `ALL`
+and `COUNT` still hold only the six, so random traffic never picks them. Every index-based rig call (body frames,
+joints, arm and head layers, arm lengths, `StreetGait.style`, `StreetLife.pace`) resolves through `of`, and a crew
+index routes to the same appearance pose as `StreetRig.frame(GU, f)`, so each one's own walk style, skull and hand
+scale hold in the baked body, the layered arm and head painter, the shadows, the shade and lamp layers and the
+night grade alike (a test compares the two paths shape for shape).
+
+The walk (`StreetCrew`, pure, no allocation per frame): a slot every 150 s (longer on a street whose walk takes
+longer, so only one walk at a time), taken 60% of the time and never in the first period; about one walk every 4.9
+minutes of viewing, the group on the street about a third of the time on the city scenario. They stroll at 0.86 of
+the slowest one's pace in a loose formation (seats 8.5 units apart along the walk, 0.4 to 2.8 out from the wall, a
+shuffle per walk), each drifting a little on two slow waves. Each one's steps follow the ground they cover in the
+way they face, out of step with each other, so nobody skates. The group keeps to the wall side; anyone passing keeps
+out past it (`StreetLife.makeWay` gives each passer a floor) and the group closes up across the pavement to let them.
+
+Beats, one at a time with 2.5–7 s between, never the same kind twice running, the people chosen per walk:
+- shove (4.8 or 5.9 s): one comes up behind the friend ahead and shoves him with both hands; he pitches forward a
+  couple of units and a step sideways (away from whoever is ahead of him), flings his arms out and catches himself,
+  then either laughs it off, turned half round, or drops back and shoves back with a backhand, sending the first one
+  staggering back; the others laugh;
+- story (8.6–10.2 s): the one in front goes about a metre further ahead, turns round in half a second, walks
+  backwards (his walk runs backwards, so his feet still hold the ground) with both arms going in big shapes, while
+  the others laugh, each starting in their own time; then he turns back and drops into his place;
+- shoulder bump (3.9 s): the one behind comes alongside the one ahead and bumps him a step out across the pavement;
+  both laugh;
+- lag (8.2 s): the one at the back drops 11 units behind over his phone, then jogs to catch up (arms pumping, elbows
+  bent, leaning in, his steps quickening with the ground he makes up) while the one ahead looks back and waves him on.
+Between beats they chat (a hand at work, the head turned), glance round, touch their hair or scratch. Everything a
+beat moves eases in and out, and the new acts (`SHOVE`, `BACKHAND`, `CATCH`, `LAUGH`, `STORY`, `JOG`, never in
+random traffic) blend with the walk's arm swing through the act envelope. With motion reduced (`StreetLifePainter.
+calm`) they just walk: no beats, no chatter.
+
+Memory and cost: the crew's body frames are baked at every other frame of the walk (32) at `CREW_PPU` 5.2 (the
+others' 6.4), with the ten layers their acts use: 4.4 MB for all five (`StreetCrewTest` budget 5 MiB), held in their
+own cache in `SceneSprites`, apart from the walkers' 18.7 MB (whose budgets are unchanged). The cache is made on a
+background thread 40 s before the crew are due (`StreetCrew.due`, a few hashes a frame) and dropped once they have
+gone and the next walk is over a minute off, so nothing of theirs is held, baked or drawn while they are not about. Baking all five takes about
+1.5 s on a desktop JVM; a frame drawn before the thread finishes is baked in place. Drawn, the five cost about two
+and a half pairs of walkers. The crew put the pigeons up too.
+
+Not verified on a device: the look and the frame time on a phone, the background bake's time there, and the
+screenshot reference for the new `crewShoveDay` (it runs with motion on; Paparazzi refreshes it in CI). Tuned from
+software previews of the group walking and of each beat (layers composited as the painter places them, at phone
+scale and 4×), not on a phone. No existing Habits reference changes: the crew is on none of their moments.

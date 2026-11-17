@@ -3191,6 +3191,14 @@ internal class BuildingPainter {
                 since = 0f
                 break
             }
+            // the crew put them up too
+            if (life.crew.on)
+                for (m in life.crew.members) {
+                    if (!Dusk.scared(abs(m.x - middle))) continue
+                    scare[slot] = seconds
+                    since = 0f
+                    break
+                }
         }
         val phase = Dusk.pigeonPhase(since)
         if (phase == Dusk.GONE) return

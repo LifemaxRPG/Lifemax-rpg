@@ -51,7 +51,8 @@ object StreetGait {
      * standard one except for an older look's short steps ([ELDER_STRIDE]): the walk's phase comes
      * from the distance at the look's own stride ([StreetLife.pace]), so the feet never slide.
      */
-    fun style(look: Int): Gait.Style = STYLES[look]
+    fun style(look: Int): Gait.Style =
+        if (StreetLooks.crew(look)) StreetLooks.of(look).walkStyle ?: STYLES[3] else STYLES[look]
 
     /** An older walker's step, of the standard one: short, the feet kept near the ground. */
     const val ELDER_STRIDE = .74f
@@ -71,7 +72,7 @@ object StreetGait {
      * The cadence of [look]'s walk, of the standard one ([Gait.CYCLE]): fewer steps for the longer
      * stride, so that they go as fast as they did; an older walker's short steps at the usual rate.
      */
-    fun cadence(look: Int): Float = if (StreetLooks.ALL[look].elder) 1f else 1f / STRIDE
+    fun cadence(look: Int): Float = if (StreetLooks.of(look).elder) 1f else 1f / STRIDE
 
     private fun spread(look: Int, salt: Int, lo: Float, hi: Float): Float =
         lo + (hi - lo) * Ambient.hash(look + 1, 52, salt)

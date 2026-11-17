@@ -4,6 +4,7 @@ import com.lifemax.rpg.feature.habits.domain.CycleRig
 import com.lifemax.rpg.feature.habits.domain.DogRig
 import com.lifemax.rpg.feature.habits.domain.Part
 import com.lifemax.rpg.feature.habits.domain.Shape
+import com.lifemax.rpg.feature.habits.domain.StreetCrew
 import com.lifemax.rpg.feature.habits.domain.StreetGait
 import com.lifemax.rpg.feature.habits.domain.StreetLife
 import com.lifemax.rpg.feature.habits.domain.StreetLooks
@@ -50,11 +51,66 @@ internal object StreetSprites {
     }
 
     /**
+     * Pixels to a street unit for the crew (GU1–GU5, [StreetCrew]): a little coarser than the
+     * others', still well over what the phone shows, so that the five of them stay small in memory
+     * for the short while they are kept.
+     */
+    const val CREW_PPU = 5.2f
+
+    /** The crew's walk is baked at every other frame of the others' ([StreetCrew.FRAMES]). */
+    const val CREW_FRAMES = StreetCrew.FRAMES
+
+    /**
+     * The layers the crew's acts use: the arms with an open or a closed hand, the heads, a phone.
+     */
+    val CREW_PARTS =
+        intArrayOf(
+            Part.UPPER_N,
+            Part.FORE_N + StreetRig.OPEN,
+            Part.FORE_N + StreetRig.GRIP,
+            Part.UPPER_F,
+            Part.FORE_F + StreetRig.OPEN,
+            Part.FORE_F + StreetRig.GRIP,
+            Part.HEAD,
+            Part.HEAD_GLANCE,
+            Part.HEAD_AWAY,
+            Part.PHONE,
+        )
+
+    /**
+     * Crew look [look]'s walk frame [frame] (an even one, of [StreetGait.FRAMES]), at [CREW_PPU].
+     */
+    fun crewWalker(look: Int, frame: Int): WalkerSprite {
+        val fig = StreetRig.body(look, frame)
+        return WalkerSprite(bake(fig.shapes, StreetLife.SIZE, CREW_PPU), fig.joints)
+    }
+
+    /**
+     * What the crew's pictures take, every walk frame and [CREW_PARTS] of each of them baked, in
+     * bytes.
+     */
+    fun crewBytes(): Int {
+        var total = 0
+        for (i in 0 until StreetLooks.CREW_COUNT) {
+            val l = StreetLooks.CREW_AT + i
+            for (f in 0 until CREW_FRAMES) {
+                val s = crewWalker(l, f * StreetCrew.STEP).sprite
+                total += s.w * s.h * 4
+            }
+            for (p in CREW_PARTS) {
+                val s = part(l, p, CREW_PPU)
+                total += s.w * s.h * 4
+            }
+        }
+        return total
+    }
+
+    /**
      * Walker [look]'s layer [part] ([Part]): its joint at the sprite's origin, hanging down (a head
      * upright), to be turned about it as it is drawn ([StreetLayers]). A forearm is cut round the
-     * elbow, so it closes over the upper arm with no edge.
+     * elbow, so it closes over the upper arm with no edge. At [ppu] pixels a unit.
      */
-    fun part(look: Int, part: Int): Sprite {
+    fun part(look: Int, part: Int, ppu: Float = PPU): Sprite {
         val shapes =
             when (part) {
                 // shaded as if the limb ran on into the shoulder, then cut back to its round, so
@@ -62,8 +118,8 @@ internal object StreetSprites {
                 Part.UPPER_N,
                 Part.UPPER_F ->
                     return cut(
-                        bake(StreetRig.upperArm(look, part == Part.UPPER_N), StreetLife.SIZE, PPU),
-                        StreetRig.shoulderR(look) * StreetLife.SIZE * PPU,
+                        bake(StreetRig.upperArm(look, part == Part.UPPER_N), StreetLife.SIZE, ppu),
+                        StreetRig.shoulderR(look) * StreetLife.SIZE * ppu,
                     )
                 Part.HEAD -> StreetRig.head(look, false)
                 Part.HEAD_GLANCE -> StreetRig.head(look, true)
@@ -77,13 +133,13 @@ internal object StreetSprites {
                     val near = part < Part.UPPER_F
                     val hand = part - if (near) Part.FORE_N else Part.FORE_F
                     return cut(
-                        bake(StreetRig.forearm(look, near, hand), StreetLife.SIZE, PPU),
-                        StreetRig.elbowR(look) * StreetLife.SIZE * PPU,
+                        bake(StreetRig.forearm(look, near, hand), StreetLife.SIZE, ppu),
+                        StreetRig.elbowR(look) * StreetLife.SIZE * ppu,
                     )
                 }
             }
-        if (shapes.isEmpty()) return Sprite(1, 1, StreetLife.SIZE * PPU, 0f, 0f, IntArray(1))
-        return bake(shapes, StreetLife.SIZE, PPU)
+        if (shapes.isEmpty()) return Sprite(1, 1, StreetLife.SIZE * ppu, 0f, 0f, IntArray(1))
+        return bake(shapes, StreetLife.SIZE, ppu)
     }
 
     /**

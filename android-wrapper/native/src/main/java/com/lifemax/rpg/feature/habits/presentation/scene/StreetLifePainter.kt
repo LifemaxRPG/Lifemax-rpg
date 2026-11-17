@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import com.lifemax.rpg.feature.habits.domain.BuildingLayout
 import com.lifemax.rpg.feature.habits.domain.BuildingSpec as B
 import com.lifemax.rpg.feature.habits.domain.CarPass
+import com.lifemax.rpg.feature.habits.domain.Crew
 import com.lifemax.rpg.feature.habits.domain.CycleRig
 import com.lifemax.rpg.feature.habits.domain.DogRig
 import com.lifemax.rpg.feature.habits.domain.Furniture
@@ -36,6 +37,7 @@ import com.lifemax.rpg.feature.habits.domain.Passer
 import com.lifemax.rpg.feature.habits.domain.PeopleLod
 import com.lifemax.rpg.feature.habits.domain.Perspective
 import com.lifemax.rpg.feature.habits.domain.SceneLight
+import com.lifemax.rpg.feature.habits.domain.StreetCrew
 import com.lifemax.rpg.feature.habits.domain.StreetGait
 import com.lifemax.rpg.feature.habits.domain.StreetLayers
 import com.lifemax.rpg.feature.habits.domain.StreetLayout
@@ -59,6 +61,12 @@ internal class StreetLifePainter {
     var count = 0
     val cars = Array(StreetLife.CAR_MOST) { CarPass() }
     var carCount = 0
+
+    /** The crew this frame, when they are walking ([StreetCrew]): filled by [update]. */
+    val crew = Crew()
+
+    /** Motion reduced: the crew (should a still show them) just walk, no messing about. */
+    var calm = false
 
     /** The key light and where it stands, as [BuildingPainter] has them: set by the stage. */
     var light: KeyLight? = null
@@ -251,15 +259,52 @@ internal class StreetLifePainter {
         how: Int = PLAIN,
         reach: Float = 0f,
     ) {
+        layer(p.x, p.x, p.lane, p.lane, alpha, mode, reach)
+        party(p, persp, 1f, filter, how)
+        drawIntoCanvas { it.restore() }
+    }
+
+    /**
+     * A layer [whole] lays figures down in, round feet from [x0] to [x1] along the street and [y0]
+     * to [y1] out on the pavement, laid over the street at [alpha] with [mode] when restored.
+     */
+    private fun DrawScope.layer(
+        x0: Float,
+        x1: Float,
+        y0: Float,
+        y1: Float,
+        alpha: Float,
+        mode: BlendMode,
+        reach: Float,
+    ) {
         wholePaint.alpha = alpha
         wholePaint.blendMode = mode
         drawIntoCanvas {
             it.saveLayer(
-                Rect(p.x - 70f - reach, p.lane - 70f, p.x + 70f + reach, p.lane + 14f + reach),
+                Rect(x0 - 70f - reach, y0 - 70f, x1 + 70f + reach, y1 + 14f + reach),
                 wholePaint,
             )
         }
-        party(p, persp, 1f, filter, how)
+    }
+
+    /**
+     * The crew drawn solid in [filter] into one layer, laid over the street at [alpha] with [mode]
+     * (or only member [only]), as [whole] does a passer.
+     */
+    private fun DrawScope.wholeCrew(
+        alpha: Float,
+        filter: ColorFilter,
+        mode: BlendMode,
+        how: Int = PLAIN,
+        reach: Float = 0f,
+        only: Int = -1,
+    ) {
+        val c = crew
+        if (only >= 0) {
+            val m = c.members[only]
+            layer(m.x, m.x, m.lane, m.lane, alpha, mode, reach)
+        } else layer(c.lo, c.hi, StreetCrew.LANE - 1f, c.top + 1f, alpha, mode, reach)
+        crewParty(1f, filter, how, only = only)
         drawIntoCanvas { it.restore() }
     }
 
@@ -271,7 +316,21 @@ internal class StreetLifePainter {
 
     /** Fills in who is on the street at [seconds]. */
     fun update(seconds: Float, seed: Int, street: StreetLayout) {
-        count = StreetLife.passers(seconds, seed, street.start, street.end, passers, street.centers)
+        count =
+            StreetLife.passers(
+                seconds,
+                seed,
+                street.start,
+                street.end,
+                passers,
+                street.centers,
+                crew,
+                !calm,
+            )
+        // the crew's pictures are made a little before they come and let go once they have gone
+        val due = StreetCrew.due(seconds, seed, street.start, street.end)
+        if (due < StreetCrew.LEAD) SceneSprites.wantCrew()
+        else if (due > StreetCrew.LEAD + 20f) SceneSprites.dropCrew()
         val busy = StreetLife.traffic(painter?.hour ?: 12f)
         carCount = StreetLife.cars(seconds, seed, street.start, street.end, busy, cars)
     }
@@ -297,7 +356,7 @@ internal class StreetLifePainter {
      * what it holds in front.
      */
     private fun DrawScope.walkerFrames(
-        p: Passer,
+        still: Float,
         look: Int,
         frame: Int,
         next: Int,
@@ -305,9 +364,10 @@ internal class StreetLifePainter {
         alpha: Float,
         filter: ColorFilter?,
         g: Gesture,
+        partScale: Float = this@StreetLifePainter.partScale,
     ) {
         val l = layers
-        StreetLayers.lay(look, frame, next, mix, p.still, g, l)
+        StreetLayers.lay(look, frame, next, mix, still, g, l)
         for (i in 0 until l.count) {
             val part = l.part[i]
             val a = alpha * l.alpha[i]
@@ -427,7 +487,7 @@ internal class StreetLifePainter {
     private fun DrawScope.figure(p: Passer, alpha: Float, filter: ColorFilter?) {
         when (p.kind) {
             Stroller.CYCLIST -> cycleFrames(p, alpha, filter)
-            else -> walkerFrames(p, p.look, p.frame, p.next, p.mix, alpha, filter, p.act)
+            else -> walkerFrames(p.still, p.look, p.frame, p.next, p.mix, alpha, filter, p.act)
         }
     }
 
@@ -514,12 +574,64 @@ internal class StreetLifePainter {
                     )
                 }) {
                     scale(p.dir * s2, s2, Offset.Zero) {
-                        walkerFrames(p, p.look2, p.frame2, p.next2, p.mix2, alpha, filter, p.act2)
+                        walkerFrames(
+                            p.still,
+                            p.look2,
+                            p.frame2,
+                            p.next2,
+                            p.mix2,
+                            alpha,
+                            filter,
+                            p.act2,
+                        )
                     }
                 }
                 skew = 0f
             }
             else -> {}
+        }
+        blend = BlendMode.SrcOver
+    }
+
+    /** The crew's pictures to a unit of the rig, and to a street unit. */
+    private val crewPartScale = StreetLife.SIZE * StreetSprites.CREW_PPU
+    private val crewUnit = 1f / StreetSprites.CREW_PPU
+
+    /**
+     * The crew, back to front, each placed [how] about their feet and facing their own way (or only
+     * member [only]): as [party] does a passer.
+     */
+    private fun DrawScope.crewParty(
+        alpha: Float,
+        filter: ColorFilter?,
+        how: Int,
+        mode: BlendMode = BlendMode.SrcOver,
+        only: Int = -1,
+    ) {
+        val c = crew
+        blend = mode
+        for (o in 0 until StreetCrew.SIZE) {
+            val i = c.order[o]
+            if (only >= 0 && i != only) continue
+            val m = c.members[i]
+            val s = perspective(m.lane) * crewUnit
+            skew = m.face * tan(m.lean * (Math.PI.toFloat() / 180f))
+            withTransform({ transform(placed(m.x, m.lane, how)) }) {
+                scale(m.face * s, s, Offset.Zero) {
+                    walkerFrames(
+                        0f,
+                        m.look,
+                        m.frame,
+                        m.next,
+                        m.mix,
+                        alpha,
+                        filter,
+                        m.act,
+                        crewPartScale,
+                    )
+                }
+            }
+            skew = 0f
         }
         blend = BlendMode.SrcOver
     }
@@ -538,6 +650,7 @@ internal class StreetLifePainter {
             if (p.x + near < from || p.x - near > to) continue
             party(p, perspective(p.lane), 1f, filter, KEY)
         }
+        if (crew.on && crew.hi + near >= from && crew.lo - near <= to) crewParty(1f, filter, KEY)
         for (i in 0 until carCount) {
             val car = cars[i]
             if (car.x + 120f < from || car.x - 120f > to) continue
@@ -622,7 +735,7 @@ internal class StreetLifePainter {
      * anything that stands on the pavement.
      */
     fun DrawScope.lampShadows(dark: Float, lamps: List<Furniture>, from: Float, to: Float) {
-        if (dark <= .2f || count == 0) return
+        if (dark <= .2f || (count == 0 && !crew.on)) return
         for (k in lamps.indices) {
             val f = lamps[k]
             if (f.kind != FurnitureKind.LAMP) continue
@@ -647,6 +760,21 @@ internal class StreetLifePainter {
                     260f,
                 )
             }
+            if (crew.on)
+                for (i in 0 until StreetCrew.SIZE) {
+                    val m = crew.members[i]
+                    val strength = NearLight.lampFall(m.x - lensX)
+                    if (strength < .02f) continue
+                    this@StreetLifePainter.lensX = lensX
+                    wholeCrew(
+                        .6f * dark * strength,
+                        lampShadeFilter,
+                        BlendMode.SrcOver,
+                        LAMP,
+                        260f,
+                        only = i,
+                    )
+                }
         }
     }
 
@@ -664,9 +792,11 @@ internal class StreetLifePainter {
         to: Float,
         lod: PeopleLod,
     ) {
-        if (count == 0 || lod == PeopleLod.NONE || lod == PeopleLod.DOT) return
+        if ((count == 0 && !crew.on) || lod == PeopleLod.NONE || lod == PeopleLod.DOT) return
         val key = light
         val dark = sky.dark
+        // the crew keep to the wall side: drawn before those who pass them
+        if (crew.on && crew.hi + 60f >= from && crew.lo - 60f <= to) crewFigures(lamps, key, dark)
         for (i in 0 until count) {
             val p = passers[i]
             if (p.x + 60f < from || p.x - 60f > to) continue
@@ -684,10 +814,17 @@ internal class StreetLifePainter {
             // the feet's contact shadows, or the bicycle's under its tyres and frame
             if (p.kind == Stroller.CYCLIST) cycleContacts(p, persp)
             else
-                contacts(p, p.look, StreetLayers.shown(p.frame, p.still, p.act), p.x, p.lane, persp)
+                contacts(
+                    p.dir,
+                    p.look,
+                    StreetLayers.shown(p.frame, p.still, p.act),
+                    p.x,
+                    p.lane,
+                    persp,
+                )
             if (p.kind == Stroller.PAIR)
                 contacts(
-                    p,
+                    p.dir,
                     p.look2,
                     StreetLayers.shown(p.frame2, p.still, p.act2),
                     p.x - p.dir * StreetLife.SIDE_BACK,
@@ -743,6 +880,98 @@ internal class StreetLifePainter {
     }
 
     /**
+     * The crew as [people] draws a passer: the feet's contact shadows, the rim on the lit side, the
+     * night look solid and the day look over it, a building's shade and the lamps' light on each of
+     * them where they stand, all faded or multiplied as whole figures.
+     */
+    private fun DrawScope.crewFigures(lamps: List<Furniture>, key: KeyLight?, dark: Float) {
+        val c = crew
+        for (o in 0 until StreetCrew.SIZE) {
+            val m = c.members[c.order[o]]
+            contacts(m.face, m.look, m.frame, m.x, m.lane, perspective(m.lane))
+        }
+        // the lamps' light at the group's middle (for the rim), and the day's share of their look
+        var lamp = 0f
+        val mid = (c.lo + c.hi) / 2f
+        if (dark > .2f)
+            for (k in lamps.indices) {
+                val f = lamps[k]
+                if (f.kind != FurnitureKind.LAMP) continue
+                val s = NearLight.lampFall(mid - (f.x + NearLight.LAMP_LENS)) * dark
+                if (s > lamp) lamp = s
+            }
+        val day = (1f - dark * 1.6f).coerceIn(0f, 1f)
+        val rim =
+            if (key != null)
+                key.strength * (1f - .5f * key.cool) * (1f - dark * .5f) * (1f - .55f * day)
+            else 0f
+        if (rim > .03f && lamp < rim) {
+            val filter = if (key != null && key.cool > .5f) moonRimFilter else dayRimFilter
+            nudgeX = lightFrom * .5f
+            nudgeY = -.15f
+            crewParty(rim * .55f, filter, PLAIN)
+            nudgeX = 0f
+            nudgeY = 0f
+        }
+        if (day < .99f) {
+            phoneGlow = (1f - day) * PHONE_GLOW
+            crewParty(1f, nightFigure, PLAIN)
+            phoneGlow = 0f
+        }
+        if (day > .01f) {
+            if (day < .99f) wholeCrew(day, dayFigure, BlendMode.SrcOver)
+            else crewParty(1f, dayFigure, PLAIN)
+        }
+        for (i in 0 until StreetCrew.SIZE) {
+            val m = c.members[i]
+            val shaded = painter?.shadeAt(m.x, m.lane) ?: 0f
+            if (shaded > .01f)
+                wholeCrew(
+                    (shaded * SHADE_ON_FIGURE).coerceAtMost(1f),
+                    figureShade,
+                    BlendMode.Multiply,
+                    only = i,
+                )
+        }
+        if (dark > .2f) for (i in 0 until StreetCrew.SIZE) crewLampsOn(i, lamps, dark)
+    }
+
+    /** The street lamps' light on member [i] of the crew at night, as [lampsOn] lights a passer. */
+    private fun DrawScope.crewLampsOn(i: Int, lamps: List<Furniture>, dark: Float) {
+        val m = crew.members[i]
+        val n = LightSprites.POINT.toFloat()
+        val s = 2f * LightSprites.POINT_R / n
+        for (k in lamps.indices) {
+            val f = lamps[k]
+            if (f.kind != FurnitureKind.LAMP) continue
+            val lx = f.x + NearLight.LAMP_LENS
+            val d = m.x - lx
+            if (abs(d) > LightSprites.POINT_R) continue
+            lampPaint.alpha = (LAMP_ON_FIGURE * dark).coerceAtMost(1f)
+            drawIntoCanvas {
+                it.saveLayer(Rect(m.x - 60f, -90f, m.x + 60f, m.lane + 10f), lampPaint)
+            }
+            nudgeX = (if (d > 0f) -1f else 1f) * .6f
+            nudgeY = -.2f
+            crewParty(1f, lampLitFilter, PLAIN, only = i)
+            nudgeX = 0f
+            nudgeY = 0f
+            crewParty(.5f, lampLitFilter, PLAIN, BlendMode.DstOut, only = i)
+            withTransform({
+                translate(lx, -NearLight.LAMP_HEIGHT)
+                scale(s, s, Offset.Zero)
+            }) {
+                drawImage(
+                    SceneSprites.light.point,
+                    Offset(-n / 2f, -n / 2f),
+                    blendMode = BlendMode.DstIn,
+                )
+            }
+            drawIntoCanvas { it.restore() }
+        }
+    }
+
+    /**
      * The light of each street lamp near passer [p] on them, at night: the figure in the lamp's
      * colour, a little brighter along the edge that faces the lens, seen through the lamp's
      * fall-off ([LightSprites.point], centred on the lens) and added over the figure. So the light
@@ -787,7 +1016,7 @@ internal class StreetLifePainter {
      * The soft shadow under each of a walker's feet: darkest with the foot down, gone as it lifts.
      */
     private fun DrawScope.contacts(
-        p: Passer,
+        dir: Float,
         look: Int,
         frame: Int,
         x: Float,
@@ -796,8 +1025,8 @@ internal class StreetLifePainter {
     ) {
         val j = SceneSprites.walker(look, frame).joints
         val s = StreetLife.SIZE * persp
-        foot(x + p.dir * j.footNX * s, y, j.footNH * s)
-        foot(x + p.dir * j.footFX * s, y, j.footFH * s)
+        foot(x + dir * j.footNX * s, y, j.footNH * s)
+        foot(x + dir * j.footFX * s, y, j.footFH * s)
     }
 
     /**

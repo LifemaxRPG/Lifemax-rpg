@@ -741,6 +741,8 @@ private fun StageCanvas(
         streetLife.lightX = painter.lightX
         streetLife.lightSpan = painter.lightSpan
         streetLife.lightFrom = painter.lightFrom
+        // motion reduced: should a still show the crew, they just walk
+        streetLife.calm = p.reducedMotion
         streetLife.update(seconds, seed, street)
         val from = f.streetX(0f) - B.GAP
         val to = f.streetX(this.size.width) + B.GAP

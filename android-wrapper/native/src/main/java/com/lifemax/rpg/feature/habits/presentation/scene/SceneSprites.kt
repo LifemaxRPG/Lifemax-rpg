@@ -16,6 +16,7 @@ import com.lifemax.rpg.feature.habits.domain.Part
 import com.lifemax.rpg.feature.habits.domain.PeopleActivities
 import com.lifemax.rpg.feature.habits.domain.RoomKind
 import com.lifemax.rpg.feature.habits.domain.SeasonState
+import com.lifemax.rpg.feature.habits.domain.StreetCrew
 import com.lifemax.rpg.feature.habits.domain.StreetGait
 import com.lifemax.rpg.feature.habits.domain.StreetLife
 import com.lifemax.rpg.feature.habits.domain.StreetLooks
@@ -565,6 +566,8 @@ internal object SceneSprites {
      * off the main thread ([warmStreet]).
      */
     fun walker(look: Int, frame: Int): WalkerImage {
+        if (StreetLooks.crew(look))
+            return crewWalker(look, frame, crewGen) ?: crewWalker(look, frame, crewGen)!!
         val i = look * StreetRig.TOTAL_FRAMES + frame
         held(walkers, i)?.let {
             return it
@@ -581,6 +584,8 @@ internal object SceneSprites {
      * top-left from its joint.
      */
     fun walkerPart(look: Int, part: Int): PersonImage {
+        if (StreetLooks.crew(look))
+            return crewPart(look, part, crewGen) ?: crewPart(look, part, crewGen)!!
         val i = look * Part.COUNT + part
         held(walkerParts, i)?.let {
             return it
@@ -588,6 +593,119 @@ internal object SceneSprites {
         val sp = StreetSprites.part(look, part)
         return keep(walkerParts, i, PersonImage(street(sp), -sp.ox, -sp.oy), sp)
     }
+
+    // ---- the crew (GU1–GU5, [StreetCrew]): they come rarely, so their pictures are made only when
+    // they are due (off the main thread, [wantCrew]), kept apart from the others' and let go once
+    // they have gone ([dropCrew]). Nothing of theirs is held, or made, while they are not about.
+
+    private var crewWalkers: Array<WalkerImage?>? = null
+    private var crewParts: Array<PersonImage?>? = null
+    private var crewBytes = 0
+
+    /** Which keeping of the crew's pictures this is: a drop starts a new one. */
+    @Volatile private var crewGen = 0
+    @Volatile private var crewWarming = false
+    @Volatile private var crewHeld = false
+
+    @Synchronized
+    private fun crewPool(gen: Int): Boolean {
+        if (gen != crewGen) return false
+        if (crewWalkers == null) {
+            crewWalkers = arrayOfNulls(StreetLooks.CREW_COUNT * StreetSprites.CREW_FRAMES)
+            crewParts = arrayOfNulls(StreetLooks.CREW_COUNT * Part.COUNT)
+            crewHeld = true
+        }
+        return true
+    }
+
+    @Synchronized private fun <T> crewHeldAt(pool: Array<T?>?, i: Int): T? = pool?.get(i)
+
+    /** Keeps [made] at [i] of the crew's [pool] (of keeping [gen]), unless it is there already. */
+    @Synchronized
+    private fun <T> crewKeep(pool: Array<T?>?, i: Int, made: T, sp: Sprite, gen: Int): T {
+        if (pool == null || gen != crewGen) return made
+        pool[i]?.let {
+            return it
+        }
+        crewBytes += sp.w * sp.h * 4
+        pool[i] = made
+        return made
+    }
+
+    /** Crew look [look]'s walk frame [frame] (an even one); null once keeping [gen] is dropped. */
+    private fun crewWalker(look: Int, frame: Int, gen: Int): WalkerImage? {
+        if (!crewPool(gen)) return null
+        val i = (look - StreetLooks.CREW_AT) * StreetSprites.CREW_FRAMES + frame / StreetCrew.STEP
+        crewHeldAt(crewWalkers, i)?.let {
+            return it
+        }
+        val w = StreetSprites.crewWalker(look, frame / StreetCrew.STEP * StreetCrew.STEP)
+        val sp = w.sprite
+        return crewKeep(crewWalkers, i, WalkerImage(street(sp), -sp.ox, -sp.oy, w.joints), sp, gen)
+    }
+
+    private fun crewPart(look: Int, part: Int, gen: Int): PersonImage? {
+        if (!crewPool(gen)) return null
+        val i = (look - StreetLooks.CREW_AT) * Part.COUNT + part
+        crewHeldAt(crewParts, i)?.let {
+            return it
+        }
+        val sp = StreetSprites.part(look, part, StreetSprites.CREW_PPU)
+        return crewKeep(crewParts, i, PersonImage(street(sp), -sp.ox, -sp.oy), sp, gen)
+    }
+
+    /**
+     * The crew are coming: makes their pictures now on a thread of its own, unless they are made or
+     * being made.
+     */
+    fun wantCrew() {
+        if (crewWarming || (crewHeld && crewReady)) return
+        crewWarming = true
+        val gen = crewGen
+        Thread({ warmCrew(gen) }, "street-crew")
+            .apply {
+                isDaemon = true
+                priority = Thread.MIN_PRIORITY
+            }
+            .start()
+    }
+
+    @Volatile private var crewReady = false
+
+    /** Makes every picture of the crew's that their walk shows (keeping [gen]). */
+    fun warmCrew(gen: Int = crewGen) {
+        try {
+            for (i in 0 until StreetLooks.CREW_COUNT) {
+                val l = StreetLooks.CREW_AT + i
+                if (gen != crewGen) return
+                StreetRig.joints(l)
+                for (p in StreetSprites.CREW_PARTS) if (crewPart(l, p, gen) == null) return
+                for (f in 0 until StreetSprites.CREW_FRAMES) if (
+                    crewWalker(l, f * StreetCrew.STEP, gen) == null
+                )
+                    return
+            }
+            if (gen == crewGen) crewReady = true
+        } finally {
+            crewWarming = false
+        }
+    }
+
+    /** The crew have gone: lets their pictures go. */
+    fun dropCrew() {
+        if (!crewHeld) return
+        synchronized(this) {
+            crewGen++
+            crewWalkers = null
+            crewParts = null
+            crewBytes = 0
+            crewHeld = false
+            crewReady = false
+        }
+    }
+
+    /** What the crew's pictures made so far take, in bytes (nothing while they are not about). */
+    @Synchronized fun crewBytes(): Int = crewBytes
 
     /** The dog's frame [frame] ([DogRig.TOTAL_FRAMES]). */
     fun dog(frame: Int): PersonImage {

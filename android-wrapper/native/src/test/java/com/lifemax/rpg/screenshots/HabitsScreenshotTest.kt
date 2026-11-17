@@ -11,17 +11,23 @@ import com.android.resources.Density
 import com.lifemax.rpg.feature.habits.HabitsScenarios
 import com.lifemax.rpg.feature.habits.MemoryHabitsStorage
 import com.lifemax.rpg.feature.habits.TestClock
+import com.lifemax.rpg.feature.habits.domain.Act
 import com.lifemax.rpg.feature.habits.domain.Ambient
+import com.lifemax.rpg.feature.habits.domain.Crew
 import com.lifemax.rpg.feature.habits.domain.HabitsLoad
 import com.lifemax.rpg.feature.habits.domain.Pass
 import com.lifemax.rpg.feature.habits.domain.Season
 import com.lifemax.rpg.feature.habits.domain.SeasonState
+import com.lifemax.rpg.feature.habits.domain.StreetCrew
 import com.lifemax.rpg.feature.habits.domain.WeatherOverride
 import com.lifemax.rpg.feature.habits.domain.WeatherState
+import com.lifemax.rpg.feature.habits.domain.buildingLayout
+import com.lifemax.rpg.feature.habits.domain.streetLayout
 import com.lifemax.rpg.feature.habits.presentation.HabitsScreen
 import com.lifemax.rpg.feature.habits.presentation.HabitsViewModel
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import kotlin.math.abs
 import org.junit.Rule
 import org.junit.Test
 
@@ -65,12 +71,24 @@ class HabitsScreenshotTest {
         weather: WeatherState? = null,
         season: SeasonState = Season.SUMMER,
         minute: Int = 0,
+        reducedMotion: Boolean = true,
         use: HabitsViewModel.() -> Unit = {},
     ) {
         WeatherOverride.forced = weather
         Season.override = season
         try {
-            snapIn(name, hour, minute, light, opened, keyboardDp, ambientAt, topInsetDp, use)
+            snapIn(
+                name,
+                hour,
+                minute,
+                light,
+                opened,
+                keyboardDp,
+                ambientAt,
+                topInsetDp,
+                reducedMotion,
+                use,
+            )
         } finally {
             WeatherOverride.forced = null
             Season.override = null
@@ -86,6 +104,7 @@ class HabitsScreenshotTest {
         keyboardDp: Int,
         ambientAt: Float?,
         topInsetDp: Float,
+        reducedMotion: Boolean,
         use: HabitsViewModel.() -> Unit,
     ) {
         val clock = TestClock(ZonedDateTime.of(2026, 3, 2, hour, minute, 0, 0, ZoneOffset.UTC))
@@ -93,7 +112,7 @@ class HabitsScreenshotTest {
             HabitsScenarios.surroundings(
                 light = light,
                 tokens = ScreenshotPalette.tokens(light),
-                reducedMotion = true,
+                reducedMotion = reducedMotion,
             )
         val repository =
             HabitsScenarios.repository(
@@ -368,6 +387,40 @@ class HabitsScreenshotTest {
     fun blimpNight() =
         snap("city", hour = 22, ambientAt = blimpMoment()) {
             focus(projection.value!!.stacks[2].id)
+        }
+
+    /**
+     * The first moment the crew (GU1–GU5) walk past the first building with one of them shoving
+     * another, by day ([StreetCrewTest] keeps them out of every other picture).
+     */
+    private fun crewShoveMoment(): Float {
+        val seed = HabitsScenarios.TODAY.hashCode()
+        val street =
+            streetLayout(HabitsScenarios.projection("city").stacks.map { buildingLayout(it) })
+        val crew = Crew()
+        var t = StreetCrew.PERIOD
+        while (t < 20000f) {
+            if (StreetCrew.at(t, seed, street.start, street.end, crew)) {
+                val middle = (crew.lo + crew.hi) / 2f
+                if (
+                    abs(middle - street.centers[0]) < 25f &&
+                        crew.members.any { it.act.act == Act.SHOVE && it.act.w > .9f }
+                )
+                    return t
+                t += .05f
+            } else t += 2f
+        }
+        return 0f
+    }
+
+    /**
+     * The crew messing about in front of the first building: one shoves another, the others walking
+     * on (motion not reduced, so they goof; with it reduced they just walk).
+     */
+    @Test
+    fun crewShoveDay() =
+        snap("city", ambientAt = crewShoveMoment(), reducedMotion = false) {
+            focus(projection.value!!.stacks[0].id)
         }
 
     /** Dusk: clouds with warm rosy undersides, the sun's corona, trees lit warm. */

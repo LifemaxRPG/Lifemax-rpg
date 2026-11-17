@@ -51,6 +51,19 @@ enum class Act {
     TIE,
     /** Stopped to talk to the one beside them: the head turned to them, a hand at work. */
     TALK,
+    // the crew's ([StreetCrew]), never picked in random traffic
+    /** Both hands thrust forward into a friend's back. */
+    SHOVE,
+    /** A shove back: the near arm swung back at the one behind, the face turned to him. */
+    BACKHAND,
+    /** Pitched by a shove: the arms flung out for balance, the head up. */
+    CATCH,
+    /** Laughing: the head thrown back and bobbing, a hand at the belly. */
+    LAUGH,
+    /** Telling a story walking backwards: both arms going, big gestures. */
+    STORY,
+    /** Jogging to catch up: the elbows bent, the arms pumping. */
+    JOG,
 }
 
 /** What one walker is doing this moment, written by [StreetActs.at]. */
@@ -136,7 +149,8 @@ object StreetActs {
             Act.TIE -> 1f
             Act.PEER,
             Act.LOOK_ROUND,
-            Act.TALK -> .6f
+            Act.TALK,
+            Act.STORY -> .6f
             Act.CALL,
             Act.SCRATCH,
             Act.RUB,
@@ -167,6 +181,12 @@ object StreetActs {
             Act.LOOK_ROUND,
             Act.TIE,
             Act.TALK -> 3f + 3f * h
+            Act.SHOVE,
+            Act.BACKHAND,
+            Act.CATCH,
+            Act.LAUGH,
+            Act.STORY,
+            Act.JOG -> 1.5f + 2f * h
             Act.RELAX -> 1f
         }
 
