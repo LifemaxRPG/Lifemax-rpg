@@ -114,6 +114,41 @@ class Crew {
 }
 
 object StreetCrew {
+    /**
+     * A walk called up by hand (the developer row's Crew button): [summon] asks for one, and the
+     * next frame read ([due]) sets it off [SUMMON_LEAD] seconds on, so their pictures are baked in
+     * time; it then runs as any other walk, ahead of the schedule's. NaN: none called.
+     */
+    @Volatile private var requested = false
+    @Volatile
+    var summonedAt = Float.NaN
+        private set
+
+    /** Calls the crew out now (they set out a moment later). */
+    fun summon() {
+        requested = true
+    }
+
+    /** Forgets a walk called up by hand (for tests). */
+    fun clearSummon() {
+        requested = false
+        summonedAt = Float.NaN
+    }
+
+    /** The slot a walk called up by hand plays as (its own beats and direction). */
+    const val SUMMONED = -7
+
+    /** How long after the call the crew sets out, seconds. */
+    const val SUMMON_LEAD = 2.5f
+
+    /** When the walk called up by hand at [seconds] began, if it is on now; else NaN. */
+    private fun summonedNow(seconds: Float, from: Float, to: Float): Float {
+        val s = summonedAt
+        if (s.isNaN()) return Float.NaN
+        val t = seconds - s
+        return if (t >= 0f && t <= duration(from, to)) s else Float.NaN
+    }
+
     /** How many they are. */
     const val SIZE = 5
 
@@ -211,6 +246,15 @@ object StreetCrew {
      */
     fun due(seconds: Float, seed: Int, from: Float, to: Float): Float {
         if (seconds <= 0f) return Float.MAX_VALUE
+        if (requested) {
+            requested = false
+            summonedAt = seconds + SUMMON_LEAD
+        }
+        val called = summonedAt
+        if (!called.isNaN()) {
+            if (seconds < called) return called - seconds
+            if (seconds - called <= duration(from, to)) return 0f
+        }
         val p = period(from, to)
         val d = duration(from, to)
         val k0 = floor(seconds / p).toInt()
@@ -243,17 +287,21 @@ object StreetCrew {
         val p = period(from, to)
         val k = floor(seconds / p).toInt()
         var slot = Int.MIN_VALUE
+        var began = summonedNow(seconds, from, to)
+        if (!began.isNaN()) slot = SUMMONED
         // a walk is over before the next period's start, but it may run on into the next period
-        for (j in k downTo k - 1) {
-            if (!happens(seed, j)) continue
-            val t = seconds - start(seed, j, p)
-            if (t >= 0f && t <= duration(from, to)) {
-                slot = j
-                break
+        else
+            for (j in k downTo k - 1) {
+                if (!happens(seed, j)) continue
+                val t = seconds - start(seed, j, p)
+                if (t >= 0f && t <= duration(from, to)) {
+                    slot = j
+                    began = start(seed, j, p)
+                    break
+                }
             }
-        }
         if (slot == Int.MIN_VALUE) return false
-        val t = seconds - start(seed, slot, p)
+        val t = seconds - began
         plan(seed, slot, from, to, out)
         val dir = dir(seed, slot)
         val ground = out.speed * t - FRONT

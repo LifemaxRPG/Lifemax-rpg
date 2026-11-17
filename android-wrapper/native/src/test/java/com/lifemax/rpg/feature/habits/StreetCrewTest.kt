@@ -379,4 +379,29 @@ class StreetCrewTest {
             )
         }
     }
+
+    @Test
+    fun theCrewButtonCallsThemOutAMomentLaterWhateverTheSchedule() {
+        StreetCrew.clearSummon()
+        try {
+            val from = 0f
+            val to = 600f
+            // a moment early in the tab, when the schedule never has them out
+            val now = 20f
+            val c = Crew()
+            assertFalse(StreetCrew.at(now, 5, from, to, c))
+            StreetCrew.summon()
+            val due = StreetCrew.due(now, 5, from, to)
+            assertEquals(StreetCrew.SUMMON_LEAD, due, 1e-4f)
+            assertFalse(StreetCrew.at(now + 1f, 5, from, to, c))
+            assertTrue(StreetCrew.at(now + StreetCrew.SUMMON_LEAD + 3f, 5, from, to, c))
+            assertEquals(StreetCrew.SUMMONED, c.slot)
+            assertEquals(0f, StreetCrew.due(now + StreetCrew.SUMMON_LEAD + 3f, 5, from, to), 0f)
+            // and once they have walked the street, they are gone again
+            val gone = now + StreetCrew.SUMMON_LEAD + StreetCrew.duration(from, to) + 1f
+            assertFalse(StreetCrew.at(gone, 5, from, to, c) && c.slot == StreetCrew.SUMMONED)
+        } finally {
+            StreetCrew.clearSummon()
+        }
+    }
 }

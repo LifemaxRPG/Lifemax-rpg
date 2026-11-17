@@ -77,6 +77,7 @@ import com.lifemax.rpg.feature.habits.domain.HabitsProjection
 import com.lifemax.rpg.feature.habits.domain.Hit
 import com.lifemax.rpg.feature.habits.domain.HitKind
 import com.lifemax.rpg.feature.habits.domain.PrimaryAction
+import com.lifemax.rpg.feature.habits.domain.StreetCrew
 import com.lifemax.rpg.feature.habits.domain.Suggestion
 import com.lifemax.rpg.feature.habits.domain.lapseFraction
 import com.lifemax.rpg.feature.habits.domain.lapseWeeks
@@ -476,6 +477,19 @@ private fun DevClock(sky: SkyColors) {
                         .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
+        // the crew's walk, called up now
+        Text(
+            "Crew",
+            color = sky.ink,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier =
+                Modifier.clip(PillShape)
+                    .background(GlassBrush)
+                    .border(1.dp, GlassEdge, PillShape)
+                    .clickable { StreetCrew.summon() }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+        )
     }
 }
 
