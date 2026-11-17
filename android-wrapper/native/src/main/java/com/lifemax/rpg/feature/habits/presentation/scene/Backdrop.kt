@@ -346,7 +346,15 @@ internal class Backdrop(private val seed: Int, day: String = "") {
                 if (shows < .99f) drawIntoCanvas { it.restore() }
             }
         }
-        for (r in rows.indices) row(r, sky, horizon, shift * drift[r], seconds)
+        // the far rows shrink with the street as it zooms out (as the middle city does), held on
+        // the horizon, or they would tower over a small street like shadows in the sky
+        val far =
+            if (street > horizon)
+                ((street - horizon) / (MidCitySprites.BAND * d)).coerceIn(.15f, 1f)
+            else 1f
+        withTransform({ scale(far, far, Offset(0f, horizon)) }) {
+            for (r in rows.indices) row(r, sky, horizon, shift * drift[r], seconds, w / far)
+        }
         if (tone >= .7f && Ambient.birds(seconds, seed, pass))
             birds(pass, sky, w, top, horizon, ceiling, seconds)
         // the glow over the horizon: the city's light at night, haze by day
@@ -1705,9 +1713,16 @@ internal class Backdrop(private val seed: Int, day: String = "") {
      * that is on now ([Ambient.farWindowLit]), and the aircraft-warning lights, still crisp points,
      * on the tallest.
      */
-    private fun DrawScope.row(r: Int, sky: SkyColors, base: Float, slide: Float, seconds: Float) {
+    private fun DrawScope.row(
+        r: Int,
+        sky: SkyColors,
+        base: Float,
+        slide: Float,
+        seconds: Float,
+        width: Float = size.width,
+    ) {
         val d = density
-        val w = size.width
+        val w = width
         val images = SceneSprites.skyline[r]
         val body = images.body
         val win = images.windows
