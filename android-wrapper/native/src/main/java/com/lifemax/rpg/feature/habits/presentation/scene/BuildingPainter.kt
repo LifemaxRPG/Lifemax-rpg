@@ -4144,30 +4144,9 @@ internal class BuildingPainter {
                     roomOnReveals(x, y, ww, h, alpha * .3f * g * sky.dark)
             }
             inks(fa.over, f, alpha, detailed)
-            if (b.material == HabitMaterial.GLASS) {
-                // the frame is still going up: scaffold poles and a brace
-                drawLine(
-                    SceneInk.Scaffold,
-                    Offset(-half - 3f, top),
-                    Offset(-half - 3f, fa.bottom),
-                    1.2f,
-                    alpha = alpha,
-                )
-                drawLine(
-                    SceneInk.Scaffold,
-                    Offset(half + 3f, top),
-                    Offset(half + 3f, fa.bottom),
-                    1.2f,
-                    alpha = alpha * .7f,
-                )
-                drawLine(
-                    SceneInk.Scaffold,
-                    Offset(-half - 3f, top),
-                    Offset(-half + 4f, fa.bottom),
-                    .8f,
-                    alpha = alpha * .7f,
-                )
-            }
+            // a glass floor still going up (its habit not done yet today) stands in scaffolding
+            if (b.material == HabitMaterial.GLASS && !isLit(fa, live))
+                scaffold(top, fa.bottom, alpha)
         }
         decayWindows(fa, alpha, detailed, sky)
         // what stands in front of the windows: an air conditioner, a balcony, a tag on the boards
@@ -5560,6 +5539,63 @@ internal class BuildingPainter {
         }
     }
 
+    /**
+     * Scaffolding over a storey from [top] to [bottom]: steel standards at its ends and middle, a
+     * ledger along the top, a guard rail at hip height and a brace in the end bay, clamped where
+     * they meet, over a deck of boards with a toe board; each tube shaded round and casting a faint
+     * shadow on the wall behind, all dimmed at night like everything else.
+     */
+    private fun DrawScope.scaffold(top: Float, bottom: Float, alpha: Float) {
+        val half = B.W / 2f
+        val l = -half - SCAF_OUT
+        val r = half + SCAF_OUT
+        val m = SCAF_MID
+        val deck = bottom - 2.2f
+        val ledger = top + 1.6f
+        val rail = deck - (bottom - top) * .3f
+        fun dim(c: Color) = lerp(c, ScaffoldNight, inkDark * .78f)
+        val steel = dim(ScaffoldSteel)
+        val shine = dim(ScaffoldShine)
+        val dark = dim(ScaffoldDark)
+        // a tube: its shadow on the wall, the tube, its lit edge
+        fun tube(a: Offset, b: Offset, w: Float) {
+            drawLine(Color.Black, a + SCAF_SHADOW, b + SCAF_SHADOW, w, alpha = alpha * .22f)
+            drawLine(steel, a, b, w, alpha = alpha)
+            drawLine(shine, a + SCAF_LIT, b + SCAF_LIT, w * .35f, alpha = alpha * .8f)
+        }
+        // the deck of boards and its toe board, under the rails
+        drawRect(
+            Color.Black,
+            Offset(l - 1f, deck + 2.3f),
+            Size(r - l + 2f, 1.2f),
+            alpha = alpha * .2f,
+        )
+        drawRect(dim(ScaffoldPlank), Offset(l - 1f, deck), Size(r - l + 2f, 2.4f), alpha = alpha)
+        drawRect(dim(ScaffoldPlankLit), Offset(l - 1f, deck), Size(r - l + 2f, .5f), alpha = alpha)
+        var x = l + SCAF_BOARD
+        while (x < r) {
+            drawRect(dark, Offset(x, deck), Size(.45f, 2.4f), alpha = alpha * .7f)
+            x += SCAF_BOARD
+        }
+        drawRect(
+            dim(ScaffoldPlank),
+            Offset(l - 1f, deck - 1.6f),
+            Size(r - l + 2f, 1.6f),
+            alpha = alpha * .9f,
+        )
+        // the brace across the end bay, behind the standards
+        tube(Offset(l, deck), Offset(m, ledger), 1.1f)
+        // the standards, the ledger and the guard rail
+        for (sx in floatArrayOf(l, m, r)) tube(Offset(sx, top - 1f), Offset(sx, bottom + .6f), 1.6f)
+        tube(Offset(l - 1.5f, ledger), Offset(r + 1.5f, ledger), 1.3f)
+        tube(Offset(l - 1.5f, rail), Offset(r + 1.5f, rail), 1.1f)
+        // the clamps where they meet
+        for (sx in floatArrayOf(l, m, r)) for (sy in floatArrayOf(ledger, rail, deck)) {
+            drawRect(dark, Offset(sx - 1.3f, sy - 1.1f), Size(2.6f, 2.2f), alpha = alpha)
+            drawRect(shine, Offset(sx - 1.3f, sy - 1.1f), Size(2.6f, .45f), alpha = alpha * .6f)
+        }
+    }
+
     /** A storey's outline: its front, its roof face and whichever side face shows. */
     private fun silhouette(top: Float, bottom: Float) {
         val half = B.W / 2f
@@ -5792,6 +5828,21 @@ internal class BuildingPainter {
          * The night's ambient light on a wall, and how far towards it a wall goes at full night.
          */
         private val NightAmbient = Color(0xFF55629A)
+
+        /** The scaffolding: galvanised steel, its lit edge and its clamps, the boards, night. */
+        private val ScaffoldSteel = Color(0xFF8A929C)
+        private val ScaffoldShine = Color(0xFFDDE3EA)
+        private val ScaffoldDark = Color(0xFF3E444C)
+        private val ScaffoldPlank = Color(0xFF9C7446)
+        private val ScaffoldPlankLit = Color(0xFFC79C62)
+        private val ScaffoldNight = Color(0xFF1A2032)
+
+        /** How far the scaffold stands out past the front's ends, its middle standard, a board. */
+        private const val SCAF_OUT = 4f
+        private const val SCAF_MID = 6f
+        private const val SCAF_BOARD = 17f
+        private val SCAF_SHADOW = Offset(1.4f, 1.1f)
+        private val SCAF_LIT = Offset(-.45f, -.3f)
         const val NIGHT_DEPTH = .86f
 
         /**
