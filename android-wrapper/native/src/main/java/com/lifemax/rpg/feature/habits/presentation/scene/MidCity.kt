@@ -100,7 +100,8 @@ internal object MidLook {
             m[c * 5 + 2] = k[c] - w[c]
             m[c * 5 + 4] = w[c] * 255f
         }
-        val g = 9f
+        // steep, so a room's light snaps on and off rather than fading
+        val g = 120f
         val t = 1f - share
         m[15] = -g * t
         m[16] = g
@@ -192,7 +193,8 @@ internal class MidCity(private val seed: Int) {
     private var keyHour = -1f
 
     private val bodyF = arrayOfNulls<ColorFilter>(3)
-    private val winF = arrayOfNulls<ColorFilter>(3)
+    /** Each layer's windows at each step of the lights' coming and going ([LIGHT_STEPS]). */
+    private val winF = Array(3) { arrayOfNulls<ColorFilter>(LIGHT_STEPS) }
     private val leafF = arrayOfNulls<ColorFilter>(3)
     private val snowF = arrayOfNulls<ColorFilter>(3)
     private val topF = arrayOfNulls<ColorFilter>(3)
@@ -243,7 +245,10 @@ internal class MidCity(private val seed: Int) {
             val h = MidLook.haze(l, sky, cloud, mist)
             haze[l] = h
             bodyF[l] = filter(MidLook.body(light, air, h))
-            winF[l] = filter(MidLook.windows(share, warm, cool))
+            for (q in 0 until LIGHT_STEPS) {
+                val wobble = (q / (LIGHT_STEPS - 1f) * 2f - 1f) * LIGHT_WOBBLE
+                winF[l][q] = filter(MidLook.windows(share + wobble * share, warm, cool))
+            }
             leafF[l] =
                 filter(
                     MidLook.leaves(
@@ -315,6 +320,7 @@ internal class MidCity(private val seed: Int) {
         view = shift
         looks(sky, hour, cloud, mist, season)
         val images = SceneSprites.midCity
+        lightStep(seconds)
         layer(M.FAR, images[M.FAR], horizon, shift)
         if (Ambient.train(seconds, seed, pass)) train(pass, horizon)
         layer(M.BLOCKS, images[M.BLOCKS], horizon, shift)
@@ -325,8 +331,29 @@ internal class MidCity(private val seed: Int) {
 
     /** The near kerb, its people. */
     fun DrawScope.front(horizon: Float, shift: Float, seconds: Float) {
+        lightStep(seconds)
         layer(M.KERB, SceneSprites.midCity[M.KERB], horizon, shift)
         walkers(M.KERB, horizon, shift, seconds)
+    }
+
+    /** Which step of its lights each layer is at now ([lightStep]). */
+    private val step = IntArray(3) { LIGHT_STEPS / 2 }
+
+    /**
+     * People about their evening: the share of lit windows drifts a little round the hour's, slowly
+     * and unevenly (three slow waves, each layer its own), so the windows whose turn is near it go
+     * on and off one at a time, a room lit here, another put out there; still with motion off.
+     */
+    private fun lightStep(seconds: Float) {
+        for (l in 0 until 3) {
+            val w =
+                if (seconds <= 0f) 0f
+                else
+                    .55f * sin(seconds * TWO_PI / 71f + l * 1.7f) +
+                        .3f * sin(seconds * TWO_PI / 29f + l * 2.9f) +
+                        .15f * sin(seconds * TWO_PI / 13f + l * 4.1f)
+            step[l] = Math.round((w + 1f) / 2f * (LIGHT_STEPS - 1)).coerceIn(0, LIGHT_STEPS - 1)
+        }
     }
 
     /** Where layer [l]'s first period starts on screen (px): slid by its share of the street. */
@@ -352,7 +379,7 @@ internal class MidCity(private val seed: Int) {
                     images.windows,
                     x,
                     horizon,
-                    winF[l],
+                    winF[l][step[l]]!!,
                     (1f - .55f * haze[l]) * Px.smooth(.05f, .45f, dark),
                 )
             if (images.glow != null) {
@@ -636,6 +663,11 @@ internal class MidCity(private val seed: Int) {
     }
 
     companion object {
+        /** How many steps the lit share moves through, and how far either way (a share of it). */
+        const val LIGHT_STEPS = 25
+        const val LIGHT_WOBBLE = .07f
+        private const val TWO_PI = 6.2831855f
+
         /** A street unit scrolled slides the band's pavement line this many dp (at full size). */
         const val DRIFT_UNIT = 1.1f
 
