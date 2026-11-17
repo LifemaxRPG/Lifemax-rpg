@@ -36,10 +36,17 @@ object Perspective {
 
     /**
      * The same for a building at [x] along the street, in a view [span] street units wide whose
-     * middle stands at [middle].
+     * middle stands at [middle], seen by the camera, which stands a little right of the view's
+     * middle ([EYE]): the building in front is never dead on, a sliver of its right side shows.
      */
     fun sideAt(x: Float, middle: Float, span: Float, k: Float = K_FOCUS): Float =
-        if (span <= 0f) 0f else side(.5f + (x - middle) / span, k)
+        if (span <= 0f) 0f else side(.5f + (x - middle) / span - EYE, k)
+
+    /**
+     * How far right of the view's middle the camera stands, a share of the view's width: the
+     * building in front shows a little of its right side (about a quarter of it, close up).
+     */
+    const val EYE = .08f
 
     /** How wide the shown side face is drawn, 0 to [BuildingSpec.DX]. */
     fun width(side: Float): Float = BuildingSpec.DX * ease(abs(side).coerceIn(0f, 1f))

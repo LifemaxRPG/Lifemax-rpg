@@ -86,10 +86,12 @@ class PerspectiveTest {
 
     @Test
     fun aBuildingIsPlacedInTheViewByTheStreetsMiddleAndWidth() {
-        // the view's middle at street x 100, 400 units wide: 100 is the middle, 0 a quarter in
-        assertEquals(0f, Perspective.sideAt(100f, 100f, 400f), 0f)
-        assertEquals(Perspective.side(.25f), Perspective.sideAt(0f, 100f, 400f), 1e-6f)
-        assertEquals(Perspective.side(.75f), Perspective.sideAt(200f, 100f, 400f), 1e-6f)
+        // the view's middle at street x 100, 400 units wide: 100 is the middle, 0 a quarter in,
+        // all seen from the camera standing EYE right of the middle
+        val e = Perspective.EYE
+        assertEquals(Perspective.side(.5f - e), Perspective.sideAt(100f, 100f, 400f), 1e-6f)
+        assertEquals(Perspective.side(.25f - e), Perspective.sideAt(0f, 100f, 400f), 1e-6f)
+        assertEquals(Perspective.side(.75f - e), Perspective.sideAt(200f, 100f, 400f), 1e-6f)
         assertEquals(0f, Perspective.sideAt(50f, 100f, 0f), 0f)
     }
 
@@ -132,5 +134,15 @@ class PerspectiveTest {
             b.hit(-top.width / 2f - B.DX * .4f, top.top + B.DY * .5f, -B.DX),
         )
         assertNull(b.hit(-top.width / 2f - B.DX * .4f, top.top + B.DY * .5f, B.DX))
+    }
+
+    @Test
+    fun theBuildingInFrontIsSeenALittleFromItsRightNotDeadOn() {
+        val front = Perspective.sideAt(100f, 100f, 300f)
+        assertTrue("side $front", front > .1f && front < .3f)
+        assertTrue(Perspective.shift(front) > 0f)
+        // and the side still comes round smoothly as the street scrolls
+        assertTrue(Perspective.sideAt(40f, 100f, 300f) > front)
+        assertTrue(Perspective.sideAt(160f, 100f, 300f) < front)
     }
 }
